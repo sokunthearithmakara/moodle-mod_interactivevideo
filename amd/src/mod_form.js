@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -44,6 +45,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
             let videofile = $('input[name=videofile]');
             let videotype = $('input[name=type]');
             let posterimage = $('input[name=posterimage]');
+            let nameinput = $('input[name=name]');
 
             /**
              * Format seconds to HH:MM:SS.
@@ -97,7 +99,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     endassistinput.val(convertSecondsToHMS(totaltime));
                     endinput.val(totaltime);
                 }
-                $("#videototaltime").text("<= " + convertSecondsToHMS(totaltime));
+                $("#videototaltime").text(convertSecondsToHMS(totaltime));
                 posterimage.val(player.posterImage);
             };
 
@@ -130,6 +132,11 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 });
             });
 
+            nameinput.on('contextmenu', function(e) {
+                e.preventDefault();
+                nameinput.val(player.title);
+            });
+
             videourlinput.on('input', async function() {
                 videourlinput.removeClass('is-invalid');
                 videourlinput.next('.form-control-feedback').remove();
@@ -138,13 +145,28 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 if (player) {
                     player.destroy();
                 }
+                videowrapper.html('<div id="player" style="width:100%; max-width: 100%"></div>');
                 let url = $(this).val().trim();
                 if (url == '') {
                     videowrapper.hide();
                     return;
                 }
 
+                let defaultLoadFunction = (type) => {
+                    require(['mod_interactivevideo/player/' + type], function(VP) {
+                        player = new VP();
+                        player.load(url, 0, null, {
+                            'showControls': true,
+                            'preload': true
+                        });
+                    });
+                };
+
                 // YOUTUBE:: Check if the video is a youtube video.
+                // e.g. https://www.youtube.com/watch?v={id}
+                // e.g. https://www.youtube.com/embed/{id}
+                // e.g. https://youtu.be/{id}
+                // e.g. https://www.youtube-nocookie.com/embed/{id}
                 if (videotypes.includes('yt') || currenttype == 'yt') {
                     let regex = new RegExp(
                         '(?:https?:\\/\\/)?' +
@@ -159,36 +181,44 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         // Show loader while the video is loading.
                         videowrapper.html('<div id="player" class="w-100"></div>');
                         videotype.val('yt');
-                        require(['mod_interactivevideo/player/yt'], function(VP) {
-                            player = new VP(url, 0, null, {
-                                'showControls': true,
-                                'preload': true
-                            });
-                        });
+                        defaultLoadFunction('yt');
                         return;
                     }
                 }
 
+                // VIMEO:: Check if the video is from vimeo.
+                // e.g. https://vimeo.com/*
                 if (videotypes.includes('vimeo') || currenttype == 'vimeo') {
                     // VIMEO:: Extract id from the URL.
-                    let regex = /(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com)\/(?:channels\/[A-Za-z0-9]+\/|)([^/]+)/g;
+                    let regex = /(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com)\/([^/]+)/g;
                     let match = regex.exec(url);
                     let vid = match ? match[1] : null;
                     if (vid) {
-                        url = 'https://vimeo.com/' + vid;
-                        videourlinput.val(url);
                         videowrapper.html('<div id="player" class="w-100"></div>');
                         videotype.val('vimeo');
-                        require(['mod_interactivevideo/player/vimeo'], function(VP) {
-                            player = new VP(url, 0, null, {
-                                'showControls': true,
-                            });
-                        });
+                        defaultLoadFunction('vimeo');
+                        return;
+                    }
+                }
+
+                // PANOPTO:: Check if the video is from panopto.
+                // e.g. https://upenn.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=f4f968b2-eb20-4972-9ec1-ab7e01351489
+                if (videotypes.includes('panopto') || currenttype == 'panopto') {
+                    // Extract id from the URL.
+                    let regex = /(?:https?:\/\/)?(?:www\.)?(?:[^\/]*panopto\.[^\/]+)\/Panopto\/.+\?id=([^/]+)/g;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('panopto');
+                        defaultLoadFunction('panopto');
                         return;
                     }
                 }
 
                 // DAILYMOTION:: Check if the video is from daily motion.
+                // e.g. https://www.dailymotion.com/video/x7zv7zv
+                // e.g. https://dai.ly/x7zv7zv
+                // e.g. https://www.dailymotion.com/embed/video/x7zv7zv
                 if (videotypes.includes('dailymotion') || currenttype == 'dailymotion') {
                     let regex = /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/g;
                     let match = regex.exec(url);
@@ -197,12 +227,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         // Show loader while the video is loading
                         videowrapper.html('<div id="player" class="w-100"></div>');
                         videotype.val('dailymotion');
-                        require(['mod_interactivevideo/player/dailymotion'], function(VP) {
-                            player = new VP(url, 0, null, {
-                                'showControls': true,
-                                'preload': true
-                            });
-                        });
+                        defaultLoadFunction('dailymotion');
                         return;
                     }
                 }
@@ -215,11 +240,69 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     if (mediaId) {
                         videowrapper.show();
                         videotype.val('wistia');
-                        require(['mod_interactivevideo/player/wistia'], function(VP) {
-                            player = new VP(url, 0, null, {
-                                'showControls': true,
-                            });
-                        });
+                        defaultLoadFunction('wistia');
+                        return;
+                    }
+                }
+
+                // RUMBLE:: Check if the video is from rumble.
+                if (videotypes.includes('rumble') || currenttype == 'rumble') {
+                    // Extract id from the URL https://rumble.com/{id}
+                    let regex = /https:\/\/rumble.com\/([a-zA-Z0-9]+)/;
+                    let match = regex.exec(url);
+                    let videoId = match ? match[1] : null;
+                    if (videoId) {
+                        videowrapper.show();
+                        videotype.val('rumble');
+                        defaultLoadFunction('rumble');
+                        return;
+                    }
+                }
+
+                // SPROUTVIDEO:: Check if the video is from sproutvideo.
+                if (videotypes.includes('sproutvideo') || currenttype == 'sproutvideo') {
+                    // Extract id from the URL https://sproutvideo.com/videos/{id}
+                    // or https://*.vids.io/videos/{id} where * is the subdomain.
+                    // or https://videos.sproutvideo.com/embed/{id}
+
+                    const regexSproutVideo =
+                        /(?:https?:\/\/)?(?:[^.]+\.)*(?:sproutvideo\.com\/(?:videos|embed)|vids\.io\/videos)\/([^/]+)/;
+                    let match = regexSproutVideo.exec(url);
+                    const videoId = match ? match[1] : null;
+                    if (videoId) {
+                        videowrapper.show();
+                        videotype.val('sproutvideo');
+                        defaultLoadFunction('sproutvideo');
+                        return;
+                    }
+                }
+
+                // KINESCOPE:: Check if the video is from kinescope.
+                if (videotypes.includes('kinescope') || currenttype == 'kinescope') {
+                    // Sample video: https://kinescope.io/tLLFbwam97SS4F7V1rGB2T => https://kinescope.io/{id}
+                    // Private video: https://kinescope.io/tLLFbwam97SS4F7V1rGB2T/plrMVe6Z => https://kinescope.io/{id}/{privateId}
+                    let regex = /https:\/\/kinescope.io\/(.+)/;
+                    let match = regex.exec(url);
+                    let videoId = match ? match[1] : null;
+                    if (videoId) {
+                        videowrapper.show();
+                        videotype.val('kinescope');
+                        defaultLoadFunction('kinescope');
+                        return;
+                    }
+                }
+
+                // RUTUBE:: Check if the video is from rutube.
+                if (videotypes.includes('rutube') || currenttype == 'rutube') {
+                    // Extract id from the URL https://rutube.ru/video/{token}
+                    // or https://rutube.ru/video/private/{token}
+                    let regex = /https:\/\/rutube.ru\/video\/(?:private\/)?(.+)/;
+                    let match = regex.exec(url);
+                    let videoId = match ? match[1] : null;
+                    if (videoId) {
+                        videowrapper.show();
+                        videotype.val('rutube');
+                        defaultLoadFunction('rutube');
                         return;
                     }
                 }
@@ -230,11 +313,47 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         // Show loader while the video is loading.
                         videowrapper.html('<video id="player" class="w-100"></video>');
                         videotype.val('html5video');
-                        require(['mod_interactivevideo/player/html5video'], function(VP) {
-                            player = new VP(url, 0, null, {
-                                'showControls': true
-                            });
-                        });
+                        defaultLoadFunction('html5video');
+                        return;
+                    }
+                }
+
+                // PEERTUBE:: Check if the link is a peertube link.
+                // e.g. https://video.hardlimit.com/w/hFwjKHQa3ixivePeqGc4KR
+                if (videotypes.includes('peertube') || currenttype == 'peertube') {
+                    // Extract id from the URL https://video.hardlimit.com/w/{id}
+                    let regex = /https:\/\/([^/]+)\/w\/([^/]+)/;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('peertube');
+                        defaultLoadFunction('peertube');
+                        return;
+                    }
+                }
+
+                // Spotify:: Check if the link is a spotify link.
+                // e.g. https://open.spotify.com/episode/7mmw9e0ecbX3SEjB1fudgL?si=oowc-dqOS8GEBtUAEyO23g
+                if (videotypes.includes('spotify') || currenttype == 'spotify') {
+                    let regex = /(?:https?:\/\/)?(?:open\.spotify\.com)\/(episode|track)\/([^/]+)/;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('spotify');
+                        defaultLoadFunction('spotify');
+                        return;
+                    }
+                }
+
+                // Soundcloud:: Check if the link is a soundcloud link.
+                // e.g. https://soundcloud.com/{username}/{trackname}
+                if (videotypes.includes('soundcloud') || currenttype == 'soundcloud') {
+                    let regex = /(?:https?:\/\/)?(?:www\.)?(?:soundcloud\.com)\/([^/]+)\/([^/]+)/;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('soundcloud');
+                        defaultLoadFunction('soundcloud');
                         return;
                     }
                 }
@@ -247,6 +366,22 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 notification.alert(strings[1], strings[0]);
                 videourlinput.val('').addClass('is-invalid');
                 videowrapper.hide();
+            });
+
+            // Right click on the startassistinput to enter the current time.
+            startassistinput.on('contextmenu', async function(e) {
+                e.preventDefault();
+                const currentTime = await player.getCurrentTime();
+                startassistinput.val(convertSecondsToHMS(currentTime));
+                startinput.val(currentTime);
+            });
+
+            // Ctrl/Command click on the startassistinput to reset the start time to 0.
+            startassistinput.on('click', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    startinput.val(0);
+                    startassistinput.val('00:00:00.00');
+                }
             });
 
             startassistinput.on('change blur', async function() {
@@ -283,6 +418,22 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 }
             });
 
+            // Right click on the endassistinput to enter the current time.
+            endassistinput.on('contextmenu', async function(e) {
+                e.preventDefault();
+                const currentTime = await player.getCurrentTime();
+                endassistinput.val(convertSecondsToHMS(currentTime));
+                endinput.val(currentTime);
+            });
+
+            // Ctrl/Command click on the endassistinput to reset the end time to total time.
+            endassistinput.on('click', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    endinput.val(totaltime);
+                    endassistinput.val(convertSecondsToHMS(totaltime));
+                }
+            });
+
             endassistinput.on('change blur', async function() {
                 endassistinput.removeClass('is-invalid');
                 endassistinput.next('.invalid-feedback').remove();
@@ -316,6 +467,16 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 }
             });
 
+            $(document).on('click', '.showmore', function(e) {
+                e.preventDefault();
+                $('#instructions-text .clamp-2').removeClass('clamp-2');
+            });
+
+            $(document).on('click', '.showless', function(e) {
+                e.preventDefault();
+                $('#instructions-text > div').addClass('clamp-2');
+            });
+
             // Upload video to get draft item id.
             $(document).on('click', '#id_upload', async function() {
                 const data = {
@@ -344,7 +505,8 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     }
                     videowrapper.html('<video id="player" class="w-100"></video>');
                     require(['mod_interactivevideo/player/html5video'], function(VP) {
-                        player = new VP(url, 0, null, {
+                        player = new VP();
+                        player.load(url, 0, null, {
                             'showControls': true
                         });
                     });
@@ -420,7 +582,8 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         const url = videofile.val();
                         videowrapper.html('<video id="player" class="w-100"></video>');
                         require(['mod_interactivevideo/player/html5video'], function(VP) {
-                            player = new VP(url, 0, null, {
+                            player = new VP();
+                            player.load(url, 0, null, {
                                 'showControls': true
                             });
                         });

@@ -84,11 +84,13 @@ define([
         const xpEarned = completedAnnos.map(x => Number(x.earned)).reduce((a, b) => a + b, 0);
 
         $(".metadata").empty();
-        $(".metadata").append(`<span class="d-inline-block mr-3">
+        if (actualAnnotationCounts > 0) {
+            $(".metadata").append(`<span class="d-inline-block mr-3">
             <i class="bi bi-stopwatch mr-2"></i>${formatTime(Math.ceil(actualduration))}</span>
             <span class="d-inline-block mr-3">
         <i class="bi bi-bullseye mr-2"></i>${completedAnnos.length} / ${actualAnnotationCounts}</span>
         <span class="d-inline-block"><i class="bi bi-star mr-2"></i>${xpEarned} / ${xp}</span>`);
+        }
 
         $("#interactions-nav ul").empty();
 
@@ -172,6 +174,8 @@ define([
             url, cmid, interaction, course, userid, start = 0, end,
             completionpercentage, gradeiteminstance, grademax, vtype,
             preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null) {
+            // First of all, add vtype to the body.
+            $('body').addClass(vtype);
             // Convert start to number if string
             start = Number(start);
             if (isNaN(start)) {
@@ -187,6 +191,7 @@ define([
             displayoptions = doptions;
 
             let playerReady = false;
+            let uprogress = null;
 
             if (localStorage.getItem('limitedwidth') == 'true' && displayoptions.hidemainvideocontrols == 0) {
                 $('body').addClass('limited-width');
@@ -224,10 +229,9 @@ define([
 
             /**
              * Function to get all annotations from the database and render them.
-             * @param {function} callback
              * @returns {Promise}
              */
-            const getAnnotations = (callback) => {
+            const getAnnotations = () => {
                 // Get all interaction items.
                 const annnoitems = $.ajax({
                     url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
@@ -277,9 +281,13 @@ define([
                 $.when(annnoitems, userprogress, getContentTypes).done(async function(annos, progress, ct) {
                     annotations = JSON.parse(annos[0]);
                     progress = JSON.parse(progress[0]);
+                    uprogress = progress;
                     contentTypes = JSON.parse(ct[0]);
                     completionid = progress.id;
                     let completiondetails = JSON.parse(progress.completiondetails || '[]');
+                    if (typeof completiondetails == 'object') {
+                        completiondetails = Object.values(completiondetails);
+                    }
                     annotations = filterAnnotations(annotations, contentTypes, start, end);
                     annotations = processAnnotations(annotations, contentTypes, progress, start, end, completiondetails);
                     annotations.sort((a, b) => a.timestamp - b.timestamp);
@@ -299,7 +307,6 @@ define([
                     $("#spinner").remove();
                     $("#video-info").toggleClass('d-none d-flex');
                     playerReady = true;
-                    callback();
                     return new Promise((resolve) => {
                         resolve();
                     });
@@ -482,10 +489,26 @@ define([
              * @returns {void}
              */
             const runInteraction = async(annotation) => {
+                // First making sure the player is paused.
+                player.pause();
+                let isPaused = await player.isPaused();
+                if (!isPaused) {
+                    runInteraction(annotation);
+                    return;
+                }
+                // Continue with the interaction. Take notes of the earlier interactions to avoid accidental re-runs.
                 lastrun = annotation.id;
                 $('#video-wrapper').data('timestamp', new Date().getTime());
+                viewedAnno = [];
+                // Put all annotations with timestamp < annotation.timestamp in the viewedAnno.
+                releventAnnotations.forEach(x => {
+                    if (Number(x.timestamp) <= Number(annotation.timestamp)) {
+                        viewedAnno.push(Number(x.id));
+                    }
+                });
                 viewedAnno.push(Number(annotation.id));
                 viewedAnno = [...new Set(viewedAnno)];
+
                 // Remove the previous message but keep the one below the video.
                 $('#annotation-modal').modal('hide');
                 $('#message').not('[data-placement=bottom]').not('.sticky').not(`[data-id=${annotation.id}]`).remove();
@@ -498,16 +521,31 @@ define([
                     if (theAnnotations.length > 0) {
                         const theAnnotation = theAnnotations[0];
                         await player.pause();
-                        await player.seek((theAnnotation.timestamp - 0.7 > start) ? (theAnnotation.timestamp - 0.7) : start);
-                        Toast.add(M.util.get_string('youmustcompletethepreviousactivity', 'mod_interactivevideo'), {
+                        await player.seek(theAnnotation.timestamp);
+                        runInteraction(theAnnotation);
+                        Toast.add(M.util.get_string('youmustcompletethistaskfirst', 'mod_interactivevideo'), {
                             type: 'danger'
                         });
                         return;
                     }
                 }
-                activityType = ctRenderer[annotation.type];
 
-                activityType.runInteraction(annotation);
+                // If the annotation has displayoptions == 'side' and it is already run, then we don't need to run it again.
+                // But we need to show the message.
+                if (annotation.displayoptions == 'side' && $(`#message[data-id=${annotation.id}]`).length > 0) {
+                    if (!$('body').hasClass('hassidebar')) {
+                        // Toggle the drawer.
+                        $('#annotation-toggle').trigger('click');
+                        // Switch to the annotation tab.
+                        $(`.sidebar-nav-item[data-id=${annotation.id}]`).trigger('click');
+                    }
+                } else {
+                    activityType = ctRenderer[annotation.type];
+                    setTimeout(() => {
+                        activityType.runInteraction(annotation);
+                    }, 100);
+                }
+
                 dispatchEvent('interactionrun', {'annotation': annotation});
             };
 
@@ -527,14 +565,6 @@ define([
                 }
                 // Check if the url has a timestamp using url params.
                 const urlParams = new URLSearchParams(window.location.search);
-                const time = Number(moment);
-                if (time && !isNaN(time) && time >= start && time <= end) {
-                    // Hide the start screen.
-                    $('#video-wrapper #start-screen').hide(0);
-                    await replaceProgressBars(((time - start) / totaltime) * 100);
-                    await player.seek(time);
-                    player.play();
-                }
                 urlParams.delete('t');
                 const newurl = window.location.protocol
                     + '//' + window.location.host + window.location.pathname + '?' + urlParams.toString();
@@ -542,11 +572,12 @@ define([
             };
 
             const updateTime = async(duration) => {
+                duration = Number(duration);
                 let toUpdatetime = false;
                 if (!end || end == 0 || end > duration) {
                     toUpdatetime = true;
                 }
-                end = !end ? duration : Math.min(end, duration);
+                end = !end || end == 0 ? duration : Math.min(end, duration);
                 if (!start || start >= duration || start < 0 || start >= end) {
                     toUpdatetime = true;
                 }
@@ -571,6 +602,14 @@ define([
 
             let loaded = false;
             const onLoaded = async() => {
+                if (loaded) {
+                    return;
+                }
+                if (displayoptions.passwordprotected == 1 && player.support.password) {
+                    // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
+                    $('#start-screen').removeClass('d-none');
+                    $('.video-block').removeClass('no-pointer bg-transparent');
+                }
                 loaded = true;
                 // Add player to Window object.
                 window.IVPLAYER = player;
@@ -627,44 +666,6 @@ define([
 
                 $('#start-screen #start').focus();
 
-                $('#seekhead').draggable({
-                    'containment': '#video-nav',
-                    'axis': 'x',
-                    'cursor': 'col-resize',
-                    'start': function(event, ui) {
-                        $(this).addClass('active');
-                        $('#taskinfo').addClass('no-pointer-events');
-                        $("#message, #end-screen").remove();
-                        $("#seek").append('<div id="position"><div id="timelabel"></div></div>');
-                        let $position = $('#position');
-                        const relX = ui.position.left;
-                        $position.css('left', (relX) + 'px');
-                        const percentage = relX / $(this).width();
-                        const time = percentage * totaltime;
-                        const formattedTime = convertSecondsToHMS(time);
-                        $position.find('#timelabel').text(formattedTime);
-                    },
-                    'drag': async function(event, ui) {
-                        let timestamp = ((ui.position.left) / $('#video-nav').width()) * totaltime + start;
-                        let percentage = ui.position.left / $('#video-nav').width();
-                        await replaceProgressBars(percentage * 100);
-                        $('#seek #position').css('left', ui.position.left + 'px');
-                        $('#seek #position #timelabel').text(convertSecondsToHMS(timestamp - start));
-                        await player.seek(timestamp);
-                        await player.pause();
-                    },
-                    'stop': async function() {
-                        setTimeout(function() {
-                            $('#taskinfo').removeClass('no-pointer-events');
-                        }, 200);
-                        setTimeout(function() {
-                            $('#seekhead').removeClass('active');
-                            $('#seek #position').remove();
-                        }, 1000);
-                        player.play();
-                    }
-                });
-
                 // Resize observer
                 let vwrapper = document.querySelector('#video-wrapper');
                 const resizeObserver = new ResizeObserver(() => {
@@ -704,19 +705,53 @@ define([
              */
             const onReady = async() => {
                 if (!loaded) {
-                    onLoaded();
+                    await onLoaded();
                 }
-                // Get watchedpoint from storage to resume.
-                if (!moment) {
-                    const lastwatched = localStorage.getItem(`watchedpoint-${userid}-${interaction}`);
-                    if (lastwatched && (lastwatched > start + 60 || lastwatched < end - 60)) {
-                        player.seek(lastwatched);
-                    }
-                }
-
                 $(".video-block").css('background', 'transparent');
                 $("#annotation-canvas").removeClass('d-none');
-                await getAnnotations(shareMoment);
+
+                await getAnnotations();
+                $('#seekhead').draggable({
+                    'containment': '#video-nav',
+                    'axis': 'x',
+                    'cursor': 'col-resize',
+                    'start': function(event, ui) {
+                        player.pause();
+                        $(this).addClass('active');
+                        $('#taskinfo').addClass('no-pointer-events');
+                        $('#message').not('[data-placement=bottom]').not('.sticky').remove();
+                        $("#end-screen").fadeOut(300);
+                        $("#seek").append('<div id="position"><div id="timelabel"></div></div>');
+                        let $position = $('#position');
+                        const relX = ui.position.left;
+                        $position.css('left', (relX) + 'px');
+                        const percentage = relX / $(this).width();
+                        const time = percentage * totaltime;
+                        const formattedTime = convertSecondsToHMS(time);
+                        $position.find('#timelabel').text(formattedTime);
+                    },
+                    'drag': async function(event, ui) {
+                        let timestamp = ((ui.position.left) / $('#video-nav').width()) * totaltime + start;
+                        let percentage = ui.position.left / $('#video-nav').width();
+                        await replaceProgressBars(percentage * 100);
+                        $('#seek #position').css('left', ui.position.left + 'px');
+                        $('#seek #position #timelabel').text(convertSecondsToHMS(timestamp - start));
+                        await player.seek(timestamp);
+                    },
+                    'stop': async function() {
+                        // Reset the launched annotation.
+                        lastrun = null;
+                        viewedAnno = [];
+                        setTimeout(function() {
+                            $('#taskinfo').removeClass('no-pointer-events');
+                        }, 200);
+                        setTimeout(function() {
+                            $('#seekhead').removeClass('active');
+                            $('#seek #position').remove();
+                        }, 1000);
+                        player.play();
+                    }
+                });
                 dispatchEvent('timeupdate', {'time': start});
             };
 
@@ -729,17 +764,37 @@ define([
              * - Updates the play/pause button icon to indicate 'play'.
              * - Sets the tooltip of the play/pause button to 'play'.
              */
+            let lastSaved;
             const onPaused = async() => {
                 if (!playerReady) {
                     return;
                 }
+                $('#controller').addClass('opacity-1');
                 $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
                 $('#playpause').attr('data-original-title', M.util.get_string('play', 'mod_interactivevideo'));
-                // Save watched point to cache.
-                localStorage.setItem(`watchedpoint-${userid}-${interaction}`, await player.getCurrentTime());
+                cancelAnimationFrame(playingInterval);
+                // Save watched progress to database.
+                const t = await player.getCurrentTime();
+                const watchedpoint = Math.round(t);
+                if (watchedpoint <= start + 1 || (watchedpoint >= lastSaved - 1 && watchedpoint <= lastSaved + 1)) {
+                    return;
+                }
+                lastSaved = watchedpoint;
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                    method: "POST",
+                    dataType: "text",
+                    data: {
+                        action: 'update_watchedpoint',
+                        sesskey: M.cfg.sesskey,
+                        completionid: completionid,
+                        watchedpoint: watchedpoint,
+                        contextid: M.cfg.contextid
+                    }
+                });
             };
 
-
+            let videoEnded = false;
             /**
              * Handles the end of the video playback.
              *
@@ -756,18 +811,28 @@ define([
                 if (!playerReady) {
                     return;
                 }
+                if (videoEnded) {
+                    return;
+                }
+
+                let isPlaying = await player.isPlaying();
+                if (isPlaying) {
+                    player.pause();
+                    onEnded(); // Repeat until player is paused.
+                    return;
+                }
+
+                onPaused(); // Run the onPaused function to save the last watched point.
+
+                dispatchEvent('timeupdate', {'time': end});
                 $('#currenttime').text(convertSecondsToHMS(totaltime));
+                $('#remainingtime').text(convertSecondsToHMS(0));
                 $('#restart').removeClass('d-none').fadeIn(300);
                 $('#end-screen').removeClass('d-none').fadeIn(300);
-                $('#progress').css('width', '100%');
-                $('#seekhead').css('left', '100%');
-                await player.pause();
-                dispatchEvent('timeupdate', {'time': end});
-                $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
-                $('#playpause').attr('data-original-title', M.util.get_string('play', 'mod_interactivevideo'));
                 dispatchEvent('ended', {'time': end});
-                // Remove watched point from cache.
-                localStorage.removeItem(`watchedpoint-${userid}-${interaction}`);
+                replaceProgressBars(100);
+                videoEnded = true;
+                viewedAnno = [];
             };
 
             /**
@@ -790,11 +855,14 @@ define([
                 }
                 const percentage = (t - start) / (totaltime) * 100;
                 $('#currenttime').text(convertSecondsToHMS(t - start));
+                $('#remainingtime').text(convertSecondsToHMS(totaltime - (t - start)));
                 replaceProgressBars(percentage);
                 dispatchEvent('timeupdate', {'time': t});
             };
 
             let visualized = false;
+            let playingInterval = null;
+            let firstPlay = false;
             /**
              * Handles the 'playing' event of the video player.
              * This function is triggered when the video is playing and performs various actions such as:
@@ -808,7 +876,7 @@ define([
              * @function onPlaying
              * @returns {Promise<void>} A promise that resolves when the function completes.
              */
-            const onPlaying = () => {
+            const onPlaying = async() => {
                 // Reset the annotation content.
                 if (!playerReady) {
                     return;
@@ -822,27 +890,51 @@ define([
                 }
                 $('#annotation-modal').modal('hide');
                 $('#message').not('[data-placement=bottom]').not('.sticky').remove();
-                $('#end-screen, #start-screen').fadeOut(300);
-                $('#restart').addClass('d-none');
                 $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
                 $('#playpause').attr('data-original-title', M.util.get_string('pause', 'mod_interactivevideo'));
+                $('#controller').removeClass('opacity-1');
+                if (!videoEnded) {
+                    $('#end-screen, #start-screen').fadeOut(300);
+                    $('#restart').addClass('d-none');
+                }
+                if (!firstPlay) {
+                    firstPlay = true;
+                    if (window.resumetime && window.resumetime > start && window.resumetime < end) {
+                        await player.seek(window.resumetime);
+                    }
+                }
+
                 const intervalFunction = async function() {
-                    const t = await player.getCurrentTime();
-                    // Remove the viewedAnno after the current time.
-                    viewedAnno = viewedAnno.filter(x => {
-                        const anno = releventAnnotations.find(y => y.id == x);
-                        return anno.timestamp <= t;
-                    });
                     const isPlaying = await player.isPlaying();
                     const isEnded = await player.isEnded();
-                    if (!isPlaying || isEnded) {
-                        return;
-                    }
-
-                    if (t > end || isEnded) {
+                    const isPaused = await player.isPaused();
+                    if (isEnded) {
                         onEnded(end);
                         return;
                     }
+                    if (isPaused) {
+                        onPaused();
+                        return;
+                    }
+                    if (!isPlaying) {
+                        if (player.type == 'spotify' || player.type == 'rutube') {
+                            player.pause();
+                            cancelAnimationFrame(playingInterval);
+                        }
+                        if (player.type == 'yt') {
+                            cancelAnimationFrame(playingInterval);
+                        }
+                        return;
+                    }
+
+                    const t = await player.getCurrentTime();
+
+                    if (t > end) {
+                        onEnded(end);
+                        return;
+                    }
+
+                    videoEnded = false;
 
                     // Make sure wistia is not muted.
                     if ($('#mute i').hasClass('bi-volume-up') && player.type == 'wistia') {
@@ -855,12 +947,14 @@ define([
                     // If it is the same annotation we just run, then we don't need to run it again.
                     let percentagePlayed = (t - start) / totaltime;
                     $('#currenttime').text(convertSecondsToHMS(t - start));
+                    $('#remainingtime').text(convertSecondsToHMS(totaltime - (t - start)));
                     percentagePlayed = percentagePlayed > 1 ? 1 : percentagePlayed;
                     $('#video-nav #progress').css('width', percentagePlayed * 100 + '%');
                     $('#video-nav #seekhead').css('left', percentagePlayed * 100 + '%');
                     const theAnnotation = releventAnnotations.find(x => (((t - 0.5).toFixed(2) <= x.timestamp
                         && (t + player.frequency).toFixed(2) >= x.timestamp) || time == x.timestamp) &&
                         x.id != 0 && !viewedAnno.includes(Number(x.id)));
+
                     if (theAnnotation) {
                         $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] .item').trigger('mouseover')
                             .addClass('active');
@@ -887,23 +981,34 @@ define([
                     }
                 };
 
-                if (player.type == 'yt' || player.type == 'wistia') {
+                if (player.useAnimationFrame) {
                     const animate = async() => {
-                        intervalFunction();
-                        if (await player.isPlaying()) {
-                            requestAnimationFrame(animate);
+                        const isPlaying = await player.isPlaying();
+                        if (isPlaying) {
+                            intervalFunction();
+                            playingInterval = requestAnimationFrame(animate);
                         }
                     };
-                    requestAnimationFrame(animate);
+                    playingInterval = requestAnimationFrame(animate);
                 } else {
-                    intervalFunction();
+                    const isPlaying = await player.isPlaying();
+                    if (isPlaying) {
+                        intervalFunction();
+                    }
                 }
             };
 
             // Implement the player
             require(['mod_interactivevideo/player/' + vtype], function(VideoPlayer) {
-                player = new VideoPlayer(
-                    url,
+
+                player = new VideoPlayer();
+                if (displayoptions.passwordprotected == 1 && player.support.password) {
+                    // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
+                    $('#start-screen').addClass('d-none');
+                    $('.video-block').addClass('no-pointer bg-transparent');
+                    $('#annotation-canvas').removeClass('d-none');
+                }
+                player.load(url,
                     start,
                     end,
                     {
@@ -911,8 +1016,8 @@ define([
                         'customStart': true,
                         'preload': false,
                         'autoplay': displayoptions.autoplay == 1,
-                    }
-                );
+                        'passwordprotected': displayoptions.passwordprotected == 1 && player.support.password,
+                    });
             });
 
             // Move toast-wrapper to the #wrapper element so it can be displayed on top of the video in fullscreen mode.
@@ -921,14 +1026,16 @@ define([
 
             $(document).on('timeupdate', async function(e) {
                 const t = e.originalEvent.detail.time;
-                if (preventskip) {
-                    const theAnnotations = releventAnnotations.filter(x => Number(x.timestamp) <= (t + player.frequency)
+                if (preventskip && releventAnnotations) {
+                    // Check if there is any uncompleted activity before the current time.
+                    const theAnnotations = releventAnnotations.filter(x => Number(x.timestamp) < Number(t.toFixed(2))
                         && x.completed == false && x.hascompletion == 1);
                     if (theAnnotations.length > 0) {
                         const theAnnotation = theAnnotations[0];
                         await player.pause();
-                        await player.seek((theAnnotation.timestamp - 0.7 > start) ? (theAnnotation.timestamp - 0.7) : start);
-                        Toast.add(M.util.get_string('youmustcompletethepreviousactivity', 'mod_interactivevideo'), {
+                        await player.seek(theAnnotation.timestamp);
+                        runInteraction(theAnnotation);
+                        Toast.add(M.util.get_string('youmustcompletethistaskfirst', 'mod_interactivevideo'), {
                             type: 'danger'
                         });
                         $videoNav.find('#progress').css('width', ((theAnnotation.timestamp - start) / totaltime) * 100 + '%');
@@ -996,6 +1103,7 @@ define([
                         container: '#wrapper',
                         boundary: 'window',
                     });
+                    $('#controller').addClass('bg-black').removeClass('bg-dark');
                 } else {
                     $('#wrapper, #interactivevideo-container').removeClass('fullscreen');
                     let ratio = 16 / 9;
@@ -1003,6 +1111,7 @@ define([
                         ratio = player.aspectratio;
                     }
                     $("#video-wrapper").css('padding-bottom', (1 / ratio) * 100 + '%');
+                    $('#controller').addClass('bg-dark').removeClass('bg-black');
                 }
                 $('#wrapper #fullscreen i').toggleClass('bi-fullscreen bi-fullscreen-exit');
             });
@@ -1095,7 +1204,8 @@ define([
                     return;
                 }
                 const timestamp = $(this).data('timestamp');
-                if (await player.getCurrentTime() == timestamp && lastrun) {
+                const currenttime = await player.getCurrentTime();
+                if (currenttime == timestamp && lastrun) {
                     $loader.fadeOut(300);
                     return;
                 }
@@ -1137,8 +1247,8 @@ define([
                 await replaceProgressBars(percentage * 100);
                 $loader.fadeIn(300);
                 await player.seek((percentage * totaltime) + start);
-                player.play();
                 lastrun = null;
+                viewedAnno = [];
                 setTimeout(() => {
                     // Remove the position.
                     $('#position').remove();
@@ -1158,7 +1268,12 @@ define([
             // Handle video control events:: restart
             $(document).on('click', '#end-screen #restart', async function(e) {
                 e.preventDefault();
+
                 $('#message').remove();
+                // Remove sidebar/drawer.
+                $('body').removeClass('hassidebar');
+                $('#annotation-sidebar, #annotation-toggle').remove();
+
                 viewedAnno = [];
                 lastrun = null;
                 $loader.fadeIn(300);
@@ -1291,9 +1406,10 @@ define([
                 onReady();
             });
 
-            $(document).on('iv:playerPaused', function() {
+            $(document).on('iv:playerPaused', async function() {
                 // Remove the tooltip.
                 $('.tooltip').remove();
+                dispatchEvent('videoPaused');
                 onPaused();
             });
 
@@ -1333,8 +1449,7 @@ define([
                 }
             });
 
-            $(document).on('iv:playerError', function(e) {
-                window.console.log(e.detail);
+            $(document).on('iv:playerError', function() {
                 Toast.add(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), {
                     type: 'danger'
                 });
@@ -1352,7 +1467,6 @@ define([
                 $(`.changequality[data-quality="${e.originalEvent.detail.quality}"]`).find('i').addClass('bi-check');
             });
 
-            let firstPlay = false;
             $(document).on('annotationitemsrendered', function() {
                 $('#wrapper [data-toggle="tooltip"]').tooltip({
                     container: '#wrapper',
@@ -1371,15 +1485,30 @@ define([
                 if ($interactionNav.find('li').length > 0) {
                     $('#taskinfo').removeClass('border-0');
                 }
-                // Autoplay if enabled.
 
-                if (displayoptions.autoplay == 1 && !firstPlay && !$('body').hasClass('preview-mode')) {
-                    setTimeout(function() {
-                        $('#play').trigger('click');
-                        // Make sure to unmute.
-                        player.unMute();
-                        firstPlay = true;
-                    }, 1000);
+                // Autoplay if enabled and in right conditions.
+                if (!$('body').hasClass('preview-mode') && !firstPlay) {
+                    let autoplay = displayoptions.autoplay == 1;
+                    let time = start;
+                    if ($('.intro-content').hasClass('hasintro')) {
+                        autoplay = false;
+                    }
+                    if ((uprogress.lastviewed > start && uprogress.lastviewed < end - 5) || moment) {
+                        autoplay = true;
+                        time = moment ? Number(moment) : uprogress.lastviewed;
+                        time = time >= end || time < start ? start : time;
+                    }
+                    if (autoplay) {
+                        window.resumetime = time;
+                        setTimeout(async() => {
+                            // Make sure to unmute.
+                            player.unMute();
+                            if (!moment) {
+                                $('#play').trigger('click');
+                            }
+                        }, 1000);
+                    }
+                    shareMoment();
                 }
             });
 
@@ -1400,6 +1529,12 @@ define([
                     }, 2000); // Hide after 3 seconds
                 });
             }
+
+            window.addEventListener('beforeunload', async function() {
+                await player.pause();
+                // Remove all event listeners before unload.
+                $(document).off();
+            });
         }
     };
 });

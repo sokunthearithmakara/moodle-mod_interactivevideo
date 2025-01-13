@@ -205,14 +205,13 @@ class interactivevideo_util {
                 $completion = json_decode($completiondetails);
                 $cdetails = $currentprogress['completiondetails'];
                 $cdetails = json_decode($cdetails);
+                // Remove the detail item with the same id.
+                $cdetails = array_filter($cdetails, function ($item) use ($completion) {
+                    $item = json_decode($item);
+                    return $item->id != $completion->id;
+                });
                 if ($markdone) {
                     $cdetails[] = $completiondetails;
-                } else {
-                    // Remove the detail item with the same id.
-                    $cdetails = array_filter($cdetails, function ($item) use ($completion) {
-                        $item = json_decode($item);
-                        return $item->id != $completion->id;
-                    });
                 }
                 $progress['completiondetails'] = json_encode($cdetails);
             }
@@ -222,20 +221,19 @@ class interactivevideo_util {
         $record = $DB->get_record('interactivevideo_completion', ['cmid' => $interactivevideo, 'userid' => $userid]);
         $record->completeditems = $completeditems;
         $record->timecompleted = $completed ? time() : 0;
-        $record->completionpercentage = $percentage;
+        $record->completionpercentage = round($percentage);
         $record->xp = $xp;
         $completion = json_decode($completiondetails);
         $cdetails = json_decode($record->completiondetails);
+        // Remove the detail item with the same id.
+        $cdetails = array_filter($cdetails, function ($item) use ($completion) {
+            $item = json_decode($item);
+            return $item->id != $completion->id;
+        });
         if ($markdone) {
             $cdetails[] = $completiondetails;
-        } else {
-            // Remove the detail item with the same id.
-            $cdetails = array_filter($cdetails, function ($item) use ($completion) {
-                $item = json_decode($item);
-                return $item->id != $completion->id;
-            });
-            $cdetails = array_values($cdetails);
         }
+        $cdetails = array_values($cdetails);
         $record->completiondetails = json_encode($cdetails);
         $DB->update_record('interactivevideo_completion', $record);
 
@@ -315,7 +313,8 @@ class interactivevideo_util {
              ac.completionpercentage, ac.completeditems, ac.xp, ac.completiondetails, ac.id as completionid
                     FROM {user} u
                     LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = :cmid
-                    WHERE u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = :contextid AND roleid IN (" . $roles . "))
+                    WHERE u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = :contextid AND roleid
+                     IN (" . $roles . "))
                     ORDER BY u.lastname, u.firstname";
             $records = $DB->get_records_sql($sql, ['cmid' => $interactivevideo, 'contextid' => $contextid]);
         } else {

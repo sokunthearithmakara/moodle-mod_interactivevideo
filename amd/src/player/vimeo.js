@@ -25,29 +25,35 @@ let player;
 
 class Vimeo {
     /**
-     * Constructs a Vimeo player instance.
+     * Constructs a new Vimeo player instance.
+     */
+    constructor() {
+        this.type = 'vimeo';
+        this.useAnimationFrame = false;
+        this.frequency = 0.27;
+        this.support = {
+            playbackrate: true,
+            quality: true,
+            password: true,
+        };
+    }
+    /**
+     * Load player instance.
      *
      * @param {string} url - The URL of the Vimeo video.
      * @param {number} start - The start time of the video in seconds.
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
      */
-    constructor(url, start, end, opts = {}) {
+    load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
-        this.type = 'vimeo';
         this.start = start;
-        this.frequency = 0.27;
-        this.support = {
-            playbackrate: true,
-            quality: true,
-        };
         // Documented at https://developer.vimeo.com/player/sdk/reference or https://github.com/vimeo/player.js
         let VimeoPlayer;
-        var regex = /(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(?:video\/)?([^/]+)/g;
-        this.videoId = regex.exec(url)[1];
+        this.aspectratio = 16 / 9;
         // Get poster image using oEmbed.
-        var posterUrl = 'https://vimeo.com/api/oembed.json?url=https%3A//vimeo.com/' + this.videoId;
+        var posterUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url);
         fetch(posterUrl)
             .then(response => response.json())
             .then(data => {
@@ -57,6 +63,7 @@ class Vimeo {
                 this.posterImage = poster;
                 this.title = data.title;
                 this.aspectratio = data.width / data.height;
+                this.videoId = data.video_id;
                 return poster;
             }).catch(() => {
                 return;
@@ -84,38 +91,51 @@ class Vimeo {
             watch_full_video: false,
             keyboard: false,
             dnt: true,
+            chapters: showControls,
+            interactive_markers: showControls,
+            vimeo_logo: false,
         };
 
         let ready = false;
         const vimeoEvents = (player) => {
             player.on('loaded', async function() {
-                let duration = await player.getDuration();
-                end = !end ? duration - 0.1 : Math.min(end, duration - 0.1);
-                end = Number(end.toFixed(2));
-                self.end = end;
-                self.duration = self.end - self.start;
-                self.totaltime = Number((duration - 0.1).toFixed(2));
-                // Get track list.
-                // Unset the captions.
-                player.disableTextTrack();
-                let tracks = await player.getTextTracks();
-                if (tracks && tracks.length > 0) {
-                    tracks = tracks.map((track) => {
-                        return {
-                            label: track.label,
-                            code: track.language
-                        };
-                    });
+                let duration = 0;
+                try {
+                    // Without password protection, we can get the duration.
+                    duration = await player.getDuration();
+                } catch (e) {
+                    return;
                 }
+                if (duration > 0) {
+                    end = !end ? duration - 0.1 : Math.min(end, duration - 0.1);
+                    end = Number(end.toFixed(2));
+                    self.end = end;
+                    self.duration = self.end - self.start;
+                    self.totaltime = Number((duration - 0.1).toFixed(2));
+                    // Get track list.
+                    // Unset the captions.
+                    player.disableTextTrack();
+                    let tracks = await player.getTextTracks();
+                    if (tracks && tracks.length > 0) {
+                        tracks = tracks.map((track) => {
+                            return {
+                                label: track.label,
+                                code: track.language
+                            };
+                        });
+                    }
 
-                dispatchEvent('iv:playerLoaded', {
-                    tracks: tracks,
-                    qualities: self.getQualities(),
-                });
+                    if (!opts.passwordprotected) {
+                        dispatchEvent('iv:playerLoaded', {
+                            tracks: tracks,
+                            qualities: self.getQualities(),
+                        });
+                    }
 
-                if (showControls) {
-                    ready = true;
-                    dispatchEvent('iv:playerReady');
+                    if (showControls) {
+                        ready = true;
+                        dispatchEvent('iv:playerReady');
+                    }
                 }
             });
 
@@ -133,18 +153,35 @@ class Vimeo {
                 });
             }
 
-            player.on('timeupdate', async function() {
+            player.on('pause', function(e) {
                 if (!ready) {
                     return;
                 }
-                let isEnded = await player.getEnded();
-                let currentTime = await player.getCurrentTime();
-                if (isEnded || (end && currentTime >= end)) {
+                self.paused = true;
+                if (e.seconds >= end) {
+                    self.ended = true;
                     dispatchEvent('iv:playerEnded');
-                    player.pause();
+                } else {
+                    self.ended = false;
+                    dispatchEvent('iv:playerPaused');
+                }
+            });
+
+
+            player.on('timeupdate', async function(e) {
+                if (!ready) {
+                    return;
+                }
+                if (e.seconds >= end) {
+                    self.ended = true;
+                    self.paused = true;
+                    dispatchEvent('iv:playerEnded');
                 } else if (await player.getPaused()) {
+                    self.paused = true;
                     dispatchEvent('iv:playerPaused');
                 } else {
+                    self.paused = false;
+                    self.ended = false;
                     dispatchEvent('iv:playerPlaying');
                 }
             });
@@ -181,6 +218,8 @@ class Vimeo {
                 if (!ready) {
                     return;
                 }
+                self.ended = true;
+                self.paused = true;
                 dispatchEvent('iv:playerEnded');
             });
 
@@ -189,6 +228,13 @@ class Vimeo {
                     return;
                 }
                 dispatchEvent('iv:playerQualityChange', {quality: e.quality});
+            });
+
+            player.on('error', function(e) {
+                if (!ready) {
+                    return;
+                }
+                dispatchEvent('iv:playerError', {error: e.message});
             });
         };
 
@@ -209,6 +255,7 @@ class Vimeo {
      */
     play() {
         player.play();
+        this.paused = false;
     }
     /**
      * Pauses the Vimeo player.
@@ -217,6 +264,8 @@ class Vimeo {
      */
     async pause() {
         await player.pause();
+        this.paused = true;
+        return true;
     }
     /**
      * Stops the video playback and sets the current time to the specified start time.
@@ -231,7 +280,7 @@ class Vimeo {
      * Seeks the video to a specified time.
      *
      * @param {number} time - The time in seconds to seek to.
-     * @returns {Promise<number>} A promise that resolves to the time sought to.
+     * @returns {Promise<number>} A promise that resolves to the time in seconds to which the video was seeked.
      */
     async seek(time) {
         if (time < 0) {
@@ -263,6 +312,9 @@ class Vimeo {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player is paused.
      */
     async isPaused() {
+        if (this.paused) {
+            return true;
+        }
         const paused = await player.getPaused();
         return paused;
     }
@@ -272,6 +324,9 @@ class Vimeo {
      * @returns {Promise<boolean>} A promise that resolves to `true` if the player is playing, otherwise `false`.
      */
     async isPlaying() {
+        if (this.paused) {
+            return false;
+        }
         const paused = await player.getPaused();
         return !paused;
     }
@@ -283,6 +338,9 @@ class Vimeo {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player has ended.
      */
     async isEnded() {
+        if (this.ended) {
+            return true;
+        }
         const ended = await player.getEnded();
         return ended;
     }

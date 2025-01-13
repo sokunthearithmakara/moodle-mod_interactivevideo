@@ -67,8 +67,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $videotypes = get_config('mod_interactivevideo', 'videosources');
         $videotypes = explode(',', $videotypes);
         $allowupload = in_array('html5video', $videotypes);
-        // Allow link if $videotypes length is greater than 1 after removing html5video.
-        $allowlink = count(array_diff($videotypes, ['html5video'])) > 1;
+        // Allow link if $videotypes length is greater than 0 after removing html5video.
+        $allowlink = count(array_diff($videotypes, ['html5video'])) > 0;
 
         $url = '';
         if (isset($current->source) && $current->source == 'file') {
@@ -99,6 +99,29 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $mform->addElement('hidden', 'videofile', $url);
         $mform->setType('videofile', PARAM_URL);
 
+        // Site wide instructions on video sharing.
+        $instructions = get_config('mod_interactivevideo', 'videosharinginstructions');
+        if (!empty($instructions)) {
+            $instructions = format_text($instructions, FORMAT_HTML);
+            $mform->addElement(
+                'html',
+                "<div id='instructions-text' class='alert alert-info'>
+                <div class='clamp-2'>
+                {$instructions}
+                </div>
+                <div class='d-flex justify-content-end'>
+                    <a href='#' class='btn btn-link showmore'>
+                        " . get_string('showmore', 'mod_interactivevideo') . "
+                    </a>
+                    <a href='#' class='btn btn-link showless'>
+                        " . get_string('showless', 'mod_interactivevideo') . "
+                    </a>
+                </div>
+                </div>"
+            );
+        }
+
+        // Video player.
         $mform->addElement('html', '<div class="mx-auto w-100" style="max-width: 800px;">
             <div id="video-wrapper" class="mt-2 mb-3" style="display: none;">
             <div id="player" style="width:100%; max-width: 100%"></div>
@@ -166,7 +189,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                     '((event.ctrlKey || event.metaKey) && event.key === \'y\') ' .
                     ' || ((event.ctrlKey || event.metaKey) && event.key === \'a\') ' .
                     '|| event.key === \'Backspace\' || event.key === \'Delete\' ? true : false;',
-                'placeholder' => get_string('videourlplaceholder', 'mod_interactivevideo', $allowedlinks),
+                'placeholder' => get_string('videourlplaceholder', 'mod_interactivevideo'),
             ];
             if (isset($current->type) && !in_array($current->type, $videotypes)) {
                 $attr['disabled'] = 'disabled';
@@ -178,6 +201,25 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 $attr
             );
             $mform->hideIf('videourl', 'source', 'eq', 'file');
+            // Supported links text.
+            $mform->addElement(
+                'static',
+                'supportedlinks',
+                '',
+                '<small class="text-muted">' . get_string('supportedlinks', 'mod_interactivevideo', $allowedlinks) . '</small>'
+            );
+            $mform->hideIf('supportedlinks', 'source', 'eq', 'file');
+            // Password protected video.
+            $mform->addElement(
+                'advcheckbox',
+                'passwordprotected',
+                '',
+                get_string('passwordprotected', 'mod_interactivevideo'),
+                ['group' => 1],
+                [0, 1]
+            );
+            $mform->addHelpButton('passwordprotected', 'passwordprotected', 'mod_interactivevideo');
+            $mform->hideIf('passwordprotected', 'source', 'eq', 'file');
         } else {
             $mform->addElement('hidden', 'videourl', '');
         }
@@ -193,7 +235,15 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $mform->setType('posterimage', PARAM_TEXT);
 
         // Adding the standard "name" field.
-        $mform->addElement('text', 'name', get_string('interactivevideoname', 'mod_interactivevideo'), ['size' => '100']);
+        $mform->addElement('text', 'name', get_string('interactivevideoname', 'mod_interactivevideo'), [
+            'size' => '100',
+            'data-toggle' => "tooltip",
+            'data-trigger' => "hover",
+            'data-placement' => "auto",
+            'data-boundary' => "viewport",
+            'data-original-title' => '💡' . get_string('nametip', 'mod_interactivevideo'),
+            'data-html' => "true",
+        ]);
 
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
@@ -204,40 +254,73 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
 
-        // Adding start time and end time fields.
-        $mform->addElement(
-            'text',
-            'startassist',
-            get_string('start', 'mod_interactivevideo'),
-            ['size' => '100', 'placeholder' => '00:00:00.00']
-        );
-        $mform->setType('startassist', PARAM_TEXT);
-        $mform->setDefault('startassist', "00:00:00");
-        $mform->addRule('startassist', null, 'required', null, 'client');
-        $mform->addRule(
-            'startassist',
-            get_string('invalidtimeformat', 'mod_interactivevideo'),
-            'regex',
-            '/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])(\.\d{2})?$/',
-            'client'
-        );
+        if (get_config('mod_interactivevideo', 'disablecustomtime')) {
+            $mform->addElement('hidden', 'startassist');
+            $mform->setType('startassist', PARAM_TEXT);
+            $mform->addElement('hidden', 'endassist');
+            $mform->setType('endassist', PARAM_TEXT);
+        } else {
+            // Adding start time and end time fields.
+            $mform->addElement(
+                'text',
+                'startassist',
+                get_string('start', 'mod_interactivevideo'),
+                [
+                    'size' => '100',
+                    'placeholder' => '00:00:00.00',
+                    'data-toggle' => "tooltip",
+                    'data-trigger' => "hover",
+                    'data-placement' => "auto",
+                    'data-boundary' => "viewport",
+                    'data-original-title' => '💡' . get_string('starttip', 'mod_interactivevideo'),
+                    'data-html' => "true",
+                ]
+            );
+            $mform->setType('startassist', PARAM_TEXT);
+            $mform->setDefault('startassist', "00:00:00");
+            $mform->addRule('startassist', null, 'required', null, 'client');
+            $mform->addRule(
+                'startassist',
+                get_string('invalidtimeformat', 'mod_interactivevideo'),
+                'regex',
+                '/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])(\.\d{2})?$/',
+                'client'
+            );
 
-        $mform->addElement(
-            'text',
-            'endassist',
-            get_string('end', 'mod_interactivevideo') . '<br><span class="text-muted small" id="videototaltime"></span>',
-            ['size' => '100', 'placeholder' => '00:00:00.00']
-        );
-        $mform->setType('endassist', PARAM_TEXT);
-        $mform->setDefault('startassist', "00:00:00");
-        $mform->addRule('endassist', null, 'required', null, 'client');
-        $mform->addRule(
-            'endassist',
-            get_string('invalidtimeformat', 'mod_interactivevideo'),
-            'regex',
-            '/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])(\.\d{2})?$/',
-            'client'
-        );
+            $mform->addElement(
+                'text',
+                'endassist',
+                get_string('end', 'mod_interactivevideo'),
+                [
+                    'size' => '100',
+                    'placeholder' => '00:00:00.00',
+                    'data-toggle' => "tooltip",
+                    'data-trigger' => "hover",
+                    'data-placement' => "auto",
+                    'data-boundary' => "viewport",
+                    'data-original-title' => '💡' . get_string('endtip', 'mod_interactivevideo'),
+                    'data-html' => "true",
+                ]
+            );
+            $mform->setType('endassist', PARAM_TEXT);
+            $mform->setDefault('startassist', "00:00:00");
+            $mform->addRule('endassist', null, 'required', null, 'client');
+            $mform->addRule(
+                'endassist',
+                get_string('invalidtimeformat', 'mod_interactivevideo'),
+                'regex',
+                '/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])(\.\d{2})?$/',
+                'client'
+            );
+            // Tip.
+            $mform->addElement(
+                'static',
+                'endtip',
+                '',
+                '<small class="text-muted"><i class="fa fa-stopwatch mr-1"></i><span
+                 id="videototaltime"></span></small>'
+            );
+        }
 
         $mform->addElement('hidden', 'starttime', 0);
         $mform->setType('starttime', PARAM_FLOAT);
@@ -441,6 +524,16 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         );
         $mform->hideIf('showposterimage', 'displayinline', 'eq', 0);
         $mform->hideIf('showposterimage', 'cardonly', 'eq', 1);
+
+        // Square poster image.
+        $mform->addElement(
+            'advcheckbox',
+            'squareposterimage',
+            '',
+            get_string('squareposterimage', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
 
         // Show name.
         $mform->addElement(
@@ -675,6 +768,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
 
         $defaultarray['cardsize'] = get_config('mod_interactivevideo', 'cardsize');
         $defaultarray['source'] = get_config('mod_interactivevideo', 'defaultvideosource');
+        $defaultarray['theme'] = get_config('mod_interactivevideo', 'defaulttheme');
 
         $mform->setDefaults($defaultarray);
 
@@ -871,6 +965,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'pauseonblur',
                 'autoplay',
                 'columnlayout',
+                'squareposterimage',
+                'passwordprotected',
             ];
             if (empty($defaultvalues['displayoptions'])) {
                 $defaultvalues['displayoptions'] = json_encode(array_fill_keys($displayoptions, 0));

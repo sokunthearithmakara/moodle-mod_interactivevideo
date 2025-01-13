@@ -36,18 +36,6 @@ $ADMIN->add('modsettings', $modfolder);
 // General settings page.
 $gsettings = new admin_settingpage('mod_interactivevideo_generalsettings', get_string('generalsettings', 'mod_interactivevideo'));
 
-$gsettings->add(new admin_setting_heading(
-    'mod_interactivevideo_generalsettings',
-    '',
-    '<div class="alert alert-danger">
-    <div class="d-flex align-items-center mb-3"><i class="fa fa-info-circle fa-2x mr-2"></i><b>Important notice!</b></div><div>'
-        . get_string(
-            'generalsettings_desc',
-            'mod_interactivevideo',
-            'https://github.com/sokunthearithmakara/mod_interactivevideo/issues'
-        ) . '</div></div>'
-));
-
 // Checkboxes for enabling the content types.
 $subplugins = array_keys(core_component::get_plugin_list('ivplugin'));
 $contenttypes = [];
@@ -77,6 +65,26 @@ $gsettings->add(new admin_setting_configmulticheckbox(
 ));
 
 // Enable source selector.
+$sources = [
+    'html5video' => get_string('html5video', 'mod_interactivevideo'),
+    'videolink' => get_string('videolink', 'mod_interactivevideo'),
+    'dailymotion' => get_string('dailymotion', 'mod_interactivevideo'),
+    'vimeo' => get_string('vimeo', 'mod_interactivevideo'),
+    'wistia' => get_string('wistia', 'mod_interactivevideo'),
+    'yt' => get_string('youtube', 'mod_interactivevideo'),
+    'sproutvideo' => get_string('sproutvideo', 'mod_interactivevideo'),
+    'kinescope' => get_string('kinescope', 'mod_interactivevideo'),
+    'rutube' => get_string('rutube', 'mod_interactivevideo'),
+    'rumble' => get_string('rumble', 'mod_interactivevideo'),
+    'panopto' => get_string('panopto', 'mod_interactivevideo'),
+    'spotify' => get_string('spotify', 'mod_interactivevideo')
+        . '<span class="badge alert-primary mx-1">' . get_string('audio', 'mod_interactivevideo') . '</span>',
+    'soundcloud' => get_string('soundcloud', 'mod_interactivevideo')
+        . '<span class="badge alert-primary mx-1">' . get_string('audio', 'mod_interactivevideo') . '</span>',
+    'peertube' => get_string('peertube', 'mod_interactivevideo'),
+];
+// Sort the sources by name a-z.
+asort($sources);
 $gsettings->add(new admin_setting_configmulticheckbox(
     'mod_interactivevideo/videosources',
     get_string('enablevideosources', 'mod_interactivevideo'),
@@ -84,19 +92,10 @@ $gsettings->add(new admin_setting_configmulticheckbox(
     [
         'html5video' => get_string('html5video', 'mod_interactivevideo'),
         'videolink' => get_string('videolink', 'mod_interactivevideo'),
-        'dailymotion' => get_string('dailymotion', 'mod_interactivevideo'),
         'vimeo' => get_string('vimeo', 'mod_interactivevideo'),
-        'wistia' => get_string('wistia', 'mod_interactivevideo'),
         'yt' => get_string('youtube', 'mod_interactivevideo'),
     ],
-    [
-        'html5video' => get_string('html5video', 'mod_interactivevideo'),
-        'videolink' => get_string('videolink', 'mod_interactivevideo'),
-        'dailymotion' => get_string('dailymotion', 'mod_interactivevideo'),
-        'vimeo' => get_string('vimeo', 'mod_interactivevideo'),
-        'wistia' => get_string('wistia', 'mod_interactivevideo'),
-        'yt' => get_string('youtube', 'mod_interactivevideo'),
-    ],
+    $sources,
 ));
 
 // Default source.
@@ -110,6 +109,23 @@ $gsettings->add(new admin_setting_configselect(
         'file' => get_string('file', 'mod_interactivevideo'),
     ],
 ));
+
+// Disable custom time.
+$gsettings->add(new admin_setting_configcheckbox(
+    'mod_interactivevideo/disablecustomtime',
+    get_string('disablecustomtime', 'mod_interactivevideo'),
+    get_string('disablecustomtime_desc', 'mod_interactivevideo'),
+    0,
+));
+
+// Site wide instructions.
+$gsettings->add(new admin_setting_confightmleditor(
+    'mod_interactivevideo/videosharinginstructions',
+    get_string('videosharinginstructions', 'mod_interactivevideo'),
+    get_string('videosharinginstructions_desc', 'mod_interactivevideo'),
+    null,
+));
+
 // Textarea for defining available font families.
 $gsettings->add(new admin_setting_configtextarea(
     'mod_interactivevideo/fontfamilies',
@@ -132,6 +148,23 @@ $ADMIN->add('modivfolder', $gsettings);
 
 // Default appearance settings page.
 $asettings = new admin_settingpage('mod_interactivevideo_appearance', get_string('appearancesettings', 'mod_interactivevideo'));
+// Default force theme.
+$themeobjects = get_list_of_themes();
+$themes = [];
+$themes[''] = get_string('forceno');
+foreach ($themeobjects as $key => $theme) {
+    if (empty($theme->hidefromselector)) {
+        $themes[$key] = get_string('pluginname', 'theme_' . $theme->name);
+    }
+}
+$asettings->add(new admin_setting_configselect(
+    'mod_interactivevideo/defaulttheme',
+    get_string('defaulttheme', 'mod_interactivevideo'),
+    get_string('defaulttheme_desc', 'mod_interactivevideo'),
+    '',
+    $themes,
+));
+
 $asettings->add(new admin_setting_configmulticheckbox(
     'mod_interactivevideo/defaultappearance',
     get_string('defaultappearance', 'mod_interactivevideo'),
@@ -155,6 +188,7 @@ $asettings->add(new admin_setting_configmulticheckbox(
         'showprogressbar' => get_string('showprogressbar', 'mod_interactivevideo'),
         'showcompletionrequirements' => get_string('showcompletionrequirements', 'mod_interactivevideo'),
         'showposterimage' => get_string('showposterimage', 'mod_interactivevideo'),
+        'squareposterimage' => get_string('squareposterimage', 'mod_interactivevideo'),
         'showname' => get_string('showname', 'mod_interactivevideo'),
         'showposterimageright' => get_string('showposterimageright', 'mod_interactivevideo'),
         'distractionfreemode' => get_string('distractionfreemode', 'mod_interactivevideo'),

@@ -24,26 +24,31 @@ import {dispatchEvent} from 'core/event_dispatcher';
 
 class Html5Video {
     /**
-     * Creates an instance of an HTML5 video player.
+     * Constructor for the HTML5 video player.
+     */
+    constructor() {
+        this.type = "html5video";
+        this.frequency = 0.5;
+        this.useAnimationFrame = false;
+        this.support = {
+            playbackrate: true,
+            quality: false,
+        };
+    }
+    /**
+     * Loads an instance of an HTML5 video player.
      *
-     * @constructor
      * @param {string} url - The URL of the video to be played.
      * @param {number} start - The start time of the video in seconds.
      * @param {number} [end] - The end time of the video in seconds. If not provided, defaults to the video's duration.
      * @param {object} opts - The options for the player.
      */
-    constructor(url, start, end, opts = {}) {
+    load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         const autoplay = opts.autoplay || false;
-        this.type = "html5video";
         this.start = start;
         this.end = end;
-        this.frequency = 0.28;
-        this.support = {
-            playbackrate: true,
-            quality: false,
-        };
         var player = document.getElementById(node);
         this.posterImage = player.poster;
         // Check if the url is for video or audio.
@@ -83,7 +88,7 @@ class Html5Video {
 
         player.addEventListener('loadedmetadata', function() {
             self.aspectratio = self.ratio();
-            let totaltime = Number((player.duration).toFixed(2));
+            let totaltime = Number((player.duration).toFixed(2)) - self.frequency;
             end = !end ? totaltime : Math.min(end, totaltime);
             end = Number(end.toFixed(2));
             self.end = end;
@@ -100,14 +105,33 @@ class Html5Video {
             dispatchEvent('iv:playerSeek', {time: player.currentTime});
         });
 
+        player.addEventListener('pause', function() {
+            self.paused = true;
+            dispatchEvent('iv:playerPaused');
+        });
+
         player.addEventListener('timeupdate', function() {
-            if (player.ended || (end && player.currentTime >= end)) {
-                dispatchEvent('iv:playerEnded');
-                player.pause();
-            } else if (player.paused) {
+            if (self.paused) {
                 dispatchEvent('iv:playerPaused');
-            } else if (!player.paused) {
-                dispatchEvent('iv:playerPlaying');
+                return;
+            }
+            if (player.currentTime < self.start) {
+                player.currentTime = self.start;
+            }
+            if (player.currentTime >= self.end + self.frequency) {
+                player.currentTime = self.end - self.frequency;
+            }
+            self.paused = false;
+            dispatchEvent('iv:playerPlaying');
+            if (self.ended) {
+                self.ended = false;
+            } else {
+                if (!self.ended && player.currentTime >= self.end) {
+                    self.ended = true;
+                    self.paused = true;
+                    player.pause();
+                    dispatchEvent('iv:playerEnded');
+                }
             }
         });
 
@@ -185,6 +209,7 @@ class Html5Video {
      */
     play() {
         this.player.play();
+        this.paused = false;
     }
     /**
      * Pauses the video playback.
@@ -193,6 +218,8 @@ class Html5Video {
      */
     async pause() {
         await this.player.pause();
+        this.paused = true;
+        return true;
     }
     /**
      * Stops the video playback and sets the current time to the specified start time.
@@ -235,6 +262,9 @@ class Html5Video {
      * @returns {boolean} True if the player is paused, false otherwise.
      */
     isPaused() {
+        if (this.paused) {
+            return true;
+        }
         return this.player.paused;
     }
     /**
@@ -243,6 +273,9 @@ class Html5Video {
      * @returns {boolean} True if the video is playing, false if it is paused.
      */
     isPlaying() {
+        if (this.paused) {
+            return false;
+        }
         return !this.player.paused;
     }
 
@@ -252,7 +285,7 @@ class Html5Video {
      * @returns {boolean} True if the video has ended, otherwise false.
      */
     isEnded() {
-        return this.player.ended;
+        return this.player.ended || this.player.currentTime >= this.end;
     }
     /**
      * Calculates the aspect ratio of the video.

@@ -370,7 +370,7 @@ define(['jquery',
                 }
                 start = start > end ? 0 : start;
                 if (toUpdatetime) {
-                await $.ajax({
+                    await $.ajax({
                         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
                         method: "POST",
                         dataType: "text",
@@ -391,7 +391,15 @@ define(['jquery',
              * Set of events to run after the video player is ready.
              */
             const onReady = async() => {
-                if (player.type != 'vimeo' && player.type != 'html5video') { // Vimeo/HTML5 does not pause/play on click.
+                if (displayoptions.passwordprotected == 1) {
+                    // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
+                    $('#start-screen').removeClass('d-none');
+                    $('#video-block').removeClass('no-pointer bg-transparent');
+                }
+                if (player.type != 'vimeo'
+                    && player.type != 'html5video'
+                    && player.type != 'panopto'
+                    && player.type != "peertube") { // Vimeo/HTML5 does not pause/play on click.
                     $('#video-block').addClass('no-pointer');
                 }
 
@@ -399,6 +407,12 @@ define(['jquery',
                     $('#changerate').remove();
                 } else {
                     $('#changerate').removeClass('d-none');
+                }
+
+                if (player.support.quality == false) {
+                    $('#changequality').remove();
+                } else {
+                    $('#changequality').removeClass('d-none');
                 }
 
                 let t = player.totaltime;
@@ -426,7 +440,7 @@ define(['jquery',
                 $("#timeline-wrapper #currenttime").text(convertSecondsToHMS(start, true));
                 // Render minute markers.
                 const minutes = Math.floor(totaltime / 60);
-                $('#timeline-items-wrapper').css('width', (minutes * 300) + 'px');
+                $('#timeline-items-wrapper').css('width', (minutes * 300) + 'px'); // 300px per minute as default.
                 const relWidth = $('#timeline-items').width();
                 $('#minute-markers, #minute-markers-bg, #vseek').css('width', relWidth + 'px');
                 let startPercentage = 0;
@@ -454,6 +468,14 @@ define(['jquery',
                     $('#minute-markers, #minute-markers-bg').append(`<div class="minute-marker position-absolute"
                         style="left: 100%;"><div class="text-white minute-label"></div></div>`);
                 }
+
+                // Set caption to null.
+                try {
+                    player.setCaption('');
+                } catch (e) {
+                    // Do nothing.
+                }
+
                 getAnnotations();
             };
 
@@ -579,7 +601,7 @@ define(['jquery',
                         replaceProgressBars(percentage);
                     }
                 };
-                if (player.type == 'yt' || player.type == 'wistia') {
+                if (player.useAnimationFrame) {
                     const animate = async() => {
                         intervalFunction();
                         onPlayingInterval = requestAnimationFrame(animate);
@@ -600,12 +622,19 @@ define(['jquery',
 
             // Implement the player
             require(['mod_interactivevideo/player/' + type], function(VideoPlayer) {
-                player = new VideoPlayer(
+                if (displayoptions.passwordprotected == 1) {
+                    // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
+                    $('#video-block').addClass('no-pointer bg-transparent');
+                    $('#annotation-canvas').removeClass('d-none');
+                }
+                player = new VideoPlayer();
+                player.load(
                     url,
                     start,
                     end,
                     {
                         'customStart': true,
+                        'passwordprotected': displayoptions.passwordprotected == 1,
                     }
                 );
                 window.IVPLAYER = player;
@@ -1176,6 +1205,7 @@ define(['jquery',
                     'containment': '#video-timeline-wrapper',
                     'handles': 'e, w',
                     'start': function() {
+                        player.pause();
                         $('#message').remove();
                         appendTimestampMarker($(this).data('timestamp'));
                         $('#timeline-items').addClass('no-pointer-events');
@@ -1192,7 +1222,6 @@ define(['jquery',
                         }
                         $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
                         await player.seek(timestamp);
-                        player.pause();
                         $('#vseek #position').text(convertSecondsToHMS(timestamp, true, false));
                     },
                     'stop': async function(event, ui) {
@@ -1267,6 +1296,7 @@ define(['jquery',
                 'axis': 'x',
                 'cursor': 'col-resize',
                 'start': function(event, ui) {
+                    player.pause();
                     $('#timeline-items').addClass('no-pointer-events');
                     $("#message").remove();
                     appendTimestampMarker(((ui.position.left) / $('#timeline-items').width()) * totaltime + start, false);
@@ -1278,8 +1308,6 @@ define(['jquery',
                     $('#vseek #position-marker, #scrollhead-top, #scrollbar')
                         .css('left', percentage + '%');
                     await player.seek(timestamp);
-                    player.pause();
-
                 },
                 'stop': function(event, ui) {
                     $('#vseek #position-marker').remove();
@@ -1289,13 +1317,15 @@ define(['jquery',
                     // Convert the position to percentage
                     let timestamp = ((ui.position.left) / $('#timeline-items').width()) * totaltime + start;
                     $('#scrollbar, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                    player.pause();
                 }
             });
 
             $('#scrollhead-top').draggable({
                 'axis': 'x',
                 'cursor': 'col-resize',
-                'start': function(event, ui) {
+                'start': async function(event, ui) {
+                    player.pause();
                     $('#vseek').addClass('no-pointer-events');
                     $("#message").remove();
                     appendTimestampMarker(((ui.position.left) / $('#vseek').width()) * totaltime + start, false);
@@ -1310,7 +1340,6 @@ define(['jquery',
                     $('#vseek #position-marker, #scrollhead-top, #scrollbar')
                         .css('left', percentage + '%');
                     await player.seek(timestamp);
-                    player.pause();
                 },
                 'stop': function(event, ui) {
                     $('#vseek #position-marker').remove();
@@ -1323,6 +1352,7 @@ define(['jquery',
                         timestamp = start;
                     }
                     $('#scrollbar, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                    player.pause();
                 }
             });
 
@@ -1445,8 +1475,8 @@ define(['jquery',
                 const percentage = e.offsetX / $(this).width();
                 replaceProgressBars(percentage * 100);
                 $loader.fadeIn(300);
-                await player.seek((percentage * totaltime) + start);
                 player.pause();
+                await player.seek((percentage * totaltime) + start);
                 $loader.fadeOut(300);
                 $("#message, #end-screen").remove();
             });
@@ -1592,6 +1622,31 @@ define(['jquery',
             $(document).on('iv:playerRateChange', function(e) {
                 $('.changerate').find('i').removeClass('bi-check');
                 $(`.changerate[data-rate="${e.originalEvent.detail.rate}"]`).find('i').addClass('bi-check');
+            });
+
+            // Handle video control:: Quality change
+            $("#changequality").on('shown.bs.dropdown', async function() {
+                let quality = await player.getQualities();
+                $('#qualitieslist').empty();
+                let currentQuality = quality.currentQuality;
+                if (currentQuality === null) {
+                    currentQuality = $(this).data('current');
+                }
+                let qualities = quality.qualities;
+                let qualitiesLabel = quality.qualitiesLabel;
+                qualities.forEach((q, i) => {
+                    $('#qualitieslist').append(`<a class="dropdown-item text-white changequality" data-quality="${q}"
+                         href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw ml-n3"></i>${qualitiesLabel[i]}</a>`);
+                });
+                $(this).find('[data-toggle=dropdown]').dropdown('update');
+            });
+
+            $(document).on('click', '.changequality', function(e) {
+                e.preventDefault();
+                const quality = $(this).data('quality');
+                player.setQuality(quality);
+                $('.changequality').find('i').removeClass('bi-check');
+                $(this).find('i').addClass('bi-check');
             });
 
             // Observe timeline-wrapper width change.
@@ -1877,6 +1932,82 @@ define(['jquery',
                         $(this).addClass('d-none').removeClass('d-flex');
                     }
                 });
+            });
+
+            // Implement fast forward and rewind.
+            const fastforward = async(e) => {
+                let time = await player.getCurrentTime();
+                if (time >= end) {
+                    return;
+                }
+                if (e.ctrlKey || e.metaKey) {
+                    time += 1;
+                } else {
+                    time += 0.2;
+                }
+                if (time > end) {
+                    time = end;
+                }
+                await player.seek(time);
+            };
+            $(document).on('click', '#fast-forward', async function(e) {
+                e.preventDefault();
+                fastforward(e);
+            });
+
+            let fastForwardInterval;
+            $(document).on('mousedown', '#fast-forward', async function(e) {
+                e.preventDefault();
+                fastForwardInterval = setInterval(async() => {
+                    fastforward(e);
+                    if (await player.getCurrentTime() >= end) {
+                        clearInterval(fastForwardInterval);
+                    }
+                }, 200);
+            });
+
+            $(document).on('mouseup mouseleave', '#fast-forward', function() {
+                clearInterval(fastForwardInterval);
+            });
+
+            const rewind = async(e) => {
+                let time = await player.getCurrentTime();
+                if (time <= start) {
+                    return;
+                }
+                if (e.ctrlKey || e.metaKey) {
+                    time -= 1;
+                } else {
+                    time -= 0.2;
+                }
+                if (time < start) {
+                    time = start;
+                }
+                await player.seek(time);
+            };
+            $(document).on('click', '#rewind', async function(e) {
+                e.preventDefault();
+                rewind(e);
+            });
+
+            let rewindInterval;
+            $(document).on('mousedown', '#rewind', async function(e) {
+                e.preventDefault();
+                rewindInterval = setInterval(async() => {
+                    rewind(e);
+                    if (await player.getCurrentTime() <= start) {
+                        clearInterval(rewindInterval);
+                    }
+                }, 200);
+            });
+
+            $(document).on('mouseup mouseleave', '#rewind', function() {
+                clearInterval(rewindInterval);
+            });
+
+            // Remove all event listeners before leaving the page.
+            window.addEventListener('beforeunload', function() {
+                $(document).off();
             });
         }
     };

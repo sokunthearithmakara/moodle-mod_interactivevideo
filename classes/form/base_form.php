@@ -78,9 +78,12 @@ class base_form extends \core_form\dynamic_form {
         $data->start = $this->optional_param('start', '00:00:00', PARAM_TEXT);
         $data->end = $this->optional_param('end', '00:00:00', PARAM_TEXT);
         $data->hascompletion = $this->optional_param('hascompletion', 0, PARAM_INT);
-        $data->char1 = $this->optional_param('char1', null, PARAM_TEXT);
-        $data->char2 = $this->optional_param('char2', null, PARAM_TEXT);
-        $data->char3 = $this->optional_param('char3', null, PARAM_TEXT);
+        $data->intg1 = $this->optional_param('intg1', null, PARAM_RAW);
+        $data->intg2 = $this->optional_param('intg2', null, PARAM_RAW);
+        $data->intg3 = $this->optional_param('intg3', null, PARAM_RAW);
+        $data->char1 = $this->optional_param('char1', null, PARAM_RAW);
+        $data->char2 = $this->optional_param('char2', null, PARAM_RAW);
+        $data->char3 = $this->optional_param('char3', null, PARAM_RAW);
         $data->text1 = $this->optional_param('text1', '', PARAM_RAW);
         $data->text2 = $this->optional_param('text2', '', PARAM_RAW);
         $data->text3 = $this->optional_param('text3', '', PARAM_RAW);

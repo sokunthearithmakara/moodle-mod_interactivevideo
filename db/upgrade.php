@@ -92,5 +92,49 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         // Interactivevideo savepoint reached.
         upgrade_mod_savepoint(true, 2024092223, 'interactivevideo');
     }
+
+    if ($oldversion < 2025010100) {
+
+        // Define field intg1 to be added to interactivevideo_items.
+        $table = new xmldb_table('interactivevideo_items');
+        $field = new xmldb_field('intg1', XMLDB_TYPE_INTEGER, '20', null, null, null, '0', 'advanced');
+
+        // Conditionally launch add field intg1.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('intg2', XMLDB_TYPE_INTEGER, '20', null, null, null, '0', 'intg1');
+
+        // Conditionally launch add field intg2.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('intg3', XMLDB_TYPE_INTEGER, '20', null, null, null, '0', 'intg2');
+
+        // Conditionally launch add field intg3.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025010100, 'interactivevideo');
+    }
+
+    if ($oldversion < 2025010101) {
+
+        // Define field lastviewed to be added to interactivevideo_completion.
+        $table = new xmldb_table('interactivevideo_completion');
+        $field = new xmldb_field('lastviewed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'completiondetails');
+
+        // Conditionally launch add field lastviewed.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025010101, 'interactivevideo');
+    }
     return true;
 }

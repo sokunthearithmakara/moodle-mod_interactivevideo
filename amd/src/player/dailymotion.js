@@ -25,30 +25,39 @@ import $ from 'jquery';
 let player;
 class DailyMotion {
     /**
-     * Constructs a new Dailymotion player instance.
+     * Construct a new DailyMotion player instance.
+     */
+    constructor() {
+        this.type = 'dailymotion';
+        this.frequency = 0.27;
+        this.support = {
+            playbackrate: true,
+            quality: true,
+            password: true,
+        };
+        this.useAnimationFrame = false;
+    }
+    /**
+     * Loads a new Dailymotion player instance.
      *
      * @param {string} url - The URL of the Dailymotion video.
      * @param {number} start - The start time of the video in seconds.
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
      */
-    constructor(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const customStart = opts.customStart || false;
         const node = opts.node || 'player';
-        this.type = 'dailymotion';
         this.start = start;
-        this.frequency = 0.27;
-        this.support = {
-            playbackrate: true,
-            quality: true,
-        };
 
         const reg = /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/g;
         const match = reg.exec(url);
         const videoId = match[1];
         this.videoId = videoId;
         var self = this;
+        self.aspectratio = 16 / 9; //
+        self.posterImage = '';
         fetch(`https://api.dailymotion.com/video/${videoId}?fields=thumbnail_720_url`)
             .then(response => response.json())
             .then(data => {
@@ -67,12 +76,16 @@ class DailyMotion {
         };
         let dailymotion;
         const dailymotionEvents = async(player) => {
-            self.aspectratio = await self.ratio();
-            if (showControls) {
-                player.setQuality(480);
-            }
             const state = await player.getState();
-            const totaltime = Number(state.videoDuration.toFixed(2));
+            player.off(dailymotion.events.VIDEO_DURATIONCHANGE);
+            if ((state.videoIsPasswordRequired && state.videoDuration == 0) || state.videoDuration == 0) {
+                player.on(dailymotion.events.VIDEO_DURATIONCHANGE, function() {
+                    dailymotionEvents(player);
+                });
+                return;
+            }
+            self.aspectratio = await self.ratio();
+            const totaltime = Number(state.videoDuration.toFixed(2)) - self.frequency;
             end = !end ? totaltime : Math.min(end, totaltime);
             end = Number(end.toFixed(2));
             self.end = end;
@@ -115,45 +128,70 @@ class DailyMotion {
             // That's when we let user know, player is ready.
             const playerEvents = () => {
                 player.on(dailymotion.events.VIDEO_SEEKEND, function(e) {
+                    if (!ready) {
+                        return;
+                    }
                     dispatchEvent('iv:playerSeek', e.videoTime);
                 });
 
                 player.on(dailymotion.events.VIDEO_END, function() {
-                    player.seek(start);
-                    player.pause();
+                    self.ended = true;
                     dispatchEvent('iv:playerEnded');
                 });
 
                 player.off(dailymotion.events.VIDEO_TIMECHANGE);
-                player.on(dailymotion.events.VIDEO_TIMECHANGE, function(e) {
+                player.on(dailymotion.events.VIDEO_TIMECHANGE, async function(e) {
                     if (!ready) {
                         return;
                     }
-
-                    if (e.videoTime >= end) {
+                    if (e.videoTime < start) {
+                        player.seek(start);
+                    }
+                    if (e.videoTime > end + self.frequency) {
+                        player.seek(end - 1);
+                    }
+                    if (self.ended) {
                         dispatchEvent('iv:playerEnded');
-                        player.pause();
-                    } else if (e.playerIsPlaying === false) {
-                        dispatchEvent('iv:playerPaused');
-                    } else if (e.playerIsPlaying === true) {
-                        dispatchEvent('iv:playerPlaying');
+                        self.ended = false;
+                    } else {
+                        if (e.playerIsPlaying === true) {
+                            dispatchEvent('iv:playerPlaying');
+                            self.ended = false;
+                            self.paused = false;
+                        }
+                        if (e.videoTime >= end) {
+                            dispatchEvent('iv:playerEnded');
+                            self.ended = true;
+                        }
                     }
                 });
 
-                player.on(dailymotion.events.VIDEO_PLAY, function() {
+                player.on(dailymotion.events.VIDEO_PLAY, async function(e) {
+                    if (!ready) {
+                        return;
+                    }
+                    if (self.ended || e.videoTime >= end) {
+                        self.ended = false;
+                        player.seek(start);
+                    }
+                    self.paused = false;
                     dispatchEvent('iv:playerPlaying');
                 });
 
-                player.on(dailymotion.events.VIDEO_PAUSE, function() {
-                    dispatchEvent('iv:playerPaused');
-                });
-
-                player.on(dailymotion.events.VIDEO_END, function() {
-                    dispatchEvent('iv:playerEnded');
+                player.on(dailymotion.events.VIDEO_PAUSE, async function() {
+                    if (!ready) {
+                        return;
+                    }
+                    self.paused = true;
+                    if (player.getState().videoTime >= end) {
+                        self.ended = true;
+                        dispatchEvent('iv:playerEnded');
+                    } else {
+                        dispatchEvent('iv:playerPaused');
+                    }
                 });
 
                 player.on(dailymotion.events.PLAYER_ERROR, function(e) {
-                    window.console.log(e);
                     dispatchEvent('iv:playerError', {error: e});
                 });
 
@@ -175,10 +213,10 @@ class DailyMotion {
                         player.setMute(true);
                     }
                     setTimeout(async() => {
+                        player.pause();
                         player.seek(start);
                         player.setMute(false);
                         if (!ready) {
-                            await self.pause();
                             playerEvents();
                             ready = true;
                             dispatchEvent('iv:playerReady');
@@ -204,7 +242,9 @@ class DailyMotion {
             // At the time of writing this, the dailymotion player script is not generally available.
             // Developers must set up the players and get the script from the dailymotion website.
             var tag = document.createElement('script');
-            if (showControls) {
+            if (showControls || opts.passwordprotected) {
+                // If password protected, show controls; otherwise, users can't enter the password.
+                // (Possible bug on Dailymotion side)
                 // If you fork this, change this to your own dailymotion player.
                 tag.src = "https://geo.dailymotion.com/libs/player/xsyje.js";
             } else {
@@ -215,26 +255,16 @@ class DailyMotion {
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
             window.dailymotion = {
-                onScriptLoaded: () => {
+                onScriptLoaded: async() => {
                     dailymotion = window.dailymotion;
-                    dailymotion.createPlayer(node, dmOptions).then(function(pl) {
-                        player = pl;
-                        dailymotionEvents(player);
-                        return;
-                    }).catch(() => {
-                        // Do nothing.
-                    });
+                    player = await dailymotion.createPlayer(node, dmOptions);
+                    dailymotionEvents(player);
                 }
             };
         } else {
-            window.dailymotion.createPlayer(node, dmOptions).then(function(pl) {
-                player = pl;
-                dailymotionEvents(player);
-                dailymotion = window.dailymotion;
-                return;
-            }).catch(() => {
-                // Do nothing.
-            });
+            player = await window.dailymotion.createPlayer(node, dmOptions);
+            dailymotionEvents(player);
+            dailymotion = window.dailymotion;
         }
     }
     /**
@@ -242,6 +272,7 @@ class DailyMotion {
      */
     play() {
         player.play();
+        this.paused = false;
     }
     /**
      * Pauses the Dailymotion player.
@@ -249,7 +280,12 @@ class DailyMotion {
      * This method calls the `pause` function on the `player` object to halt video playback.
      */
     async pause() {
+        if (this.paused) {
+            return false;
+        }
         await player.pause();
+        this.paused = true;
+        return true;
     }
     /**
      * Stops the video playback and seeks to the specified start time.
@@ -296,6 +332,9 @@ class DailyMotion {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player is paused.
      */
     async isPaused() {
+        if (this.paused) {
+            return true;
+        }
         const state = await player.getState();
         return !state.playerIsPlaying;
     }
@@ -305,6 +344,9 @@ class DailyMotion {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating if the player is playing.
      */
     async isPlaying() {
+        if (this.paused) {
+            return false;
+        }
         const state = await player.getState();
         return state.playerIsPlaying;
     }
@@ -315,6 +357,9 @@ class DailyMotion {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating if the player is on the replay screen.
      */
     async isEnded() {
+        if (this.ended) {
+            return true;
+        }
         const state = await player.getState();
         return state.playerIsReplayScreen;
     }

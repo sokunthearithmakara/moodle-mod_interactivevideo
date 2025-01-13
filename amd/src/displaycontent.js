@@ -143,12 +143,12 @@ const defaultDisplayContent = async function(annotation, player) {
     }
     // Display the completion button conditionally.
     if (annotation.hascompletion == 1 && annotation.completed) {
-        completionbutton += `<button id="completiontoggle" class="btn mark-undone btn-success btn-sm border-0"
+        completionbutton += `<button id="completiontoggle" class="btn text-truncate mark-undone btn-success btn-sm border-0"
              data-id="${annotation.id}"><i class="bi bi-check2"></i>
              <span class="ml-2 d-none d-sm-block">
              ${M.util.get_string('completionmarkincomplete', 'mod_interactivevideo')}</span></button>`;
     } else if (annotation.hascompletion == 1 && annotation.completed == false) {
-        completionbutton += `<button  id="completiontoggle" class="btn mark-done btn-secondary btn-sm border-0"
+        completionbutton += `<button id="completiontoggle" class="btn text-truncate mark-done btn-secondary btn-sm border-0"
              data-id="${annotation.id}"><i class="bi bi-circle"></i>
              <span class="ml-2 d-none d-sm-block">
              ${M.util.get_string('completionmarkcomplete', 'mod_interactivevideo')}</span></button>`;
@@ -166,7 +166,7 @@ const defaultDisplayContent = async function(annotation, player) {
     // Message title.
     let prop = JSON.parse(annotation.prop);
     let messageTitle = `<h5 class="modal-title text-truncate mb-0">
-    <i class="${prop.icon} mr-2 d-none d-md-inline"></i>${annotation.formattedtitle}</h5>
+    <i class="${prop.icon} mr-2 d-none d-md-inline"></i><span>${annotation.formattedtitle}</span></h5>
                             <div class="btns d-flex align-items-center">
                             ${completionbutton}
                             <button class="btn mx-2 p-0 border-0" id="close-${annotation.id}" aria-label="Close">

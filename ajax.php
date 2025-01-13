@@ -43,6 +43,18 @@ switch ($action) {
         $text = required_param('text', PARAM_RAW);
         echo interactivevideo_util::format_content($text, 1, $contextid);
         break;
+    case 'get_from_url':
+        $url = required_param('url', PARAM_URL);
+        // Send get request to the URL.
+        $response = file_get_contents($url);
+        if (!$response) {
+            require_once($CFG->libdir . '/filelib.php');
+            $curl = new curl(['ignoresecurity' => true]);
+            $curl->setHeader('Content-Type: application/json');
+            $response = $curl->get($url);
+        }
+        echo $response;
+        break;
     case 'update_videotime':
         require_capability('mod/interactivevideo:view', $context);
         $id = required_param('id', PARAM_INT);
@@ -225,5 +237,12 @@ switch ($action) {
         $courseid = required_param('courseid', PARAM_INT);
         $completion = interactivevideo_util::get_cm_completion($cmid, $userid, $courseid, $contextid);
         echo json_encode($completion);
+        break;
+    case 'update_watchedpoint':
+        require_capability('mod/interactivevideo:view', $context);
+        $id = required_param('completionid', PARAM_INT);
+        $watchedpoint = required_param('watchedpoint', PARAM_INT);
+        $DB->set_field('interactivevideo_completion', 'lastviewed', $watchedpoint, ['id' => $id]);
+        echo json_encode(['id' => $id, 'watchedpoint' => $watchedpoint]);
         break;
 }

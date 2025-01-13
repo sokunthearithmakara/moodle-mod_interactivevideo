@@ -1,7 +1,6 @@
 Transform your video/audio content into an interactive learning adventure! Add dynamic annotations and interactions like H5P activities, PDFs, HTML games/simulations, rich text, and more. Track every learner’s journey with detailed reports.
 
 ## Main Features: ##
-- Media Support: Upload video/audio files or use YouTube, Vimeo, DailyMotion, Wistia, and direct file URLs.
 - Interactive Content: Add interactions or content types at specific points in the video/audio.
 - Inline activity card: When enabled, the activity card on the course page will be displayed with poster image and video can be launched as a popup
 - Display Modes: Choose from three display modes for interactions: inline (covering the video), popup (modal), and below the video.
@@ -14,11 +13,31 @@ Transform your video/audio content into an interactive learning adventure! Add d
 - Mobile Support: Compatible with mobile apps both on Android and iOS.
 - Modular Design: Administrators can add, remove, enable, or disable content types as plugins/subplugins. Developers can extend Interactive Video through custom plugins.
 
+## Supported Sources: ##
+- Video/audio file upload
+- Video/audio file direct link
+- YouTube (public/unlisted)
+- Vimeo (public/unlisted/hide from Vimeo/password)
+- Dailymotion (public/private/password protected*)
+- Wistia (public/password protected)
+- Panopto (public)
+- Kinescope (anyone/user with private link/user with password)
+- PeerTube (public/unlisted/password protected)
+- Rutube (public/private)
+- Rumble (public/unlisted)
+- SproutVideo (public/password protected**)
+- Spotify (Podcast episode) (public)
+- SoundCloud (public)
+
+* Password-protected Dailymotion video must play with original player controls.
+** You must use the embed link for the password protected video to work.
+
 ## Out-of-the-box interaction/content types: ##
 - Chapter: Break video/audio into segments.
 - Content bank item: Add content from the course's content bank.
 - External content: Embed an external content using OEmbed library.
 - Skip segment: Skip certain segments of the video/audio.
+- Rich text: Text content using the text editor.
 
 ## Optional content types: ##
 - Annotations: Add persistant annotations on top of the video/canvas.

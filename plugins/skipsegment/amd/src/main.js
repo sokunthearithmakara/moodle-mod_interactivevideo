@@ -204,17 +204,33 @@ export default class SkipSegment extends Base {
      * @returns {Promise<void>} A promise that resolves when the interaction is complete.
      */
     async runInteraction(annotation) {
+        let self = this;
         $('.video-block').append(`<div id="skipsegment" class="text-white position-absolute p-3 hide">
          <i class="${this.prop.icon}"></i></div>`);
         $('#skipsegment').fadeIn(300);
-        await this.player.seek(Number(annotation.title) + 0.01);
-        this.player.play();
+        await this.player.seek(Number(annotation.title) + 0.1);
+        this.player.pause();
+        if (annotation.title >= this.end) {
+            dispatchEvent('iv:playerEnded', {});
+        }
+        if (this.isEditMode()) {
+            return;
+        }
         setTimeout(() => {
             $('#skipsegment').fadeOut(300);
             setTimeout(() => {
                 $('#skipsegment').remove();
             }, 300);
-        }, 1000);
+            const checkPlaying = setInterval(async() => {
+                const isPaused = await self.player.isPaused();
+                const isPlaying = await self.player.isPlaying();
+                if (!isPaused && isPlaying) {
+                    clearInterval(checkPlaying);
+                } else {
+                    self.player.play();
+                }
+            }, 10);
+        }, this.player.type === 'rumble' ? 1000 : 0);
 
     }
 }

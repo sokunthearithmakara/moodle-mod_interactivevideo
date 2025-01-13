@@ -86,7 +86,7 @@ if ($iframe) {
 }
 
 if ($embed) {
-    $PAGE->add_body_class('embed-mode');
+    $PAGE->add_body_class('embed-mode bg-dark');
     $moduleinstance->displayoptions['distractionfreemode'] = 1;
     $getcompletion = false;
 }

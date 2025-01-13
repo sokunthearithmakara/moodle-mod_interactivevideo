@@ -109,22 +109,9 @@ export default class ContentBank extends Base {
         $message.find('.modal-body').addClass('p-0');
         let $completiontoggle = $message.find('#completiontoggle');
         $message.find('#title .info').remove();
-        switch (annotation.completiontracking) {
-            case 'complete':
-                $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2" data-toggle="tooltip" data-container="#wrapper"
-                    data-trigger="hover"
-                     data-title="${M.util.get_string("completiononcomplete", "mod_interactivevideo")}"></i>`);
-                break;
-            case 'completepass':
-                $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2" data-toggle="tooltip" data-container="#wrapper"
-    data-trigger="hover"
-     data-title="${M.util.get_string("completiononcompletepass", "mod_interactivevideo")}"></i>`);
-                break;
-            case 'completefull':
-                $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2" data-toggle="tooltip" data-container="#wrapper"
-            data-trigger="hover" data-title="${M.util.get_string("completiononcompletefull", "mod_interactivevideo")}"></i>`);
-                break;
-        }
+        $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2 info" data-toggle="tooltip"
+            data-container="#wrapper" data-trigger="hover"
+            data-title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}"></i>`);
         $message.find('[data-toggle="tooltip"]').tooltip();
         return $message;
     }
@@ -148,16 +135,15 @@ export default class ContentBank extends Base {
     }
 
     /**
-     * Run the interaction
+     * Apply the content to the annotation
      * @param {Object} annotation The annotation object
-     * @returns {void}
+     * @returns {Promise<void>} - Returns a promise that resolves when the content is applied.
+     * @override
      */
-    async runInteraction(annotation) {
-        await this.player.pause();
-        const annoid = annotation.id;
+    async applyContent(annotation) {
         let self = this;
-        let $message;
-
+        let $message = $(`#message[data-id='${annotation.id}']`);
+        let annoid = annotation.id;
         const xAPICheck = (annotation, listenToEvents = true) => {
             const detectH5P = () => {
                 let H5P;
@@ -251,31 +237,15 @@ export default class ContentBank extends Base {
             requestAnimationFrame(detectH5P);
         };
 
-        const applyContent = async function(annotation) {
-            const data = await self.render(annotation);
-            $message.find(`.modal-body`).html(data).attr('id', 'content').fadeIn(300);
-            if (annotation.hascompletion != 1 || self.isEditMode()) {
-                return;
-            }
-            if (!annotation.completed && annotation.completiontracking == 'view') {
-                self.toggleCompletion(annoid, 'mark-done', 'automatic');
-            }
-            xAPICheck(annotation, !annotation.completed && annotation.completiontracking != 'manual');
-        };
-
-
-        await this.renderViewer(annotation);
-        $message = this.renderContainer(annotation);
-        applyContent(annotation);
-
-        this.enableManualCompletion(annotation);
-
-        this.resizeIframe(annotation);
-
-        if (annotation.displayoptions == 'popup') {
-            $('#annotation-modal').on('shown.bs.modal', function() {
-                self.setModalDraggable('#annotation-modal .modal-dialog');
-            });
+        const data = await self.render(annotation);
+        $message.find(`.modal-body`).html(data).attr('id', 'content').fadeIn(300);
+        if (annotation.hascompletion != 1 || self.isEditMode()) {
+            return;
         }
+        if (!annotation.completed && annotation.completiontracking == 'view') {
+            self.toggleCompletion(annoid, 'mark-done', 'automatic');
+        }
+        xAPICheck(annotation, !annotation.completed && annotation.completiontracking != 'manual');
+        this.resizeIframe(annotation);
     }
 }

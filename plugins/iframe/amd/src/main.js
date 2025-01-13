@@ -163,12 +163,12 @@ export default class Iframe extends Base {
     postContentRender(annotation) {
         const checkIframe = () => {
             if ($(`#message[data-id='${annotation.id}'] iframe`).length > 0) {
-            // Remove the loading background because some iframe has transparent content
-            setTimeout(() => {
-                $(`#message[data-id='${annotation.id}'] iframe`).css('background', 'none');
-            }, 1000);
+                // Remove the loading background because some iframe has transparent content
+                setTimeout(() => {
+                    $(`#message[data-id='${annotation.id}'] iframe`).css('background', 'none');
+                }, 1000);
             } else {
-            requestAnimationFrame(checkIframe);
+                requestAnimationFrame(checkIframe);
             }
         };
         requestAnimationFrame(checkIframe);

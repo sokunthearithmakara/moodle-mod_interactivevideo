@@ -27,16 +27,9 @@ class Yt {
      * Creates an instance of the YouTube player.
      *
      * @constructor
-     * @param {string} url - The URL of the YouTube video.
-     * @param {number} start - The start time of the video in seconds.
-     * @param {number} end - The end time of the video in seconds.
-     * @param {object} opts - The options for the player.
      */
-    constructor(url, start, end, opts = {}) {
-        const showControls = opts.showControls || false;
-        const customStart = opts.customStart || false;
-        const preload = opts.preload || false;
-        const node = opts.node || 'player';
+    constructor() {
+        this.useAnimationFrame = true;
         /**
          * The type of the player
          * @type {String}
@@ -45,6 +38,30 @@ class Yt {
          * @readonly
          */
         this.type = 'yt';
+        /**
+         * Interval frequency
+         * @type {Number}
+         */
+        this.frequency = 0.25;
+        this.support = {
+            playbackrate: true,
+            quality: false,
+            password: false,
+        };
+    }
+    /**
+     * Load the video
+     * @param {string} url
+     * @param {number} start
+     * @param {number} end
+     * @param {object} opts
+     * @return {Promise<Boolean>}
+     */
+    load(url, start, end, opts = {}) {
+        const showControls = opts.showControls || false;
+        const customStart = opts.customStart || false;
+        const preload = opts.preload || false;
+        const node = opts.node || 'player';
         /**
          * The start time of the video
          * @type {Number}
@@ -56,15 +73,6 @@ class Yt {
          * @type {Number}
          */
         this.end = end;
-        /**
-         * Interval frequency
-         * @type {Number}
-         */
-        this.frequency = 0.25;
-        this.support = {
-            playbackrate: true,
-            quality: false,
-        };
         // Documented at https://developers.google.com/youtube/iframe_api_reference
         var YT;
         let regex = new RegExp(
@@ -108,7 +116,8 @@ class Yt {
                 },
                 onReady: function(e) {
                     self.title = e.target.videoTitle;
-                    let totaltime = Number(e.target.getDuration().toFixed(2));
+                    // We don't want to use the end time from the player, just to avoid any issue restarting the video.
+                    let totaltime = Number(e.target.getDuration().toFixed(2)) - self.frequency;
                     end = !end ? totaltime : Math.min(end, totaltime);
                     end = Number(end.toFixed(2));
                     self.end = end;
@@ -140,22 +149,39 @@ class Yt {
                     if (ready === false) {
                         return;
                     }
+                    if (player.getCurrentTime() < self.start) {
+                        player.seekTo(self.start);
+                        player.playVideo();
+                    }
+                    if (player.getCurrentTime() >= self.end + self.frequency) {
+                        player.seekTo(self.end - self.frequency);
+                        player.playVideo();
+                    }
                     switch (e.data) {
-                        case YT.PlayerState.BUFFERING:
-                            dispatchEvent('iv:playerBuffering');
-                            break;
                         case YT.PlayerState.ENDED:
+                            self.ended = true;
+                            self.paused = true;
                             dispatchEvent('iv:playerEnded');
                             break;
                         case YT.PlayerState.PLAYING:
-                            if (player.getCurrentTime() >= self.end || player.getCurrentTime() < self.start) {
-                                player.seekTo(self.start);
+                            self.paused = false;
+                            if (self.ended) {
+                                self.ended = false;
+                                if (player.getCurrentTime() < self.start) {
+                                    player.seekTo(self.start);
+                                } else if (player.getCurrentTime() >= self.end) {
+                                    player.seekTo(self.start);
+                                }
+                            }
+                            dispatchEvent('iv:playerPlaying');
+                            if (player.getCurrentTime() >= self.end) {
+                                self.ended = true;
+                                self.paused = true;
                                 dispatchEvent('iv:playerEnded');
-                            } else {
-                                dispatchEvent('iv:playerPlaying');
                             }
                             break;
                         case YT.PlayerState.PAUSED:
+                            self.paused = true;
                             dispatchEvent('iv:playerPaused');
                             break;
                         case YT.PlayerState.CUED:
@@ -221,6 +247,9 @@ class Yt {
             YT = window.YT || {};
             player = new YT.Player(node, options);
         }
+        return new Promise((resolve) => {
+            resolve(true);
+        });
     }
     /**
      * Play the video
@@ -228,13 +257,16 @@ class Yt {
      */
     play() {
         player.playVideo();
+        this.paused = false;
     }
     /**
      * Pause the video
      * @return {Void}
      */
-    async pause() {
-        await player.pauseVideo();
+    pause() {
+        player.pauseVideo();
+        this.paused = true;
+        return true;
     }
     /**
      * Stop the video
@@ -276,28 +308,30 @@ class Yt {
      * @return {Boolean}
      */
     isPaused() {
-        return player.getPlayerState() === 2;
+        if (this.paused) {
+            return true;
+        }
+        return player.getPlayerState() == window.YT.PlayerState.PAUSED;
     }
     /**
      * Check if the video is playing
      * @return {Boolean}
      */
-    async isPlaying() {
-        return player.getPlayerState() === 1;
+    isPlaying() {
+        if (this.paused) {
+            return false;
+        }
+        return player.getPlayerState() == window.YT.PlayerState.PLAYING;
     }
     /**
      * Check if the video is ended
      * @return {Boolean}
      */
-    async isEnded() {
-        if (player.getPlayerState() === 0) {
+    isEnded() {
+        if (this.ended) {
             return true;
-        } else {
-            if (player.getCurrentTime() >= this.end) {
-                return true;
-            }
         }
-        return false;
+        return player.getPlayerState() == window.YT.PlayerState.ENDED || player.getCurrentTime() >= this.end;
     }
     /**
      * Get the aspect ratio of the video

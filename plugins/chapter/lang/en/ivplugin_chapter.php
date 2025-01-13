@@ -32,5 +32,5 @@ $string['privacy:metadata'] = 'The Chapter plugin doesn\'t store any personal da
 $string['showtitle'] = 'Show title';
 $string['showtitle_help'] = 'If enabled, the chapter title will be displayed on the video at the beginning of the chapter.';
 $string['startchapter'] = 'Start';
-
+$string['tutorialurl'] = 'https://youtu.be/hzkummjWDj0';
 

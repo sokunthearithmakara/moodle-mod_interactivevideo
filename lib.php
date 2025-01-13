@@ -24,6 +24,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core\url;
+
 define('INTERACTIVEVIDEO_DISPLAY_INLINE', 1);
 /**
  * Return if the plugin supports $feature.
@@ -105,10 +107,12 @@ function interactivevideo_display_options($moduleinstance) {
     $options['showprogressbar'] = $moduleinstance->showprogressbar ?? 0;
     $options['showcompletionrequirements'] = $moduleinstance->showcompletionrequirements ?? 0;
     $options['showposterimage'] = $moduleinstance->showposterimage ?? 0;
+    $options['squareposterimage'] = $moduleinstance->squareposterimage ?? 0;
     $options['showname'] = $moduleinstance->showname ?? 0;
     $options['autoplay'] = $moduleinstance->autoplay ?? 0;
     $options['columnlayout'] = $moduleinstance->columnlayout ?? 0;
     $options['showdescriptiononheader'] = $moduleinstance->showdescriptiononheader ?? 0;
+    $options['passwordprotected'] = $moduleinstance->passwordprotected ?? 0;
     return $options;
 }
 
@@ -741,6 +745,7 @@ function interactivevideo_displayinline(cm_info $cm) {
                 || $displayoptions->cardsize == 'mediumlarge'),
         'columnlayout' => isset($displayoptions->columnlayout) ? $displayoptions->columnlayout : '1',
         'afterlink' => $afterlink,
+        'posterimagesquare' => isset($displayoptions->squareposterimage) && $displayoptions->squareposterimage,
     ];
 
     if (isset($displayoptions->cardsize)) {
@@ -1218,6 +1223,8 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         }
     }
 
+    $videotypes = get_config('mod_interactivevideo', 'videosources');
+    $videotypes = explode(',', $videotypes);
     $videoinfo = [];
     foreach ($csv as $row) {
         $row = array_map('trim', str_getcsv($row));
@@ -1238,10 +1245,12 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             continue;
         }
 
+        // Start processing the url to get the name, poster image and duration. Note that the duration is not always available.
+        // In such cases, we will set it to 0. The end time will be updated later when the video is first viewed.
         // Check if it is a youtube url using regex.
         $ytregex = '/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be|youtube-nocookie\.com)\/';
         $ytregex .= '(?:embed\/|watch\?v=|v\/|.+\?v=)?([^&\/\?]+)(?:[&\/\?].*)?/i';
-        if (preg_match($ytregex, $video->videourl, $matches)) {
+        if (preg_match($ytregex, $video->videourl, $matches) && in_array('yt', $videotypes)) {
             $videoid = explode(',', $matches[1])[0];
             $video->videourl = 'https://www.youtube.com/watch?v=' . $videoid;
             $video->type = 'yt';
@@ -1257,13 +1266,12 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         }
 
         // Check if it is a vimeo url using regex.
-        $vimeoregex = '/(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/(?:channels\/[a-zA-Z0-9]+\/)?([0-9]+))/i';
-        if (preg_match($vimeoregex, $video->videourl, $matches)) {
-            $videoid = explode(',', $matches[1])[0];
-            $video->videourl = 'https://vimeo.com/' . $videoid;
+        // E.g. https://vimeo.com/*.
+        $vimeoregex = '/(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com)\/([^\/]+)/i';
+        if (preg_match($vimeoregex, $video->videourl, $matches) && in_array('vimeo', $videotypes)) {
             $video->type = 'vimeo';
             // Make request to oembed api to get the thumbnail.
-            $response = file_get_contents('https://vimeo.com/api/oembed.json?url=https%3A//vimeo.com/' . $videoid);
+            $response = file_get_contents('https://vimeo.com/api/oembed.json?url=' . urlencode($video->videourl));
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1280,10 +1288,10 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         }
 
         // Check if it is a dailymotion video:
-        // https://www.dailymotion.com/video/x989i3q
-        // https://dai.ly/x989i3q.
-        $dailymotionregex = '/(?:https?:\/\/)?(?:www\.)?(?:dailymotion\.com|dai\.ly)\/video\/([a-zA-Z0-9]+)/i';
-        if (preg_match($dailymotionregex, $video->videourl, $matches)) {
+        // https://www.dailymotion.com/video/k3uOm6Zw7FskZ5C80Yu
+        // https://dai.ly/k3uOm6Zw7FskZ5C80Yu.
+        $dailymotionregex = '/(?:https?:\/\/)?(?:www\.)?(?:dailymotion\.com|dai\.ly)\/(?:embed\/video\/|video\/|)([^_]+)/i';
+        if (preg_match($dailymotionregex, $video->videourl, $matches) && in_array('dailymotion', $videotypes)) {
             $videoid = explode(',', $matches[1])[0];
             $video->videourl = 'https://www.dailymotion.com/video/' . $videoid;
             $video->type = 'dailymotion';
@@ -1306,7 +1314,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
 
         // Check if the video is from wistia e.g. https://sokunthearithmakara.wistia.com/medias/kojs3bi9bf.
         $wistiaregex = '/(?:https?:\/\/)?(?:www\.)?(?:wistia\.com)\/medias\/([a-zA-Z0-9]+)/i';
-        if (preg_match($wistiaregex, $video->videourl, $matches)) {
+        if (preg_match($wistiaregex, $video->videourl, $matches) && in_array('wistia', $videotypes)) {
             $video->type = 'wistia';
             $response = file_get_contents('https://fast.wistia.com/oembed?url=' . $video->videourl);
             $response = json_decode($response);
@@ -1324,6 +1332,215 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             continue;
         }
 
+        // Check if the video is from SproutVideo e.g. https://sproutvideo.com/videos/{id}.
+        // or https://*.vids.io/videos/{id} where * is the subdomain.
+        $sproutvideoregex = '/(?:https?:\/\/)?(?:www\.)?(?:sproutvideo\.com|vids\.io)\/videos\/([a-zA-Z0-9]+)/i';
+        if (preg_match($sproutvideoregex, $video->videourl, $matches) && in_array('sproutvideo', $videotypes)) {
+            $video->type = 'sproutvideo';
+            $id = explode('/', $matches[1])[0];
+            $response = file_get_contents('https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/' . $id);
+            $response = json_decode($response);
+            $video->posterimage = $response->thumbnail_url;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $response->duration) {
+                $video->endtime = (int)$response->duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Rumble e.g. https://rumble.com/vb1z1z-2021-2022-panini-chronicles-draft-picks-basketball-3-box-break-1-ebay.html.
+        $rumbleregex = '/(?:https?:\/\/)?(?:www\.)?(?:rumble\.com)\/([a-zA-Z0-9]+)/i';
+        if (preg_match($rumbleregex, $video->videourl, $matches) && in_array('rumble', $videotypes)) {
+            $video->type = 'rumble';
+            $id = explode('/', $matches[1])[0];
+            $response = file_get_contents('https://rumble.com/api/Media/oembed.json?url=' . urlencode($video->videourl));
+            $response = json_decode($response);
+            $video->posterimage = $response->thumbnail_url;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $response->duration) {
+                $video->endtime = (int)$response->duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if the video is from Kinescope e.g. https://kinescope.io/{id}.
+        $kinescoperegex = '/(?:https?:\/\/)?(?:www\.)?(?:kinescope\.io)\/([a-zA-Z0-9]+)/i';
+        if (preg_match($kinescoperegex, $video->videourl, $matches) && in_array('kinescope', $videotypes)) {
+            $video->type = 'kinescope';
+            $id = $matches[1];
+            $response = file_get_contents('https://kinescope.io/embed/' . $id);
+            $title = '';
+            $posterimage = '';
+            $duration = 0;
+            $doc = new DOMDocument();
+            @$doc->loadHTML($response);
+            $metatags = $doc->getElementsByTagName('meta');
+            foreach ($metatags as $tag) {
+                if ($tag->getAttribute('property') == 'og:title') {
+                    $title = $tag->getAttribute('content');
+                }
+                if ($tag->getAttribute('property') == 'og:image') {
+                    $posterimage = $tag->getAttribute('content');
+                }
+                if ($tag->getAttribute('property') == 'og:video:duration') {
+                    $duration = $tag->getAttribute('content');
+                }
+            }
+            $video->posterimage = $posterimage;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $duration) {
+                $video->endtime = (int)$duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if it is a panopto url.
+        // Ex. https://upenn.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=f4f968b2-eb20-4972-9ec1-XXXXXXXX.
+        $panoptoregex = '/(?:https?:\/\/)?(?:www\.)?(?:[^\/]*panopto\.[^\/]+)\/Panopto\/.+\?id=([^\/]+)/i';
+        if (preg_match($panoptoregex, $video->videourl, $matches) && in_array('panopto', $videotypes)) {
+            $response = file_get_contents($video->videourl);
+            if (!$response) {
+                require_once($CFG->libdir . '/filelib.php');
+                $curl = new curl(['ignoresecurity' => true]);
+                $curl->setHeader('Content-Type: application/json');
+                $response = $curl->get($video->videourl);
+            }
+            $title = '';
+            $posterimage = '';
+            $duration = 0;
+            $doc = new DOMDocument();
+            @$doc->loadHTML($response);
+            $metatags = $doc->getElementsByTagName('meta');
+            foreach ($metatags as $tag) {
+                if ($tag->getAttribute('property') == 'og:title') {
+                    $title = $tag->getAttribute('content');
+                }
+                if ($tag->getAttribute('property') == 'og:image') {
+                    $posterimage = $tag->getAttribute('content');
+                }
+            }
+            $video->type = 'panopto';
+            $video->posterimage = $posterimage;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $duration) {
+                $video->endtime = (int)$duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if the video is from RuTube e.g. https://rutube.ru/video/{id}.
+        $rutuberegex = '/(?:https?:\/\/)?(?:www\.)?(?:rutube\.ru)\/video\/([a-zA-Z0-9]+)/i';
+        if (preg_match($rutuberegex, $video->videourl, $matches) && in_array('rutube', $videotypes)) {
+            $video->type = 'rutube';
+            $id = explode('/', $matches[1])[0];
+            $response = file_get_contents('https://rutube.ru/api/play/options/' . $id);
+            $response = json_decode($response);
+            $video->posterimage = $response->thumbnail_url;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $response->duration) {
+                $video->endtime = (int)$response->duration / 1000;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if the link is from PeerTube. e.g. https://{{any domain}}/w/{{id}}.
+        $peertuberegex = "/https:\/\/([^/]+)\/w\/([^/]+)/";
+        if (preg_match($peertuberegex, $video->videourl, $matches) && in_array('peertube', $videotypes)) {
+            $video->type = 'peertube';
+            $response = file_get_contents('https://' . $matches[1] . '/api/v1/videos/' . $matches[2]);
+            if (!$response) {
+                require_once($CFG->libdir . '/filelib.php');
+                $curl = new curl(['ignoresecurity' => true]);
+                $curl->setHeader('Content-Type: application/json');
+                $response = $curl->get('https://' . $matches[1] . '/api/v1/videos/' . $matches[2]);
+            }
+            $response = json_decode($response);
+            if (!$response || !isset($response->thumbnailPath)) { // Make sure the video exists or accessible.
+                continue;
+            }
+            $video->posterimage = 'https://' . $matches[1] . $reponse->thumbnailPath;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->name ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $response->duration) {
+                $video->endtime = (int)$response->duration;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if the link is Spotify.
+        // e.g. https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUc9Lp. OR https://open.spotify.com/episode/37i9dQZF1DXcBWIGoYBM5M.
+        $spotifyregex = '/(?:https?:\/\/)?(?:open\.spotify\.com)\/(episode|track)\/([^\/\?]+)(?:\?.*)?/i';
+        if (preg_match($spotifyregex, $video->videourl, $matches) && in_array('spotify', $videotypes)) {
+            $video->type = 'spotify';
+            $response = file_get_contents('https://open.spotify.com/oembed?url=' . urlencode($video->videourl));
+            if (!$response) {
+                require_once($CFG->libdir . '/filelib.php');
+                $curl = new curl(['ignoresecurity' => true]);
+                $curl->setHeader('Content-Type: application/json');
+                $response = $curl->get('https://open.spotify.com/oembed?url=' . urlencode($video->videourl));
+            }
+            $response = json_decode($response);
+            $video->posterimage = $response->thumbnail_url;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if the link is from SoundCloud.
+        // e.g. https://soundcloud.com/user-555/song-name.
+        $soundcloudregex = '/(?:https?:\/\/)?(?:www\.)?(?:soundcloud\.com)\/([^\/\?]+)/i';
+        if (preg_match($soundcloudregex, $video->videourl, $matches) && in_array('soundcloud', $videotypes)) {
+            $video->type = 'soundcloud';
+            $response = file_get_contents('https://soundcloud.com/oembed?url=' . urlencode($video->videourl));
+            if (!$response) {
+                require_once($CFG->libdir . '/filelib.php');
+                $curl = new curl(['ignoresecurity' => true]);
+                $curl->setHeader('Content-Type: application/json');
+                $response = $curl->get('https://soundcloud.com/oembed?url=' . urlencode($video->videourl));
+            }
+            $response = json_decode($response);
+            $video->posterimage = $response->thumbnail_url;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
         // Check if it is a direct video/audio file using mime type.
         $fileinfo = pathinfo($video->videourl);
         $fileextension = $fileinfo['extension'];
@@ -1331,7 +1548,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             continue;
         }
         $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac'];
-        if (in_array($fileextension, $acceptedextensions)) {
+        if (in_array($fileextension, $acceptedextensions) && in_array('videolink', $videotypes)) {
             $video->type = 'html5video';
             $video->posterimage = '';
             if (!isset($video->name) || empty($video->name)) {
@@ -1346,6 +1563,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         }
     }
 
+    // If there are no valid videos, throw an exception.
     if (empty($videoinfo)) {
         throw new moodle_exception('novalidvideoinfo', 'mod_interactivevideo');
     }

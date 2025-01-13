@@ -39,6 +39,7 @@ $string['preview'] = 'Preview';
 $string['privacy:metadata'] = 'The Contentbank plugin doesn\'t store any personal data.';
 $string['resync'] = 'Resync content from content bank';
 $string['selectoruploadcontent'] = 'Select a content from the list or create one';
+$string['tutorialurl'] = 'https://youtu.be/tlzT0CleRaM';
 $string['upload'] = 'Upload';
 $string['uploadcontent'] = 'Upload content';
 $string['xapicheck'] = 'xAPI check';

@@ -28,22 +28,24 @@ let player;
 class Wistia {
     /**
      * Constructs a new Wistia player instance.
-     *
-     * @param {string} url - The URL of the Wistia video.
-     * @param {number} start - The start time of the video in seconds.
-     * @param {number} end - The end time of the video in seconds.
-     * @param {object} opts - The options for the player.
      */
-    constructor(url, start, end, opts = {}) {
-        const showControls = opts.showControls || false;
-        const node = opts.node || 'player';
+    constructor() {
         this.type = 'wistia';
-        this.start = start;
+        this.useAnimationFrame = true;
         this.frequency = 0.3;
         this.support = {
             playbackrate: true,
             quality: true,
+            password: true,
         };
+    }
+    load(url, start, end, opts = {}) {
+        const showControls = opts.showControls || false;
+        const node = opts.node || 'player';
+        this.start = start;
+        if (opts.passwordprotected) {
+            $('#start-screen, .video-block, #video-block').remove();
+        }
         if (!showControls) {
             $('body').addClass('no-original-controls');
         }
@@ -68,12 +70,23 @@ class Wistia {
         let ready = false;
         const wistiaOptions = {
             id: videoId,
+            options: {
+                plugin: {
+                    chapters: {
+                        on: false
+                    },
+                    "postRoll-v1": {
+                        on: false
+                    }
+                }
+            },
             onReady: async function(video) {
                 player = video;
-                let totaltime = video.duration();
+                self.aspectratio = self.ratio();
+                // We don't want to use the end time from the player, just to avoid any issue restarting the video.
+                let totaltime = video.duration() - self.frequency;
                 end = !end ? totaltime : Math.min(end, totaltime);
                 end = Number(end.toFixed(2));
-                self.aspectratio = self.ratio();
                 self.end = end;
                 self.totaltime = Number(totaltime.toFixed(2));
                 self.duration = self.end - self.start;
@@ -101,7 +114,11 @@ class Wistia {
                     if (!ready) {
                         return;
                     }
-                    dispatchEvent('iv:playerPaused');
+                    if (video.time() >= end) {
+                        dispatchEvent('iv:playerEnded');
+                    } else {
+                        dispatchEvent('iv:playerPaused');
+                    }
                 });
 
                 video.on("seek", (e) => {
@@ -111,26 +128,28 @@ class Wistia {
                     dispatchEvent('iv:playerSeek', {time: e});
                 });
 
-                video.bind('play', () => {
+                video.bind('play', async() => {
                     if (!ready) {
                         return;
                     }
-                    dispatchEvent('iv:playerPlaying');
-                    if (video.time() > end) {
-                        dispatchEvent('iv:playerEnded');
-                        video.time(start);
-                        video.pause();
+                    if (video.time() >= end) {
+                        await video.time(start);
                     }
+                    dispatchEvent('iv:playerPlaying');
                 });
 
                 video.on('timechange', (s) => {
                     if (!ready) {
                         return;
                     }
-                    if (s > end) {
-                        dispatchEvent('iv:playerEnded');
+                    if (s < start) {
                         video.time(start);
-                        video.pause();
+                    }
+                    if (s >= end + self.frequency) {
+                        video.time(end - self.frequency);
+                    }
+                    if (s >= end) {
+                        dispatchEvent('iv:playerEnded');
                     }
                 });
 
@@ -157,7 +176,6 @@ class Wistia {
             tag.rel = "preload";
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
             var interval = setInterval(() => {
                 if (window._wq) {
                     clearInterval(interval);

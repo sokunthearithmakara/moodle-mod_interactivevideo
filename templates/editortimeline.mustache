@@ -34,25 +34,46 @@ Example context (json):
         </div>
         <div class="col text-center d-flex align-items-center justify-content-center"
              id="playbutton">
-            <button class="btn btn-sm p-0 text-white mr-3 border-0" type="button" id="playpause">
+            <button class="btn btn-sm py-0 px-1 text-white mr-3 border-0 bg-transparent" type="button" id="rewind" data-toggle="tooltip" title="{{#str}}rewind200,mod_interactivevideo{{/str}}" >
+                <i class="bi bi-rewind-fill"></i>
+            </button>
+            <button class="btn btn-sm py-0 px-1 text-white mr-3 border-0 bg-transparent" data-toggle="tooltip" title="{{#str}}playpause,mod_interactivevideo{{/str}}" type="button" id="playpause">
                 <i class="bi bi-play-fill fs-25px"></i>
             </button>
-            <span class="text-white" id="currenttime">00:00</span><span class="mx-1">/</span><span class="text-white mr-3" id="duration">00:00</span>
+            <button class="btn btn-sm py-0 px-1 text-white border-0 bg-transparent" type="button" id="fast-forward" data-toggle="tooltip" title="{{#str}}fastforward200,mod_interactivevideo{{/str}}" >
+                <i class="bi bi-fast-forward-fill"></i>
+            </button>
+            <span id="timeline-timestamp"><span class="text-white" id="currenttime">00:00</span><span class="mx-1">/</span><span class="text-white" id="duration">00:00</span></span>
             <div class="btn-group dropup d-none" id="changerate">
                 <span role="button"
                       data-toggle="dropdown"
                       aria-haspopup="true"
                       aria-expanded="false"
-                      class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1"><i class="bi bi-speedometer2"
+                      class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1"><i class="bi bi-speedometer2"
    data-toggle="tooltip"
    data-trigger="focus"
    title="{{#str}}changeplaybackspeed,mod_interactivevideo{{/str}}"></i></span>
                 <div class="dropdown-menu dropdown-menu-right bg-black text-white">
                     <a class="dropdown-item text-white changerate" data-rate="0.5" href="#"><i class="bi fa-fw ml-n3"></i>0.5</a>
+                    <a class="dropdown-item text-white changerate" data-rate="0.75" href="#"><i class="bi fa-fw ml-n3"></i>0.75</a>
                     <a class="dropdown-item text-white changerate" data-rate="1" href="#"><i class="bi fa-fw bi-check ml-n3"></i>1</a>
                     <a class="dropdown-item text-white changerate" data-rate="1.5" href="#"><i class="bi fa-fw ml-n3"></i>1.5</a>
                     <a class="dropdown-item text-white changerate" data-rate="2" href="#"><i class="bi fa-fw ml-n3"></i>2</a>
                 </div>
+            </div>
+            <div class="d-none btn-group dropup ml-3" id="changequality" data-current="">
+            <span role="button"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1">
+                <i class="bi bi-gear"
+                   data-toggle="tooltip"
+                   data-trigger="focus"
+                   title="{{#str}}videoquality,mod_interactivevideo{{/str}}"></i>
+            </span>
+            <div class="dropdown-menu dropdown-menu-right bg-black text-white"
+                 id="qualitieslist"></div>
             </div>
         </div>
         <div class="d-flex col justify-content-end">
@@ -62,17 +83,17 @@ Example context (json):
                 <i class="bi bi-floppy mr-2"></i>{{#str}}save,mod_interactivevideo{{/str}}
             </button>
             <div id="zoomlevel" class="d-flex align-items-center">
-                <button class="btn btn-sm p-0 text-white mr-2 border-0"
+                <button class="btn btn-sm p-0 text-white mr-2 border-0 bg-transparent"
                         type="button"
                         disabled
                         id="zoomout">
                     <i class="bi bi-zoom-out"></i>
                 </button>
-                <button class="btn btn-sm p-0 text-white mr-4 border-0" type="button" id="zoomin">
+                <button class="btn btn-sm p-0 text-white mr-4 border-0 bg-transparent" type="button" id="zoomin">
                     <i class="bi bi-zoom-in"></i>
                 </button>
             </div>
-            <button class="border-0 btn btn-sm p-0 text-white mr-2"
+            <button class="border-0 btn btn-sm p-0 text-white mr-2 bg-transparent"
                     data-toggle="popover"
                     data-trigger="hover"
                     data-placement="auto"
@@ -93,8 +114,8 @@ Example context (json):
         <div id="scrollhead-top"></div>
         <div class="w-100" id="bar"></div>
     </div>
-    <div id="timeline" class="px-4">
-        <div id="timeline-items-wrapper" class="px-2">
+    <div id="timeline" class="px-5">
+        <div id="timeline-items-wrapper" class="pl-0">
             <div id="timeline-items">
                 <div id="scrollbar" class="snap">
                     <div id="scrollhead" class="opacity-0 bg-transparent"></div>

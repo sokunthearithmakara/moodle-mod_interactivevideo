@@ -27,6 +27,7 @@ class backup_interactivevideo_activity_structure_step extends backup_activity_st
      * Backup structure
      */
     protected function define_structure() {
+        global $DB;
         // To know if we are including userinfo.
         $userinfo = $this->get_setting_value('userinfo');
 
@@ -54,30 +55,13 @@ class backup_interactivevideo_activity_structure_step extends backup_activity_st
         ]);
 
         $items = new backup_nested_element('items');
-        $item = new backup_nested_element('item', ["id"], [
-            "timecreated",
-            "timemodified",
-            "courseid",
-            "cmid",
-            "annotationid",
-            "timestamp",
-            "title",
-            "type",
-            "displayoptions",
-            "completiontracking",
-            "contentid",
-            "iframeurl",
-            "content",
-            'xp',
-            'hascompletion',
-            'advanced',
-            'char1',
-            'char2',
-            'char3',
-            'text1',
-            'text2',
-            'text3',
-            'contextid',
+        // Get the columns from the interactivevideo_items table.
+        $columns = $DB->get_columns('interactivevideo_items');
+        // Convert the columns to an array of column names.
+        $columns = array_keys($columns);
+        // Remove the id column.
+        $columns = array_diff($columns, ['id']);
+        $cbcolumns = [
             'cbname',
             'cbcontextid',
             'cbcontenttype',
@@ -88,7 +72,9 @@ class backup_interactivevideo_activity_structure_step extends backup_activity_st
             'cbtimecreated',
             'cbtimemodified',
             'cbfilecontenthash',
-        ]);
+        ];
+        $columns = array_merge($columns, $cbcolumns);
+        $item = new backup_nested_element('item', ["id"], $columns);
 
         // Build the tree.
         $interactivevideo->add_child($items);
@@ -125,6 +111,7 @@ class backup_interactivevideo_activity_structure_step extends backup_activity_st
                 "completeditems",
                 "xp",
                 "completiondetails",
+                "lastviewed",
             ]);
 
             $interactivevideo->add_child($completiondata);
@@ -136,24 +123,10 @@ class backup_interactivevideo_activity_structure_step extends backup_activity_st
 
             // Log data.
             $logdata = new backup_nested_element('logdata');
-            $log = new backup_nested_element('log', ["id"], [
-                'userid',
-                'cmid',
-                'annotationid',
-                'completionid',
-                'attachments',
-                'intg1',
-                'intg2',
-                'intg3',
-                'char1',
-                'char2',
-                'char3',
-                'text1',
-                'text2',
-                'text3',
-                'timecreated',
-                'timemodified',
-            ]);
+            $logcolumns = $DB->get_columns('interactivevideo_log');
+            $logcolumns = array_keys($logcolumns);
+            $logcolumns = array_diff($logcolumns, ['id']);
+            $log = new backup_nested_element('log', ["id"], $logcolumns);
 
             $interactivevideo->add_child($logdata);
             $logdata->add_child($log);

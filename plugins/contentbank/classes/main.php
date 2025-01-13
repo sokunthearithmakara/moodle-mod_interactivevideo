@@ -42,6 +42,7 @@ class main extends \ivplugin_richtext\main {
             'hasreport' => true,
             'description' => get_string('contentbankdescription', 'ivplugin_contentbank'),
             'author' => 'tsmakara',
+            'tutorial' => get_string('tutorialurl', 'ivplugin_contentbank'),
         ];
     }
 
@@ -71,7 +72,10 @@ class main extends \ivplugin_richtext\main {
         $cb = new contentbank();
         $content = $cb->get_content_from_id($id);
         $type = $content->get_content_type_instance();
-        return $type->get_view_content($content);
+        $contenthtml = $type->get_view_content($content);
+        // Replace &component with the current component.
+        $contenthtml = str_replace('component', 'component=mod_interactivevideo', $contenthtml);
+        return $contenthtml;
     }
 
     /**

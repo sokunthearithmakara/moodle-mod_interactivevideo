@@ -716,6 +716,9 @@ class Base {
         if (annotation.timestamp < this.start || annotation.timestamp > this.end) {
             return;
         }
+        if (!this.totaltime) {
+            this.totaltime = this.end - this.start;
+        }
         const percentage = ((Number(annotation.timestamp) - this.start) / this.totaltime) * 100;
         if (this.isVisible(annotation)) {
             let classes = annotation.type + ' annotation li-draggable ';
@@ -833,7 +836,8 @@ class Base {
                 .addClass(action == 'mark-done' ? 'bi-check2' : 'bi-circle');
             $toggleButton.find(`span`).show();
         } else if (type == 'automatic') {
-            $toggleButton.find(`i`).toggleClass('bi-check2 bi-circle');
+            $toggleButton.find(`i`).removeClass('bi-check2 bi-circle')
+            .addClass(action == 'mark-done' ? 'bi-check2' : 'bi-circle');
         }
 
         let audio;
@@ -1041,31 +1045,51 @@ class Base {
     }
 
     /**
+     * Applies content to the specified annotation element.
+     *
+     * This function renders the content for the given annotation, updates the
+     * corresponding message element in the DOM, and performs post-render actions.
+     * If the annotation is marked as completed, it exits early. If the annotation
+     * requires completion tracking and the tracking type is 'view', it toggles the
+     * completion status automatically.
+     *
+     * @param {Object} annotation - The annotation object containing content and metadata.
+     * @returns {Promise<void>} A promise that resolves when the content is applied.
+     */
+    async applyContent(annotation) {
+        const self = this;
+        const data = await self.render(annotation);
+        let $message = $(`#message[data-id='${annotation.id}']`);
+        $message.find(`.modal-body`).html(data);
+        $message.find(`.modal-body`).attr('id', 'content');
+        self.postContentRender(annotation);
+        if (annotation.completed || self.isEditMode()) {
+            return;
+        }
+        if (annotation.hascompletion == 1 && annotation.completiontracking == 'view') {
+            setTimeout(() => {
+                self.toggleCompletion(annotation.id, 'mark-done', 'automatic');
+            }, 5000);
+        }
+    }
+
+    /**
      * What happens when an item runs
      * @param {Object} annotation The annotation object
      * @returns {void}
      */
     async runInteraction(annotation) {
         let self = this;
-        await this.player.pause();
-
-        const applyContent = async function(annotation) {
-            const data = await self.render(annotation);
-            let $message = $(`#message[data-id='${annotation.id}']`);
-            $message.find(`.modal-body`).html(data);
-            $message.find(`.modal-body`).attr('id', 'content');
-            self.postContentRender(annotation);
-            if (annotation.completed) {
-                return;
-            }
-            if (annotation.hascompletion == 1 && annotation.completiontracking == 'view') {
-                self.toggleCompletion(annotation.id, 'mark-done', 'automatic');
-            }
-        };
+        let isPaused = await self.player.isPaused();
+        if (!isPaused) {
+            await self.player.pause();
+            this.runInteraction(annotation);
+            return;
+        }
 
         await this.renderViewer(annotation);
         this.renderContainer(annotation);
-        applyContent(annotation);
+        self.applyContent(annotation);
 
         if (annotation.hascompletion == 1 && annotation.completiontracking == 'manual') {
             this.enableManualCompletion(annotation);
@@ -1076,7 +1100,6 @@ class Base {
                 self.setModalDraggable('#annotation-modal .modal-dialog');
             });
         }
-
     }
 
     /**

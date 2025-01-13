@@ -27,6 +27,8 @@ define(['jquery'], function($) {
         init: function() {
             // Launch the interactive video in modal
             $(document).on('click', '.launch-interactivevideo', function(e) {
+                // Save the current document title.
+                let title = document.title;
                 // Get showcontrols from cache.
                 let showcontrols = localStorage.getItem('showcontrols') ? true : false;
                 e.preventDefault();
@@ -47,14 +49,15 @@ define(['jquery'], function($) {
                             </div>
                         </div>
                     </div>
-                       <div class="modal-content ${showcontrols ? 'show-control' : ''}">
+                       <div class="modal-content ${showcontrols ? 'show-control' : ''} rounded-0 border-0">
                        <div class="modal-header border-0 text-white align-items-center py-0 h-0
                         position-absolute w-100 z-index-1 rounded-0">
                          <div class="modal-background w-100 position-absolute"></div>
                                <span class="modal-title position-relative z-index-1 d-flex align-items-center overflow-hidden"
                                 id="playermodalLabel">
                                 <span class="h5 mb-0">
-                                    <button type="button" class="btn border-0 m-1 p-1 h5" data-dismiss="modal" aria-label="Close">
+                                    <button type="button" class="btn border-0 m-1 p-1 h5 bg-transparent" data-dismiss="modal"
+                                     aria-label="Close">
                                         <i class="fa fa-arrow-left text-white m-0 fa-2x" aria-hidden="true"></i>
                                     </button>
                                 </span>
@@ -66,17 +69,17 @@ define(['jquery'], function($) {
                                <div class="modal-action d-flex align-items-center position-relative z-index-1">
                                <div class="d-none d-sm-block small" data-region="activity-completion">
                                </div>
-                               <a type="button" class="btn ml-2 border-0 h5 mb-0"
-                                href="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}">
-                               <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i></a>
+                               <span type="button" class="btn ml-2 border-0 h5 mb-0 open-external-link"
+                                data-href="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}">
+                               <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i></span>
                                </div>
                            </div>
-                           <div class="modal-body p-0 position-relative">
+                           <div class="modal-body p-0 position-relative overflow-hidden ">
                            <iframe id="ivplayer" src="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}&embed=1" frameborder=0
-                           class="w-100 position-absolute h-100"></iframe>
-                           <button type="button" class="btn border-0 m-1 p-1 h5 toggle-controls d-none">
+                           class="w-100 position-absolute h-100" allow="autoplay"></iframe>
+                                <button type="button" class="btn border-0 m-1 p-1 h5 toggle-controls d-none">
                                    <i class="fa fa-chevron-up text-white m-0 fa-2x" aria-hidden="true"></i>
-                               </button></span>
+                                </button></span>
                            </div>
                        </div>
                    </div>
@@ -102,6 +105,7 @@ define(['jquery'], function($) {
 
                 let iframeDoc, iframeAnnos, details, player;
                 $('#playermodal').on('shown.bs.modal', function() {
+                    $('body').addClass('overflow-hidden');
                     $(this).find('.modal-header').addClass('show');
                     let $completion = $card.find('[data-region=activity-information]');
                     $completion = $completion.clone();
@@ -157,6 +161,21 @@ define(['jquery'], function($) {
                                 }
                             });
 
+                            iframeDoc.addEventListener('videoPaused', function() {
+                                let $message = iframeDoc.querySelector('#message:not(.sticky)');
+                                let $activestart = iframeDoc.querySelector('#start-screen:not(.d-none) .hasintro');
+                                if ($message || $activestart) {
+                                    $('#playermodal .modal-header').removeClass('show');
+                                } else {
+                                    headerFunction();
+                                }
+                                $('#playermodal .toggle-controls').fadeOut(300);
+                            });
+
+                            iframeDoc.addEventListener('iv:playerPlaying', function() {
+                                $('#playermodal .toggle-controls').fadeIn(300);
+                            });
+
                             // Analytics progress bar.
                             let $progressbar = $card.find('.analytics.progress .progress-bar');
                             if ($progressbar.length == 0) {
@@ -168,11 +187,9 @@ define(['jquery'], function($) {
                                 if (percentage > current) {
                                     $progressbar.css('width', percentage + '%')
                                         .data('current', percentage);
-
                                     $card.find('.analytics-percentage').text(Math.round(percentage));
                                 }
                             });
-
                         } else {
                             requestAnimationFrame(checkIframeDoc);
                         }
@@ -189,9 +206,13 @@ define(['jquery'], function($) {
 
                     // Update the browser url to the current activity.
                     history.pushState(null, null, M.cfg.wwwroot + '/mod/interactivevideo/view.php?id=' + id);
+                    // Update the title of tab to the activity name.
+                    let activitytitle = $card.data('title');
+                    document.title = activitytitle;
                 });
 
                 $('#playermodal').on('hide.bs.modal', async function() {
+                    $('body').removeClass('overflow-hidden');
                     // Trigger hover on .image-container for 2 seconds.
                     setTimeout(function() {
                         $card.find('.image-container').removeClass('hovered');
@@ -251,6 +272,7 @@ define(['jquery'], function($) {
 
                     // Update the browser url to the current course.
                     history.pushState(null, null, M.cfg.wwwroot + '/course/view.php?id=' + course);
+                    document.title = title;
 
                     if (iframeAnnos) {
                         // Remove the new-bagde from the poster.
@@ -259,12 +281,23 @@ define(['jquery'], function($) {
 
                     $card.closest('.modtype_interactivevideo')[0]
                         .scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+
+                    if (iframeDoc) {
+                       $(iframeDoc).off();
+                    }
                 });
 
                 // Close modal when the browser back button is clicked.
-                window.onpopstate = function() {
-                    $('#playermodal').modal('hide');
+                window.onpopstate = function(e) {
+                    if (e.target.location.pathname == '/course/view.php') {
+                        $('#playermodal').modal('hide');
+                    }
                 };
+            });
+
+            $(document).on('click', '.open-external-link', function() {
+                $('#playermodal').modal('hide');
+                window.open($(this).data('href'), '_blank');
             });
 
             $(document).on('click', '.interactivevideo-card .description-show',

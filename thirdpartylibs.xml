@@ -56,4 +56,11 @@
         <license>MIT</license>
         <licenseversion></licenseversion>
     </library>
+    <library>
+        <location>amd/src/libraries/peertube.js</location>
+        <name>PeerTube player</name>
+        <version>0.2.0</version>
+        <license>AGPL</license>
+        <licenseversion>3+</licenseversion>
+    </library>
 </libraries>

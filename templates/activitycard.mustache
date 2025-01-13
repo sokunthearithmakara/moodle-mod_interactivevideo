@@ -30,7 +30,7 @@ Example context (json):
         {{^cardonly}}
         {{#showposterimage}}
         <div class="image-container position-relative {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
-            <div class="poster position-relative"
+            <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}"
                  style="background-image: url({{interactivevideo.posterimage}})">
                 {{#cm.uservisible}}
                 <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}>
@@ -82,7 +82,7 @@ Example context (json):
 </div>
 {{#showdescription}}
 {{#formattedintro}}
-<div class="description {{^showname}}mt-0{{/showname}} {{#showname}}mt-3{{/showname}}" {{^usecustomdesc}}style="display:none"{{/usecustomdesc}}>
+<div class="description {{^showname}}mt-0{{/showname}} {{#showname}}mt-2{{/showname}}" {{^usecustomdesc}}style="display:none"{{/usecustomdesc}}>
     {{{formattedintro}}}
 </div>
 {{/formattedintro}}
@@ -109,7 +109,7 @@ Example context (json):
 {{/noitems}}
 {{/showprogressbar}}
 {{#completion}}
-<div class="small mt-3 {{^showcompletion}}d-none{{/showcompletion}}">{{{completion}}}</div>
+<div class="small mt-2 {{^showcompletion}}d-none{{/showcompletion}}">{{{completion}}}</div>
 {{/completion}}
 </div>
 {{/cm.uservisible}}
@@ -117,9 +117,13 @@ Example context (json):
 {{/cardonly}}
 {{#cardonly}}
 <div class="image-container card-only {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
-    <div class="poster position-relative"
+    <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}"
          style="background-image: url({{interactivevideo.posterimage}})">
-        {{#cm.uservisible}}
+    {{#new}}
+            <span class="badge badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
+    {{/new}}
+
+    {{#cm.uservisible}}
         <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}><i class="fa fa-play"></i></a>
     {{/cm.uservisible}}
     <span class="position-absolute badge duration">{{duration}}</span>

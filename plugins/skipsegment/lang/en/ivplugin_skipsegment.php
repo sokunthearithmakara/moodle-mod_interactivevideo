@@ -32,5 +32,6 @@ $string['privacy:metadata'] = 'The Skipped Segment plugin doesn\'t store any per
 $string['skipped'] = 'Skipped';
 $string['skipsegmentcontent'] = 'Skipped segment';
 $string['skipsegmentdescription'] = 'Skip a segment of the video.';
+$string['tutorialurl'] = 'https://youtu.be/tRiW09XazJk';
 $string['untiltimemustbegreaterthantimestamp'] = 'End time must be greater than the start time.';
 

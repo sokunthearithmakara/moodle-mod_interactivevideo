@@ -31,3 +31,4 @@ $string['iframedescription'] = 'Embed an external content as an iframe.';
 $string['iframeurl'] = 'Iframe URL or enter the embed code';
 $string['pluginname'] = 'Iframe';
 $string['privacy:metadata'] = 'The Iframe plugin doesn\'t store any personal data.';
+$string['tutorialurl'] = 'https://youtu.be/O83Iy3y5RgA';
