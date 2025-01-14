@@ -88,7 +88,7 @@ class Spotify {
         let json = JSON.parse(data);
         self.title = json.title;
         self.posterImage = json.thumbnail_url;
-        self.aspectratio = json.width / json.height;
+        self.aspectratio = 16 / 9;
         let ready = false;
 
         const callback = (EmbedController) => {
@@ -102,6 +102,7 @@ class Spotify {
                 self.currentTime = e.data.position / 1000;
                 if (!ready) {
                     let totaltime = e.data.duration / 1000;
+                    totaltime = Number(totaltime.toFixed(2));
                     if (totaltime === 0) {
                         return;
                     }
@@ -128,7 +129,7 @@ class Spotify {
                             break;
                         case false:
                             self.paused = false;
-                            if (self.ended || self.currentTime <= self.start) {
+                            if ((self.ended && self.currentTime > self.end) || self.currentTime <= self.start) {
                                 self.ended = false;
                                 EmbedController.seek(self.start);
                                 EmbedController.resume();
@@ -146,7 +147,12 @@ class Spotify {
         };
 
         // Load the IFrame Player API code asynchronously.
-        if (!window.IFrameAPI) {
+        const element = document.getElementById(node);
+        const options = {
+            uri: 'spotify:' + type + ':' + videoId,
+            startAt: self.start,
+        };
+        if (!window.EmbedController) {
             var tag = document.createElement('script');
             tag.src = "https://open.spotify.com/embed/iframe-api/v1";
             tag.async = true;
@@ -156,15 +162,11 @@ class Spotify {
             // Replace the 'player' element with an <iframe> and Spotify player
             window.onSpotifyIframeApiReady = (IFrameAPI) => {
                 IFrameAPI = window.IFrameAPI || IFrameAPI;
-                const element = document.getElementById(node);
-                const options = {
-                    uri: 'spotify:' + type + ':' + videoId,
-                    startAt: self.start,
-                };
+                window.IFrameAPI = IFrameAPI;
                 IFrameAPI.createController(element, options, callback);
             };
         } else {
-            window.EmbedController.loadUri('spotify:' + type + ':' + videoId, true, self.start);
+            window.IFrameAPI.createController(element, options, callback);
         }
     }
     /**

@@ -174,8 +174,6 @@ define([
             url, cmid, interaction, course, userid, start = 0, end,
             completionpercentage, gradeiteminstance, grademax, vtype,
             preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null) {
-            // First of all, add vtype to the body.
-            $('body').addClass(vtype);
             // Convert start to number if string
             start = Number(start);
             if (isNaN(start)) {
@@ -196,6 +194,10 @@ define([
             if (localStorage.getItem('limitedwidth') == 'true' && displayoptions.hidemainvideocontrols == 0) {
                 $('body').addClass('limited-width');
                 $('#controller #expand i').removeClass('bi-file').addClass('bi-square');
+            }
+
+            if (vtype == 'spotify') { // Spotify player.
+                $('body').addClass('limited-width');
             }
 
             /**
@@ -574,14 +576,13 @@ define([
             const updateTime = async(duration) => {
                 duration = Number(duration);
                 let toUpdatetime = false;
-                if (!end || end == 0 || end > duration) {
+                if (!end || end == 0) {
                     toUpdatetime = true;
                 }
-                end = !end || end == 0 ? duration : Math.min(end, duration);
-                if (!start || start >= duration || start < 0 || start >= end) {
+                if (!start || start >= duration || start < 0 || start >= duration) {
                     toUpdatetime = true;
                 }
-                start = start > end ? 0 : start;
+                start = start > duration ? 0 : start;
                 if (toUpdatetime) {
                     await $.ajax({
                         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
@@ -592,11 +593,12 @@ define([
                             sesskey: M.cfg.sesskey,
                             id: interaction,
                             start: start,
-                            end: end,
+                            end: !end || end == 0 ? duration : end,
                             contextid: M.cfg.contextid
                         }
                     });
                 }
+                end = !end || end == 0 || end > duration ? duration : end;
                 return {start, end};
             };
 
@@ -858,6 +860,13 @@ define([
                 $('#remainingtime').text(convertSecondsToHMS(totaltime - (t - start)));
                 replaceProgressBars(percentage);
                 dispatchEvent('timeupdate', {'time': t});
+                // Reset the launched annotation to include only the ones that are before the current time.
+                viewedAnno = [];
+                releventAnnotations.forEach(x => {
+                    if (Number(x.timestamp) <= t) {
+                        viewedAnno.push(Number(x.id));
+                    }
+                });
             };
 
             let visualized = false;

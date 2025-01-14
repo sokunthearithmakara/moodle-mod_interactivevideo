@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2025-01-14
+### Fixed
+- Dailymotion video and SoundCloud audio played from the start after ended.
+- iv:playerReady fired twice for Wistia video when password-protected.
+- Destroy method didn't work correctly on SoundCloud/Spotify.
+
+### Updated
+- Resize player iframe for SoundCloud/Spotify.
+- Add player type to body class.
+- Add a key icon to the poster image on the card if video is password-protected
+- Only auto update the video end time if it is 0 or undefined.
+
 ## [1.0] - 2025-01-13 - First Stable
 ### Added
 - Support for Panopto, Spotify, PeerTube, Kinescope, SproutVideo, Rutube, and Rumble (Site admin must select them in the site settings to enable them.)

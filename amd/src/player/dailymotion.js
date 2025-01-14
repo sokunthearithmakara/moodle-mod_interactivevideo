@@ -304,6 +304,7 @@ class DailyMotion {
      */
     async seek(time) {
         await player.seek(time);
+        this.ended = false;
         dispatchEvent('iv:playerSeek', {time: time});
     }
     /**

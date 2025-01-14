@@ -360,15 +360,15 @@ define(['jquery',
              * @returns {Object} Object containing start and end time.
              */
             const updateTime = async(duration) => {
+                duration = Number(duration);
                 let toUpdatetime = false;
-                if (!end || end == 0 || end > duration) {
+                if (!end || end == 0) {
                     toUpdatetime = true;
                 }
-                end = !end ? duration : Math.min(end, duration);
-                if (!start || start >= duration || start < 0 || start >= end) {
+                if (!start || start >= duration || start < 0 || start >= duration) {
                     toUpdatetime = true;
                 }
-                start = start > end ? 0 : start;
+                start = start > duration ? 0 : start;
                 if (toUpdatetime) {
                     await $.ajax({
                         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
@@ -379,11 +379,12 @@ define(['jquery',
                             sesskey: M.cfg.sesskey,
                             id: interaction,
                             start: start,
-                            end: end,
-                            contextid: M.cfg.contextid,
+                            end: !end || end == 0 ? duration : end,
+                            contextid: M.cfg.contextid
                         }
                     });
                 }
+                end = !end || end == 0 || end > duration ? duration : end;
                 return {start, end};
             };
 

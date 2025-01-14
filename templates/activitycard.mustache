@@ -38,6 +38,7 @@ Example context (json):
                 </a>
             {{/cm.uservisible}}
             <span class="badge duration">{{duration}}</span>
+            {{#passwordprotected}}<span class="badge password" title="{{#str}}passwordrequired,interactivevideo{{/str}}"><i class="fa fa-key"></i></span>{{/passwordprotected}}
             {{#cm.uservisible}}
             {{#new}}
             <span class="badge badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
@@ -119,20 +120,20 @@ Example context (json):
 <div class="image-container card-only {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
     <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}"
          style="background-image: url({{interactivevideo.posterimage}})">
-    {{#new}}
-            <span class="badge badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
+        {{#new}}
+        <span class="badge badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
     {{/new}}
-
     {{#cm.uservisible}}
-        <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}><i class="fa fa-play"></i></a>
-    {{/cm.uservisible}}
-    <span class="position-absolute badge duration">{{duration}}</span>
-    {{#cm.uservisible}}
-    {{^noitems}}
-    <span class="position-absolute badge percentage-badge d-flex">
-        <i class="fa fa-bullseye mr-1"></i>
-        <span class="percentage">{{usercompletion.completionpercentage}}</span>%
-    </span>
+    <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}><i class="fa fa-play"></i></a>
+{{/cm.uservisible}}
+<span class="position-absolute badge duration">{{duration}}</span>
+{{#passwordprotected}}<span class="badge password" title="{{#str}}passwordrequired,interactivevideo{{/str}}"><i class="fa fa-key"></i></span>{{/passwordprotected}}
+{{#cm.uservisible}}
+{{^noitems}}
+<span class="position-absolute badge percentage-badge d-flex">
+    <i class="fa fa-bullseye mr-1"></i>
+    <span class="percentage">{{usercompletion.completionpercentage}}</span>%
+</span>
 {{/noitems}}
 {{#hasanalytics}}
 <div class="analytics rounded-0 progress">

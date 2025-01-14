@@ -51,6 +51,10 @@ html:has(.path-mod-interactivevideo) {
     opacity: 1 !important;
 }
 
+.path-mod-interactivevideo .badge {
+    padding: 0.25em 0.4em;
+}
+
 .path-mod-interactivevideo .sticky-left-0 {
     left: 0;
     position: sticky !important;
@@ -519,7 +523,7 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo .w-wistia-logo,
 .path-mod-interactivevideo .w-bpb-wrapper {
-    display: none!important;
+    display: none !important;
 }
 
 .path-mod-interactivevideo #video-nav {
@@ -1006,8 +1010,9 @@ html:has(.path-mod-interactivevideo) {
     justify-content: center;
 }
 
-#page-mod-interactivevideo-view .fullscreen #end-screen .end-content:not(.hascontent) {
-    background-color: #000!important;
+#page-mod-interactivevideo-view .fullscreen #end-screen .end-content:not(.hascontent),
+#page-mod-interactivevideo-view.embed-mode:not(.iframe) #end-screen .end-content:not(.hascontent) {
+    background-color: #000 !important;
 }
 
 #page-mod-interactivevideo-view #start-screen #play,
@@ -1301,8 +1306,8 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo.no-original-controls video::-webkit-media-controls-panel,
 .path-mod-interactivevideo.no-original-controls .w-bottom-bar,
-.path-mod-interactivevideo.no-original-controls .player-Rumble-cls>div >div:not(#pac),
-.path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls>div > div:not(#pac) {
+.path-mod-interactivevideo.no-original-controls .player-Rumble-cls>div>div:not(#pac),
+.path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls>div>div:not(#pac) {
     display: none !important;
 }
 
@@ -2283,10 +2288,18 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 .path-course-view .modtype_interactivevideo .image-container .duration,
-.path-course-view .modtype_interactivevideo .image-container .percentage-badge {
+.path-course-view .modtype_interactivevideo .image-container .percentage-badge,
+.path-course-view .modtype_interactivevideo .image-container .password {
     background: rgba(0, 0, 0, 0.5);
     color: #fff;
     font-weight: 500;
+}
+
+.path-course-view .modtype_interactivevideo .image-container .password {
+    position: absolute;
+    top: 0.25rem;
+    left: 0.25rem;
+    z-index: 2;
 }
 
 .path-course-view .modtype_interactivevideo .image-container.card-only {
@@ -2551,6 +2564,11 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 
 .path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-item {
     border: 0;
+    background-color: transparent;
+}
+
+.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card) .contentafterlink {
+    margin: 0;
 }
 
 .path-course-view:not(.editing) .section .activity:has(.interactivevideo-card) {
@@ -2807,4 +2825,22 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
         "afterlink afterlink afterlink afterlink"
         "availability availability availability availability"
         "visibility visibility visibility visibility";
+}
+
+.path-mod-interactivevideo.spotify,
+.path-mod-interactivevideo.soundcloud {
+    #player {
+        position: relative !important;
+        max-height: 352px;
+        max-width: clamp(300px, calc(100% - 2rem), 800px);
+        border-radius: 0;
+    }
+
+    #annotation-canvas {
+        background: rgba(0, 0, 0, 0.15);
+    }
+}
+
+.path-course-view:has(.interactivevideo-card) #format_tiles_overlay {
+    z-index: 1;
 }

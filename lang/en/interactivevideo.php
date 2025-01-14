@@ -201,6 +201,7 @@ $string['panopto'] = 'Panopto';
 $string['participant'] = 'Participant';
 $string['passwordprotected'] = 'Password protected';
 $string['passwordprotected_help'] = 'Check this box if the video is password protected. This will make sure the password field is not obstructed by any elements on the page.';
+$string['passwordrequired'] = 'Password required';
 $string['pause'] = 'Pause';
 $string['pauseonblur'] = 'Pause video when tab is inactive';
 $string['peertube'] = 'PeerTube';

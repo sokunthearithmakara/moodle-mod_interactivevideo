@@ -94,6 +94,7 @@ class SoundCloud {
         });
         let SC;
         const callback = function() {
+            SC = window.SC || SC;
             player = SC.Widget(node);
             self.player = player;
             player.bind(window.SC.Widget.Events.READY, function() {
@@ -210,6 +211,7 @@ class SoundCloud {
     seek(time) {
         time = Math.min(time, this.end);
         time = Math.max(time, this.start);
+        this.ended = false;
         return new Promise((resolve) => {
             this.player.seekTo(time * 1000);
             this.currentTime = time;
@@ -282,9 +284,13 @@ class SoundCloud {
      * @return {Void}
      */
     destroy() {
-        this.player.pause();
-        $(`#${this.node}`).remove();
-        dispatchEvent('iv:playerDestroyed');
+        try {
+            this.player.pause();
+            $(`#${this.node}`).remove();
+            dispatchEvent('iv:playerDestroyed');
+        } catch (e) {
+            // Do nothing
+        }
     }
     /**
      * Get the state of the player

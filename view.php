@@ -226,6 +226,8 @@ $gradeitem = grade_item::fetch([
     'itemnumber' => 0,
 ]);
 
+$PAGE->add_body_class($moduleinstance->type);
+
 // Use Bootstrap icons instead of fontawesome icons to avoid issues fontawesome icons support in Moodle 4.1.
 $PAGE->requires->css(new moodle_url('/mod/interactivevideo/libraries/bootstrap-icons/bootstrap-icons.min.css'));
 

@@ -80,7 +80,7 @@ $PAGE->set_title(get_string('interactionsin', 'interactivevideo', format_string(
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 $PAGE->set_pagelayout('embedded');
-$PAGE->add_body_class('page-interactions');
+$PAGE->add_body_class('page-interactions ' . $moduleinstance->type);
 
 // Sort the content types by title.
 usort($contentoptions, function ($a, $b) {

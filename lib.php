@@ -730,6 +730,7 @@ function interactivevideo_displayinline(cm_info $cm) {
         'interactivevideo' => $interactivevideo,
         'cm' => $cm,
         'hascompletion' => isset($displayoptions->hascompletion),
+        'passwordprotected' => isset($displayoptions->passwordprotected) && $displayoptions->passwordprotected,
         'overallcomplete' => isset($displayoptions->hascompletion)
             && isset($displayoptions->overallcompletion) && $displayoptions->overallcompletion == 1,
         'launchinpopup' => isset($displayoptions->launchinpopup) && $displayoptions->launchinpopup,
