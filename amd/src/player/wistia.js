@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import $ from 'jquery';
-import { dispatchEvent } from 'core/event_dispatcher';
+import {dispatchEvent} from 'core/event_dispatcher';
 let player;
 
 class Wistia {
@@ -60,7 +60,7 @@ class Wistia {
               fullscreenButton=false time=${start} fitStrategy=contain" style="height:100%;width:100%"></div>`);
         let self = this;
         $.get('https://fast.wistia.com/oembed.json?url=' + url)
-            .then(function (data) {
+            .then(function(data) {
                 self.posterImage = data.thumbnail_url;
                 self.title = data.title;
                 return self.posterImage;
@@ -80,7 +80,7 @@ class Wistia {
                     }
                 }
             },
-            onReady: async function (video) {
+            onReady: async function(video) {
                 player = video;
                 self.aspectratio = self.ratio();
                 // We don't want to use the end time from the player, just to avoid any issue restarting the video.
@@ -123,10 +123,10 @@ class Wistia {
                     if (!ready) {
                         return;
                     }
-                    dispatchEvent('iv:playerSeek', { time: e });
+                    dispatchEvent('iv:playerSeek', {time: e});
                 });
 
-                video.bind('play', async () => {
+                video.bind('play', async() => {
                     if (!ready) {
                         return;
                     }
@@ -152,16 +152,16 @@ class Wistia {
                 });
 
                 video.on("error", (e) => {
-                    dispatchEvent('iv:playerError', { error: e });
+                    dispatchEvent('iv:playerError', {error: e});
                 });
 
                 video.on("playbackratechange", (e) => {
-                    dispatchEvent('iv:playerRateChange', { rate: e });
+                    dispatchEvent('iv:playerRateChange', {rate: e});
                 });
 
             },
-            onError: function (e) {
-                dispatchEvent('iv:playerError', { error: e });
+            onError: function(e) {
+                dispatchEvent('iv:playerError', {error: e});
             }
         };
 
@@ -218,7 +218,7 @@ class Wistia {
      */
     seek(time) {
         player.time(time);
-        dispatchEvent('iv:playerSeek', { time: time });
+        dispatchEvent('iv:playerSeek', {time: time});
         return time;
     }
     /**
@@ -322,7 +322,7 @@ class Wistia {
      */
     setQuality(quality) {
         player.videoQuality(quality);
-        dispatchEvent('iv:playerQualityChange', { quality: quality });
+        dispatchEvent('iv:playerQualityChange', {quality: quality});
         return quality;
     }
     /**
