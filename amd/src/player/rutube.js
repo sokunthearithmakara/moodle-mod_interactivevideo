@@ -81,6 +81,9 @@ class Rutube {
                 sesskey: M.cfg.sesskey,
             },
         }).done(function(data) {
+            if (data.html === undefined) {
+                dispatchEvent('iv:playerError', {error: data});
+            }
             self.posterImage = data.thumbnail_url;
             let totaltime = data.duration / 1000 - self.frequency;
             end = !end ? totaltime : Math.min(end, totaltime);
@@ -151,8 +154,20 @@ class Rutube {
                             dispatchEvent('iv:playerSeek', {time: self.currentTime});
                         }
                         break;
+                    case 'player:rollState':
+                        if (message.data.state === 'play') { // Ad started
+                            $(".video-block, #video-block").addClass('d-none');
+                            $("#start-screen").addClass('bg-transparent d-none');
+                            $('#annotation-canvas').removeClass('d-none');
+                        } else if (message.data.state === 'complete') { // Ad complete/error
+                            $(".video-block, #video-block").removeClass('d-none');
+                            $("#start-screen").removeClass('bg-transparent d-none');
+                        }
+                        break;
+                    case 'player:error':
+                        dispatchEvent('iv:playerError', {error: message.data});
+                        break;
                 };
-
             });
         }).catch(function(error) {
             dispatchEvent('iv:playerError', {error: error});
@@ -197,6 +212,7 @@ class Rutube {
         if (time < 0) {
             time = 0;
         }
+        this.ended = false;
         this.doCommand({type: 'player:setCurrentTime', data: {time}});
         dispatchEvent('iv:playerSeek', {time: time});
         return time;

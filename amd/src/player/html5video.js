@@ -237,6 +237,7 @@ class Html5Video {
      * @returns {boolean} Returns true when the seek operation is initiated.
      */
     seek(time) {
+        this.ended = false;
         this.player.currentTime = time;
         return true;
     }

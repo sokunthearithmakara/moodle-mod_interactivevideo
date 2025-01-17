@@ -181,7 +181,9 @@ const defaultDisplayContent = async function(annotation, player) {
     $(document).off('click', `#close-${annotation.id}`).on('click', `#close-${annotation.id}`, async function(e) {
         e.preventDefault();
         if (!$('body').hasClass('page-interactions')) { // Do not auto resume if on interactions page.
-            if (player.end != await player.getCurrentTime()) {
+            const isEnded = await player.isEnded();
+            const currentTime = await player.getCurrentTime();
+            if (!isEnded || currentTime < annotation.end) {
                 player.play();
             }
         }
@@ -200,8 +202,6 @@ const defaultDisplayContent = async function(annotation, player) {
                 annotation: annotation,
             });
         }, 100);
-
-
     });
 
     const handlePopupDisplay = (annotation, messageTitle) => {

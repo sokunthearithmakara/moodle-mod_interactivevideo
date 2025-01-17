@@ -126,13 +126,17 @@ class Yt {
                     self.aspectratio = self.ratio();
                     // It's always good idea to play the video at the beginning to download some data.
                     // Otherwise, if user seek before start, they're gonna get blackscreen.
-                    if (preload == true && customStart == false) {
+                    if (preload == true && customStart == false) { // For editing form
                         ready = true;
                         dispatchEvent('iv:playerReady');
                     } else {
                         e.target.mute();
                         e.target.playVideo();
                         let interval = setInterval(() => {
+                            if (ready === true) {
+                                clearInterval(interval);
+                                return;
+                            }
                             if (e.target.getCurrentTime() > 0) {
                                 clearInterval(interval);
                                 e.target.seekTo(self.start);
@@ -283,6 +287,7 @@ class Yt {
      * @return {Promise<Boolean>}
      */
     async seek(time) {
+        this.ended = false;
         return new Promise((resolve) => {
             player.seekTo(time, true);
             dispatchEvent('iv:playerSeek', {time: time});

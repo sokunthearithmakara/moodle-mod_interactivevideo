@@ -58,15 +58,17 @@ class DailyMotion {
         var self = this;
         self.aspectratio = 16 / 9; //
         self.posterImage = '';
-        fetch(`https://api.dailymotion.com/video/${videoId}?fields=thumbnail_720_url`)
-            .then(response => response.json())
-            .then(data => {
-                self.posterImage = data.thumbnail_720_url;
-                return;
-            })
-            .catch(() => {
-                return;
-            });
+        if (opts.editform) {
+            fetch(`https://api.dailymotion.com/video/${videoId}?fields=thumbnail_720_url`)
+                .then(response => response.json())
+                .then(data => {
+                    self.posterImage = data.thumbnail_720_url;
+                    return;
+                })
+                .catch(() => {
+                    return;
+                });
+        }
         var ready = false;
         var dmOptions = {
             video: videoId,
@@ -124,7 +126,7 @@ class DailyMotion {
             // Handle Dailymotion behavior. Video always start from the start time,
             // So if you seek before starting the video, it will just start from the beginning.
             // So, to deal with this, we have to start the video as soon as the player is ready.
-            // Let it plays on mute which sometimes include ads. When the ad is done, the VIDEO_START event will fire.
+            // Let it play on mute which sometimes include ads. When the ad is done, the VIDEO_START event will fire.
             // That's when we let user know, player is ready.
             const playerEvents = () => {
                 player.on(dailymotion.events.VIDEO_SEEKEND, function(e) {
@@ -231,9 +233,14 @@ class DailyMotion {
 
             // Show ads to user so they know ad is playing, not because something is wrong.
             player.on(dailymotion.events.AD_START, function() {
-                $(".video-block").css('background', 'transparent');
-                $("#start-screen").addClass('bg-transparent');
+                $(".video-block, #video-block").addClass('d-none');
+                $("#start-screen").addClass('d-none');
                 $('#annotation-canvas').removeClass('d-none');
+            });
+
+            player.on(dailymotion.events.AD_END, function() {
+                $(".video-block, #video-block").removeClass('d-none');
+                $("#start-screen").removeClass('d-none');
             });
         };
 

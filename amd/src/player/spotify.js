@@ -26,7 +26,7 @@ import $ from 'jquery';
 class Spotify {
     constructor() {
         this.type = 'spotify';
-        this.frequency = 0.5; // Spotify emits playback_update very very slowly (0.5 - 1 s).
+        this.frequency = 1.2; // Spotify emits playback_update very very slowly (0.5 - 1 s).
         this.support = {
             playbackrate: false,
             quality: false,
@@ -84,10 +84,19 @@ class Spotify {
                 }
             });
         };
-        const data = await getData();
-        let json = JSON.parse(data);
-        self.title = json.title;
-        self.posterImage = json.thumbnail_url;
+
+        if (opts.editform) {
+            const data = await getData();
+            try {
+                var json = JSON.parse(data);
+                self.title = json.title;
+                self.posterImage = json.thumbnail_url;
+            } catch (e) {
+                self.title = '';
+                self.posterImage = '';
+            }
+        }
+
         self.aspectratio = 16 / 9;
         let ready = false;
 
@@ -121,6 +130,14 @@ class Spotify {
                     ready = true;
                     dispatchEvent('iv:playerReady');
                 } else {
+                    if (self.currentTime < self.start) {
+                        EmbedController.pause();
+                        setTimeout(() => {
+                            EmbedController.seek(self.start + self.frequency);
+                            EmbedController.resume();
+                        }, self.frequency);
+                        return;
+                    }
                     let isPaused = e.data.isPaused;
                     switch (isPaused) {
                         case true:
@@ -129,12 +146,16 @@ class Spotify {
                             break;
                         case false:
                             self.paused = false;
-                            if ((self.ended && self.currentTime > self.end) || self.currentTime <= self.start) {
+
+                            if (self.ended) {
                                 self.ended = false;
-                                EmbedController.seek(self.start);
-                                EmbedController.resume();
+                                EmbedController.restart();
+                                setTimeout(() => {
+                                    EmbedController.seek(self.start + self.frequency);
+                                }, self.frequency);
                                 return;
                             }
+
                             dispatchEvent('iv:playerPlaying');
                             if (!self.ended && self.currentTime >= self.end - self.frequency) {
                                 self.ended = true;
@@ -201,8 +222,6 @@ class Spotify {
      * @return {Promise<Boolean>}
      */
     seek(time) {
-        time = Math.min(time, this.end);
-        time = Math.max(time, this.start);
         this.ended = false;
         return new Promise((resolve) => {
             window.EmbedController.seek(time);

@@ -92,6 +92,7 @@ class SproutVideo {
 
             player.bind('progress', function(event) {
                 if (!ready) {
+                    player.setVolume(0.0);
                     return;
                 }
                 let currentTime = event.data.time;
@@ -107,6 +108,7 @@ class SproutVideo {
 
             player.bind('play', function() {
                 if (!ready) {
+                    player.setVolume(0.0);
                     return;
                 }
                 let currentTime = player.getCurrentTime();
@@ -157,6 +159,9 @@ class SproutVideo {
             iframeurl = `https://videos.sproutvideo.com/embed/${videoId}`;
             self.title = 'Private Video';
             self.aspectratio = 16 / 9;
+            if (!url.includes('embed')) {
+                dispatchEvent('iv:playerError', {message: 'Video not found'});
+            }
         } else {
             self.title = data.title;
             self.aspectratio = data.width / data.height;

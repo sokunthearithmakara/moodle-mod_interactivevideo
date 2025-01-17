@@ -106,7 +106,7 @@ class Kinescope {
                         });
 
                         // Scrap the video url to get the video title and poster image in the head.
-                        if ($('body').attr('id') === 'page-mod-interactivevideo-mod') {
+                        if (opts.editform) {
                             const response = await fetch('https://kinescope.io/embed/' + videoId);
                             const data = await response.text();
                             let parser = new DOMParser();
@@ -237,6 +237,7 @@ class Kinescope {
         if (time < 0) {
             time = 0;
         }
+        this.ended = false;
         player.seekTo(parseFloat(time));
         dispatchEvent('iv:playerSeek', {time: time});
         return time;

@@ -309,7 +309,7 @@ html:has(.path-mod-interactivevideo) {
     justify-content: center;
 }
 
-#page-mod-interactivevideo-view #toolbar {
+.path-mod-interactivevideo #toolbar {
     right: 0;
     width: 0;
     overflow: visible;
@@ -492,7 +492,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo #annotation-list tr td:first-child {
-    width: 0;
+    width: 1px;
 }
 
 .path-mod-interactivevideo .toast-wrapper {
@@ -1549,6 +1549,16 @@ html:has(.path-mod-interactivevideo) {
     line-height: 25px !important;
 }
 
+.path-mod-interactivevideo .fs-35px {
+    font-size: 35px !important;
+    line-height: 35px !important;
+}
+
+.path-mod-interactivevideo .rotate-360 {
+    transform: rotate(360deg);
+    transition: transform ease-in-out 300ms;
+}
+
 .path-mod-interactivevideo #maincontent {
     display: none;
 }
@@ -1675,7 +1685,7 @@ html:has(.path-mod-interactivevideo) {
         border: 0 !important;
     }
 
-    #page-mod-interactivevideo-view #toolbar {
+    .path-mod-interactivevideo #toolbar {
         align-content: end;
         padding-bottom: 60px;
     }
@@ -2834,9 +2844,11 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
         max-height: 352px;
         max-width: clamp(300px, calc(100% - 2rem), 800px);
         border-radius: 0;
+        overflow: hidden;
     }
 
     #annotation-canvas {
+        overflow: hidden;
         background: rgba(0, 0, 0, 0.15);
     }
 }

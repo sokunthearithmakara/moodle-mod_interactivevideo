@@ -102,25 +102,46 @@ class Panopto {
                 },
                 onIframeReady: async function() {
                     player.loadVideo();
-                    $.ajax({
-                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                        type: 'POST',
-                        dataType: 'text/plain',
-                        data: {
-                            action: 'get_from_url',
-                            contextid: M.cfg.contextid,
-                            url: url,
-                            sesskey: M.cfg.sesskey,
-                        },
-                        complete: function(res) {
-                            player.pauseVideo();
-                            // We don't want to reach the end of the video to avoid any issue restarting the video.
-                            let totaltime = Number(player.getDuration().toFixed(2)) - self.frequency;
-                            end = !end ? totaltime : Math.min(end, totaltime);
-                            end = Number(end.toFixed(2));
-                            self.end = end;
-                            self.totaltime = totaltime;
-                            self.duration = self.end - self.start;
+                    player.pauseVideo();
+                    const setup = setInterval(() => {
+                        try {
+                            player.getDuration().toFixed(2);
+                        } catch (e) {
+                            return;
+                        }
+                        clearInterval(setup);
+                        // We don't want to reach the end of the video to avoid any issue restarting the video.
+                        let totaltime = Number(player.getDuration().toFixed(2)) - self.frequency;
+                        end = !end ? totaltime : Math.min(end, totaltime);
+                        end = Number(end.toFixed(2));
+                        self.end = end;
+                        self.totaltime = totaltime;
+                        self.duration = self.end - self.start;
+                        if (opts.editform) { // Get title and poster image from the video if it's in edit form.
+                            $.ajax({
+                                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                                type: 'POST',
+                                dataType: 'text/plain',
+                                data: {
+                                    action: 'get_from_url',
+                                    contextid: M.cfg.contextid,
+                                    url: url,
+                                    sesskey: M.cfg.sesskey,
+                                },
+                                complete: function(res) {
+                                    // Get title and poster image from the video.
+                                    let parser = new DOMParser();
+                                    let doc = parser.parseFromString(res.responseText, 'text/html');
+                                    let page = $(doc);
+                                    let title = page.find('meta[property="og:title"]').attr('content');
+                                    let poster = page.find('meta[property="og:image"]').attr('content');
+                                    self.title = title;
+                                    self.posterImage = poster;
+                                    ready = true;
+                                    dispatchEvent('iv:playerReady');
+                                }
+                            });
+                        } else {
                             let tracks = player.getCaptionTracks();
                             player.disableCaptions();
                             if (tracks && tracks.length > 0) {
@@ -132,18 +153,10 @@ class Panopto {
                                 });
                                 dispatchEvent('iv:playerLoaded', {tracks});
                             }
-                            // Get title and poster image from the video.
-                            let parser = new DOMParser();
-                            let doc = parser.parseFromString(res.responseText, 'text/html');
-                            let page = $(doc);
-                            let title = page.find('meta[property="og:title"]').attr('content');
-                            let poster = page.find('meta[property="og:image"]').attr('content');
-                            self.title = title;
-                            self.posterImage = poster;
                             ready = true;
                             dispatchEvent('iv:playerReady');
                         }
-                    });
+                    }, 100);
                 },
                 onStateChange: function(state) {
                     if (ready === false) {
@@ -181,6 +194,11 @@ class Panopto {
                 onError: function(error) {
                     dispatchEvent('iv:playerError', {error});
                 },
+                onLoginShown: function() {
+                    $('#start-screen').addClass('d-none');
+                    $('.video-block, #video-block').addClass('no-pointer bg-transparent');
+                    $('#annotation-canvas').removeClass('d-none');
+                }
             }
         };
 
@@ -231,6 +249,7 @@ class Panopto {
      * @return {Promise<Boolean>}
      */
     async seek(time) {
+        this.ended = false;
         return new Promise((resolve) => {
             player.seekTo(time, true);
             dispatchEvent('iv:playerSeek', {time: time});

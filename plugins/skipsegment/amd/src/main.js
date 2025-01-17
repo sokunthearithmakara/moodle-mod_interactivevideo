@@ -175,6 +175,7 @@ export default class SkipSegment extends Base {
         if (annotation.timestamp < this.start || annotation.timestamp > this.end) {
             return;
         }
+        this.totaltime = this.totaltime || this.end - this.start;
         const percentage = ((Number(annotation.timestamp) - this.start) / this.totaltime) * 100;
         const length = (Number(annotation.title) - Number(annotation.timestamp)) / this.totaltime * 100;
         if (this.isVisible(annotation) && !this.isEditMode()) {

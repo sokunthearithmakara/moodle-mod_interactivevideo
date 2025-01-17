@@ -130,7 +130,6 @@ class Rumble {
                                 return;
                             }
 
-                            self.paused = true;
                             if (player.getCurrentTime() < start) {
                                 player.setCurrentTime(start);
                             }
@@ -264,7 +263,7 @@ class Rumble {
      * @returns {boolean} True if the player is in the 'playing' state, otherwise false.
      */
     isPlaying() {
-        return !this.isPaused();
+        return !this.paused;
     }
     /**
      * Checks if the video player has reached the end of the video.

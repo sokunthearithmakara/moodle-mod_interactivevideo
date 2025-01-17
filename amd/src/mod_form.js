@@ -157,7 +157,8 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         player = new VP();
                         player.load(url, 0, null, {
                             'showControls': true,
-                            'preload': true
+                            'preload': true,
+                            'editform': true,
                         });
                     });
                 };
@@ -507,7 +508,8 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     require(['mod_interactivevideo/player/html5video'], function(VP) {
                         player = new VP();
                         player.load(url, 0, null, {
-                            'showControls': true
+                            'showControls': true,
+                            'editform': true,
                         });
                     });
                     videoinput.val(e.detail.video);
@@ -584,7 +586,8 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         require(['mod_interactivevideo/player/html5video'], function(VP) {
                             player = new VP();
                             player.load(url, 0, null, {
-                                'showControls': true
+                                'showControls': true,
+                                'editform': true,
                             });
                         });
                     } else {

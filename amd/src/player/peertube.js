@@ -46,7 +46,7 @@ class PeerTube {
          * Interval frequency
          * @type {Number}
          */
-        this.frequency = 0.25;
+        this.frequency = 0.7;
         this.support = {
             playbackrate: true,
             quality: true,
@@ -137,6 +137,8 @@ class PeerTube {
         player.setVideoPassword(password); // Set the password for the video.
         await player.ready; // Wait for the player to be ready.
         player.pause();
+        player.setVolume(0);
+        player.seek(start);
         let captions = await player.getCaptions();
         if (captions.length > 0) {
             captions = captions.map((caption) => {
@@ -150,23 +152,15 @@ class PeerTube {
             tracks: captions, qualities: self.getQualities(),
         });
 
-        self.currentTime = start;
-        ready = true;
-        dispatchEvent('iv:playerReady');
-        player.setVolume(1);
-
-        const listener = (status) => {
+        let listener = (status) => {
             let currentTime = status.position;
             self.currentTime = currentTime;
             switch (status.playbackState) {
                 case 'playing':
-                    if (!ready) {
-                        return;
-                    }
                     self.paused = false;
                     self.ended = false;
                     if (currentTime < self.start) {
-                        player.seek(self.start);
+                        self.seek(self.start);
                     }
                     dispatchEvent('iv:playerPlaying');
                     if (currentTime >= self.end) {
@@ -174,10 +168,7 @@ class PeerTube {
                         dispatchEvent('iv:playerEnded');
                     }
                     break;
-                case 'paused':
-                    self.paused = true;
-                    dispatchEvent('iv:playerPaused');
-                    break;
+
                 case 'ended':
                     if (!self.ended) {
                         self.ended = true;
@@ -188,8 +179,40 @@ class PeerTube {
             }
         };
 
+        player.addEventListener('playbackStatusChange', (status) => {
+            if (!ready) {
+                player.setVolume(0);
+                return;
+            }
+            if (status === 'paused') {
+                self.paused = true;
+                dispatchEvent('iv:playerPaused');
+            }
+        });
+
         player.addEventListener('playbackStatusUpdate', (status) => {
-            listener(status);
+            if (self.ended) {
+                return;
+            }
+            if (!ready) {
+                player.setVolume(0);
+                // Peertube player remembers the last position of the video.
+                // We need to make sure the video is at the start before dispatching the ready event.
+                const goToStart = setInterval(() => {
+                    if (status.position > self.start
+                        || status.position >= self.end
+                        || status.position <= self.start) {
+                        clearInterval(goToStart);
+                        player.seek(self.start);
+                        player.pause();
+                        ready = true;
+                        dispatchEvent('iv:playerReady');
+                        player.setVolume(1);
+                    }
+                }, 100);
+            } else {
+                listener(status);
+            }
         });
 
         return true;
@@ -252,6 +275,7 @@ class PeerTube {
      * @return {Promise<Boolean>}
      */
     async seek(time) {
+        this.ended = false;
         await player.seek(time);
         dispatchEvent('iv:playerSeek', {time: time});
         return true;
@@ -261,7 +285,7 @@ class PeerTube {
      * @return {Number}
      */
     getCurrentTime() {
-        return this.currentTime || this.start;
+        return this.currentTime;
     }
     /**
      * Get the duration of the video

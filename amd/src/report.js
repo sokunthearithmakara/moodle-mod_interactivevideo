@@ -419,6 +419,8 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                         data: {
                             action: 'delete_progress_by_id',
                             recordid,
+                            courseid: courseid,
+                            cmid: cmid,
                             contextid: M.cfg.contextid,
                             sesskey: M.cfg.sesskey,
                         },

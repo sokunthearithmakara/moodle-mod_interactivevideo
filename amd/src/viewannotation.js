@@ -304,7 +304,7 @@ define([
                         completionpercentage, gradeiteminstance, grademax, vtype, preventskip,
                         totaltime, start, end, cmid, token, completionid);
 
-                    await renderAnnotationItems(releventAnnotations, start, totaltime);
+                    await renderAnnotationItems(releventAnnotations, start, end - start);
                     $("#play").removeClass('d-none');
                     $("#spinner").remove();
                     $("#video-info").toggleClass('d-none d-flex');
@@ -430,7 +430,6 @@ define([
                         hide: true
                     });
                 }
-
 
                 /**
                  * Asynchronously loads and initializes content type renderers for interactive video annotations.
@@ -603,6 +602,8 @@ define([
             };
 
             let loaded = false;
+            let lookbacktime = 0;
+
             const onLoaded = async() => {
                 if (loaded) {
                     return;
@@ -615,6 +616,7 @@ define([
                 loaded = true;
                 // Add player to Window object.
                 window.IVPLAYER = player;
+                lookbacktime = Math.max(0.5, player.frequency); // How far back to look for annotations.
                 // Check if the player supports playback rate and quality adjustments.
                 if (player.support.playbackrate == false) {
                     $('#changerate').remove();
@@ -628,9 +630,6 @@ define([
                     $('#changequality').removeClass('d-none');
                 }
 
-                // Explanation: YT shows annoying related videos if the player is large enough when the script is loading.
-                // So we're tricking it by hiding the canvas which also hides the #player first
-                // and only shows it when player is ready.
                 const duration = player.totaltime;
                 ({start, end} = await updateTime(duration));
                 totaltime = end - start;
@@ -709,6 +708,10 @@ define([
                 if (!loaded) {
                     await onLoaded();
                 }
+
+                // Explanation: YT shows annoying related videos if the player is large enough when the script is loading.
+                // So we're tricking it by hiding the canvas which also hides the #player first
+                // and only shows it when player is ready.
                 $(".video-block").css('background', 'transparent');
                 $("#annotation-canvas").removeClass('d-none');
 
@@ -717,8 +720,11 @@ define([
                     'containment': '#video-nav',
                     'axis': 'x',
                     'cursor': 'col-resize',
-                    'start': function(event, ui) {
-                        player.pause();
+                    'start': async function(event, ui) {
+                        const isPaused = await player.isPaused();
+                        if (!isPaused) {
+                            player.pause();
+                        }
                         $(this).addClass('active');
                         $('#taskinfo').addClass('no-pointer-events');
                         $('#message').not('[data-placement=bottom]').not('.sticky').remove();
@@ -776,9 +782,10 @@ define([
                 $('#playpause').attr('data-original-title', M.util.get_string('play', 'mod_interactivevideo'));
                 cancelAnimationFrame(playingInterval);
                 // Save watched progress to database.
-                const t = await player.getCurrentTime();
-                const watchedpoint = Math.round(t);
-                if (watchedpoint <= start + 1 || (watchedpoint >= lastSaved - 1 && watchedpoint <= lastSaved + 1)) {
+                let t = await player.getCurrentTime();
+                let watchedpoint = Math.round(t);
+                // Make sure the watchedpoint is not the same as the last saved point or so close to it.
+                if (watchedpoint <= start + 1 || watchedpoint >= end - 1 || Math.abs(watchedpoint - lastSaved) < 5) {
                     return;
                 }
                 lastSaved = watchedpoint;
@@ -863,7 +870,7 @@ define([
                 // Reset the launched annotation to include only the ones that are before the current time.
                 viewedAnno = [];
                 releventAnnotations.forEach(x => {
-                    if (Number(x.timestamp) <= t) {
+                    if (Number(x.timestamp) < t) {
                         viewedAnno.push(Number(x.id));
                     }
                 });
@@ -890,13 +897,16 @@ define([
                 if (!playerReady) {
                     return;
                 }
+                // Initialize the player visualizer for html5 audio.
                 if (player.audio && !visualized) {
                     player.visualizer();
                     visualized = true;
                 }
+                // Force fullscreen for mobile themes and mobile devices.
                 if ($('body').hasClass('mobiletheme') && !$('#wrapper').hasClass('fullscreen')) {
                     $("#fullscreen").trigger('click');
                 }
+
                 $('#annotation-modal').modal('hide');
                 $('#message').not('[data-placement=bottom]').not('.sticky').remove();
                 $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
@@ -905,8 +915,11 @@ define([
                 if (!videoEnded) {
                     $('#end-screen, #start-screen').fadeOut(300);
                     $('#restart').addClass('d-none');
+                } else {
+                    viewedAnno = [];
                 }
                 if (!firstPlay) {
+                    viewedAnno = [];
                     firstPlay = true;
                     if (window.resumetime && window.resumetime > start && window.resumetime < end) {
                         await player.seek(window.resumetime);
@@ -926,17 +939,15 @@ define([
                         return;
                     }
                     if (!isPlaying) {
-                        if (player.type == 'spotify' || player.type == 'rutube') {
+                        if (player.type == 'spotify' || player.type == 'rutube' || player.type == 'yt') {
                             player.pause();
-                            cancelAnimationFrame(playingInterval);
-                        }
-                        if (player.type == 'yt') {
                             cancelAnimationFrame(playingInterval);
                         }
                         return;
                     }
 
-                    const t = await player.getCurrentTime();
+                    let t = await player.getCurrentTime();
+                    t = Number(t);
 
                     if (t > end) {
                         onEnded(end);
@@ -960,7 +971,7 @@ define([
                     percentagePlayed = percentagePlayed > 1 ? 1 : percentagePlayed;
                     $('#video-nav #progress').css('width', percentagePlayed * 100 + '%');
                     $('#video-nav #seekhead').css('left', percentagePlayed * 100 + '%');
-                    const theAnnotation = releventAnnotations.find(x => (((t - 0.5).toFixed(2) <= x.timestamp
+                    const theAnnotation = releventAnnotations.find(x => (((t - lookbacktime).toFixed(2) <= x.timestamp
                         && (t + player.frequency).toFixed(2) >= x.timestamp) || time == x.timestamp) &&
                         x.id != 0 && !viewedAnno.includes(Number(x.id)));
 
@@ -1009,7 +1020,6 @@ define([
 
             // Implement the player
             require(['mod_interactivevideo/player/' + vtype], function(VideoPlayer) {
-
                 player = new VideoPlayer();
                 if (displayoptions.passwordprotected == 1 && player.support.password) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
@@ -1219,7 +1229,10 @@ define([
                     return;
                 }
                 lastrun = null;
-                player.pause();
+                const isPaused = await player.isPaused();
+                if (!isPaused) {
+                    player.pause();
+                }
                 await replaceProgressBars((timestamp - start) / totaltime * 100);
                 await player.seek(Number(timestamp));
                 const id = $(this).data('id');
@@ -1256,6 +1269,10 @@ define([
                 await replaceProgressBars(percentage * 100);
                 $loader.fadeIn(300);
                 await player.seek((percentage * totaltime) + start);
+                const isPlaying = await player.isPlaying();
+                if (!isPlaying || videoEnded) {
+                    await player.play();
+                }
                 lastrun = null;
                 viewedAnno = [];
                 setTimeout(() => {
@@ -1462,6 +1479,9 @@ define([
                 Toast.add(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), {
                     type: 'danger'
                 });
+                $('#annotation-canvas').removeClass('d-none');
+                $('#start-screen').addClass('d-none');
+                $('.video-block').addClass('no-pointer bg-transparent');
                 $('#spinner').remove();
             });
 
@@ -1543,6 +1563,7 @@ define([
                 await player.pause();
                 // Remove all event listeners before unload.
                 $(document).off();
+                cancelAnimationFrame(playingInterval);
             });
         }
     };

@@ -54,20 +54,21 @@ class Vimeo {
         this.aspectratio = 16 / 9;
         // Get poster image using oEmbed.
         var posterUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url);
-        fetch(posterUrl)
-            .then(response => response.json())
-            .then(data => {
-                var poster = data.thumbnail_url;
-                // Change the dimensions of the poster image to 16:9.
-                poster = poster.replace(/_\d+x\d+/, '_720x405');
-                this.posterImage = poster;
-                this.title = data.title;
-                this.aspectratio = data.width / data.height;
-                this.videoId = data.video_id;
-                return poster;
-            }).catch(() => {
-                return;
-            });
+        if (opts.editform) { // If the video is being edited on the form, we need to get the poster image.
+            fetch(posterUrl)
+                .then(response => response.json())
+                .then(data => {
+                    var poster = data.thumbnail_url;
+                    // Change the dimensions of the poster image to 16:9.
+                    poster = poster.replace(/_\d+x\d+/, '_720x405');
+                    this.posterImage = poster;
+                    this.title = data.title;
+                    this.videoId = data.video_id;
+                    return poster;
+                }).catch(() => {
+                    return;
+                });
+        }
         let self = this;
         const option = {
             url: url,
@@ -112,6 +113,7 @@ class Vimeo {
                     self.end = end;
                     self.duration = self.end - self.start;
                     self.totaltime = Number((duration - 0.1).toFixed(2));
+                    this.aspectratio = await player.getVideoWidth() / await player.getVideoHeight();
                     // Get track list.
                     // Unset the captions.
                     player.disableTextTrack();
@@ -231,9 +233,6 @@ class Vimeo {
             });
 
             player.on('error', function(e) {
-                if (!ready) {
-                    return;
-                }
                 dispatchEvent('iv:playerError', {error: e.message});
             });
         };
@@ -286,6 +285,7 @@ class Vimeo {
         if (time < 0) {
             time = 0;
         }
+        this.ended = false;
         await player.setCurrentTime(time);
         return time;
     }

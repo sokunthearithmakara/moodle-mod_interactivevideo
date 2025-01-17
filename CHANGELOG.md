@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2025-01-17
+### Fixed
+- Custom start time for Spotify episode
+- Timestamp column width is not respected on Safari.
+- Totaltime is undefined in some circumstances.
+- When video restarts, the annotation that has timestamp=starttime is skipped.
+- Individual completion record is not deleted from the report page on Moodle 4.1.
+- Rumble's isPlaying method always return true.
+
+### Updated
+- Improve error handling: remove/hide elements above the video to show the error screen (e.g. youtube video no longer available)
+- Only get posterImage and title when on editing form (opts.editform)
+- If video is already paused, do not pause again if not necessary.
+- Reset viewAnno when video restarts.
+- Increase frequency for Spotify and PeerTube since their timeupdate interval is longer than others.
+- PeerTube: use playbackStatusChange to check/dispatch pause state.
+- PeerTube: ensure video resets to start time before dispatching iv:playerReady.
+
 ## [1.0.1] - 2025-01-14
 ### Fixed
 - Dailymotion video and SoundCloud audio played from the start after ended.

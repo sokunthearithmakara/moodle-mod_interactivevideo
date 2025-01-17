@@ -164,6 +164,7 @@ export default class Chapter extends Base {
         if (annotation.timestamp < this.start || annotation.timestamp > this.end) {
             return;
         }
+        this.totaltime = this.totaltime || this.end - this.start;
         const percentage = ((Number(annotation.timestamp) - this.start) / this.totaltime) * 100;
         if (this.isVisible(annotation)) {
             let classes = annotation.type + ' annotation li-draggable ';

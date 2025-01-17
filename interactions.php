@@ -176,6 +176,7 @@ $PAGE->requires->js_call_amd(
         $moduleinstance->type,
         $moduleinstance->displayoptions,
         $USER->id,
+        $moduleinstance->posterimage,
     ]
 );
 

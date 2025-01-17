@@ -82,8 +82,10 @@ define(['jquery',
          * @param {String} type video type
          * @param {Object} displayoptions display options
          * @param {Number} userid user id
+         * @param {String} posterimage poster image
          */
-        init: function(url, coursemodule, interaction, course, start, end, coursecontextid, type = 'yt', displayoptions, userid) {
+        init: function(url, coursemodule, interaction, course, start, end, coursecontextid,
+            type = 'yt', displayoptions, userid, posterimage) {
 
             /**
              * Util function to display notification
@@ -433,7 +435,7 @@ define(['jquery',
 
                 // Handle timeline block.
                 $("#timeline-wrapper #video-timeline").css({
-                    'background-image': 'url(' + player.posterImage + ')',
+                    'background-image': 'url(' + posterimage + ')',
                     'background-size': 'contain',
                     'background-repeat': 'no-repeat',
                 });
@@ -485,7 +487,7 @@ define(['jquery',
              */
             const onEnded = () => {
                 player.pause();
-                $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
+                $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill').toggleClass('rotate-360');
                 // Cover the video with a message on a white background div.
                 $('#video-wrapper').append(`<div id="end-screen" class="border position-absolute w-100 h-100 bg-white d-flex
                      justify-content-center align-items-center" style="top: 0; left: 0;">
@@ -537,9 +539,9 @@ define(['jquery',
             /**
              * Excute when video plays (i.e. start or resume)
              */
-            const onPlaying = () => {
+            const onPlaying = async() => {
                 $('#message, #end-screen').not('.sticky').remove();
-                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
+                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill').removeClass('rotate-360');
                 if (player.audio && !visualized) {
                     player.visualizer();
                     visualized = true;
@@ -604,12 +606,18 @@ define(['jquery',
                 };
                 if (player.useAnimationFrame) {
                     const animate = async() => {
-                        intervalFunction();
-                        onPlayingInterval = requestAnimationFrame(animate);
+                        const isPlaying = await player.isPlaying();
+                        if (isPlaying) {
+                            intervalFunction();
+                            onPlayingInterval = requestAnimationFrame(animate);
+                        }
                     };
                     onPlayingInterval = requestAnimationFrame(animate);
                 } else {
-                    intervalFunction();
+                    const isPlaying = await player.isPlaying();
+                    if (isPlaying) {
+                        intervalFunction();
+                    }
                 }
             };
 
@@ -618,7 +626,7 @@ define(['jquery',
              */
             const onPause = () => {
                 cancelAnimationFrame(onPlayingInterval);
-                $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
+                $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill').toggleClass('rotate-360');
             };
 
             // Implement the player
@@ -659,6 +667,15 @@ define(['jquery',
 
             $(document).on('iv:playerSeek', function(e) {
                 onSeek(e.detail.time);
+            });
+
+            $(document).on('iv:playerError', function() {
+                addNotification(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), 'danger');
+                $('#annotation-canvas').removeClass('d-none');
+                $('#start-screen').addClass('d-none');
+                $('#video-block').addClass('no-pointer bg-transparent');
+                $('#spinner').remove();
+                $('.loader').removeClass('loader');
             });
 
             // Post annotation update (add, edit, clone).
@@ -1062,7 +1079,11 @@ define(['jquery',
                 }
                 $('#timeline-items .annotation.li-draggable').draggable({
                     'axis': 'x',
-                    'start': function() {
+                    'start': async function() {
+                        const isPaused = await player.isPaused();
+                        if (!isPaused) {
+                            player.pause();
+                        }
                         appendTimestampMarker($(this).data('timestamp'));
                         $('.tooltip, #message').remove();
                         $('#timeline-items').addClass('no-pointer-events');
@@ -1081,7 +1102,6 @@ define(['jquery',
                         $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
                         $(this).css('left', (timestamp - start) / totaltime * 100 + '%');
                         await player.seek(timestamp);
-                        player.pause();
                         $('#vseek #position').text(convertSecondsToHMS(timestamp, true, false));
                     },
                     'stop': async function(event, ui) {
@@ -1118,14 +1138,21 @@ define(['jquery',
                             action: 'draft'
                         });
                         await player.seek(timestamp); // Seek to the new position
-                        player.pause();
+                        const isPaused = await player.isPaused();
+                        if (!isPaused) {
+                            player.pause();
+                        }
                         $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
                     }
                 });
 
                 $('#video-timeline-wrapper .skipsegment').draggable({
                     'axis': 'x',
-                    'start': function() {
+                    'start': async function() {
+                        const isPaused = await player.isPaused();
+                        if (!isPaused) {
+                            player.pause();
+                        }
                         $('#message').remove();
                         appendTimestampMarker($(this).data('timestamp'));
                         $('#timeline-items').addClass('no-pointer-events');
@@ -1144,7 +1171,6 @@ define(['jquery',
 
                         $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
                         await player.seek(timestamp);
-                        player.pause();
                         $('#vseek #position').text(convertSecondsToHMS(timestamp, true, false));
                     },
                     'stop': async function(event, ui) {
@@ -1197,7 +1223,10 @@ define(['jquery',
                             action: 'draft'
                         });
                         await player.seek(timestamp); // Seek to the new position
-                        player.pause();
+                        const isPaused = await player.isPaused();
+                        if (!isPaused) {
+                            player.pause();
+                        }
                         $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
                     }
                 });
@@ -1205,8 +1234,11 @@ define(['jquery',
                 $('#video-timeline-wrapper .skipsegment').resizable({
                     'containment': '#video-timeline-wrapper',
                     'handles': 'e, w',
-                    'start': function() {
-                        player.pause();
+                    'start': async function() {
+                        const isPaused = await player.isPaused();
+                        if (!isPaused) {
+                            player.pause();
+                        }
                         $('#message').remove();
                         appendTimestampMarker($(this).data('timestamp'));
                         $('#timeline-items').addClass('no-pointer-events');
@@ -1266,7 +1298,10 @@ define(['jquery',
                             action: 'draft'
                         });
                         await player.seek(timestamp);
-                        player.pause();
+                        const isPaused = await player.isPaused();
+                        if (!isPaused) {
+                            player.pause();
+                        }
                         $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
                     }
                 });
@@ -1282,7 +1317,10 @@ define(['jquery',
                     e.preventDefault();
                     const timestamp = $(this).data('timestamp');
                     await player.seek(timestamp);
-                    player.pause();
+                    const isPaused = await player.isPaused();
+                    if (!isPaused) {
+                        player.pause();
+                    }
                 });
 
                 $('#video-timeline-wrapper .skipsegment .delete-skipsegment').off('click').on('click', function(e) {
@@ -1296,8 +1334,11 @@ define(['jquery',
                 'containment': '#timeline-items',
                 'axis': 'x',
                 'cursor': 'col-resize',
-                'start': function(event, ui) {
-                    player.pause();
+                'start': async function(event, ui) {
+                    const isPaused = await player.isPaused();
+                    if (!isPaused) {
+                        player.pause();
+                    }
                     $('#timeline-items').addClass('no-pointer-events');
                     $("#message").remove();
                     appendTimestampMarker(((ui.position.left) / $('#timeline-items').width()) * totaltime + start, false);
@@ -1310,7 +1351,7 @@ define(['jquery',
                         .css('left', percentage + '%');
                     await player.seek(timestamp);
                 },
-                'stop': function(event, ui) {
+                'stop': async function(event, ui) {
                     $('#vseek #position-marker').remove();
                     setTimeout(function() {
                         $('#timeline-items').removeClass('no-pointer-events');
@@ -1318,7 +1359,10 @@ define(['jquery',
                     // Convert the position to percentage
                     let timestamp = ((ui.position.left) / $('#timeline-items').width()) * totaltime + start;
                     $('#scrollbar, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
-                    player.pause();
+                    const isPaused = await player.isPaused();
+                    if (!isPaused) {
+                        player.pause();
+                    }
                 }
             });
 
@@ -1326,7 +1370,10 @@ define(['jquery',
                 'axis': 'x',
                 'cursor': 'col-resize',
                 'start': async function(event, ui) {
-                    player.pause();
+                    const isPaused = await player.isPaused();
+                    if (!isPaused) {
+                        player.pause();
+                    }
                     $('#vseek').addClass('no-pointer-events');
                     $("#message").remove();
                     appendTimestampMarker(((ui.position.left) / $('#vseek').width()) * totaltime + start, false);
@@ -1342,7 +1389,7 @@ define(['jquery',
                         .css('left', percentage + '%');
                     await player.seek(timestamp);
                 },
-                'stop': function(event, ui) {
+                'stop': async function(event, ui) {
                     $('#vseek #position-marker').remove();
                     setTimeout(function() {
                         $('#vseek').removeClass('no-pointer-events');
@@ -1353,7 +1400,10 @@ define(['jquery',
                         timestamp = start;
                     }
                     $('#scrollbar, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
-                    player.pause();
+                    const isPaused = await player.isPaused();
+                    if (!isPaused) {
+                        player.pause();
+                    }
                 }
             });
 
@@ -1476,7 +1526,10 @@ define(['jquery',
                 const percentage = e.offsetX / $(this).width();
                 replaceProgressBars(percentage * 100);
                 $loader.fadeIn(300);
-                player.pause();
+                const isPaused = await player.isPaused();
+                if (!isPaused) {
+                    player.pause();
+                }
                 await player.seek((percentage * totaltime) + start);
                 $loader.fadeOut(300);
                 $("#message, #end-screen").remove();
@@ -2009,6 +2062,7 @@ define(['jquery',
             // Remove all event listeners before leaving the page.
             window.addEventListener('beforeunload', function() {
                 $(document).off();
+                cancelAnimationFrame(onPlayingInterval);
             });
         }
     };

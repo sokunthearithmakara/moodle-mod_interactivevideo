@@ -59,15 +59,16 @@ class Wistia {
              controlsVisibleOnLoad=${showControls} playButton=${showControls} videoFoam=false silentAutoPlay=allow playsinline=true
               fullscreenButton=false time=${start} fitStrategy=contain" style="height:100%;width:100%"></div>`);
         let self = this;
-        $.get('https://fast.wistia.com/oembed.json?url=' + url)
-            .then(function(data) {
-                self.posterImage = data.thumbnail_url;
-                self.title = data.title;
-                return self.posterImage;
-            }).catch(() => {
-                return;
-            });
-        let ready = false;
+        if (opts.editform) {
+            $.get('https://fast.wistia.com/oembed.json?url=' + url)
+                .then(function(data) {
+                    self.posterImage = data.thumbnail_url;
+                    self.title = data.title;
+                    return self.posterImage;
+                }).catch(() => {
+                    return;
+                });
+        }
         const wistiaOptions = {
             id: videoId,
             options: {
@@ -90,75 +91,68 @@ class Wistia {
                 self.end = end;
                 self.totaltime = Number(totaltime.toFixed(2));
                 self.duration = self.end - self.start;
-                if (start > 0) {
-                    video.play();
-                    await video.time(start);
-                    await video.pause();
+
+                const eventListeners = () => {
+                    video.unmute();
                     video.on("pause", () => {
-                        if (!ready) {
-                            ready = true;
-                            dispatchEvent('iv:playerReady');
+                        if ($(document).find('.w-password-protected').length > 0) {
+                            return;
+                        }
+                        if (video.time() >= end) {
+                            dispatchEvent('iv:playerEnded');
+                        } else {
+                            dispatchEvent('iv:playerPaused');
                         }
                     });
-                } else {
-                    if (!ready) {
-                        ready = true;
-                        dispatchEvent('iv:playerReady');
-                    }
-                }
-                video.unmute();
+
+                    video.on("seek", (e) => {
+                        if ($(document).find('.w-password-protected').length > 0) {
+                            return;
+                        }
+                        dispatchEvent('iv:playerSeek', {time: e});
+                    });
+
+                    video.bind('play', async() => {
+                        if (video.time() >= end) {
+                            await video.time(start);
+                        }
+                        dispatchEvent('iv:playerPlaying');
+                    });
+
+                    video.on('timechange', (s) => {
+                        if (s < start) {
+                            video.time(start);
+                        }
+                        if (s >= end + self.frequency) {
+                            video.time(end - self.frequency);
+                        }
+                        if (s >= end) {
+                            dispatchEvent('iv:playerEnded');
+                        }
+                    });
+
+                    video.on("error", (e) => {
+                        dispatchEvent('iv:playerError', {error: e});
+                    });
+
+                    video.on("playbackratechange", (e) => {
+                        dispatchEvent('iv:playerRateChange', {rate: e});
+                    });
+                };
+
+                video.play();
+                await video.time(start);
+                await video.pause();
 
                 video.on("pause", () => {
-                    if (!ready) {
-                        return;
-                    }
-                    if (video.time() >= end) {
-                        dispatchEvent('iv:playerEnded');
+                    if ($(document).find('.w-password-protected').length > 0) {
+                        video.play();
                     } else {
-                        dispatchEvent('iv:playerPaused');
+                        video.unbind('pause');
+                        dispatchEvent('iv:playerReady');
+                        eventListeners();
                     }
                 });
-
-                video.on("seek", (e) => {
-                    if (!ready) {
-                        return;
-                    }
-                    dispatchEvent('iv:playerSeek', {time: e});
-                });
-
-                video.bind('play', async() => {
-                    if (!ready) {
-                        return;
-                    }
-                    if (video.time() >= end) {
-                        await video.time(start);
-                    }
-                    dispatchEvent('iv:playerPlaying');
-                });
-
-                video.on('timechange', (s) => {
-                    if (!ready) {
-                        return;
-                    }
-                    if (s < start) {
-                        video.time(start);
-                    }
-                    if (s >= end + self.frequency) {
-                        video.time(end - self.frequency);
-                    }
-                    if (s >= end) {
-                        dispatchEvent('iv:playerEnded');
-                    }
-                });
-
-                video.on("error", (e) => {
-                    dispatchEvent('iv:playerError', {error: e});
-                });
-
-                video.on("playbackratechange", (e) => {
-                    dispatchEvent('iv:playerRateChange', {rate: e});
-                });
-
             },
             onError: function(e) {
                 dispatchEvent('iv:playerError', {error: e});
@@ -218,6 +212,7 @@ class Wistia {
      */
     seek(time) {
         player.time(time);
+        this.ended = false;
         dispatchEvent('iv:playerSeek', {time: time});
         return time;
     }

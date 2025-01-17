@@ -158,6 +158,10 @@ class SoundCloud {
                 self.paused = true;
                 dispatchEvent('iv:playerEnded');
             });
+
+            player.bind(window.SC.Widget.Events.ERROR, function(data) {
+                dispatchEvent('iv:playerError', {error: data});
+            });
         };
 
         // Load the IFrame Player API code asynchronously.
