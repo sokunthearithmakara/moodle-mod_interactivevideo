@@ -21,6 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import {dispatchEvent} from 'core/event_dispatcher';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 let player;
 
 class Vimeo {
@@ -45,9 +47,14 @@ class Vimeo {
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
      */
-    load(url, start, end, opts = {}) {
-        const showControls = opts.showControls || false;
+    async load(url, start, end, opts = {}) {
+        let showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+            showControls = true;
+        }
         this.start = start;
         // Documented at https://developer.vimeo.com/player/sdk/reference or https://github.com/vimeo/player.js
         let VimeoPlayer;
@@ -134,10 +141,10 @@ class Vimeo {
                         });
                     }
 
-                    if (showControls) {
-                        ready = true;
-                        dispatchEvent('iv:playerReady');
-                    }
+                    ready = true;
+                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                    // Unmute the video
+                    player.setVolume(1);
                 }
             });
 
@@ -150,7 +157,7 @@ class Vimeo {
                         // Unmute the video.
                         player.setVolume(1);
                         ready = true;
-                        dispatchEvent('iv:playerReady');
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
                     }
                 });
             }
@@ -233,7 +240,16 @@ class Vimeo {
             });
 
             player.on('error', function(e) {
+                if (e.name === 'NotAllowedError') {
+                    return;
+                }
                 dispatchEvent('iv:playerError', {error: e.message});
+                if (!showControls) {
+                    const $videoblock = document.querySelector('.video-block');
+                    if ($videoblock) {
+                        $videoblock.classList.remove('no-pointer');
+                    }
+                }
             });
         };
 

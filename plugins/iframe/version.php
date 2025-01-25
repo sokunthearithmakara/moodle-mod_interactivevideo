@@ -25,12 +25,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component    = 'ivplugin_iframe';
-$plugin->release      = '1.0';
-$plugin->version      = 2024071500;
+$plugin->release      = '1.0.1';
+$plugin->version      = 2024071501;
 $plugin->requires     = 2022112800;
 $plugin->supported    = [401, 405];
 $plugin->maturity     = MATURITY_STABLE;
 $plugin->dependencies = [
-    'interactivevideo' => 2024042720,
+    'interactivevideo' => 2025011305,
     'ivplugin_richtext' => 2024071500,
 ];

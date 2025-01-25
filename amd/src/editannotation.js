@@ -38,6 +38,7 @@ define(['jquery',
      * @returns {void}
      * */
     const replaceProgressBars = (percentage) => {
+        percentage = percentage < 0 ? 0 : percentage;
         percentage = percentage > 100 ? 100 : percentage;
         $('#video-nav #progress').css('width', percentage + '%');
         $('#scrollbar, #scrollhead-top').css('left', percentage + '%');
@@ -83,9 +84,10 @@ define(['jquery',
          * @param {Object} displayoptions display options
          * @param {Number} userid user id
          * @param {String} posterimage poster image
+         * @param {String} extendedcompletion extended completion
          */
         init: function(url, coursemodule, interaction, course, start, end, coursecontextid,
-            type = 'yt', displayoptions, userid, posterimage) {
+            type = 'yt', displayoptions, userid, posterimage, extendedcompletion) {
 
             /**
              * Util function to display notification
@@ -230,7 +232,8 @@ define(['jquery',
                         contentTypes.forEach(x => {
                             require(['' + x.amdmodule], function(Type) {
                                 ctRenderer[x.name] = new Type(player, annotations, interaction,
-                                    course, 0, 0, 0, 0, type, 0, totaltime, start, end, x, coursemodule);
+                                    course, 0, 0, 0, 0, type, 0, totaltime, start, end, x, coursemodule,
+                                    null, displayoptions, null, extendedcompletion);
                                 count++;
                                 ctRenderer[x.name].init();
                                 if (count == contentTypes.length) {
@@ -394,6 +397,16 @@ define(['jquery',
              * Set of events to run after the video player is ready.
              */
             const onReady = async() => {
+                player.pause();
+                const isPaused = await player.isPaused();
+                if (!isPaused) {
+                    await player.seek(start);
+                    onReady();
+                    return;
+                }
+                if (player.audio) {
+                    $('#annotation-canvas').addClass('bg-black');
+                }
                 if (displayoptions.passwordprotected == 1) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
                     $('#start-screen').removeClass('d-none');
@@ -478,6 +491,8 @@ define(['jquery',
                 } catch (e) {
                     // Do nothing.
                 }
+
+                $('#scrollbar, #scrollhead-top').css('left', 0);
 
                 getAnnotations();
             };
@@ -570,7 +585,6 @@ define(['jquery',
                     $('#timeline-wrapper #currenttime').text(convertSecondsToHMS(thisTime, true));
                     let percentage = (thisTime - start) / (totaltime) * 100;
                     $('#video-nav #progress').css('width', percentage + '%');
-
                     $("#scrollbar, #scrollhead-top").css('left', percentage + '%');
 
                     // Scroll the timeline so that the current time is in the middle of the timeline.
@@ -644,6 +658,7 @@ define(['jquery',
                     {
                         'customStart': true,
                         'passwordprotected': displayoptions.passwordprotected == 1,
+                        'showControls': false,
                     }
                 );
                 window.IVPLAYER = player;
@@ -926,6 +941,18 @@ define(['jquery',
                 const fld = $(this).data('editable');
                 $(this).hide();
                 $(this).siblings('[data-field="' + fld + '"]').removeClass('d-none').focus().addClass('editing');
+                if (fld == 'timestamp') {
+                    $(this).closest('tr')
+                    .append(`<div class="timestamp-info position-absolute">
+                        ${M.util.get_string('rightclicktosetcurrenttime', 'mod_interactivevideo')}</div>`);
+                }
+            });
+
+            $(document).on('contextmenu', '[data-field="timestamp"]', async function(e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                const time = await player.getCurrentTime();
+                $(this).val(convertSecondsToHMS(time, false, false));
             });
 
             $(document).on('keyup', '[data-field].editing', function(e) {
@@ -943,10 +970,12 @@ define(['jquery',
                     $(this).removeClass('editing');
                     $(this).addClass('d-none');
                     $(this).siblings('[data-editable]').show();
+                    $('.timestamp-info').remove();
                     return;
                 }
                 // If enter key is pressed, save the value.
                 if (e.key == 'Enter') {
+
                     let seconds;
                     if (fld == 'timestamp') {
                         const parts = initialValue.split(':');
@@ -987,6 +1016,7 @@ define(['jquery',
                             value: fld == 'timestamp' ? seconds : val,
                         },
                         success: function(data) {
+                            $('.timestamp-info').remove();
                             const updated = JSON.parse(data);
                             dispatchEvent('annotationupdated', {
                                 annotation: updated,
@@ -1004,6 +1034,7 @@ define(['jquery',
                 $(this).removeClass('editing');
                 $(this).addClass('d-none');
                 $(this).siblings('[data-editable]').show();
+                $('.timestamp-info').remove();
             });
             // End quick edit.
 
@@ -1099,8 +1130,12 @@ define(['jquery',
                             timestamp = end;
                             ui.position.left = $('#timeline-items').width() - 5;
                         }
-                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
-                        $(this).css('left', (timestamp - start) / totaltime * 100 + '%');
+                        let percentage = (timestamp - start) / totaltime * 100;
+                        if (percentage < 0) {
+                            percentage = 0;
+                        }
+                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
+                        $(this).css('left', percentage + '%');
                         await player.seek(timestamp);
                         $('#vseek #position').text(convertSecondsToHMS(timestamp, true, false));
                     },
@@ -1119,7 +1154,11 @@ define(['jquery',
                             timestamp = end;
                             $(this).css('left', 'calc(100% - 5px)');
                         }
-                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                        let percentage = (timestamp - start) / totaltime * 100;
+                        if (percentage < 0) {
+                            percentage = 0;
+                        }
+                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
                         const id = $(this).data('id');
                         targetAnnotation = annotations.find(x => x.id == id);
                         const existingAnnotation = annotations.find(x => x.timestamp == timestamp && x.id != id);
@@ -1142,7 +1181,7 @@ define(['jquery',
                         if (!isPaused) {
                             player.pause();
                         }
-                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
                     }
                 });
 
@@ -1169,7 +1208,11 @@ define(['jquery',
                             timestamp = end;
                         }
 
-                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                        let percentage = (timestamp - start) / totaltime * 100;
+                        if (percentage < 0) {
+                            percentage = 0;
+                        }
+                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
                         await player.seek(timestamp);
                         $('#vseek #position').text(convertSecondsToHMS(timestamp, true, false));
                     },
@@ -1227,7 +1270,11 @@ define(['jquery',
                         if (!isPaused) {
                             player.pause();
                         }
-                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                        let percentage = (timestamp - start) / totaltime * 100;
+                        if (percentage < 0) {
+                            percentage = 0;
+                        }
+                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
                     }
                 });
 
@@ -1253,7 +1300,14 @@ define(['jquery',
                         } else {
                             timestamp = ((ui.position.left + ui.size.width) / $('#video-timeline').width()) * totaltime + start;
                         }
-                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                        let percentage = (timestamp - start) / totaltime * 100;
+                        if (isNaN(percentage) || percentage < 0) {
+                            percentage = 0;
+                        }
+                        if (percentage > 100) {
+                            percentage = 100;
+                        }
+                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
                         await player.seek(timestamp);
                         $('#vseek #position').text(convertSecondsToHMS(timestamp, true, false));
                     },
@@ -1302,7 +1356,14 @@ define(['jquery',
                         if (!isPaused) {
                             player.pause();
                         }
-                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                        let percentage = (timestamp - start) / totaltime * 100;
+                        if (isNaN(percentage) || percentage < 0) {
+                            percentage = 0;
+                        }
+                        if (percentage > 100) {
+                            percentage = 100;
+                        }
+                        $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
                     }
                 });
 
@@ -1358,7 +1419,14 @@ define(['jquery',
                     }, 200);
                     // Convert the position to percentage
                     let timestamp = ((ui.position.left) / $('#timeline-items').width()) * totaltime + start;
-                    $('#scrollbar, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                    let percentage = (timestamp - start) / totaltime * 100;
+                    if (isNaN(percentage) || percentage < 0) {
+                        percentage = 0;
+                    }
+                    if (percentage > 100) {
+                        percentage = 100;
+                    }
+                    $('#scrollbar, #scrollhead-top').css('left', percentage + '%');
                     const isPaused = await player.isPaused();
                     if (!isPaused) {
                         player.pause();
@@ -1381,6 +1449,12 @@ define(['jquery',
                 'drag': async function(event, ui) {
                     let timestamp = ((ui.position.left) / $('#vseek').width()) * totaltime + start;
                     let percentage = (timestamp - start) / totaltime * 100;
+                    if (isNaN(percentage) || percentage < 0) {
+                        percentage = 0;
+                    }
+                    if (percentage > 100) {
+                        percentage = 100;
+                    }
                     if (timestamp < start) {
                         timestamp = start;
                     }
@@ -1399,7 +1473,14 @@ define(['jquery',
                     if (timestamp < start) {
                         timestamp = start;
                     }
-                    $('#scrollbar, #scrollhead-top').css('left', (timestamp - start) / totaltime * 100 + '%');
+                    let percentage = (timestamp - start) / totaltime * 100;
+                    if (isNaN(percentage) || percentage < 0) {
+                        percentage = 0;
+                    }
+                    if (percentage > 100) {
+                        percentage = 100;
+                    }
+                    $('#scrollbar, #scrollhead-top').css('left', percentage + '%');
                     const isPaused = await player.isPaused();
                     if (!isPaused) {
                         player.pause();
@@ -2063,6 +2144,55 @@ define(['jquery',
             window.addEventListener('beforeunload', function() {
                 $(document).off();
                 cancelAnimationFrame(onPlayingInterval);
+            });
+
+            let idleInterval = null;
+            $(document).on('visibilitychange', async function() {
+                // Destroy the player if the tab is hidden and the video isn't playing for more than 30 minutes.
+                if (document.visibilityState == 'hidden') {
+                    const isPaused = await player.isPaused();
+                    if (!isPaused) {
+                        player.pause();
+                    }
+                    // Check if the player is paused and the user is not interacting with the player.
+                    idleInterval = setInterval(async() => {
+                        const isPaused = await player.isPaused();
+                        const isEnded = await player.isEnded();
+                        if (isEnded || isPaused || !playerReady || !player) {
+                            // Destroy the player.
+                            try {
+                                player.destroy();
+                            } catch (error) {
+                                // Do nothing.
+                            }
+                            cancelAnimationFrame(onPlayingInterval);
+                            clearInterval(idleInterval);
+                            $(document).off();
+                            let $endscreen = $('#end-screen');
+                            if ($endscreen.length == 0) {
+                                // Cover the video with a message on a white background div.
+                                $('#video-wrapper')
+                                    .append(`<div id="end-screen" class="border position-absolute w-100 h-100 bg-white d-flex
+                                    justify-content-center align-items-center" style="top: 0; left: 0;">
+                                    <button class="btn btn-danger border-0 rounded-circle" style="font-size: 1.5rem;" id="restart">
+                                <i class="bi bi-arrow-repeat" style="font-size: x-large;"></i></button></div>`);
+                            }
+                            $(document).on('click', '#end-screen #restart', function(e) {
+                                e.preventDefault();
+                                location.reload();
+                            });
+                            $('#timeline-wrapper').addClass('no-pointer-events');
+                        }
+                    }, 60 * 1000 * 15);
+                } else {
+                    // Cancel the destroy player timeout.
+                    clearInterval(idleInterval);
+                }
+            });
+
+            $(document).on('iv:autoplayBlocked', function(e) {
+                e.preventDefault();
+                addNotification(M.util.get_string('autoplayblocked', 'mod_interactivevideo'), 'danger');
             });
         }
     };

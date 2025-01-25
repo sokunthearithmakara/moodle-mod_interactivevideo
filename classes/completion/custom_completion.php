@@ -62,7 +62,13 @@ class custom_completion extends activity_custom_completion {
     public function get_state(string $rule): int {
         global $DB;
 
-        $this->validate_rule($rule);
+        if (!$this->is_defined($rule)) {
+            return COMPLETION_COMPLETE;
+        }
+
+        if (!$this->is_available($rule)) {
+            throw new moodle_exception("Custom completion rule '$rule' is not used by this activity.");
+        }
 
         if ($rule === 'completionpercentage') {
             $userid = $this->userid;
@@ -156,6 +162,13 @@ class custom_completion extends activity_custom_completion {
         ];
         $extendedcompletion = $this->cm->customdata['extendedcompletion'];
         $extendedcompletion = json_decode($extendedcompletion, true);
+        // Filter out the conditions that are no longer available.
+        $allcustomrules = $this->get_defined_custom_rules();
+        $nonexistentrules = array_diff(array_keys($extendedcompletion), $allcustomrules);
+        foreach ($nonexistentrules as $rule) {
+            $description[$rule] = get_string('completiondetail:nonexistent', 'interactivevideo', $rule);
+            unset($extendedcompletion[$rule]);
+        }
         foreach ($this->subplugins as $class) {
             $description = $class::get_descriptions($description, $extendedcompletion);
         }
@@ -169,6 +182,10 @@ class custom_completion extends activity_custom_completion {
      */
     public function get_sort_order(): array {
         $customrules = $this->get_defined_custom_rules();
+        // What if we restore the module from other sites with custom ivplugins and we don't have the plugin anymore?
+        $extendedcompletion = $this->cm->customdata['extendedcompletion'];
+        $extendedcompletion = json_decode($extendedcompletion, true);
+        $customrules = array_merge($customrules, array_keys($extendedcompletion));
         // Add completionview as the first element.
         array_unshift($customrules, 'completionview');
         $customrules[] = 'completionusegrade';

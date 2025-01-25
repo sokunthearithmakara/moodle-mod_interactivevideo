@@ -171,6 +171,12 @@ class Base {
          * @type {Object}
          */
         this.extracompletion = extracompletion ? JSON.parse(extracompletion) : {};
+
+        /**
+         * Cache the annotations
+         * @type {Object}
+         */
+        this.cache = {};
     }
 
     /**
@@ -263,6 +269,15 @@ class Base {
             return `${minutes}:${seconds}`;
         }
         return `${hours}:${minutes}:${seconds}`;
+    }
+
+    /**
+     * HMS to seconds
+     * @param {string} hms The time in HH:MM:SS or MM:SS or SS format
+     * @returns {number}
+     */
+    convertHMSToSeconds(hms) {
+        return hms.split(':').reduce((acc, time) => (60 * acc) + +time);
     }
 
     /**
@@ -837,7 +852,7 @@ class Base {
             $toggleButton.find(`span`).show();
         } else if (type == 'automatic') {
             $toggleButton.find(`i`).removeClass('bi-check2 bi-circle')
-            .addClass(action == 'mark-done' ? 'bi-check2' : 'bi-circle');
+                .addClass(action == 'mark-done' ? 'bi-check2' : 'bi-circle');
         }
 
         let audio;
@@ -926,7 +941,9 @@ class Base {
             const completeTime = new Date();
             completionDetails.hasDetails = details.details ? true : false;
             completionDetails.xp = details.xp || thisItem.xp;
-            completionDetails.duration = details.duration || completeTime.getTime() - $('#video-wrapper').data('timestamp');
+            let windowAnno = window.ANNOS.find(x => x.id == id);
+            completionDetails.duration = details.duration
+                || (windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime));
             completionDetails.timecompleted = details.timecompleted || completeTime.getTime();
             const completiontime = completeTime.toLocaleString();
             let duration = this.formatTime(completionDetails.duration / 1000);
@@ -1022,8 +1039,8 @@ class Base {
             // Implement required min minutes.
             if ($(this).hasClass('mark-done') && annotation.requiremintime > 0) {
                 // Duration in minutes
-                const duration = (new Date().getTime() - $('#video-wrapper').data('timestamp')) / 1000 / 60;
-
+                const windowAnno = window.ANNOS.find(x => x.id == annotation.id);
+                const duration = (windowAnno.duration + (new Date().getTime() - windowAnno.newstarttime)) / 1000 / 60; // Minutes.
                 if (duration < annotation.requiremintime) {
                     self.addNotification(
                         M.util.get_string('youmustspendatleastminutesbeforemarkingcomplete', 'mod_interactivevideo',
@@ -1044,6 +1061,7 @@ class Base {
         });
     }
 
+
     /**
      * Applies content to the specified annotation element.
      *
@@ -1058,7 +1076,11 @@ class Base {
      */
     async applyContent(annotation) {
         const self = this;
-        const data = await self.render(annotation);
+        // We don't need to run the render method every time the content is applied. We can cache the content.
+        if (!self.cache[annotation.id] || self.isEditMode()) {
+            self.cache[annotation.id] = await self.render(annotation);
+        }
+        const data = self.cache[annotation.id];
         let $message = $(`#message[data-id='${annotation.id}']`);
         $message.find(`.modal-body`).html(data);
         $message.find(`.modal-body`).attr('id', 'content');

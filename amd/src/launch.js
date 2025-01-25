@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
  * Launch the interactive video in modal on course page
  *
@@ -22,9 +21,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery'], function($) {
+define(['jquery', 'core/str'], function($, str) {
     return {
-        init: function() {
+        init: async function() {
+            let strings = await str.get_strings([
+                {key: 'close', component: 'mod_interactivevideo'},
+                {key: 'lock', component: 'mod_interactivevideo'},
+                {key: 'unlock', component: 'mod_interactivevideo'},
+                {key: 'openinnewtab', component: 'mod_interactivevideo'},
+                {key: 'togglecontrols', component: 'mod_interactivevideo'},
+            ]);
             // Launch the interactive video in modal
             $(document).on('click', '.launch-interactivevideo', function(e) {
                 // Save the current document title.
@@ -57,7 +63,7 @@ define(['jquery'], function($) {
                                 id="playermodalLabel">
                                 <span class="h5 mb-0">
                                     <button type="button" class="btn border-0 m-1 p-1 h5 bg-transparent" data-dismiss="modal"
-                                     aria-label="Close">
+                                     aria-label="Close" title="${strings[0]}">
                                         <i class="fa fa-arrow-left text-white m-0 fa-2x" aria-hidden="true"></i>
                                     </button>
                                 </span>
@@ -69,7 +75,12 @@ define(['jquery'], function($) {
                                <div class="modal-action d-flex align-items-center position-relative z-index-1">
                                <div class="d-none d-sm-block small" data-region="activity-completion">
                                </div>
+                               <span type="button" class="btn ml-2 border-0 h5 mb-0 lock-bar"
+                                title="${strings[1]}"
+                                data-href="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}">
+                               <i class="fa fa-unlock text-white m-0 fa-xl" aria-hidden="true"></i></span>
                                <span type="button" class="btn ml-2 border-0 h5 mb-0 open-external-link"
+                                title="${strings[3]}"
                                 data-href="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}">
                                <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i></span>
                                </div>
@@ -77,7 +88,8 @@ define(['jquery'], function($) {
                            <div class="modal-body p-0 position-relative overflow-hidden ">
                            <iframe id="ivplayer" src="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}&embed=1" frameborder=0
                            class="w-100 position-absolute h-100" allow="autoplay"></iframe>
-                                <button type="button" class="btn border-0 m-1 p-1 h5 toggle-controls d-none">
+                                <button type="button" class="btn border-0 m-1 p-1 h5 toggle-controls d-none"
+                                 title="${strings[4]}">
                                    <i class="fa fa-chevron-up text-white m-0 fa-2x" aria-hidden="true"></i>
                                 </button></span>
                            </div>
@@ -96,23 +108,33 @@ define(['jquery'], function($) {
 
                     $header.addClass('show');
                     $header.fadeIn();
-
-                    setTimeout(function() {
-                        $header.removeClass('show');
-                        $header.fadeOut();
-                    }, 5000);
+                    if (!$('#playermodal').hasClass('locked')) {
+                        setTimeout(function() {
+                            $header.removeClass('show');
+                            $header.fadeOut();
+                        }, 5000);
+                    }
                 };
 
                 let iframeDoc, iframeAnnos, details, player;
                 $('#playermodal').on('shown.bs.modal', function() {
                     $('body').addClass('overflow-hidden');
                     $(this).find('.modal-header').addClass('show');
+                    if (localStorage.getItem('lock-bar')) {
+                        $(this).find('.lock-bar').trigger('click');
+                    }
+                    // Copy the activity information to the modal header.
                     let $completion = $card.find('[data-region=activity-information]');
                     $completion = $completion.clone();
                     $(this).find('[data-region="activity-completion"]').html($completion);
                     // Listen the player timeupdate event in the iframe.
                     let checkIframeDoc = function() {
-                        iframeDoc = document.getElementById('ivplayer').contentDocument;
+                        try {
+                            iframeDoc = document.getElementById('ivplayer').contentDocument;
+                        } catch (e) {
+                            cancelAnimationFrame(checkIframeDoc);
+                            return;
+                        }
                         iframeAnnos = document.getElementById('ivplayer').contentWindow.IVANNO;
                         if (!iframeDoc.getElementById('player')) {
                             requestAnimationFrame(checkIframeDoc);
@@ -152,6 +174,9 @@ define(['jquery'], function($) {
                             });
 
                             $(iframeDoc).on('mousemove', '#video-wrapper', function() {
+                                if ($('#playermodal').hasClass('locked')) {
+                                    return;
+                                }
                                 let $message = iframeDoc.querySelector('#message:not(.sticky)');
                                 let $activestart = iframeDoc.querySelector('#start-screen:not(.d-none) .hasintro');
                                 if ($message || $activestart) {
@@ -162,6 +187,9 @@ define(['jquery'], function($) {
                             });
 
                             iframeDoc.addEventListener('videoPaused', function() {
+                                if ($('#playermodal').hasClass('locked')) {
+                                    return;
+                                }
                                 let $message = iframeDoc.querySelector('#message:not(.sticky)');
                                 let $activestart = iframeDoc.querySelector('#start-screen:not(.d-none) .hasintro');
                                 if ($message || $activestart) {
@@ -195,6 +223,10 @@ define(['jquery'], function($) {
                         }
                     };
                     requestAnimationFrame(checkIframeDoc);
+
+                    $(this).off('hidden.bs.modal').on('hidden.bs.modal', function() {
+                        cancelAnimationFrame(checkIframeDoc);
+                    });
 
                     $(document).off('click', '#playermodal [data-action="toggle-manual-completion"]')
                         .on('click', '#playermodal [data-action="toggle-manual-completion"]', function() {
@@ -293,12 +325,36 @@ define(['jquery'], function($) {
                         $('#playermodal').modal('hide');
                     }
                 };
+
+                $(document).off('click', '.lock-bar').on('click', '.lock-bar', function(e) {
+                    e.preventDefault();
+                    $(this).toggleClass('locked');
+                    $('#playermodal').toggleClass('locked');
+                    if ($(this).hasClass('locked')) {
+                        $(this).attr('title', strings[2]);
+                        $(this).find('i').removeClass('fa-unlock').addClass('fa-lock');
+                        $('#playermodal .modal-header').addClass('show');
+                        // Save to local storage.
+                        localStorage.setItem('lock-bar', '1');
+                        headerFunction();
+                    } else {
+                        $(this).attr('title', strings[1]);
+                        $(this).find('i').removeClass('fa-lock').addClass('fa-unlock');
+                        // Remove from local storage.
+                        localStorage.removeItem('lock-bar');
+                        setTimeout(function() {
+                            $('#playermodal .modal-header').removeClass('show');
+                        }, 5000);
+                    }
+
+                });
             });
 
             $(document).on('click', '.open-external-link', function() {
                 $('#playermodal').modal('hide');
                 window.open($(this).data('href'), '_blank');
             });
+
 
             $(document).on('click', '.interactivevideo-card .description-show',
                 function() {

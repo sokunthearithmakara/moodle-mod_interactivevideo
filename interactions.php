@@ -177,6 +177,7 @@ $PAGE->requires->js_call_amd(
         $moduleinstance->displayoptions,
         $USER->id,
         $moduleinstance->posterimage,
+        $moduleinstance->extendedcompletion, // Extended completion settings.
     ]
 );
 

@@ -23,6 +23,8 @@
  */
 import $ from 'jquery';
 import {dispatchEvent} from 'core/event_dispatcher';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 let player;
 
 class Wistia {
@@ -39,9 +41,15 @@ class Wistia {
             password: true,
         };
     }
-    load(url, start, end, opts = {}) {
+
+    async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+            $('#start-screen, .video-block, #video-block').remove();
+        }
         this.start = start;
         if (opts.passwordprotected) {
             $('#start-screen, .video-block, #video-block').remove();
@@ -69,6 +77,7 @@ class Wistia {
                     return;
                 });
         }
+        let ready = false;
         const wistiaOptions = {
             id: videoId,
             options: {
@@ -82,6 +91,7 @@ class Wistia {
                 }
             },
             onReady: async function(video) {
+                $('#annotation-canvas').removeClass('d-none');
                 player = video;
                 self.aspectratio = self.ratio();
                 // We don't want to use the end time from the player, just to avoid any issue restarting the video.
@@ -95,10 +105,12 @@ class Wistia {
                 const eventListeners = () => {
                     video.unmute();
                     video.on("pause", () => {
+                        self.paused = true;
                         if ($(document).find('.w-password-protected').length > 0) {
                             return;
                         }
                         if (video.time() >= end) {
+                            self.ended = true;
                             dispatchEvent('iv:playerEnded');
                         } else {
                             dispatchEvent('iv:playerPaused');
@@ -116,10 +128,12 @@ class Wistia {
                         if (video.time() >= end) {
                             await video.time(start);
                         }
+                        self.paused = false;
                         dispatchEvent('iv:playerPlaying');
                     });
 
                     video.on('timechange', (s) => {
+                        self.paused = false;
                         if (s < start) {
                             video.time(start);
                         }
@@ -127,6 +141,7 @@ class Wistia {
                             video.time(end - self.frequency);
                         }
                         if (s >= end) {
+                            self.ended = true;
                             dispatchEvent('iv:playerEnded');
                         }
                     });
@@ -140,19 +155,19 @@ class Wistia {
                     });
                 };
 
+                video.mute();
                 video.play();
                 await video.time(start);
                 await video.pause();
-
-                video.on("pause", () => {
-                    if ($(document).find('.w-password-protected').length > 0) {
-                        video.play();
-                    } else {
-                        video.unbind('pause');
-                        dispatchEvent('iv:playerReady');
+                if ($(document).find('.w-password-protected').length > 0) {
+                    video.play();
+                } else {
+                    if (!ready) {
+                        ready = true;
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
                         eventListeners();
                     }
-                });
+                }
             },
             onError: function(e) {
                 dispatchEvent('iv:playerError', {error: e});
@@ -185,6 +200,7 @@ class Wistia {
      */
     play() {
         player.play();
+        this.paused = false;
     }
     /**
      * Pauses the Wistia video player.
@@ -194,6 +210,7 @@ class Wistia {
      */
     async pause() {
         await player.pause();
+        this.paused = true;
     }
     /**
      * Stops the video playback and sets the playback time to the specified start time.
@@ -238,6 +255,9 @@ class Wistia {
      * @returns {boolean} True if the player is paused, false otherwise.
      */
     isPaused() {
+        if (this.paused) {
+            return true;
+        }
         return player.state() === 'paused';
     }
     /**
@@ -246,6 +266,9 @@ class Wistia {
      * @returns {boolean} True if the player is in the 'playing' state, otherwise false.
      */
     isPlaying() {
+        if (this.paused) {
+            return false;
+        }
         return player.state() === 'playing';
     }
     /**
@@ -254,7 +277,7 @@ class Wistia {
      * @returns {boolean} True if the video has ended, otherwise false.
      */
     isEnded() {
-        return player.state() === 'ended';
+        return this.ended;
     }
     /**
      * Calculates the aspect ratio for the video player.

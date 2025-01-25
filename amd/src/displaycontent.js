@@ -195,6 +195,7 @@ const defaultDisplayContent = async function(annotation, player) {
         }
         $(this).closest("#annotation-modal").modal('hide');
         const targetMessage = $(this).closest("#message");
+        targetMessage.removeClass('active');
         targetMessage.addClass('bottom-0');
         setTimeout(function() {
             targetMessage.remove();
@@ -209,7 +210,7 @@ const defaultDisplayContent = async function(annotation, player) {
              id="annotation-modal" role="dialog" aria-labelledby="annotation-modal"
          aria-hidden="true" data-backdrop="static" data-keyboard="false">
          <div id="message" data-id="${annotation.id}" data-placement="popup"
-          class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable ${annotation.type}" role="document">
+          class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable ${annotation.type} active" role="document">
                 <div class="modal-content rounded-lg">
                     <div class="modal-header d-flex align-items-center shadow-sm pr-0" id="title">
                         ${messageTitle}
@@ -233,7 +234,7 @@ const defaultDisplayContent = async function(annotation, player) {
 
     const handleInlineDisplay = (annotation, messageTitle) => {
         $('#video-wrapper').append(`<div id="message" style="z-index:105;top:100%" data-placement="inline"
-         data-id="${annotation.id}" class="${annotation.type}">
+         data-id="${annotation.id}" class="${annotation.type} active">
         <div id="title" class="modal-header shadow-sm pr-0 rounded-0">${messageTitle}</div><div class="modal-body" id="content">
         </div></div>`);
         $(`#message[data-id='${annotation.id}']`).animate({
@@ -245,7 +246,7 @@ const defaultDisplayContent = async function(annotation, player) {
 
     const handleBottomDisplay = (annotation, messageTitle, isDarkMode) => {
         $('#annotation-content').empty();
-        $('#annotation-content').append(`<div id="message" class="fade show mt-3 ${!isDarkMode ? 'border' : ''}
+        $('#annotation-content').append(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
                  rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}">
                  <div id='title' class='modal-header shadow-sm pr-0'>${messageTitle}</div>
                 <div class="modal-body" id="content"></div></div>`);
@@ -294,11 +295,25 @@ const defaultDisplayContent = async function(annotation, player) {
                     $(this).removeClass('no-pointer-event');
                 }
             });
+            // Switch between messages.
             $(document).on('click', '#sidebar-nav .sidebar-nav-item', function() {
+                const current = $(`#sidebar-nav .sidebar-nav-item.active`).data('id');
+                if (current) {
+                    dispatchEvent('interactionclose', {
+                        annotation: {
+                            id: current
+                        }
+                    });
+                }
                 const target = $(this).data('id');
                 $(this).addClass('active').siblings().removeClass('active');
                 $('#sidebar-content #message').fadeOut(300);
-                $(`#sidebar-content #message[data-id='${target}']`).fadeIn(300);
+                $(`#sidebar-content #message[data-id='${target}']`).fadeIn(300).addClass('active');
+                dispatchEvent('interactionrun', {
+                    annotation: {
+                        id: target
+                    }
+                });
             });
         }
         // Add annotation toggle button if it does not exist.
@@ -309,8 +324,6 @@ const defaultDisplayContent = async function(annotation, player) {
         }
         // Show the sidebar.
         $('#annotation-sidebar').removeClass('hide');
-        // Remove the message if it exists.
-        $(`#sidebar-content #message[data-id='${annotation.id}']`).remove();
         // Replace the navigation item if it exists.
         if ($(`#sidebar-nav .sidebar-nav-item[data-id='${annotation.id}']`).length == 0) {
             // Add a navigation item.
@@ -323,7 +336,7 @@ const defaultDisplayContent = async function(annotation, player) {
         $('#annotation-sidebar #sidebar-nav .sidebar-nav-item:not([data-id="' + annotation.id + '"])').removeClass('active');
         // Append the message to the sidebar.
         $('#annotation-sidebar #sidebar-content').append(`<div id="message" data-placement="side"
-                    data-id="${annotation.id}" class="${annotation.type} sticky">
+                    data-id="${annotation.id}" class="${annotation.type} sticky active">
                     <div id="title" class="modal-header shadow-sm pr-0">${messageTitle}</div>
                     <div class="modal-body" id="content"></div>
                     </div>`);

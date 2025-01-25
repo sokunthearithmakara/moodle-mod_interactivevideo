@@ -23,6 +23,8 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 class Spotify {
     constructor() {
         this.type = 'spotify';
@@ -47,6 +49,10 @@ class Spotify {
     async load(url, start, end, opts = {}) {
         const node = opts.node || 'player';
         this.node = node;
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         /**
          * The start time of the video
          * @type {Number}
@@ -99,7 +105,7 @@ class Spotify {
 
         self.aspectratio = 16 / 9;
         let ready = false;
-
+        self.ended = false;
         const callback = (EmbedController) => {
             window.EmbedController = EmbedController;
             EmbedController.on('ready', () => {
@@ -112,9 +118,19 @@ class Spotify {
                 if (!ready) {
                     let totaltime = e.data.duration / 1000;
                     totaltime = Number(totaltime.toFixed(2));
+
                     if (totaltime === 0) {
                         return;
                     }
+
+                    if (totaltime < 40 && end > 40) { // Spotify shows the preview version of the audio if it cannot detect login.
+                        // We don't want to play the preview version.
+                        EmbedController.pause();
+                        EmbedController.destroy();
+                        dispatchEvent('iv:playerError', {message: 'The video is too short.'});
+                        return;
+                    }
+
                     if (e.data.position / 1000 < self.start) {
                         EmbedController.seek(self.start);
                         EmbedController.pause();
@@ -128,8 +144,11 @@ class Spotify {
                     self.totaltime = totaltime;
                     self.duration = self.end - self.start;
                     ready = true;
-                    dispatchEvent('iv:playerReady');
+                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
                 } else {
+                    if (self.ended) {
+                        return;
+                    }
                     if (self.currentTime < self.start) {
                         EmbedController.pause();
                         setTimeout(() => {
@@ -146,19 +165,11 @@ class Spotify {
                             break;
                         case false:
                             self.paused = false;
-
-                            if (self.ended) {
-                                self.ended = false;
-                                EmbedController.restart();
-                                setTimeout(() => {
-                                    EmbedController.seek(self.start + self.frequency);
-                                }, self.frequency);
-                                return;
-                            }
-
                             dispatchEvent('iv:playerPlaying');
-                            if (!self.ended && self.currentTime >= self.end - self.frequency) {
+                            if (self.currentTime >= self.end - self.frequency) {
                                 self.ended = true;
+                                self.paused = true;
+                                EmbedController.pause();
                                 dispatchEvent('iv:playerEnded');
                             }
                             break;

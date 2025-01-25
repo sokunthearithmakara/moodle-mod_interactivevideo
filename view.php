@@ -74,6 +74,21 @@ if ($moduleinstance->displayoptions) {
     $moduleinstance->displayoptions = [];
 }
 
+// Get display options from url parameters.
+// Dark mode.
+$dmode = optional_param('dm', null, PARAM_INT);
+$dfmode = optional_param('df', null, PARAM_INT);
+if ($dmode !== null) {
+    $moduleinstance->displayoptions['darkmode'] = $dmode;
+}
+if ($dmode === 1) {
+    $dfmode = 1;
+}
+// Distraction free mode.
+if ($dfmode !== null) {
+    $moduleinstance->displayoptions['distractionfreemode'] = $dfmode;
+}
+
 if (!isset($moduleinstance->displayoptions['distractionfreemode'])) {
     $moduleinstance->displayoptions['distractionfreemode'] = 1;
 }

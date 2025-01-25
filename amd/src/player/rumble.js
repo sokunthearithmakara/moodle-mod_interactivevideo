@@ -15,7 +15,7 @@
 
 /**
  * Rumble Player class
- * Doc: https://www.rumbleplayer.com/developers/Player-Examples.html
+ * Doc: https://www.rumbleplayer.com/developers/Player-Methods.html
  *
  * @module     mod_interactivevideo/player/rumble
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
@@ -23,6 +23,7 @@
  */
 import $ from 'jquery';
 import {dispatchEvent} from 'core/event_dispatcher';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
 var player;
 
@@ -48,11 +49,14 @@ class Rumble {
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
      */
-    load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.start = start;
-
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         $('#start-screen, .video-block').addClass('no-pointer');
         let ready = false;
         let firstAPIrun = false;
@@ -123,7 +127,7 @@ class Rumble {
                             player.setCurrentTime(start);
                             ready = true;
                             firstAPIrun = true;
-                            dispatchEvent('iv:playerReady');
+                            dispatchEvent('iv:playerReady', null, document.getElementById(node));
                         }
                         $(document).on('timeupdate', function() {
                             if (!ready) {

@@ -23,6 +23,8 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 var player;
 class SoundCloud {
     constructor() {
@@ -46,6 +48,10 @@ class SoundCloud {
     async load(url, start, end, opts = {}) {
         const node = opts.node || 'player';
         this.node = node;
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         /**
          * The start time of the video
          * @type {Number}
@@ -106,7 +112,7 @@ class SoundCloud {
                     self.player.seekTo(start * 1000);
                     self.player.pause();
                     ready = true;
-                    dispatchEvent('iv:playerReady');
+                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
                 });
             });
 

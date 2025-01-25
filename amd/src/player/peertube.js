@@ -24,6 +24,7 @@
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import {PeerTubePlayer} from 'mod_interactivevideo/libraries/peertube';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 let player;
 
 class PeerTube {
@@ -67,6 +68,12 @@ class PeerTube {
         const node = opts.node || 'player';
         this.start = start;
         this.node = node;
+
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+            $('#video-block, .video-block').remove();
+        }
 
         // Get the id and domain of the video.
         // Sample Url: https://video.hardlimit.com/w/hFwjKHQa3ixivePeqGc4KR
@@ -125,7 +132,7 @@ class PeerTube {
         self.posterImage = 'https://' + domain + videoInfo.thumbnailPath;
 
         let iframeURL = `https://${domain}${videoInfo.embedPath}?api=1&autoplay=1&end=${end}`;
-        iframeURL += `&warningTitle=0&controls=${showControls ? 1 : 0}&peertubeLink=0&p2p=0&muted=0`;
+        iframeURL += `&warningTitle=0&controls=${showControls || !self.allowAutoplay ? 1 : 0}&peertubeLink=0&p2p=0&muted=0`;
         if (password && password !== '') { // If the video is password protected. We need to pass the password to the embed API.
             iframeURL += `&waitPasswordFromEmbedAPI=1`;
         }
@@ -206,7 +213,7 @@ class PeerTube {
                         player.seek(self.start);
                         player.pause();
                         ready = true;
-                        dispatchEvent('iv:playerReady');
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
                         player.setVolume(1);
                     }
                 }, 100);
@@ -331,6 +338,7 @@ class PeerTube {
      */
     destroy() {
         $(`#${this.node}`).remove(); // Remove the iframe.
+        player.removeEventListener();
         dispatchEvent('iv:playerDestroyed');
     }
     /**

@@ -23,6 +23,8 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 let player;
 
 class Rutube {
@@ -48,10 +50,13 @@ class Rutube {
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
      */
-    load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
-
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         this.start = start;
         this.aspectratio = 16 / 9;
         // Sample video: https://rutube.ru/video/9235cf652dcb9d29fb02f3f6692d2a47
@@ -139,7 +144,7 @@ class Rutube {
                         }
                         break;
                     case 'player:ready':
-                        dispatchEvent('iv:playerReady');
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
                         break;
                     case 'player:currentTime':
                         self.currentTime = message.data.time;

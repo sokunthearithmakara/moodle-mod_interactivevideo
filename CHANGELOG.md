@@ -2,23 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2025-01-25
+### Fixed
+- Player didn't fire `ivplayerReady` event if the browser blocked autoplay.
+- Share-moment link included `embed=1` if the link was created from the modal.
+- `onPaused` method was not implemented on `beforeunload` event, resulting in the watched time not being saved.
+
+### Updated
+- Spotify player sometimes shows the preview version of the music tracks depending on the browser and user login. In this case, the interactions might be cut off. So, when the player is in preview mode, users will now get an error message before the player is destroyed.
+- Kill all client-side background processes and event listener if the video is invisible and paused for 30 minutes on view page and 10 minutes on interactions page. If the video already ends, the processes will be killed after 5 minutes of inactivity.
+- Get processed data from server only once for each interaction. Processed data will be saved to this.cache object with the annotation id. When the interaction is relaunched in the same session, the cached version will be used; therefore, releasing some burden from the server. This applies to view page only. One interaction page, a new data is fetched everytime the interaction is launched.
+- Notify user if the browser blocks autoplay and encourage them to allow it on the current site.
+- Kill the interactive video if on Brave browser with autoplay blocked. (We'll re-enable it in the future when Brave browser stops overly blocking the `play` method.)
+- Improve ability for other plugins to extend the mod_form and completion conditions/states, and more importantly, make sure removing or disabling the related plugins does not caused any completion issues.
+- Improve accuracy in calculting the time spent on interaction. For instance, resume counting when interaction is relaunched and pause counting when interaction is no longer active (e.g. activity closed or video playing).
+- Right-click on timestamp on the interaction list to quick-edit the interaction's timestamp. Right-click on the input to set value to the current time.
+- Minor accessiblity/UI/UX improvements
+
+### Added
+- Two url parameters to control the player appearance: `dm` for dark mode and `df` for distraction-free mode. Example: `https://yourmoodlesite.com/mod/interactivevideo/view.php?id=1&dm=1&df=1`;
+- Allow extension plugins to include js methods on the mod_form. To enable this, the plugin must add an element on the mod_form with the class '.requirejs' and the data attribute `data-plugin` value as the amd module name. Example: `<div class="requirejs" data-plugin="local_ivanalytics/main"></div>`. The plugin must implement the method `mform` to add the required js code.
+- `convertHMSToSeconds` in the base class to convert HH:MM:SS/MM:SS/SS to seconds.
+- Ability to lock the top navigation when watching the video on a modal on the course page.
+- `checkautoplay` to pre-check if the browser allows autoplay video on mute. Use `player.allowAutoplay` to check.
+- New events: `interactionrefresh` (after the refresh button is clicked), `iv:autoplayBlocked` (as soon as the player method `load` runs.)
+- `active` class to `#message` element of the current/visible interaction.
+
 ## [1.0.2] - 2025-01-17
 ### Fixed
 - Custom start time for Spotify episode
 - Timestamp column width is not respected on Safari.
-- Totaltime is undefined in some circumstances.
-- When video restarts, the annotation that has timestamp=starttime is skipped.
+- `Totaltime` is undefined in some circumstances.
+- When the video restarts, the annotation that has `timestamp=starttime` is skipped.
 - Individual completion record is not deleted from the report page on Moodle 4.1.
-- Rumble's isPlaying method always return true.
+- Rumble's `isPlaying` method always returns true.
 
 ### Updated
-- Improve error handling: remove/hide elements above the video to show the error screen (e.g. youtube video no longer available)
-- Only get posterImage and title when on editing form (opts.editform)
-- If video is already paused, do not pause again if not necessary.
-- Reset viewAnno when video restarts.
-- Increase frequency for Spotify and PeerTube since their timeupdate interval is longer than others.
-- PeerTube: use playbackStatusChange to check/dispatch pause state.
-- PeerTube: ensure video resets to start time before dispatching iv:playerReady.
+- Improve error handling: remove/hide elements above the video to show the error screen (e.g. YouTube video no longer available)
+- Only get `posterImage` and title when on editing form (`opts.editform`)
+- If the video is already paused, do not pause again if not necessary.
+- Reset `viewAnno` when the video restarts.
+- Increase frequency for Spotify and PeerTube since their time update interval is longer than others.
+- PeerTube: use `playbackStatusChange` to check/dispatch the pause state.
+- PeerTube: ensure video resets to start time before dispatching `iv:playerReady`.
+- Wistia: get annotation data from the database only after the password is validated.
 
 ## [1.0.1] - 2025-01-14
 ### Fixed

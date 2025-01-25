@@ -22,6 +22,8 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 let player;
 
 class SproutVideo {
@@ -50,6 +52,10 @@ class SproutVideo {
     async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         this.start = start;
         this.end = end;
         let regex = /(?:https?:\/\/)?(?:[^.]+\.)*(?:sproutvideo\.com\/(?:videos|embed)|vids\.io\/videos)\/(.+)/;
@@ -74,7 +80,7 @@ class SproutVideo {
                 self.totaltime = totaltime;
                 self.duration = self.end - self.start;
                 ready = true;
-                dispatchEvent('iv:playerReady');
+                dispatchEvent('iv:playerReady', null, document.getElementById(node));
                 player.setVolume(1.0);
             });
 
@@ -178,6 +184,10 @@ class SproutVideo {
         if (start > 0) {
             iframeurl += `&t=${start}`;
         }
+
+        $.get(iframeurl).catch(() => {
+            dispatchEvent('iv:playerError', {message: 'Video not found'});
+        });
 
         $('.video-block').remove();
         $('#annotation-canvas').removeClass('d-none');

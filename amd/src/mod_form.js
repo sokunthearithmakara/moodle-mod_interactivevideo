@@ -67,6 +67,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
              * Scripts to run when the player is ready.
              */
             const whenPlayerReady = async function() {
+                window.IVPLAYER = player;
                 if (player.audio) {
                     videowrapper.addClass('audio');
                 }
@@ -103,7 +104,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 posterimage.val(player.posterImage);
             };
 
-            $(document).on('iv:playerReady', function() {
+            $(document).on('iv:playerReady', '#player', function() {
                 whenPlayerReady();
             });
 
@@ -138,6 +139,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
             });
 
             videourlinput.on('input', async function() {
+                $('.noautoplay').remove();
                 videourlinput.removeClass('is-invalid');
                 videourlinput.next('.form-control-feedback').remove();
                 let currenttype = videotype.val();
@@ -369,13 +371,6 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 videowrapper.hide();
             });
 
-            // Right click on the startassistinput to enter the current time.
-            startassistinput.on('contextmenu', async function(e) {
-                e.preventDefault();
-                const currentTime = await player.getCurrentTime();
-                startassistinput.val(convertSecondsToHMS(currentTime));
-                startinput.val(currentTime);
-            });
 
             // Ctrl/Command click on the startassistinput to reset the start time to 0.
             startassistinput.on('click', function(e) {
@@ -419,14 +414,6 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 }
             });
 
-            // Right click on the endassistinput to enter the current time.
-            endassistinput.on('contextmenu', async function(e) {
-                e.preventDefault();
-                const currentTime = await player.getCurrentTime();
-                endassistinput.val(convertSecondsToHMS(currentTime));
-                endinput.val(currentTime);
-            });
-
             // Ctrl/Command click on the endassistinput to reset the end time to total time.
             endassistinput.on('click', function(e) {
                 if (e.ctrlKey || e.metaKey) {
@@ -466,6 +453,14 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         endassistinput.val(convertSecondsToHMS(totaltime));
                     }
                 }
+            });
+
+            // Right click on the assistinput to enter the current time.
+            $(document).on('contextmenu', '[data-timestamp]', async function(e) {
+                e.preventDefault();
+                const currentTime = await player.getCurrentTime();
+                $(this).val(convertSecondsToHMS(currentTime));
+                $(this).trigger('change');
             });
 
             $(document).on('click', '.showmore', function(e) {
@@ -605,6 +600,18 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 }
 
                 $('#background-loading').fadeOut(300);
+
+                // Initialize the methods required by other plugins that extend this plugin.
+                let $requirejsElements = $('.requirejs');
+                if ($requirejsElements.length) {
+                    $requirejsElements.each(function() {
+                        let $this = $(this);
+                        require([$this.data('plugin')], function(Module) {
+                            let module = new Module();
+                            module.mform();
+                        });
+                    });
+                }
             });
 
             startassistinput.val(convertSecondsToHMS(startinput.val()));

@@ -21,6 +21,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import {dispatchEvent} from 'core/event_dispatcher';
+import $ from 'jquery';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 let player;
 class Yt {
     /**
@@ -46,7 +49,7 @@ class Yt {
         this.support = {
             playbackrate: true,
             quality: false,
-            password: false,
+            password: true,
         };
     }
     /**
@@ -57,11 +60,15 @@ class Yt {
      * @param {object} opts
      * @return {Promise<Boolean>}
      */
-    load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const customStart = opts.customStart || false;
         const preload = opts.preload || false;
         const node = opts.node || 'player';
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         /**
          * The start time of the video
          * @type {Number}
@@ -90,6 +97,7 @@ class Yt {
         let loadedcaption = false;
         var ready = false;
         var self = this;
+        let hasError = false;
         var options = {
             videoId: videoId,
             width: 1080,
@@ -112,11 +120,16 @@ class Yt {
             },
             events: {
                 onError: function(e) {
+                    hasError = true;
                     dispatchEvent('iv:playerError', {error: e.data});
                 },
                 onReady: function(e) {
                     self.title = e.target.videoTitle;
                     // We don't want to use the end time from the player, just to avoid any issue restarting the video.
+                    if (e.target.getDuration() <= 0) {
+                        dispatchEvent('iv:playerError', {error: 'Video not found'});
+                        return;
+                    }
                     let totaltime = Number(e.target.getDuration().toFixed(2)) - self.frequency;
                     end = !end ? totaltime : Math.min(end, totaltime);
                     end = Number(end.toFixed(2));
@@ -128,24 +141,40 @@ class Yt {
                     // Otherwise, if user seek before start, they're gonna get blackscreen.
                     if (preload == true && customStart == false) { // For editing form
                         ready = true;
-                        dispatchEvent('iv:playerReady');
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
                     } else {
                         e.target.mute();
                         e.target.playVideo();
+                        let count = 0;
                         let interval = setInterval(() => {
+                            count++;
                             if (ready === true) {
                                 clearInterval(interval);
+                                e.target.pauseVideo();
+                                e.target.unMute();
                                 return;
                             }
-                            if (e.target.getCurrentTime() > 0) {
+                            if (e.target.getCurrentTime() > 0 || count > 6) {
                                 clearInterval(interval);
+                                if (hasError) {
+                                    return;
+                                }
                                 e.target.seekTo(self.start);
                                 e.target.pauseVideo();
                                 e.target.unMute();
                                 ready = true;
-                                dispatchEvent('iv:playerReady');
+                                dispatchEvent('iv:playerReady', null, document.getElementById(node));
                             }
                         }, 1000);
+                    }
+                },
+
+                onAutoplayBlocked: function(e) {
+                    $(`.video-block, #video-block`).remove();
+                    if (ready === false) {
+                        e.target.unMute();
+                        ready = true;
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
                     }
                 },
 

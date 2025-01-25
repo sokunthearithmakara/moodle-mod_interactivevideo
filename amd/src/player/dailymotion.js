@@ -22,6 +22,7 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 let player;
 class DailyMotion {
     /**
@@ -51,6 +52,10 @@ class DailyMotion {
         const node = opts.node || 'player';
         this.start = start;
 
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         const reg = /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/g;
         const match = reg.exec(url);
         const videoId = match[1];
@@ -79,6 +84,11 @@ class DailyMotion {
         let dailymotion;
         const dailymotionEvents = async(player) => {
             const state = await player.getState();
+            if (state.playerIsViewable === false && state.videoDuration == 0) {
+                dispatchEvent('iv:playerError', {error: 'Video is not viewable.'});
+                return;
+            }
+
             player.off(dailymotion.events.VIDEO_DURATIONCHANGE);
             if ((state.videoIsPasswordRequired && state.videoDuration == 0) || state.videoDuration == 0) {
                 player.on(dailymotion.events.VIDEO_DURATIONCHANGE, function() {
@@ -122,6 +132,16 @@ class DailyMotion {
             dispatchEvent('iv:playerLoaded', {
                 tracks: tracks, qualities: self.getQualities(),
             });
+
+            // If the browser blocks autoplay, we need to show the play button.
+            if (!state.playerIsPlaybackAllowed && !ready) {
+                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                $('#start-screen #play').removeClass('d-none');
+                $('#start-screen #spinner').remove();
+                $('.video-block, #video-block').addClass('no-pointer bg-transparent');
+                // $('#start-screen').addClass('no-pointer');
+                $('#annotation-canvas').removeClass('d-none');
+            }
 
             // Handle Dailymotion behavior. Video always start from the start time,
             // So if you seek before starting the video, it will just start from the beginning.
@@ -215,20 +235,26 @@ class DailyMotion {
                         player.setMute(true);
                     }
                     setTimeout(async() => {
+                        if (state.playerIsPlaybackAllowed) {
                         player.pause();
+                        }
                         player.seek(start);
                         player.setMute(false);
                         if (!ready) {
                             playerEvents();
                             ready = true;
-                            dispatchEvent('iv:playerReady');
+                            if (state.playerIsPlaybackAllowed) {
+                                dispatchEvent('iv:playerReady');
+                            }
                         }
-                    }, 1000);
+                    }, state.playerIsPlaybackAllowed ? 1000 : 0);
                 });
             } else {
                 playerEvents();
                 ready = true;
-                dispatchEvent('iv:playerReady');
+                if (state.playerIsPlaybackAllowed) {
+                    dispatchEvent('iv:playerReady');
+                }
             }
 
             // Show ads to user so they know ad is playing, not because something is wrong.
@@ -390,6 +416,7 @@ class DailyMotion {
      * and release any resources held by the player.
      */
     destroy() {
+        player.off();
         player.destroy();
     }
     /**

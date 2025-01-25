@@ -218,20 +218,9 @@ export default class SkipSegment extends Base {
             return;
         }
         setTimeout(() => {
-            $('#skipsegment').fadeOut(300);
-            setTimeout(() => {
-                $('#skipsegment').remove();
-            }, 300);
-            const checkPlaying = setInterval(async() => {
-                const isPaused = await self.player.isPaused();
-                const isPlaying = await self.player.isPlaying();
-                if (!isPaused && isPlaying) {
-                    clearInterval(checkPlaying);
-                } else {
-                    self.player.play();
-                }
-            }, 10);
-        }, this.player.type === 'rumble' ? 1000 : 0);
+            $('#skipsegment').remove();
+            self.player.play();
+        }, 300);
 
     }
 }

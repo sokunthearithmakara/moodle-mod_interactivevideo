@@ -23,6 +23,8 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+
 let player;
 
 class Kinescope {
@@ -48,11 +50,15 @@ class Kinescope {
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
      */
-    load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
         this.start = start;
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked');
+        }
         // Sample video: https://kinescope.io/{token}
         let regex = /kinescope\.io\/(.*)/;
         let match = regex.exec(url);
@@ -120,7 +126,7 @@ class Kinescope {
                         await player.seekTo(start);
                         await player.pause();
                         ready = true;
-                        dispatchEvent('iv:playerReady');
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
                     });
                     pl.on(pl.Events.Play, async function(event) {
                         if (!ready) {
@@ -179,6 +185,12 @@ class Kinescope {
                         }
                         dispatchEvent('iv:playerQualityChange', {quality: event.quality});
                     })
+                    pl.on(pl.Events.PlaybackRateChange, async function(event) {
+                        if (!ready) {
+                            return;
+                        }
+                        dispatchEvent('iv:playerSpeedChange', {rate: event.playbackRate});
+                    });
                 });
         };
 
@@ -313,6 +325,7 @@ class Kinescope {
      */
     async destroy() {
         if (player) {
+            player.off();
             await player.destroy();
         } else {
             $(`#${this.node}`).remove();

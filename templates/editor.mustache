@@ -85,7 +85,7 @@ Example context (json):
             {{! content item template }}
             <table>
                 <tr id="annotation-template"
-                    class="annotation listItem border-bottom d-none"
+                    class="annotation listItem border-bottom d-none position-relative"
                     data-timestamp="0"
                     data-id="0"
                     data-type="">
@@ -95,7 +95,7 @@ Example context (json):
                               class="timestamp bg-light px-2 py-1 rounded-sm text-truncate">0</span>
                         <input type="text"
                                name="timestampassist"
-                               data-field="timestamp"
+                               data-field="timestamp" title="{{#str}}rightclicktosetcurrenttime, mod_interactivevideo{{/str}}"
                                class="form-control form-control-sm d-none">
                     </td>
                     <td>

@@ -21,6 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import {dispatchEvent} from 'core/event_dispatcher';
+import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
 class Html5Video {
     /**
@@ -28,7 +29,7 @@ class Html5Video {
      */
     constructor() {
         this.type = "html5video";
-        this.frequency = 0.5;
+        this.frequency = 0.4;
         this.useAnimationFrame = false;
         this.support = {
             playbackrate: true,
@@ -43,12 +44,18 @@ class Html5Video {
      * @param {number} [end] - The end time of the video in seconds. If not provided, defaults to the video's duration.
      * @param {object} opts - The options for the player.
      */
-    load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         const autoplay = opts.autoplay || false;
         this.start = start;
         this.end = end;
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
+            dispatchEvent('iv:autoplayBlocked', {
+                requireVideoBlock: true
+            });
+        }
         var player = document.getElementById(node);
         this.posterImage = player.poster;
         // Check if the url is for video or audio.
@@ -98,7 +105,7 @@ class Html5Video {
             dispatchEvent('iv:playerLoaded', {
                 tracks: null
             });
-            dispatchEvent('iv:playerReady');
+            dispatchEvent('iv:playerReady', null, document.getElementById(node));
         });
 
         player.addEventListener('seeked', function() {
@@ -312,6 +319,7 @@ class Html5Video {
         this.player.pause();
         this.player.removeAttribute('src');
         this.player.load();
+        this.player.removeEventListeners();
     }
     /**
      * Retrieves the current state of the video player.

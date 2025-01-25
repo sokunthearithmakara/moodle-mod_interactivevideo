@@ -237,7 +237,12 @@ export default class ContentBank extends Base {
             requestAnimationFrame(detectH5P);
         };
 
-        const data = await self.render(annotation);
+        // We don't need to run the render method every time the content is applied. We can cache the content.
+        if (!self.cache[annotation.id] || self.isEditMode()) {
+            self.cache[annotation.id] = await self.render(annotation);
+        }
+        const data = self.cache[annotation.id];
+
         $message.find(`.modal-body`).html(data).attr('id', 'content').fadeIn(300);
         if (annotation.hascompletion != 1 || self.isEditMode()) {
             return;

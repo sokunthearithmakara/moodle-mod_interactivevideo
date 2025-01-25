@@ -274,6 +274,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                     'data-boundary' => "viewport",
                     'data-original-title' => '💡' . get_string('starttip', 'mod_interactivevideo'),
                     'data-html' => "true",
+                    'data-timestamp' => "true",
                 ]
             );
             $mform->setType('startassist', PARAM_TEXT);
@@ -300,6 +301,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                     'data-boundary' => "viewport",
                     'data-original-title' => '💡' . get_string('endtip', 'mod_interactivevideo'),
                     'data-html' => "true",
+                    'data-timestamp' => "true",
                 ]
             );
             $mform->setType('endassist', PARAM_TEXT);
@@ -693,6 +695,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             ['group' => 1],
             [0, 1]
         );
+        $mform->addHelpButton('autoplay', 'autoplay', 'mod_interactivevideo');
 
         // Pause video if window is not active.
         $mform->addElement(
@@ -713,6 +716,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             ['group' => 1],
             [0, 1]
         );
+        $mform->addHelpButton('preventskipping', 'preventskipping', 'mod_interactivevideo');
 
         // Prevent seeking.
         $mform->addElement(
@@ -1026,16 +1030,14 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $mform->disabledIf($completionpercentageel, $completionpercentageenabledel, 'notchecked');
 
         $return = [$completionpercentagegroupel];
-
         // Get other elements from plugins.
         foreach ($this->subplugins as $class) {
             if (!method_exists($class, 'customcompletion_definition')) {
                 continue;
             }
             try {
-                $el = $class::customcompletion_definition($mform);
-                $el['element'];
-                $return[] = $el['group'];
+                $els = $class::customcompletion_definition($mform);
+                $return = array_merge($return, $els);
             } catch (Exception $e) {
                 continue;
             }
@@ -1057,6 +1059,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             $hascompletion = true;
         }
 
+        $extendedcompletion = json_decode($data['extendedcompletion'], true);
+
         // Get other elements from plugins that extends ivhascompletion.
         foreach ($this->subplugins as $class) {
             if (!method_exists($class, 'completion_rule_enabled')) {
@@ -1064,6 +1068,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             }
             try {
                 $hascompletion = $class::completion_rule_enabled($data) ? true : $hascompletion;
+                $customcompletion = $class::custom_rules();
             } catch (Exception $e) {
                 continue;
             }
@@ -1079,23 +1084,27 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         if (!empty($data->completionunlocked)) {
             $completion = $data->{'completion'};
             $autocompletion = !empty($completion) && $completion == COMPLETION_TRACKING_AUTOMATIC;
-            if (empty($data->{'completionpercentageenabled'}) && $autocompletion) {
-                $data->{'completionpercentage'} = 0;
-            }
-
-            $customcompletion = [];
-            foreach ($this->subplugins as $class) {
-                if (!method_exists($class, 'data_postprocessing')) {
-                    continue;
+            if ($autocompletion) {
+                if (empty($data->{'completionpercentageenabled'}) && $autocompletion) {
+                    $data->{'completionpercentage'} = 0;
                 }
-                try {
-                    $customcompletion = $class::data_postprocessing($data, $customcompletion);
-                } catch (Exception $e) {
-                    continue;
-                }
-            }
 
-            $data->{'extendedcompletion'} = json_encode($customcompletion);
+                $customcompletion = [];
+                foreach ($this->subplugins as $class) {
+                    if (!method_exists($class, 'data_postprocessing')) {
+                        continue;
+                    }
+                    try {
+                        $customcompletion = $class::data_postprocessing($data, $customcompletion);
+                    } catch (Exception $e) {
+                        continue;
+                    }
+                }
+
+                $data->{'extendedcompletion'} = json_encode($customcompletion);
+            } else {
+                $data->{'extendedcompletion'} = '';
+            }
         }
     }
 }

@@ -22,6 +22,12 @@
     --ivsuccessalt: #eaf4ea;
 }
 
+.path-mod-interactivevideo {
+    h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+        color: unset;
+    }
+}
+
 html:has(.path-mod-interactivevideo) {
     scrollbar-color: hsl(0, 0%, 67%) transparent;
 }
@@ -71,6 +77,7 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo .navbar.fixed-top {
     height: 70px;
+    z-index: 1030 !important;
 }
 
 .path-mod-interactivevideo.darkmode .navbar .dropdown-toggle::after {
@@ -311,7 +318,7 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo #toolbar {
     right: 0;
-    width: 0;
+    width: 25px;
     overflow: visible;
     z-index: 1032;
     height: 100dvh;
@@ -321,7 +328,7 @@ html:has(.path-mod-interactivevideo) {
     align-content: center;
 
     .btn {
-        left: -25px;
+        left: 0;
         width: 25px;
         text-align: center;
         padding: 0.5rem 0;
@@ -335,6 +342,10 @@ html:has(.path-mod-interactivevideo) {
     .btn:hover {
         opacity: 1;
     }
+}
+
+.path-mod-interactivevideo:not(.bg-dark) #toolbar .btn {
+    opacity: 0.8;
 }
 
 #page-mod-interactivevideo-interactions {
@@ -380,6 +391,10 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo .mform .col-form-label {
     margin-bottom: 0.25rem;
     font-weight: 600;
+}
+
+.path-mod-interactivevideo .mform i.icon.fa-circle-question {
+    line-height: 1.5;
 }
 
 .path-mod-interactivevideo #video-wrapper {
@@ -496,7 +511,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo .toast-wrapper {
-    z-index: 1053;
+    z-index: 1053 !important;
 }
 
 .path-mod-interactivevideo #video-action {
@@ -981,6 +996,7 @@ html:has(.path-mod-interactivevideo) {
 
 #page-mod-interactivevideo-report th.rotate {
     height: 140px;
+    min-width: 30px;
     white-space: nowrap;
     overflow: hidden;
     position: relative;
@@ -992,7 +1008,8 @@ html:has(.path-mod-interactivevideo) {
     display: flex;
     justify-content: start;
     left: calc(50% - 16px);
-    position: relative;
+    position: absolute;
+    bottom: 0.5rem;
 }
 
 #page-mod-interactivevideo-report th.rotate>div>a {
@@ -1200,10 +1217,6 @@ html:has(.path-mod-interactivevideo) {
     transition: opacity ease-in-out 300ms;
 }
 
-.path-mod-interactivevideo #controller:hover {
-    opacity: 1;
-}
-
 .path-mod-interactivevideo.default-mode #controller {
     border-radius: 0.75rem;
     opacity: 1;
@@ -1258,6 +1271,10 @@ html:has(.path-mod-interactivevideo) {
         left: 400px;
         width: calc(100% - 400px);
         transition: left ease 300ms, width ease 300ms;
+    }
+
+    .path-mod-interactivevideo:has(#toolbar:empty) #interactivevideo-container.chapter-open {
+        width: calc(100% - 400px);
     }
 }
 
@@ -1488,6 +1505,10 @@ html:has(.path-mod-interactivevideo) {
     scrollbar-width: thin;
 }
 
+.path-course-view #playermodal.modal-fullscreen>.modal-dialog {
+    transition: all ease-in-out 300ms, he;
+}
+
 .path-course-view #playermodal.modal-fullscreen>.modal-dialog:not(:has(.show-control)) {
     max-width: 100% !important;
     width: 100% !important;
@@ -1495,7 +1516,7 @@ html:has(.path-mod-interactivevideo) {
     max-height: calc(100dvh + 55px);
     height: calc(100dvh + 55px);
     margin: 0;
-    transition: height ease-in-out 300ms;
+    transition: all ease-in-out 300ms;
 }
 
 .path-mod-interactivevideo #form-field-list .list-group-item {
@@ -1905,6 +1926,10 @@ html:has(.path-mod-interactivevideo) {
     z-index: 1;
     height: calc(100% - 45px);
     border-top: 1px solid #788389;
+}
+
+::-webkit-scrollbar-button {
+    display: none;
 }
 
 #page-mod-interactivevideo-interactions #timeline-wrapper #timeline-btns {
@@ -2456,15 +2481,19 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     font-size: unset;
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) [data-region="completionrequirements"] .badge {
+.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) [data-region="completionrequirements"] .badge {
     margin-bottom: 0.25rem;
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .card-only [data-region="completionrequirements"] .badge {
+.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .card-only [data-region="completionrequirements"] .badge {
     margin-bottom: 0.25rem;
     font-size: 0.76rem;
     opacity: 0.85;
     display: inline-flex;
+}
+
+.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .card-only [data-region="completionrequirements"] {
+    overflow: hidden;
 }
 
 .path-course-view .modtype_interactivevideo:has(.interactivevideo-card).highlighted {
@@ -2818,6 +2847,22 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     top: 0;
     left: 0;
     bottom: 0;
+    >.modal-dialog .modal-body {
+        transition: all ease-in-out 300ms;
+    }
+}
+
+.path-course-view #playermodal.locked {
+    .modal-header {
+        top: 0;
+        display: flex !important;
+    }
+
+    >.modal-dialog .modal-body {
+        margin-top: 50px;
+        height: calc(100dvh - 50px);
+        transition: all ease-in-out 300ms;
+    }
 }
 
 .path-mod-interactivevideo [data-action="toggle-manual-completion"] i {
@@ -2855,4 +2900,35 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 
 .path-course-view:has(.interactivevideo-card) #format_tiles_overlay {
     z-index: 1;
+}
+
+.path-mod-interactivevideo tr .timestamp-info {
+    left: 0;
+    top: -30px;
+    background: var(--ivprimaryalt);
+    width: 100%;
+    padding: 0.1rem 0.5rem;
+    height: 30px;
+    line-height: 30px;
+    font-size: 1em;
+    border-top-left-radius: 0.2rem;
+    border-top-right-radius: 0.2rem;
+}
+
+.path-mod-interactivevideo #autoplay-error {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    line-height: 30px;
+}
+
+.path-mod-interactivevideo.path-mod-interactivevideo.distraction-free #autoplay-error {
+    bottom: calc(1rem + 55px);
+    right: 1rem;
+    left: unset;
+    z-index: 1050;
 }

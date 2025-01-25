@@ -202,7 +202,7 @@ export default class Chapter extends Base {
         await this.player.pause();
         $('#controler').addClass('no-pointer-events');
         $('#video-wrapper').append(`<h2 id="message" style="z-index:105" class="chapter position-absolute w-100 py-4
-        px-3 m-0 justify-content-start"><span class="text-truncate">${annotation.formattedtitle}</span></h2>`);
+        px-3 m-0 justify-content-start no-pointer"><span class="text-truncate">${annotation.formattedtitle}</span></h2>`);
         // Add a progress bar and load it for 3 seconds.
         $('#video-wrapper #message').append(`<div id="chapterprogress" class="position-absolute w-100">
         <div class="progress-bar"></div></div>`);
@@ -210,12 +210,11 @@ export default class Chapter extends Base {
             'top': '1em',
         }, 300, 'swing');
         $('#chapterprogress .progress-bar').animate({'width': '100%'}, 3000, 'linear', () => {
+            $('h2#message').remove();
             if (!this.isEditMode()) {
                 $('#message span').css('top', '0');
                 this.player.play();
                 $('#controler').removeClass('no-pointer-events');
-            } else {
-                $('h2#message').remove();
             }
         });
     }
