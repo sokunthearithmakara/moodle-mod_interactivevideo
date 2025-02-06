@@ -1,14 +1,1 @@
-name: Report an Issue
-description: Describe your issue and select a status
-body:
-  - type: dropdown
-    id: mark-as
-    attributes:
-      label: "Mark as"
-      options:
-        - Open
-        - Needs Review
-        - Resolved
-        - Duplicate
-        - Wontfix
-        - Invalid
+
