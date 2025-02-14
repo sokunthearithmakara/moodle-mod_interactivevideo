@@ -67,14 +67,16 @@ class Html5Video {
             // Append a canvas element to the video.
             const canvas = '<canvas id="visualizer"></canvas>';
             player.insertAdjacentHTML('afterend', canvas);
+            player.style.visibility = 'hidden';
         }
         player.src = url;
         player.controls = showControls;
         player.currentTime = start;
+        player.setAttribute('muted', '');
+
         if (document.body.classList.contains('mobiletheme') || autoplay) {
             // Preload video on mobile app. Must mute to avoid browser restriction.
-            player.muted = true;
-            player.autoplay = true;
+            player.setAttribute('autoplay', '');
         }
         // Disable keyboard controls.
         player.tabIndex = -1;
@@ -108,18 +110,18 @@ class Html5Video {
             dispatchEvent('iv:playerReady', null, document.getElementById(node));
         });
 
-        player.addEventListener('seeked', function() {
-            dispatchEvent('iv:playerSeek', {time: player.currentTime});
-        });
-
         player.addEventListener('pause', function() {
             self.paused = true;
             dispatchEvent('iv:playerPaused');
         });
 
+        player.addEventListener('play', function() {
+            self.paused = false;
+            dispatchEvent('iv:playerPlaying');
+        });
+
         player.addEventListener('timeupdate', function() {
             if (self.paused) {
-                dispatchEvent('iv:playerPaused');
                 return;
             }
             if (player.currentTime < self.start) {
@@ -128,7 +130,6 @@ class Html5Video {
             if (player.currentTime >= self.end + self.frequency) {
                 player.currentTime = self.end - self.frequency;
             }
-            self.paused = false;
             dispatchEvent('iv:playerPlaying');
             if (self.ended) {
                 self.ended = false;
@@ -223,8 +224,8 @@ class Html5Video {
      *
      * This method calls the pause function on the player instance to stop the video.
      */
-    async pause() {
-        await this.player.pause();
+    pause() {
+        this.player.pause();
         this.paused = true;
         return true;
     }
@@ -246,6 +247,7 @@ class Html5Video {
     seek(time) {
         this.ended = false;
         this.player.currentTime = time;
+        dispatchEvent('iv:playerSeek', {time});
         return true;
     }
     /**
@@ -350,6 +352,7 @@ class Html5Video {
      */
     unMute() {
         this.player.muted = false;
+        this.player.volume = 1;
     }
 
     /**

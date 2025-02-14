@@ -33,7 +33,17 @@ class form extends \mod_interactivevideo\form\base_form {
      */
     public function set_data_for_dynamic_submission(): void {
         $data = $this->set_data_default();
-
+        $conditionaltime = json_decode($data->text1, true);
+        $data->gotoonpassing = $conditionaltime['gotoonpassing'];
+        $data->forceonpassing = $conditionaltime['forceonpassing'];
+        $data->timeonpassing = date('H:i:s', strtotime('TODAY') + $conditionaltime['timeonpassing']);
+        $data->gotoonfailed = $conditionaltime['gotoonfailed'];
+        $data->forceonfailed = $conditionaltime['forceonfailed'];
+        $data->timeonfailed = date('H:i:s', strtotime('TODAY') + $conditionaltime['timeonfailed']);
+        $data->showtextonpassing = $conditionaltime['showtextonpassing'];
+        $data->textonpassing = $conditionaltime['textonpassing'];
+        $data->showtextonfailed = $conditionaltime['showtextonfailed'];
+        $data->textonfailed = $conditionaltime['textonfailed'];
         $this->set_data($data);
     }
 
@@ -214,8 +224,134 @@ class form extends \mod_interactivevideo\form\base_form {
         );
         $mform->hideIf('char1', 'completiontracking', 'in', ['none', 'manual', 'view']);
         $mform->disabledIf('char1', 'xp', 'eq', 0);
+
         $this->display_options_field();
-        $this->advanced_form_fields(true, true, true, true);
+        $this->advanced_form_fields([
+            'hascompletion' => true,
+        ]);
+
+        $elements = [];
+        $elements[] = $mform->createElement(
+            'text',
+            'timeonpassing',
+            '<i class="bi bi-clock mr-2"></i>' . get_string('timeonpassing', 'ivplugin_contentbank'),
+            [
+                'size' => 25,
+                'class' => 'timestamp-input',
+                'readonly' => 'readonly',
+                'placeholder' => '00:00:00',
+            ]
+        );
+        $mform->setType('timeonpassing', PARAM_TEXT);
+        $elements[] = $mform->createElement('button', 'timeonpassingbutton', '<i class="bi bi-stopwatch"></i>', [
+            'class' => 'pickatime',
+            'title' => get_string('pickatime', 'ivplugin_contentbank'),
+            'data-field' => 'timeonpassing',
+        ]);
+        $elements[] = $mform->createElement('button', 'resettimepass', '<i class="bi bi-trash3 text-danger"></i>', [
+            'class' => 'resettime',
+            'title' => get_string('resettime', 'ivplugin_contentbank'),
+            'data-field' => 'timeonpassing',
+        ]);
+        $mform->addGroup($elements, 'timeonpassinggroup', get_string('timeonpassing', 'ivplugin_contentbank'), '', false);
+        // Text to display when passing.
+        $element = [];
+        $element[] = $mform->createElement(
+            'advcheckbox',
+            'showtextonpassing',
+            '',
+            get_string('showtextonpassing', 'ivplugin_contentbank'),
+            null,
+            [0, 1]
+        );
+        $element[] = $mform->createElement(
+            'editor',
+            'textonpassing',
+        );
+        $mform->setType('textonpassing', PARAM_RAW);
+        $mform->addGroup($element, 'textonpassinggroup', '', '', false);
+
+        $mform->hideIf('gotosegmentpassing', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('timeonpassinggroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('textonpassinggroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('timeonpassinggroup', 'gotoonpassing', 'eq', 0);
+        $mform->hideIf('textonpassing', 'showtextonpassing', 'eq', 0);
+
+        // Handle failing grade.
+        $elements = [];
+        $elements[] = $mform->createElement(
+            'advcheckbox',
+            'gotoonfailed',
+            '',
+            get_string('gototimestamp', 'ivplugin_contentbank'),
+            null,
+            [0, 1]
+        );
+        $elements[] = $mform->createElement(
+            'advcheckbox',
+            'forceonfailed',
+            '',
+            get_string('force', 'ivplugin_contentbank'),
+            null,
+            [0, 1]
+        );
+        $elements[] = $mform->createElement(
+            'static',
+            'gotosegment_desc',
+            '',
+            '<span class="text-muted small w-100 d-block">' . get_string('gotosegment_desc', 'ivplugin_contentbank') . '</span>'
+        );
+        $mform->addGroup($elements, 'gotosegment', get_string('onfailedgrade', 'ivplugin_contentbank'), '', false);
+        $mform->disabledIf('forceonfailed', 'gotoonfailed', 'eq', 0);
+
+        $elements = [];
+        $elements[] = $mform->createElement(
+            'text',
+            'timeonfailed',
+            '<i class="bi bi-clock mr-2"></i>' . get_string('timeonfailed', 'ivplugin_contentbank'),
+            [
+                'size' => 25,
+                'class' => 'timestamp-input',
+                'readonly' => 'readonly',
+                'placeholder' => '00:00:00',
+            ]
+        );
+        $mform->setType('timeonfailed', PARAM_TEXT);
+        $elements[] = $mform->createElement('button', 'timeonfailedbutton', '<i class="bi bi-stopwatch"></i>', [
+            'class' => 'pickatime',
+            'title' => get_string('pickatime', 'ivplugin_contentbank'),
+            'data-field' => 'timeonfailed',
+        ]);
+        $elements[] = $mform->createElement('button', 'resettimefail', '<i class="bi bi-trash3 text-danger"></i>', [
+            'class' => 'resettime',
+            'title' => get_string('resettime', 'ivplugin_contentbank'),
+            'data-field' => 'timeonfailed',
+        ]);
+        $mform->addGroup($elements, 'timeonfailedgroup', get_string('timeonfailed', 'ivplugin_contentbank'), '', false);
+
+        // Text to display when failed.
+        $element = [];
+        $element[] = $mform->createElement(
+            'advcheckbox',
+            'showtextonfailed',
+            '',
+            get_string('showtextonfailed', 'ivplugin_contentbank'),
+            null,
+            [0, 1]
+        );
+        $element[] = $mform->createElement(
+            'editor',
+            'textonfailed',
+        );
+        $mform->setType('textonfailed', PARAM_RAW);
+        $mform->addGroup($element, 'textonfailedgroup', '', '', false);
+
+        $mform->hideIf('gotosegment', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('timeonfailedgroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('textonfailedgroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('timeonfailedgroup', 'gotoonfailed', 'eq', 0);
+        $mform->hideIf('textonfailed', 'showtextonfailed', 'eq', 0);
+
         $this->close_form();
     }
 
@@ -227,15 +363,29 @@ class form extends \mod_interactivevideo\form\base_form {
      */
     public function pre_processing_data($data) {
         $data = parent::pre_processing_data($data);
-        if ($data->completiontracking == 'none') {
-            $data->xp = 0;
-            $data->hascompletion = 0;
-        } else {
-            $data->hascompletion = 1;
-        }
         // If the completion tracking is set to none, manual, or view, then the partial points should be 0.
         if (in_array($data->completiontracking, ['none', 'manual', 'view'])) {
             $data->char1 = 0;
+            $data->text1 = '';
+        } else {
+            $data->text1 = [
+                'gotoonpassing' => $data->gotoonpassing,
+                'forceonpassing' => $data->gotoonpassing == 1 && $data->forceonpassing == 1 ? 1 : 0,
+                'timeonpassing' => $data->gotoonpassing == 1 ? $data->timeonpassing : '00:00:00',
+                'showtextonpassing' => $data->showtextonpassing,
+                'textonpassing' => $data->textonpassing,
+                'gotoonfailed' => $data->gotoonfailed,
+                'forceonfailed' => $data->gotoonfailed == 1 && $data->forceonfailed == 1 ? 1 : 0,
+                'timeonfailed' => $data->gotoonfailed == 1 ? $data->timeonfailed : '00:00:00',
+                'showtextonfailed' => $data->showtextonfailed,
+                'textonfailed' => $data->textonfailed,
+            ];
+
+            // Convert timestamp to seconds.
+            $data->text1['timeonpassing'] = strtotime($data->text1['timeonpassing']) - strtotime('TODAY');
+            $data->text1['timeonfailed'] = strtotime($data->text1['timeonfailed']) - strtotime('TODAY');
+
+            $data->text1 = json_encode($data->text1);
         }
         return $data;
     }

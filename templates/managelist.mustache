@@ -1,0 +1,64 @@
+{{!
+This file is part of Moodle - http://moodle.org/
+Moodle is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+Moodle is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Moodle.  If not, see <http://www.gnu.org/licenses />.
+}}
+{{!
+@template mod_interactivevideo/managelist
+TODO describe template managelist
+Example context (json):
+{
+}
+}}
+<table id="videolist"
+       class="table table-bordered table-striped d-none w-100"
+       style="min-width: 100%">
+    <thead>
+        <tr>
+            <th id="col-id"></th>
+            <th id="col-actions"></th>
+            <th id="col-instance">{{#str}}instance,mod_interactivevideo{{/str}}</th>
+            <th id="col-posterimage">{{#str}}video,mod_interactivevideo{{/str}}</th>
+            <th id="col-title" style="width: 300px;">{{#str}}title, mod_interactivevideo{{/str}}</th>
+            <th id="col-sectionnum">{{#str}}sectionnum,mod_interactivevideo{{/str}}</th>
+            <th id="col-type">{{#str}}type, mod_interactivevideo{{/str}}</th>
+            <th id="col-view">
+                <i class="bi bi-people-fill"
+                   data-toggle="tooltip"
+                   title="{{#str}}views, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}views, mod_interactivevideo{{/str}}</span>
+            </th>
+            <th id="col-duration">
+                <i class="bi bi-stopwatch"
+                   data-toggle="tooltip"
+                   title="{{#str}}duration, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}duration, mod_interactivevideo{{/str}}</span>
+            </th>
+            <th id="col-xp">
+                <i class="bi bi-star"
+                   data-toggle="tooltip"
+                   title="{{#str}}xp, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}xp, mod_interactivevideo{{/str}}</span>
+            </th>
+            <th id="col-count">
+                <i class="bi bi-bullseye"
+                   data-toggle="tooltip"
+                   title="{{#str}}interactioncount, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}interactioncount, mod_interactivevideo{{/str}}</span>
+            </th>
+            {{#type}}
+            <th id="col-{{name}}" data-toggle="tooltip" title="{{title}}">
+                <i class="{{icon}}"></i>
+            </th>
+            {{/type}}
+            <th id="sectionname">{{#str}}sectionname, mod_interactivevideo{{/str}}</th>
+            <th id="col-url">{{#str}}url, mod_interactivevideo{{/str}}</th>
+    </tr>
+</thead>
+<tbody>
+</tbody>
+</table>

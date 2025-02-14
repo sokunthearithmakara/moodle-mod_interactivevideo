@@ -152,7 +152,6 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         }
         if (count($source) > 1) {
             $mform->addElement('select', 'source', get_string('source', 'mod_interactivevideo'), $source);
-            $mform->addRule('source', null, 'required', null, 'client');
         } else {
             $mform->addElement('hidden', 'source', key($source));
         }
@@ -202,12 +201,14 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             );
             $mform->hideIf('videourl', 'source', 'eq', 'file');
             // Supported links text.
-            $mform->addElement(
+            $group = [];
+            $group[] = &$mform->createElement(
                 'static',
                 'supportedlinks',
                 '',
                 '<small class="text-muted">' . get_string('supportedlinks', 'mod_interactivevideo', $allowedlinks) . '</small>'
             );
+            $mform->addGroup($group, 'supportedlinks', '', '', false);
             $mform->hideIf('supportedlinks', 'source', 'eq', 'file');
             // Password protected video.
             $mform->addElement(
@@ -368,413 +369,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         // APPEARANCE AND BEHAVIOR SETTINGS.
         $mform->addElement('header', 'videodisplayoptions', get_string('appearanceandbehaviorsettings', 'mod_interactivevideo'));
 
-        $mform->addElement(
-            'html',
-            '<div class="form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0 pr-md-0">
-            <h5 class="w-100 border-bottom">' . get_string('appearancesettings', 'mod_interactivevideo')
-                . '</h5></div></div>',
-        );
-
-        // Set theme.
-        $themeobjects = get_list_of_themes();
-        $themes = [];
-        $themes[''] = get_string('forceno');
-        foreach ($themeobjects as $key => $theme) {
-            if (empty($theme->hidefromselector)) {
-                $themes[$key] = get_string('pluginname', 'theme_' . $theme->name);
-            }
-        }
-        $mform->addElement('select', 'theme', get_string('forcetheme'), $themes);
-
-        // Use custom poster image.
-        $mform->addElement(
-            'advcheckbox',
-            'usecustomposterimage',
-            get_string('posterimage', 'mod_interactivevideo'),
-            get_string('usecustomposterimage', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->addElement(
-            'filemanager',
-            'posterimagefile',
-            '',
-            null,
-            [
-                'subdirs' => 0,
-                'maxfiles' => 1,
-                'maxbytes' => 500 * 1024,
-                'accepted_types' => ['web_image'],
-                'return_types' => FILE_INTERNAL,
-            ]
-        );
-        $mform->hideIf('posterimagefile', 'usecustomposterimage', 'eq', 0);
-
-        $htmlgroup = [];
-        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-secondary">');
-        $mform->addGroup(
-            $htmlgroup,
-            'posterimagehr',
-            '',
-            '',
-            false
-        );
-        $mform->hideIf('posterimagehr', 'usecustomposterimage', 'eq', 0);
-
-        // Show play button on the course page.
-
-        $mform->addElement(
-            'advcheckbox',
-            'displayinline',
-            get_string('activitycard', 'mod_interactivevideo'),
-            get_string('displayinline', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->addElement(
-            'advcheckbox',
-            'launchinpopup',
-            '',
-            get_string('launchinpopup', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('launchinpopup', 'displayinline', 'eq', 0);
-
-        // Card sizes.
-        if ($CFG->branch >= 403) {
-            $mform->addElement(
-                'static',
-                'cardsizeheader',
-                '',
-                '<b>' . get_string('cardsize', 'mod_interactivevideo') . '</b>'
-            );
-            $mform->hideIf('cardsizeheader', 'displayinline', 'eq', 0);
-        }
-
-        $mform->addElement(
-            'select',
-            'cardsize',
-            $CFG->branch >= 403 ? '' : get_string('cardsize', 'mod_interactivevideo'),
-            [
-                'large' => '100%',
-                'largemedium' => '75%',
-                'mediumlarge' => '67%',
-                'medium' => '50%',
-                'small' => '33%',
-                'tiny' => '25%',
-            ]
-        );
-
-        $mform->hideIf('cardsize', 'displayinline', 'eq', 0);
-
-        // Card only design for small card size.
-        $mform->addElement(
-            'advcheckbox',
-            'cardonly',
-            '',
-            get_string('usecardonlydesign', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('cardonly', 'displayinline', 'eq', 0);
-
-        // Column layout.
-        $mform->addElement(
-            'advcheckbox',
-            'columnlayout',
-            '',
-            get_string('usecolumnlayout', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('columnlayout', 'displayinline', 'eq', 0);
-        $mform->hideIf('columnlayout', 'cardonly', 'eq', 1);
-
-        // Show progress bar.
-        $mform->addElement(
-            'advcheckbox',
-            'showprogressbar',
-            '',
-            get_string('showprogressbar', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showprogressbar', 'displayinline', 'eq', 0);
-
-        // Show completion requirements.
-        $mform->addElement(
-            'advcheckbox',
-            'showcompletionrequirements',
-            '',
-            get_string('showcompletionrequirements', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showcompletionrequirements', 'displayinline', 'eq', 0);
-
-        // Show poster image.
-        $mform->addElement(
-            'advcheckbox',
-            'showposterimage',
-            '',
-            get_string('showposterimage', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showposterimage', 'displayinline', 'eq', 0);
-        $mform->hideIf('showposterimage', 'cardonly', 'eq', 1);
-
-        // Square poster image.
-        $mform->addElement(
-            'advcheckbox',
-            'squareposterimage',
-            '',
-            get_string('squareposterimage', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Show name.
-        $mform->addElement(
-            'advcheckbox',
-            'showname',
-            '',
-            get_string('showname', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showname', 'displayinline', 'eq', 0);
-
-        // Show poster image on the right.
-        $mform->addElement(
-            'advcheckbox',
-            'showposterimageright',
-            '',
-            get_string('showposterimageright', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showposterimageright', 'displayinline', 'eq', 0);
-        $mform->hideIf('showposterimageright', 'cardonly', 'eq', 1);
-
-        $mform->addElement(
-            'advcheckbox',
-            'usecustomdescription',
-            '',
-            get_string('usecustomdescription', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('usecustomdescription', 'displayinline', 'eq', 0);
-        $mform->hideIf('usecustomdescription', 'cardonly', 'eq', 1);
-
-        if ($CFG->branch >= 403) {
-            $mform->addElement(
-                'static',
-                'customdescriptionheader',
-                '',
-                '<b>' . get_string('customdescription', 'mod_interactivevideo') . '</b>'
-            );
-            $mform->hideIf('customdescriptionheader', 'usecustomdescription', 'eq', 0);
-            $mform->hideIf('customdescriptionheader', 'displayinline', 'eq', 0);
-            $mform->hideIf('customdescriptionheader', 'cardonly', 'eq', 1);
-        }
-
-        $mform->addElement(
-            'textarea',
-            'customdescription',
-            $CFG->branch >= 403 ? '' : get_string('customdescription', 'mod_interactivevideo'),
-            ['rows' => 5, 'cols' => 100]
-        );
-        $mform->hideIf('customdescription', 'usecustomdescription', 'eq', 0);
-        $mform->hideIf('customdescription', 'displayinline', 'eq', 0);
-        $mform->hideIf('customdescription', 'cardonly', 'eq', 1);
-        $mform->setType('customdescription', PARAM_RAW);
-
-        $htmlgroup = [];
-        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-secondary">');
-        $mform->addGroup(
-            $htmlgroup,
-            'displayinlinehr',
-            '',
-            '',
-            false
-        );
-        $mform->hideIf('displayinlinehr', 'displayinline', 'eq', 0);
-
-        // Use distraction-free mode.
-        $mform->addElement(
-            'advcheckbox',
-            'distractionfreemode',
-            get_string('player', 'mod_interactivevideo'),
-            get_string('distractionfreemode', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Dark mode.
-        $mform->addElement(
-            'advcheckbox',
-            'darkmode',
-            '',
-            get_string('darkmode', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('darkmode', 'distractionfreemode', 'eq', 0);
-
-        // Fix aspect ratio.
-        $mform->addElement(
-            'advcheckbox',
-            'usefixedratio',
-            '',
-            get_string('usefixedratio', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('userfixedratio', 'distractionfreemode', 'eq', 0);
-
-        // Disable chapter navigation.
-        $mform->addElement(
-            'advcheckbox',
-            'disablechapternavigation',
-            '',
-            get_string('disablechapternavigation', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Use orginal video controls.
-        $mform->addElement(
-            'advcheckbox',
-            'useoriginalvideocontrols',
-            '',
-            get_string('useoriginalvideocontrols', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Hide main video controls.
-        $mform->addElement(
-            'advcheckbox',
-            'hidemainvideocontrols',
-            '',
-            get_string('hidemainvideocontrols', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Hide interactions.
-        $mform->addElement(
-            'advcheckbox',
-            'hideinteractions',
-            '',
-            get_string('hideinteractions', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->hideIf('hideinteractions', 'hidemainvideocontrols', 'eq', 1);
-
-        $mform->addElement(
-            'html',
-            '<div class="form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0 pr-md-0">
-            <h5 class="w-100 border-bottom">' . get_string('behaviorsettings', 'mod_interactivevideo')
-                . '</h5></div></div>',
-        );
-
-        // Auto play.
-        $mform->addElement(
-            'advcheckbox',
-            'autoplay',
-            '',
-            get_string('autoplay', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->addHelpButton('autoplay', 'autoplay', 'mod_interactivevideo');
-
-        // Pause video if window is not active.
-        $mform->addElement(
-            'advcheckbox',
-            'pauseonblur',
-            '',
-            get_string('pauseonblur', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Prevent skipping.
-        $mform->addElement(
-            'advcheckbox',
-            'preventskipping',
-            '',
-            get_string('preventskipping', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->addHelpButton('preventskipping', 'preventskipping', 'mod_interactivevideo');
-
-        // Prevent seeking.
-        $mform->addElement(
-            'advcheckbox',
-            'preventseeking',
-            '',
-            get_string('preventseeking', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->hideIf('preventseeking', 'hidemainvideocontrols', 'eq', 1);
-
-        // Disable interaction click.
-        $mform->addElement(
-            'advcheckbox',
-            'disableinteractionclick',
-            '',
-            get_string('disableinteractionclick', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->hideIf('disableinteractionclick', 'preventseeking', 'eq', 1);
-        $mform->hideIf('disableinteractionclick', 'hidemainvideocontrols', 'eq', 1);
-        $mform->hideIf('disableinteractionclick', 'hideinteractions', 'eq', 1);
-
-        // Disable interaction click until completed.
-        $mform->addElement(
-            'advcheckbox',
-            'disableinteractionclickuntilcompleted',
-            '',
-            get_string('disableinteractionclickuntilcompleted', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'preventseeking', 'eq', 1);
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'disableinteractionclick', 'eq', 1);
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'hidemainvideocontrols', 'eq', 1);
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'hideinteractions', 'eq', 1);
-
-        $defaults = get_config('mod_interactivevideo', 'defaultappearance') . ','
-            . get_config('mod_interactivevideo', 'defaultbehavior');
-        $defaults = explode(',', $defaults);
-        $defaultarray = [];
-        foreach ($defaults as $default) {
-            if (empty($default)) {
-                continue;
-            }
-            $defaultarray[$default] = 1;
-        }
-
-        $defaultarray['cardsize'] = get_config('mod_interactivevideo', 'cardsize');
-        $defaultarray['source'] = get_config('mod_interactivevideo', 'defaultvideosource');
-        $defaultarray['theme'] = get_config('mod_interactivevideo', 'defaulttheme');
-
-        $mform->setDefaults($defaultarray);
+        interactivevideo_appearanceandbehavior_form($mform, $current);
 
         // Additional settings from external plugins.
         if (!empty($this->subplugins)) {
@@ -797,6 +392,59 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         // Add standard elements.
         $this->standard_coursemodule_elements();
 
+        // Set default from course settings.
+        if (!$current->instance && get_config('mod_interactivevideo', 'enablecoursesettings')) {
+            $cache = \cache::make('mod_interactivevideo', 'interactivevideo_settings');
+            $settings = $cache->get($current->course);
+            $coursecontext = \context_course::instance($current->course);
+            if ($settings) {
+                $mform->setDefault('completionpercentage', $settings->completionpercentage);
+                $mform->setDefault('displayasstartscreen', $settings->displayasstartscreen);
+                $endscreenarray = [
+                    'format' => FORMAT_HTML,
+                ];
+                $draftitemid = file_get_submitted_draft_itemid('endscreentext');
+                $endscreenarray['itemid'] = $draftitemid;
+                $endscreenarray['text'] = file_prepare_draft_area(
+                    $draftitemid,
+                    $coursecontext->id,
+                    'mod_interactivevideo',
+                    'endscreentext',
+                    0,
+                    ['subdirs' => 0],
+                    $settings->endscreentext
+                );
+
+                $mform->setDefault('endscreentext', $endscreenarray);
+
+                if ($settings->completionpercentage > 0) {
+                    $mform->setDefault('completionpercentageenabled', 1);
+                }
+                $displayoptions = json_decode($settings->displayoptions, true);
+                $mform->setDefaults($displayoptions);
+                if ($displayoptions['usecustomposterimage']) {
+                    $mform->setDefault('usecustomposterimage', 1);
+                    // Set poster image.
+                    $draftitemid = file_get_submitted_draft_itemid('posterimagefile') ?? 0;
+                    file_prepare_draft_area(
+                        $draftitemid,
+                        $coursecontext->id,
+                        'mod_interactivevideo',
+                        'posterimage',
+                        0,
+                        [
+                            'subdirs' => 0,
+                            'maxfiles' => 1,
+                            'maxbytes' => 500 * 1024,
+                            'accepted_types' => ['web_image'],
+                        ]
+                    );
+                    $mform->setDefault('posterimagefile', $draftitemid);
+                }
+                $mform->setDefault('grade[modgrade_point]', $displayoptions['grade']);
+            }
+        }
+
         // Add standard buttons.
         $this->add_action_buttons();
 
@@ -815,8 +463,44 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      */
     public function validation($data, $files) {
         global $USER;
-
+        $suffix = '';
+        if (method_exists($this, 'get_suffix')) {
+            $suffix = $this->get_suffix();
+        }
         $errors = [];
+
+        // Make sure at least one automatic completion rule is enabled if completion is enabled.
+        if (!empty($data['completion']) && $data['completion'] == COMPLETION_TRACKING_AUTOMATIC) {
+            $hascompletion = false;
+            if (isset($data['completionpercentageenabled' . $suffix]) && $data['completionpercentage' . $suffix] > 0) {
+                $hascompletion = true;
+            }
+
+            // Grade completion.
+            if (isset($data['completionusegrade']) && $data['completionusegrade'] && $data['grade'] > 0) {
+                $hascompletion = true;
+            }
+
+            // Completion on view.
+            if (isset($data['completionview']) && $data['completionview'] == 1) {
+                $hascompletion = true;
+            }
+
+            foreach ($this->subplugins as $plugin) {
+                if (!method_exists($plugin, 'validation')) {
+                    continue;
+                }
+                try {
+                    $hascompletion = $plugin::completion_rule_enabled($data, $suffix) ? true : $hascompletion;
+                } catch (Exception $e) {
+                    continue;
+                }
+            }
+
+            if (!$hascompletion) {
+                $errors['completion'] = get_string('atleastonecompletionrule', 'mod_interactivevideo');
+            }
+        }
 
         // Grade must be greater than 0.
         if ($data['grade'] < 0) {
@@ -829,9 +513,9 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         }
 
         // Completion percentage must be between 1 and 100.
-        if (isset($data['completionpercentageenabled'])) {
-            if (($data['completionpercentage'] <= 0 || $data['completionpercentage'] > 100)) {
-                $errors['completionpercentagegroup'] = get_string('completionpercentageerror', 'mod_interactivevideo');
+        if (isset($data['completionpercentageenabled' . $suffix])) {
+            if (($data['completionpercentage' . $suffix] <= 0 || $data['completionpercentage' . $suffix] > 100)) {
+                $errors['completionpercentagegroup' . $suffix] = get_string('completionpercentageerror', 'mod_interactivevideo');
             }
         }
 
@@ -897,7 +581,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 continue;
             }
             try {
-                $errors = $plugin::validation($data, $files, $errors);
+                $errors = $plugin::validation($data, $files, $errors, $suffix);
             } catch (Exception $e) {
                 continue;
             }
@@ -912,6 +596,10 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      */
     public function data_preprocessing(&$defaultvalues) {
         if ($this->current->instance) {
+            $suffix = '';
+            if (method_exists($this, 'get_suffix')) {
+                $suffix = $this->get_suffix();
+            }
             // Handle end screen.
             $text = $defaultvalues['endscreentext'] ?? '';
             $defaultvalues['endscreentext'] = [];
@@ -987,9 +675,9 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             }
 
             // Handle completion requirements.
-            $defaultvalues['completionpercentageenabled'] = !empty($defaultvalues['completionpercentage']) ? 1 : 0;
-            if (empty($defaultvalues['completionpercentage'])) {
-                $defaultvalues['completionpercentage'] = 0;
+            $defaultvalues['completionpercentageenabled' . $suffix] = !empty($defaultvalues['completionpercentage' . $suffix]) ? 1 : 0;
+            if (empty($defaultvalues['completionpercentage' . $suffix])) {
+                $defaultvalues['completionpercentage' . $suffix] = 0;
             }
 
             // Handle subplugin.
@@ -998,7 +686,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                     continue;
                 }
                 try {
-                    $plugin::data_preprocessing($defaultvalues);
+                    $plugin::data_preprocessing($defaultvalues, $suffix);
                 } catch (Exception $e) {
                     continue;
                 }
@@ -1013,19 +701,22 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      */
     public function add_completion_rules() {
         $mform = $this->_form;
-
+        $suffix = '';
+        if (method_exists($this, 'get_suffix')) {
+            $suffix = $this->get_suffix();
+        }
         $group = [];
-        $completionpercentageenabledel = 'completionpercentageenabled';
+        $completionpercentageenabledel = 'completionpercentageenabled' . $suffix;
         $group[] = &$mform->createElement(
             'checkbox',
             $completionpercentageenabledel,
             '',
             get_string('minimumcompletionpercentage', 'interactivevideo')
         );
-        $completionpercentageel = 'completionpercentage';
+        $completionpercentageel = 'completionpercentage' . $suffix;
         $group[] = &$mform->createElement('text', $completionpercentageel, '', ['size' => 3]);
         $mform->setType($completionpercentageel, PARAM_INT);
-        $completionpercentagegroupel = 'completionpercentagegroup';
+        $completionpercentagegroupel = 'completionpercentagegroup' . $suffix;
         $mform->addGroup($group, $completionpercentagegroupel, '', ' ', false);
         $mform->disabledIf($completionpercentageel, $completionpercentageenabledel, 'notchecked');
 
@@ -1036,7 +727,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 continue;
             }
             try {
-                $els = $class::customcompletion_definition($mform);
+                $els = $class::customcompletion_definition($mform, $suffix);
                 $return = array_merge($return, $els);
             } catch (Exception $e) {
                 continue;
@@ -1053,13 +744,14 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      */
     public function completion_rule_enabled($data) {
         $hascompletion = false;
-
+        $suffix = '';
+        if (method_exists($this, 'get_suffix')) {
+            $suffix = $this->get_suffix();
+        }
         // Default completion.
-        if (!isset($data['completionpercentageenabled']) && $data['completionpercentage'] > 0) {
+        if (!isset($data['completionpercentageenabled' . $suffix]) && $data['completionpercentage' . $suffix] > 0) {
             $hascompletion = true;
         }
-
-        $extendedcompletion = json_decode($data['extendedcompletion'], true);
 
         // Get other elements from plugins that extends ivhascompletion.
         foreach ($this->subplugins as $class) {
@@ -1067,8 +759,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 continue;
             }
             try {
-                $hascompletion = $class::completion_rule_enabled($data) ? true : $hascompletion;
-                $customcompletion = $class::custom_rules();
+                $hascompletion = $class::completion_rule_enabled($data, $suffix) ? true : $hascompletion;
             } catch (Exception $e) {
                 continue;
             }
@@ -1081,11 +772,15 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      * @param stdClass $data
      */
     public function data_postprocessing($data) {
+        $suffix = '';
+        if (method_exists($this, 'get_suffix')) {
+            $suffix = $this->get_suffix();
+        }
         if (!empty($data->completionunlocked)) {
-            $completion = $data->{'completion'};
+            $completion = isset($data->{'completion'}) ? $data->{'completion'} : 0;
             $autocompletion = !empty($completion) && $completion == COMPLETION_TRACKING_AUTOMATIC;
             if ($autocompletion) {
-                if (empty($data->{'completionpercentageenabled'}) && $autocompletion) {
+                if (empty($data->{'completionpercentageenabled' . $suffix}) && $autocompletion) {
                     $data->{'completionpercentage'} = 0;
                 }
 
@@ -1095,7 +790,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                         continue;
                     }
                     try {
-                        $customcompletion = $class::data_postprocessing($data, $customcompletion);
+                        $customcompletion = $class::data_postprocessing($data, $customcompletion, $suffix);
                     } catch (Exception $e) {
                         continue;
                     }

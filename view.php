@@ -125,7 +125,6 @@ $PAGE->requires->jquery_plugin('ui-css');
 
 if ($cm->completion != COMPLETION_TRACKING_NONE) {
     $cmcompletion = new completion_info($course);
-    $completionstate = $cmcompletion->internal_get_state($cm, $USER->id, true);
 }
 
 // Log view.
@@ -169,6 +168,7 @@ if (isset($moduleinstance->displayoptions['theme']) && $moduleinstance->displayo
 // Get completion information.
 $completion = null;
 if ($getcompletion) {
+    $completionstate = $cmcompletion->internal_get_state($cm, $USER->id, true);
     $completiondetails = \core_completion\cm_completion_details::get_instance($PAGE->cm, $USER->id);
     // If moodle version is 4.4 or below, use new completion information.
     if ($CFG->branch < 404) {
@@ -296,6 +296,9 @@ if ($iframe || $embed) {
 if ($rendernav) {
     $datafortemplate = [
         "cmid" => $cm->id,
+        "instance" => $cm->instance,
+        "contextid" => $modulecontext->id,
+        "courseid" => $course->id,
         "darkmode" => $moduleinstance->displayoptions['darkmode'] == '1',
         "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
         "completion" => $completion,
@@ -385,5 +388,6 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $moduleinstance->displayoptions, // Display options array set in mod_form.
     $token ?? '', // Token for mobile app.
     $moduleinstance->extendedcompletion, // Extended completion settings.
+    $preview && has_capability('mod/interactivevideo:edit', $modulecontext) ? true : false, // Preview mode.
 ]);
 echo $OUTPUT->footer();

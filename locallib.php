@@ -34,15 +34,22 @@ class interactivevideo_util {
     public static function get_items($interactivevideo, $contextid, $hascompletion = false) {
         global $DB, $PAGE;
         $PAGE->set_context(context::instance_by_id($contextid));
-        $filter = ['annotationid' => $interactivevideo];
+        $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+        $items = $cache->get($interactivevideo);
+        if (!$items) {
+            $items = $DB->get_records('interactivevideo_items', ['annotationid' => $interactivevideo]);
+            $cache->set($interactivevideo, $items);
+        }
         if ($hascompletion) {
-            $filter['hascompletion'] = 1;
+            $items = (array) $items;
+            $items = array_filter($items, function ($item) {
+                return $item->hascompletion == 1;
+            });
         }
-        $records = $DB->get_records('interactivevideo_items', $filter);
-        foreach ($records as $key => $record) {
-            $records[$key]->formattedtitle = format_string($records[$key]->title);
+        foreach ($items as $key => $item) {
+            $items[$key]->formattedtitle = format_string($items[$key]->title);
         }
-        return $records;
+        return $items;
     }
 
     /**
@@ -293,10 +300,11 @@ class interactivevideo_util {
      * @param int $interactivevideo
      * @param int $group
      * @param int $contextid
+     * @param int $courseid
      * @return array
      */
-    public static function get_report_data_by_group($interactivevideo, $group, $contextid) {
-        global $DB, $OUTPUT, $COURSE, $PAGE;
+    public static function get_report_data_by_group($interactivevideo, $group, $contextid, $courseid = 0) {
+        global $DB, $OUTPUT, $PAGE;
         $context = context::instance_by_id($contextid);
         $PAGE->set_context($context);
         // Get fields for userpicture.
@@ -331,17 +339,16 @@ class interactivevideo_util {
 
         // Render the photo of the user.
         foreach ($records as $record) {
-            $record->picture = $OUTPUT->user_picture($record, [
-                'size' => 35,
-                'courseid' => $COURSE->id,
-                'link' => true,
-                'includefullname' => true,
-            ]);
-            $record->pictureonly = $OUTPUT->user_picture($record, [
-                'size' => 24,
-                'link' => false,
-                'includefullname' => true,
-            ]);
+            $userpic = new user_picture($record);
+            $userpic->size = 24;
+            $userpic->link = false;
+            $userpic->includefullname = true;
+            $record->pictureonly = $OUTPUT->render($userpic);
+            $userpic->size = 35;
+            $userpic->courseid = $courseid;
+            $userpic->link = true;
+            $userpic->popup = true;
+            $record->picture = $OUTPUT->render($userpic);
         }
         return $records;
     }
@@ -400,6 +407,9 @@ class interactivevideo_util {
                 }
                 if (!isset($properties['stringcomponent'])) {
                     $properties['stringcomponent'] = $subplugin['name'];
+                }
+                if (!isset($properties['initonreport'])) {
+                    $properties['initonreport'] = false;
                 }
                 $contentoptions[] = $properties;
             }
@@ -682,15 +692,26 @@ class interactivevideo_util {
     public static function get_cm_by_courseid($courseid) {
         global $DB, $PAGE;
         $PAGE->set_context(context_system::instance());
-        $cms = $DB->get_records('interactivevideo', ['course' => $courseid], 'name DESC', 'id, name');
+        $cms = get_fast_modinfo($courseid);
+        $cms = $cms->get_cms();
+        // Filter out the interactivevideo modules.
+        $cms = array_filter($cms, function ($cm) {
+            return $cm->modname == 'interactivevideo';
+        });
         if (!$cms) {
             return [];
         }
         $cms = array_map(function ($cm) {
-            $cm->name = format_string($cm->name);
-            return $cm;
+            $newcm = new stdClass();
+            $newcm->name = format_string($cm->get_name());
+            $newcm->id = $cm->instance;
+            return $newcm;
         }, $cms);
-        return array_values($cms);
+        // Sort the array by name.
+        usort($cms, function ($a, $b) {
+            return strcmp($a->name, $b->name);
+        });
+        return $cms;
     }
 
     /**
@@ -823,5 +844,19 @@ class interactivevideo_util {
         }
 
         return 'deleted';
+    }
+
+    /**
+     * Save iv items in cache.
+     *
+     * @param int $cmid
+     * @return array The items.
+     */
+    public static function update_ivitems_cache($cmid) {
+        global $DB;
+        $items = $DB->get_records('interactivevideo_items', ['annotationid' => $cmid]);
+        $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+        $cache->set($cmid, $items);
+        return $items;
     }
 }

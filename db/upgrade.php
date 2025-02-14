@@ -136,5 +136,40 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         // Interactivevideo savepoint reached.
         upgrade_mod_savepoint(true, 2025010101, 'interactivevideo');
     }
+
+    if ($oldversion < 2025011309) {
+
+        // Define table interactivevideo_settings to be created.
+        $table = new xmldb_table('interactivevideo_settings');
+
+        // Adding fields to table interactivevideo_settings.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('endscreentext', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('displayasstartscreen', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
+        $table->add_field('completionpercentage', XMLDB_TYPE_INTEGER, '3', null, null, null, null);
+        $table->add_field('displayoptions', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('extendedcompletion', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('completion', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
+
+        // Adding keys to table interactivevideo_settings.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Adding indexes to table interactivevideo_settings.
+        $table->add_index('courseid', XMLDB_INDEX_UNIQUE, ['courseid']);
+
+        // Conditionally launch create table for interactivevideo_settings.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025011309, 'interactivevideo');
+    }
+
     return true;
 }

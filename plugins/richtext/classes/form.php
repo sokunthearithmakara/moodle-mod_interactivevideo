@@ -138,7 +138,9 @@ class form extends \mod_interactivevideo\form\base_form {
         $this->xp_form_field();
         $mform->hideIf('xp', 'completiontracking', 'eq', 'none');
         $this->display_options_field();
-        $this->advanced_form_fields(true, true, true, true);
+        $this->advanced_form_fields([
+            'hascompletion' => true,
+        ]);
         $this->close_form();
     }
 }

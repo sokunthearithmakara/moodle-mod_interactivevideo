@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+
 /**
  * Edit interactions module
  *
@@ -24,8 +25,10 @@ define(['jquery',
     'core/toast',
     'core/notification',
     'core/event_dispatcher',
-    'mod_interactivevideo/libraries/jquery-ui',
-], function($, addToast, Notification, {dispatchEvent}) {
+    './quickform',
+    './libraries/jquery-ui',
+
+], function($, addToast, Notification, {dispatchEvent}, quickform) {
     let ctRenderer = {};
     let player;
     let totaltime;
@@ -88,6 +91,8 @@ define(['jquery',
          */
         init: function(url, coursemodule, interaction, course, start, end, coursecontextid,
             type = 'yt', displayoptions, userid, posterimage, extendedcompletion) {
+
+            quickform();
 
             /**
              * Util function to display notification
@@ -233,7 +238,9 @@ define(['jquery',
                             require(['' + x.amdmodule], function(Type) {
                                 ctRenderer[x.name] = new Type(player, annotations, interaction,
                                     course, 0, 0, 0, 0, type, 0, totaltime, start, end, x, coursemodule,
-                                    null, displayoptions, null, extendedcompletion);
+                                    null, displayoptions, null, extendedcompletion, {
+                                        isEditMode: true,
+                                    });
                                 count++;
                                 ctRenderer[x.name].init();
                                 if (count == contentTypes.length) {
@@ -249,6 +256,7 @@ define(['jquery',
                         delete prop.authorlink;
                         delete prop.description;
                         x.prop = JSON.stringify(prop);
+                        x.editMode = true;
                         return x;
                     });
                     ctRenderer = await getRenderers;
@@ -382,6 +390,8 @@ define(['jquery',
                         data: {
                             action: 'update_videotime',
                             sesskey: M.cfg.sesskey,
+                            cmid: coursemodule,
+                            courseid: course,
                             id: interaction,
                             start: start,
                             end: !end || end == 0 ? duration : end,
@@ -404,6 +414,7 @@ define(['jquery',
                     onReady();
                     return;
                 }
+                player.unMute();
                 if (player.audio) {
                     $('#annotation-canvas').addClass('bg-black');
                 }
@@ -476,8 +487,10 @@ define(['jquery',
                     } else {
                         marker = Math.floor(i / 60) + 'm';
                     }
-                    $('#minute-markers, #minute-markers-bg').append(`<div class="minute-marker position-absolute"
+                    $('#minute-markers').append(`<div class="minute-marker position-absolute"
                          style="left: ${percentage}%;"><div class="text-white minute-label">${marker}</div></div>`);
+                    $('#minute-markers-bg').append(`<div class="minute-marker position-absolute"
+                            style="left: ${percentage}%;"></div>`);
                 }
 
                 if (end % 60 != 0) {
@@ -565,7 +578,7 @@ define(['jquery',
                     let thisTime = await player.getCurrentTime();
                     const isPlaying = await player.isPlaying();
                     const isEnded = await player.isEnded();
-                    if (!isPlaying || isEnded) {
+                    if (!isPlaying) {
                         cancelAnimationFrame(onPlayingInterval);
                         return;
                     }
@@ -575,7 +588,7 @@ define(['jquery',
                         thisTime = start;
                     }
 
-                    if (thisTime >= end) {
+                    if (thisTime >= end || isEnded) {
                         player.stop(end);
                         cancelAnimationFrame(onPlayingInterval);
                         onEnded();
@@ -694,7 +707,24 @@ define(['jquery',
             });
 
             // Post annotation update (add, edit, clone).
+            let cacheCleared = false;
             $(document).on('annotationupdated', function(e) {
+                if (!cacheCleared) {
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                        method: "POST",
+                        dataType: "text",
+                        data: {
+                            action: 'update_ivitems_cache',
+                            sesskey: M.cfg.sesskey,
+                            contextid: M.cfg.contextid,
+                            cmid: interaction,
+                        },
+                        success: function() {
+                            cacheCleared = true;
+                        }
+                    });
+                }
                 const action = e.originalEvent.detail.action;
                 if (action == 'import') {
                     annotations = e.originalEvent.detail.annotations;
@@ -715,7 +745,10 @@ define(['jquery',
                 } else {
                     activeid = null;
                 }
-
+                annotations.map(x => {
+                    x.editMode = true;
+                    return x;
+                });
                 renderAnnotationItems(annotations);
                 if (action == 'add' || action == 'clone') {
                     addNotification(M.util.get_string('interactionadded', 'mod_interactivevideo'), 'success');
@@ -943,7 +976,7 @@ define(['jquery',
                 $(this).siblings('[data-field="' + fld + '"]').removeClass('d-none').focus().addClass('editing');
                 if (fld == 'timestamp') {
                     $(this).closest('tr')
-                    .append(`<div class="timestamp-info position-absolute">
+                        .append(`<div class="timestamp-info position-absolute">
                         ${M.util.get_string('rightclicktosetcurrenttime', 'mod_interactivevideo')}</div>`);
                 }
             });
@@ -1176,11 +1209,6 @@ define(['jquery',
                             annotation: targetAnnotation,
                             action: 'draft'
                         });
-                        await player.seek(timestamp); // Seek to the new position
-                        const isPaused = await player.isPaused();
-                        if (!isPaused) {
-                            player.pause();
-                        }
                         $('#scrollbar, #position-marker, #scrollhead-top').css('left', percentage + '%');
                     }
                 });
@@ -1265,11 +1293,6 @@ define(['jquery',
                             annotation: targetAnnotation,
                             action: 'draft'
                         });
-                        await player.seek(timestamp); // Seek to the new position
-                        const isPaused = await player.isPaused();
-                        if (!isPaused) {
-                            player.pause();
-                        }
                         let percentage = (timestamp - start) / totaltime * 100;
                         if (percentage < 0) {
                             percentage = 0;
@@ -1351,11 +1374,7 @@ define(['jquery',
                             annotation: targetAnnotation,
                             action: 'draft'
                         });
-                        await player.seek(timestamp);
-                        const isPaused = await player.isPaused();
-                        if (!isPaused) {
-                            player.pause();
-                        }
+
                         let percentage = (timestamp - start) / totaltime * 100;
                         if (isNaN(percentage) || percentage < 0) {
                             percentage = 0;
@@ -1770,7 +1789,7 @@ define(['jquery',
                 let qualities = quality.qualities;
                 let qualitiesLabel = quality.qualitiesLabel;
                 qualities.forEach((q, i) => {
-                    $('#qualitieslist').append(`<a class="dropdown-item text-white changequality" data-quality="${q}"
+                    $('#qualitieslist').append(`<a class="dropdown-item changequality" data-quality="${q}"
                          href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw ml-n3"></i>${qualitiesLabel[i]}</a>`);
                 });
                 $(this).find('[data-toggle=dropdown]').dropdown('update');
@@ -2144,55 +2163,6 @@ define(['jquery',
             window.addEventListener('beforeunload', function() {
                 $(document).off();
                 cancelAnimationFrame(onPlayingInterval);
-            });
-
-            let idleInterval = null;
-            $(document).on('visibilitychange', async function() {
-                // Destroy the player if the tab is hidden and the video isn't playing for more than 30 minutes.
-                if (document.visibilityState == 'hidden') {
-                    const isPaused = await player.isPaused();
-                    if (!isPaused) {
-                        player.pause();
-                    }
-                    // Check if the player is paused and the user is not interacting with the player.
-                    idleInterval = setInterval(async() => {
-                        const isPaused = await player.isPaused();
-                        const isEnded = await player.isEnded();
-                        if (isEnded || isPaused || !playerReady || !player) {
-                            // Destroy the player.
-                            try {
-                                player.destroy();
-                            } catch (error) {
-                                // Do nothing.
-                            }
-                            cancelAnimationFrame(onPlayingInterval);
-                            clearInterval(idleInterval);
-                            $(document).off();
-                            let $endscreen = $('#end-screen');
-                            if ($endscreen.length == 0) {
-                                // Cover the video with a message on a white background div.
-                                $('#video-wrapper')
-                                    .append(`<div id="end-screen" class="border position-absolute w-100 h-100 bg-white d-flex
-                                    justify-content-center align-items-center" style="top: 0; left: 0;">
-                                    <button class="btn btn-danger border-0 rounded-circle" style="font-size: 1.5rem;" id="restart">
-                                <i class="bi bi-arrow-repeat" style="font-size: x-large;"></i></button></div>`);
-                            }
-                            $(document).on('click', '#end-screen #restart', function(e) {
-                                e.preventDefault();
-                                location.reload();
-                            });
-                            $('#timeline-wrapper').addClass('no-pointer-events');
-                        }
-                    }, 60 * 1000 * 15);
-                } else {
-                    // Cancel the destroy player timeout.
-                    clearInterval(idleInterval);
-                }
-            });
-
-            $(document).on('iv:autoplayBlocked', function(e) {
-                e.preventDefault();
-                addNotification(M.util.get_string('autoplayblocked', 'mod_interactivevideo'), 'danger');
             });
         }
     };

@@ -131,8 +131,9 @@ class PeerTube {
         self.videoId = videoInfo.uuid;
         self.posterImage = 'https://' + domain + videoInfo.thumbnailPath;
 
-        let iframeURL = `https://${domain}${videoInfo.embedPath}?api=1&autoplay=1&end=${end}`;
-        iframeURL += `&warningTitle=0&controls=${showControls || !self.allowAutoplay ? 1 : 0}&peertubeLink=0&p2p=0&muted=0`;
+        let iframeURL = `https://${domain}${videoInfo.embedPath}?api=1&autoplay=1&end=${end}&start=${start}`;
+        iframeURL += `&warningTitle=0&controls=${showControls || !self.allowAutoplay
+            ? 1 : 0}&peertubeLink=0&p2p=0&muted=0&controlBar=${showControls ? 1 : 0}&title=0`;
         if (password && password !== '') { // If the video is password protected. We need to pass the password to the embed API.
             iframeURL += `&waitPasswordFromEmbedAPI=1`;
         }

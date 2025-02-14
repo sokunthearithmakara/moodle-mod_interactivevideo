@@ -15,6 +15,7 @@
 
 /**
  * Youtube Player class
+ * Documented at https://developers.google.com/youtube/iframe_api_reference
  *
  * @module     mod_interactivevideo/player/yt
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
@@ -65,9 +66,13 @@ class Yt {
         const customStart = opts.customStart || false;
         const preload = opts.preload || false;
         const node = opts.node || 'player';
+        // Hide the player first.
+        $(`#video-wrapper`).addClass('d-none');
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            dispatchEvent('iv:autoplayBlocked', {
+                requireVideoBlock: true,
+            });
         }
         /**
          * The start time of the video
@@ -80,7 +85,6 @@ class Yt {
          * @type {Number}
          */
         this.end = end;
-        // Documented at https://developers.google.com/youtube/iframe_api_reference
         var YT;
         let regex = new RegExp(
             '(?:https?:\\/\\/)?' +
@@ -93,7 +97,16 @@ class Yt {
         var videoId = match[1];
         videoId = videoId.split("&")[0];
         this.videoId = videoId;
-        this.posterImage = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        this.posterImage = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        // If the img size is 90x120, it means the maxresdefault.jpg is not available. So we use hqdefault.jpg instead.
+        const img = new Image();
+        img.src = this.posterImage;
+        img.onload = () => {
+            if (img.width == 120 && img.height == 90) {
+                this.posterImage = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }
+        };
+
         let loadedcaption = false;
         var ready = false;
         var self = this;
@@ -116,7 +129,7 @@ class Yt {
                 rel: 0,
                 playsinline: 1,
                 disablekb: 1,
-                mute: 0,
+                mute: 1,
             },
             events: {
                 onError: function(e) {
@@ -124,6 +137,8 @@ class Yt {
                     dispatchEvent('iv:playerError', {error: e.data});
                 },
                 onReady: function(e) {
+                    // Unhide the player.
+                    $(`#video-wrapper`).removeClass('d-none');
                     self.title = e.target.videoTitle;
                     // We don't want to use the end time from the player, just to avoid any issue restarting the video.
                     if (e.target.getDuration() <= 0) {
@@ -408,6 +423,7 @@ class Yt {
      */
     unMute() {
         player.unMute();
+        player.setVolume(100);
     }
     /**
      * Get the original player object

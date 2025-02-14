@@ -360,6 +360,7 @@ class Kinescope {
      */
     unMute() {
         player.unmute();
+        player.setVolume(1);
     }
 
     /**

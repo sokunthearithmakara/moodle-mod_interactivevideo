@@ -146,7 +146,10 @@ class Spotify {
                     ready = true;
                     dispatchEvent('iv:playerReady', null, document.getElementById(node));
                 } else {
-                    if (self.ended) {
+
+                    if (self.ended && e.data.isPaused === false) {
+                        self.ended = false;
+                        EmbedController.restart();
                         return;
                     }
                     if (self.currentTime < self.start) {
@@ -168,8 +171,6 @@ class Spotify {
                             dispatchEvent('iv:playerPlaying');
                             if (self.currentTime >= self.end - self.frequency) {
                                 self.ended = true;
-                                self.paused = true;
-                                EmbedController.pause();
                                 dispatchEvent('iv:playerEnded');
                             }
                             break;

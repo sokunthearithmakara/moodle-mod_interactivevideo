@@ -51,10 +51,11 @@ class Base {
      * @param {Object} displayoptions - Display options.
      * @param {number} completionid - Completion record id.
      * @param {number} extracompletion - Extra completion.
+     * @param {Object} [options={}] - Additional options.
      *
      */
     constructor(player, annotations, interaction, course, userid, completionpercentage, gradeiteminstance, grademax, vtype,
-        preventskip, totaltime, start, end, properties, cm, token, displayoptions, completionid, extracompletion) {
+        preventskip, totaltime, start, end, properties, cm, token, displayoptions, completionid, extracompletion, options = {}) {
         /**
          * Access token
          * @type {string}
@@ -173,10 +174,25 @@ class Base {
         this.extracompletion = extracompletion ? JSON.parse(extracompletion) : {};
 
         /**
+         * Additional options
+         */
+        this.options = options;
+
+        /**
          * Cache the annotations
          * @type {Object}
          */
         this.cache = {};
+    }
+
+    /**
+     * Dispatch an event
+     * @param {string} name The event name
+     * @param {Object} detail The event detail
+     * @returns {void}
+     */
+    dispatchEvent(name, detail) {
+        dispatchEvent(name, detail);
     }
 
     /**
@@ -683,7 +699,7 @@ class Base {
      * @returns {boolean}
      */
     isEditMode() {
-        return $('body').hasClass('page-interactions');
+        return this.options.isEditMode;
     }
 
     /**
@@ -691,7 +707,7 @@ class Base {
      * @returns {boolean}
      */
     isPreviewMode() {
-        return $('body').hasClass('preview-mode');
+        return this.options.isPreviewMode;
     }
 
     /**
@@ -753,13 +769,16 @@ class Base {
                 $("#video-nav ul").append(`<li class="${classes}"  data-timestamp="${annotation.timestamp}"
         data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
         <div class="item" data-toggle="tooltip" data-container="#wrapper"
-        data-trigger="hover" data-placement="top" data-html="true" data-original-title='<i class="${this.prop.icon} mr-1"></i>
-        ${annotation.formattedtitle}'></div></li>`);
+        data-trigger="hover" data-placement="top" data-html="true" data-original-title='<div class="d-flex align-items-center">
+        <i class="${this.prop.icon} mr-2"></i>
+        <span>${annotation.formattedtitle}</span></div>'></div></li>`);
             } else {
                 $("#interactions-nav ul").append(`<li class="${classes}"  data-timestamp="${annotation.timestamp}"
                     data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)"><div class="item" data-toggle="tooltip"
                      data-container="#wrapper" data-trigger="hover" data-placement="top" data-html="true"
-                      data-original-title='<i class="${this.prop.icon} mr-1"></i>${annotation.formattedtitle}'></div></li>`);
+                       data-original-title='<div class="d-flex align-items-center">
+                        <i class="${this.prop.icon} mr-2"></i>
+                        <span>${annotation.formattedtitle}</span></div>'></div></li>`);
             }
         }
     }
@@ -790,6 +809,23 @@ class Base {
                     ? `${M.util.get_string('completioncompleted', 'mod_interactivevideo')}`
                     : `${M.util.get_string('completionincomplete', 'mod_interactivevideo')}`
             );
+        }
+        if (annotation.completed) {
+            return;
+        }
+        if ((annotation.completiontracking == 'view' || annotation.completiontracking == 'manual')
+            && annotation.requiremintime > 0) {
+            let $completiontoggle = $message.find('#completiontoggle');
+            $message.find('#title .info').remove();
+            $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2 info" data-toggle="tooltip"
+            data-container="#wrapper" data-trigger="hover"
+            data-title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`);
+            setTimeout(function() {
+                $message.find('[data-toggle="tooltip"]').tooltip('show');
+            }, 1000);
+            setTimeout(function() {
+                $message.find('[data-toggle="tooltip"]').tooltip('hide');
+            }, 3000);
         }
     }
 
@@ -922,7 +958,7 @@ class Base {
         if (this.isEditMode()) {
             return Promise.resolve(); // Return a resolved promise for consistency
         }
-        if ($('body').hasClass('preview-mode')) {
+        if (this.isPreviewMode()) {
             this.addNotification(M.util.get_string('completionnotrecordedinpreviewmode', 'mod_interactivevideo'));
             return Promise.resolve(); // Return a resolved promise for consistency
         }
@@ -1088,10 +1124,59 @@ class Base {
         if (annotation.completed || self.isEditMode()) {
             return;
         }
+        this.completiononview(annotation);
+    }
+
+    /**
+     * Method to handle automatic completion on view with required minimum time
+     * @param {Object} annotation The annotation object
+     * @returns {void}
+     */
+    completiononview(annotation) {
+        let self = this;
         if (annotation.hascompletion == 1 && annotation.completiontracking == 'view') {
-            setTimeout(() => {
+            let duration = 0;
+            let windowAnno = window.ANNOS.find(x => x.id == annotation.id);
+            if (windowAnno) {
+                duration = windowAnno.duration + (new Date().getTime() - windowAnno.newstarttime);
+            }
+            if (duration > annotation.requiremintime * 60 * 1000) {
                 self.toggleCompletion(annotation.id, 'mark-done', 'automatic');
-            }, 5000);
+                return;
+            }
+
+            const intervalFunction = async function() {
+                let runInterval = setInterval(async function() {
+                    let windowAnno = window.ANNOS.find(x => x.id == annotation.id);
+                    if (!windowAnno || windowAnno.completed) {
+                        clearInterval(runInterval);
+                        return;
+                    }
+                    duration = duration + 1000 * 10;
+                    if (duration > annotation.requiremintime * 60 * 1000) {
+                        clearInterval(runInterval);
+                        self.toggleCompletion(annotation.id, 'mark-done', 'automatic');
+                    }
+                }, 1000 * 10);
+
+                $(document).on('interactionclose', function(e) {
+                    if (e.detail.annotation.id == annotation.id) {
+                        clearInterval(runInterval);
+                    }
+                });
+
+            };
+
+            intervalFunction();
+
+            $(document).on('interactionrun', function(e) {
+                if (e.detail.annotation.id == annotation.id) {
+                    let windowAnno = window.ANNOS.find(x => x.id == annotation.id);
+                    if (windowAnno && !windowAnno.completed) {
+                        intervalFunction();
+                    }
+                }
+            });
         }
     }
 
@@ -1181,6 +1266,78 @@ class Base {
                     }
                 }
             });
+        });
+    }
+
+    /**
+     * Util function to input the timestamp on the modal form.
+     * @param {Object} options The options
+     * @returns {void}
+     * */
+    timepicker(options) {
+        // Normalize the options.
+        options = options || {};
+        options.modal = options.modal || true;
+        options.disablelist = options.disablelist || false;
+        options.required = options.required || false;
+        let self = this;
+        $(document).off('click', '#confirmtime');
+        // Pick a time button.
+        $(document).off('click', `.pickatime button`).on('click', `.pickatime button`, async function(e) {
+            e.preventDefault();
+            const $this = $(this);
+            const currenttime = await self.player.getCurrentTime();
+            const field = $(this).data('field');
+            const fieldval = $(`[name=${field}]`).val();
+            if (fieldval) {
+                const parts = fieldval.split(':');
+                const time = Number(parts[0]) * 3600 + Number(parts[1]) * 60 + Number(parts[2]);
+                await self.player.seek(time); // Go to the time.
+            }
+            // Hide this modal.
+            if (options.modal) {
+                $this.closest('.modal').addClass('d-none');
+                $('.modal-backdrop').addClass('d-none');
+            }
+            if (options.disablelist) {
+                $('#annotationwrapper').addClass('no-pointer-events');
+            }
+            $('#timeline-btns .col:first-child').hide().before(`<div class="col confirmtime-wrapper
+                d-flex justify-content-start align-items-center
+                     "><button class="btn btn-circle pulse btn-primary" id="confirmtime"
+                     title="${M.util.get_string('confirmtime', 'ivplugin_contentbank')}">
+                     <i class="fa fa-check"></i></button></div>`);
+
+            $(document).on('click', '#confirmtime', async function(e) {
+                e.preventDefault();
+                // Show the modal.
+                if (options.modal) {
+                    $this.closest('.modal').removeClass('d-none');
+                    $('.modal-backdrop').removeClass('d-none');
+                }
+                if (options.disablelist) {
+                    $('#annotationwrapper').removeClass('no-pointer-events');
+                }
+                // Remove the button.
+                // Put the time in the input.
+                const time = await self.player.getCurrentTime();
+                const formattedTime = self.convertSecondsToHMS(time, false, true);
+                $(`[name=${field}]`).val(formattedTime);
+                $(this).closest('div').remove();
+                $('#timeline-btns .col:first-child').show();
+                // Go back to the current time.
+                self.player.seek(currenttime);
+            });
+        });
+
+        // Reset time button.
+        $(document).off('click', `.resettime button`).on('click', `.resettime button`, function(e) {
+            e.preventDefault();
+            const field = $(this).data('field');
+            $(`[name=${field}]`).val('');
+            if (options.required) {
+                $(`[name=${field}]`).val(self.convertSecondsToHMS(self.start, false, true));
+            }
         });
     }
 }

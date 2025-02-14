@@ -88,12 +88,22 @@ class base_form extends \core_form\dynamic_form {
         $data->text2 = $this->optional_param('text2', '', PARAM_RAW);
         $data->text3 = $this->optional_param('text3', '', PARAM_RAW);
         $data->requiremintime = $this->optional_param('requiremintime', 0, PARAM_INT);
+        if ($data->completiontracking == 'view') {
+            $data->requiremintimeview = $this->optional_param('requiremintime', 0, PARAM_INT);
+            $data->requiremintime = 0;
+        }
         $advancedsettings = json_decode($this->optional_param('advanced', null, PARAM_RAW));
         $data->visiblebeforecompleted = $advancedsettings->visiblebeforecompleted;
         $data->visibleaftercompleted = $advancedsettings->visibleaftercompleted;
         $data->clickablebeforecompleted = $advancedsettings->clickablebeforecompleted;
         $data->clickableaftercompleted = $advancedsettings->clickableaftercompleted;
         $data->replaybehavior = $advancedsettings->replaybehavior;
+        if (isset($advancedsettings->advdismissible)) {
+            $data->advdismissible = $advancedsettings->advdismissible;
+        }
+        if (isset($advancedsettings->advskippable)) {
+            $data->advskippable = $advancedsettings->advskippable;
+        }
         return $data;
     }
 
@@ -116,6 +126,9 @@ class base_form extends \core_form\dynamic_form {
             $data->hascompletion = 0;
         } else {
             $data->hascompletion = 1;
+        }
+        if ($data->completiontracking == 'view') {
+            $data->requiremintime = $data->requiremintimeview;
         }
         return $data;
     }
@@ -156,6 +169,8 @@ class base_form extends \core_form\dynamic_form {
         $advancedsettings->clickablebeforecompleted = $data->clickablebeforecompleted;
         $advancedsettings->clickableaftercompleted = $data->clickableaftercompleted;
         $advancedsettings->replaybehavior = $data->replaybehavior;
+        $advancedsettings->advdismissible = $data->advdismissible;
+        $advancedsettings->advskippable = $data->advskippable;
         return json_encode($advancedsettings);
     }
 
@@ -255,6 +270,17 @@ class base_form extends \core_form\dynamic_form {
         $mform->addRule('requiremintime', null, 'numeric', null, 'client');
         $mform->hideIf('requiremintime', 'completiontracking', 'neq', 'manual');
         $mform->addHelpButton('requiremintime', 'requiremintime', 'mod_interactivevideo');
+
+        $mform->addElement(
+            'text',
+            'requiremintimeview',
+            '<i class="bi bi-clock mr-2"></i>' . get_string('requiremintime', 'mod_interactivevideo')
+        );
+        $mform->setType('requiremintimeview', PARAM_INT);
+        $mform->setDefault('requiremintimeview', 0);
+        $mform->addRule('requiremintimeview', null, 'numeric', null, 'client');
+        $mform->hideIf('requiremintimeview', 'completiontracking', 'neq', 'view');
+        $mform->addHelpButton('requiremintimeview', 'requiremintime', 'mod_interactivevideo');
     }
 
     /**
@@ -297,30 +323,36 @@ class base_form extends \core_form\dynamic_form {
     /**
      * Advanced form fields
      *
-     * @param bool $hascompletion if the interaction has completion
-     * @param bool $visibility  if the interaction should be shown on video navigation
-     * @param bool $click if the interaction should be clickable
-     * @param bool $rerun if the interaction should be replayed after completion
+     * @param array $options
      * @return void
      */
-    public function advanced_form_fields($hascompletion, $visibility, $click, $rerun) {
+    public function advanced_form_fields($options = []) {
+        // Normalize options.
+        $options += [
+            'hascompletion' => false, // Whether the interaction has completion tracking.
+            'visibility' => true, // Whether to show visibility options.
+            'click' => true, // Whether to show clickability options.
+            'rerun' => true, // Whether to show replay behavior options.
+        ];
+
         $mform = &$this->_form;
 
         $mform->addElement('header', 'advanced', get_string('advanced', 'mod_interactivevideo'));
         // Collapse the advanced fields by default.
         $mform->setExpanded('advanced', false);
-        if ($visibility) {
+        if ($options['visibility']) {
             $elementarray = [];
+
             $elementarray[] = $mform->createElement(
                 'advcheckbox',
                 'visiblebeforecompleted',
                 '',
-                $hascompletion ? get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
+                $options['hascompletion'] ? get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
                 ["group" => 1],
                 [0, 1]
             );
 
-            if ($hascompletion) {
+            if ($options['hascompletion']) {
                 $elementarray[] = $mform->createElement(
                     'advcheckbox',
                     'visibleaftercompleted',
@@ -330,6 +362,12 @@ class base_form extends \core_form\dynamic_form {
                     [0, 1]
                 );
             }
+            $elementarray[] = $mform->createElement(
+                'static',
+                'visibilityonvideonav',
+                '',
+                '<span class="text-muted small w-100 d-block">' . get_string('visibilityonvideonav_desc', 'mod_interactivevideo') . '</span>'
+            );
 
             $mform->addGroup($elementarray, '', get_string('visibilityonvideonav', 'mod_interactivevideo'));
 
@@ -337,18 +375,19 @@ class base_form extends \core_form\dynamic_form {
             $mform->setDefault('visibleaftercompleted', 1);
         }
 
-        if ($click) {
+        if ($options['click']) {
             $elementarray = [];
+
             $elementarray[] = $mform->createElement(
                 'advcheckbox',
                 'clickablebeforecompleted',
                 '',
-                $hascompletion ? get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
+                $options['hascompletion'] ? get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
                 ["group" => 1],
                 [0, 1]
             );
 
-            if ($hascompletion) {
+            if ($options['hascompletion']) {
                 $elementarray[] = $mform->createElement(
                     'advcheckbox',
                     'clickableaftercompleted',
@@ -358,24 +397,68 @@ class base_form extends \core_form\dynamic_form {
                     [0, 1]
                 );
             }
-
+            $elementarray[] = $mform->createElement(
+                'static',
+                'clickability',
+                '',
+                '<span class="text-muted small w-100 d-block">' . get_string('clickability_desc', 'mod_interactivevideo') . '</span>'
+            );
             $mform->addGroup($elementarray, '', get_string('clickability', 'mod_interactivevideo'));
             $mform->setDefault('clickablebeforecompleted', 1);
             $mform->setDefault('clickableaftercompleted', 1);
         }
 
-        if ($rerun && $hascompletion) {
-            $mform->addElement(
+        if ($options['rerun'] && $options['hascompletion']) {
+            $elementarray = [];
+
+            $elementarray[] = $mform->createElement(
                 'advcheckbox',
                 'replaybehavior',
-                get_string('replaybehavior', 'mod_interactivevideo'),
+                '',
                 get_string('replayaftercompletion', 'mod_interactivevideo'),
                 ["group" => 1],
                 [0, 1]
             );
+            $elementarray[] = $mform->createElement(
+                'static',
+                'rerun',
+                '',
+                '<span class="text-muted small w-100 d-block">' . get_string('rerun_desc', 'mod_interactivevideo') . '</span>'
+            );
+            $mform->addGroup($elementarray, '', get_string('replaybehavior', 'mod_interactivevideo'));
             $mform->setDefault('replaybehavior', 0);
-        } else if ($rerun && !$hascompletion) {
+        } else if ($options['rerun'] && !$options['hascompletion']) {
             $mform->addElement('hidden', 'replaybehavior', 1);
+        }
+
+        if ($options['hascompletion']) {
+            $elementarray = [];
+            $elementarray[] = $mform->createElement(
+                'advcheckbox',
+                'advdismissible',
+                '',
+                get_string('dismissible', 'mod_interactivevideo'),
+                ["group" => 1],
+                [0, 1]
+            );
+
+            $elementarray[] = $mform->createElement(
+                'advcheckbox',
+                'advskippable',
+                '',
+                get_string('skippable', 'mod_interactivevideo'),
+                ["group" => 1],
+                [0, 1]
+            );
+            $elementarray[] = $mform->createElement(
+                'static',
+                'dismissibleandskippable',
+                '',
+                '<span class="text-muted small w-100 d-block">' . get_string('dismissibleandskippable', 'mod_interactivevideo') . '</span>'
+            );
+            $mform->addGroup($elementarray, '', get_string('dismissible', 'mod_interactivevideo'));
+            $mform->setDefault('advdismissible', 1);
+            $mform->setDefault('advskippable', 1);
         }
     }
 

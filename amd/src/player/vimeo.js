@@ -53,7 +53,6 @@ class Vimeo {
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked');
-            showControls = true;
         }
         this.start = start;
         // Documented at https://developer.vimeo.com/player/sdk/reference or https://github.com/vimeo/player.js

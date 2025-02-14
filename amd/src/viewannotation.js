@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+
 /**
  * View page module
  *
@@ -22,8 +23,8 @@
  */
 
 define([
-    'jquery', 'core/event_dispatcher', 'core/toast', 'mod_interactivevideo/libraries/jquery-ui'
-], function($, eventDispatcher, Toast) {
+    'jquery', 'core/event_dispatcher', 'core/toast', 'mod_interactivevideo/quickform', 'mod_interactivevideo/libraries/jquery-ui'
+], function($, eventDispatcher, Toast, quickform) {
     const {dispatchEvent} = eventDispatcher;
     const ctRenderer = {};
     let annotations, // Array of annotations.
@@ -40,7 +41,6 @@ define([
     const $videoNav = $('#video-nav');
     const $interactionNav = $('#interactions-nav');
     const $loader = $('#background-loading');
-
     const formatTime = (seconds) => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -122,24 +122,30 @@ define([
             'totalxp': xp,
         });
 
+        // Handle the chapter list.
         $('.annolistinchapter').empty();
-        const chapteritems = releventAnnotations.filter(x => x.type != 'skipsegment' && x.hascompletion == 1);
+        const chapteritems = releventAnnotations.filter(x => x.type != 'skipsegment'
+            && x.hascompletion == 1);
         chapteritems.sort((a, b) => a.timestamp - b.timestamp);
         chapteritems.forEach((x) => {
-            $('[data-region="chapterlists"] li').each(function() {
-                const cstart = $(this).data('start');
-                const cend = $(this).data('end');
-                if (x.timestamp >= cstart && x.timestamp < cend) {
-                    $(this).find('.annolistinchapter')
-                        .append(`<li class="border-bottom anno d-flex align-items-center justify-content-between
+            const advanced = JSON.parse(x.advanced);
+            if ((advanced.visiblebeforecompleted == "1" && !x.completed)
+                || (advanced.visibleaftercompleted == "1" && x.completed)) {
+                $('[data-region="chapterlists"] li').each(function() {
+                    const cstart = $(this).data('start');
+                    const cend = $(this).data('end');
+                    if (x.timestamp >= cstart && x.timestamp < cend) {
+                        $(this).find('.annolistinchapter')
+                            .append(`<li class="border-bottom anno d-flex align-items-center justify-content-between
                          px-3 py-2 ${x.completed ? "completed" : ""}" data-id="${x.id}" data-timestamp="${x.timestamp}">
                          <span class="text-nowrap">
                          <i class="small bi ${x.completed ? "bi-check-circle-fill text-success" : 'bi-circle'} mr-2"></i>
                          <i class="${JSON.parse(x.prop).icon} mr-2"></i></span>
                          <span class="flex-grow-1 text-truncate">${x.formattedtitle}</span>
                          <span class="text-nowrap">${x.xp}<i class="bi bi-star ml-1"></i></span></li>`);
-                }
-            });
+                    }
+                });
+            }
         });
         dispatchEvent('chapterrendered', {'annotations': releventAnnotations});
     };
@@ -167,12 +173,21 @@ define([
          * @param {object} doptions - The display options.
          * @param {string} token - The token.
          * @param {string} extendedcompletion - The extended completion requirements.
+         * @param {boolean} isPreviewMode - The preview mode flag.
          * @return {void}
          */
         init: function(
             url, cmid, interaction, course, userid, start = 0, end,
             completionpercentage, gradeiteminstance, grademax, vtype,
-            preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null) {
+            preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null, isPreviewMode = false) {
+
+            quickform({
+                contextid: M.cfg.contextid,
+                courseid: course,
+                cmid,
+                interaction,
+            });
+
             // Convert start to number if string
             start = Number(start);
             if (isNaN(start)) {
@@ -264,7 +279,7 @@ define([
                         token: token,
                         cmid: cmid,
                         contextid: M.cfg.contextid,
-                        previewmode: $('body').hasClass('preview-mode') ? 1 : 0
+                        previewmode: isPreviewMode ? 1 : 0
                     }
                 });
 
@@ -406,6 +421,10 @@ define([
                         });
                         if (shouldAdd) {
                             releventAnnotations.push(annotation);
+                            if (isPreviewMode) {
+                                annotation.completed = true;
+                                annotation.previewMode = true;
+                            }
                         }
                     });
                     return releventAnnotations;
@@ -472,7 +491,9 @@ define([
                             require([contentType.amdmodule], function(Type) {
                                 ctRenderer[contentType.name] = new Type(player, releventAnnotations, interaction, course, userid,
                                     completionpercentage, gradeiteminstance, grademax, vtype, preventskip, totaltime, start,
-                                    end, contentType, cmid, token, displayoptions, completionid, extendedcompletion);
+                                    end, contentType, cmid, token, displayoptions, completionid, extendedcompletion, {
+                                    isPreviewMode: isPreviewMode
+                                });
                                 try {
                                     ctRenderer[contentType.name].init();
                                 } catch (error) {
@@ -488,9 +509,10 @@ define([
             /**
              * Run the interaction.
              * @param {object} annotation annotation object
+             * @param {boolean} force force run the interaction
              * @returns {void}
              */
-            const runInteraction = async(annotation) => {
+            const runInteraction = async(annotation, force = false) => {
                 // First making sure the player is paused.
                 player.pause();
                 let isPaused = await player.isPaused();
@@ -533,21 +555,30 @@ define([
 
                 // If the annotation has displayoptions == 'side' and it is already run, then we don't need to run it again.
                 // But we need to show the message.
-                if (annotation.displayoptions == 'side' && $(`#message[data-id=${annotation.id}]`).length > 0) {
+                if (annotation.displayoptions == 'side' && $(`.sidebar-nav-item[data-id=${annotation.id}]`).length > 0 && !force) {
                     if (!$('body').hasClass('hassidebar')) {
                         // Toggle the drawer.
                         $('#annotation-toggle').trigger('click');
-                        // Switch to the annotation tab.
-                        $(`.sidebar-nav-item[data-id=${annotation.id}]`).trigger('click');
                     }
+                    $(`.sidebar-nav-item[data-id=${annotation.id}]`).trigger('click');
                 } else {
                     activityType = ctRenderer[annotation.type];
                     setTimeout(() => {
                         activityType.runInteraction(annotation);
+                        // In case there is an active interaction, trigger the interactionclose event.
+                        if ($('#message.active').length > 0) {
+                            $('#message.active').each(function() {
+                                const id = $(this).data('id');
+                                if (id != annotation.id) {
+                                    $(this).removeClass('active');
+                                    dispatchEvent('interactionclose', {'annotation': {'id': id}});
+                                }
+                            });
+                        }
+                        dispatchEvent('interactionrun', {'annotation': annotation});
                     }, 100);
                 }
 
-                dispatchEvent('interactionrun', {'annotation': annotation});
             };
 
             /**
@@ -591,6 +622,8 @@ define([
                             action: 'update_videotime',
                             sesskey: M.cfg.sesskey,
                             id: interaction,
+                            cmid: cmid,
+                            courseid: course,
                             start: start,
                             end: !end || end == 0 ? duration : end,
                             contextid: M.cfg.contextid
@@ -719,6 +752,7 @@ define([
                     }, 500);
                     return;
                 }
+
                 player.pause();
                 const isPaused = await player.isPaused();
                 if (!isPaused) {
@@ -742,6 +776,7 @@ define([
                 $("#annotation-canvas").removeClass('d-none');
 
                 await getAnnotations();
+
                 $('#seekhead').draggable({
                     'containment': '#video-nav',
                     'axis': 'x',
@@ -786,7 +821,8 @@ define([
                         player.play();
                     }
                 });
-                dispatchEvent('timeupdate', {'time': start});
+
+                dispatchEvent('timeupdate', {'time': start}); // Dispatch the timeupdate event with the start time.
             };
 
             /**
@@ -803,7 +839,6 @@ define([
                 if (!playerReady) {
                     return;
                 }
-                $('#controller').addClass('opacity-1');
                 $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
                 $('#playpause').attr('data-original-title', M.util.get_string('play', 'mod_interactivevideo'));
                 cancelAnimationFrame(playingInterval);
@@ -811,7 +846,7 @@ define([
                 let t = await player.getCurrentTime();
                 let watchedpoint = Math.round(t);
                 // Make sure the watchedpoint is not the same as the last saved point or so close to it.
-                if (watchedpoint <= start + 1 || watchedpoint >= end - 1 || Math.abs(watchedpoint - lastSaved) < 5) {
+                if ((Math.abs(watchedpoint - lastSaved) < 5 && watchedpoint != Math.round(end)) || watchedpoint < start + 5) {
                     return;
                 }
                 lastSaved = watchedpoint;
@@ -825,7 +860,7 @@ define([
                         completionid: completionid,
                         watchedpoint: watchedpoint,
                         contextid: M.cfg.contextid
-                    },
+                    }
                 });
             };
 
@@ -900,6 +935,10 @@ define([
                         viewedAnno.push(Number(x.id));
                     }
                 });
+                // If lastrun timestamp is greater than t, then we need to reset it.
+                if (lastrun && releventAnnotations.find(x => x.id == lastrun).timestamp > t) {
+                    lastrun = null;
+                }
             };
 
             let visualized = false;
@@ -934,11 +973,13 @@ define([
                 }
 
                 if ($('#message.active').length > 0) {
-                    const mid = $('#message.active').data('id');
-                    if (mid) {
-                        $('#message').removeClass('active');
-                        dispatchEvent('interactionclose', {'annotation': {'id': mid}});
-                    }
+                    $('#message.active').each(function() {
+                        const mid = $(this).data('id');
+                        if (mid) {
+                            $(this).removeClass('active');
+                            dispatchEvent('interactionclose', {'annotation': {'id': mid}});
+                        }
+                    });
                 }
 
                 $('#annotation-modal').modal('hide');
@@ -958,7 +999,13 @@ define([
                     viewedAnno = [];
                     firstPlay = true;
                     if (window.resumetime && window.resumetime > start && window.resumetime < end) {
-                        await player.seek(window.resumetime);
+                        if (player.allowAutoplay) {
+                            await player.seek(window.resumetime);
+                        } else {
+                            await player.pause();
+                            await player.seek(window.resumetime);
+                            player.play();
+                        }
                     }
                     player.unMute();
                 }
@@ -1023,7 +1070,7 @@ define([
                             return;
                         }
                         // If in preview mode, don't run the interaction.
-                        if ($('body').hasClass('preview-mode')) {
+                        if (isPreviewMode) {
                             return;
                         }
                         // Run the interaction if it isn't complete or rerunnable.
@@ -1087,8 +1134,40 @@ define([
             let $toast = $('.toast-wrapper').detach();
             $('#wrapper').append($toast);
 
+            $(document).on('click', '.completion-required', function(e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                Toast.add(M.util.get_string('youmustcompletethistaskfirst', 'mod_interactivevideo'), {
+                    type: 'danger'
+                });
+                return;
+            });
+
+            const handleUnskippable = async(t) => {
+                // Handle unskippable interactions.
+                if (!t) {
+                    t = await player.getCurrentTime();
+                }
+
+                if (releventAnnotations) {
+                    const theAnnotation = releventAnnotations.find(x => Number(x.timestamp) < Number(t.toFixed(2))
+                        && x.completed == false && JSON.parse(x.advanced).advskippable == 0 && x.hascompletion == 1);
+                    if (theAnnotation) {
+                        await player.pause();
+                        await player.seek(theAnnotation.timestamp);
+                        runInteraction(theAnnotation);
+                        Toast.add(M.util.get_string('youmustcompletethistaskfirst', 'mod_interactivevideo'), {
+                            type: 'danger'
+                        });
+                        replaceProgressBars((theAnnotation.timestamp - start) / totaltime * 100);
+                        return true;
+                    }
+                }
+                return false;
+            };
+
             $(document).on('timeupdate', async function(e) {
-                if (!playerReady) {
+                if (!playerReady || isPreviewMode) {
                     return;
                 }
                 const t = e.originalEvent.detail.time;
@@ -1107,6 +1186,7 @@ define([
                         replaceProgressBars((theAnnotation.timestamp - start) / totaltime * 100);
                     }
                 }
+                handleUnskippable(t);
             });
 
             // Handle the refresh button:: allowing user to refresh the content
@@ -1117,7 +1197,7 @@ define([
                 const annotation = releventAnnotations.find(x => x.id == id);
                 $(this).closest('#message').remove();
                 dispatchEvent('interactionrefresh', {'annotation': annotation});
-                runInteraction(annotation);
+                runInteraction(annotation, true);
             });
 
             // Handle video control events:: fullscreen toggle
@@ -1300,6 +1380,13 @@ define([
             $(document).on('click', '#interactions-nav .annotation, #video-nav .annotation', async function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
+                const timestamp = $(this).data('timestamp');
+
+                let hasSkippable = await handleUnskippable(timestamp);
+                if (hasSkippable) {
+                    return;
+                }
+
                 $loader.fadeIn(300);
                 if ($(this).hasClass('no-click')) {
                     // Add a tooltip that seeking is disabled.
@@ -1308,7 +1395,6 @@ define([
                     });
                     return;
                 }
-                const timestamp = $(this).data('timestamp');
                 const currenttime = await player.getCurrentTime();
                 if (currenttime == timestamp && lastrun) {
                     $loader.fadeOut(300);
@@ -1359,7 +1445,6 @@ define([
                 if (!isPlaying || videoEnded) {
                     await player.play();
                 }
-                lastrun = null;
                 viewedAnno = [];
                 setTimeout(() => {
                     // Remove the position.
@@ -1384,11 +1469,14 @@ define([
             // Handle video control events:: restart
             $(document).on('click', '#end-screen #restart', async function(e) {
                 e.preventDefault();
-
+                dispatchEvent('iv:playerRestart');
                 $('#message').remove();
                 // Remove sidebar/drawer.
-                $('body').removeClass('hassidebar');
-                $('#annotation-sidebar, #annotation-toggle').remove();
+                if ($('body').hasClass('hassidebar')) {
+                    $('#annotation-toggle').trigger('click');
+                    $('#annotation-sidebar, #annotation-toggle').remove();
+                    $('body').removeClass('hassidebar');
+                }
 
                 viewedAnno = [];
                 lastrun = null;
@@ -1499,7 +1587,7 @@ define([
                 let qualities = quality.qualities;
                 let qualitiesLabel = quality.qualitiesLabel;
                 qualities.forEach((q, i) => {
-                    $('#qualitieslist').append(`<a class="dropdown-item text-white changequality" data-quality="${q}"
+                    $('#qualitieslist').append(`<a class="dropdown-item changequality text-white" data-quality="${q}"
                          href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw ml-n3"></i>${qualitiesLabel[i]}</a>`);
                 });
                 $(this).find('[data-toggle=dropdown]').dropdown('update');
@@ -1560,12 +1648,12 @@ define([
                 }
                 $('#changecaption').removeClass('d-none');
                 $('#changecaption .dropdown-menu')
-                    .html(`<a class="dropdown-item text-white changecaption"
+                    .html(`<a class="dropdown-item changecaption"
                      data-lang="" href="#">
                      <i class="bi fa-fw bi-check ml-n3"></i>${M.util.get_string('off', 'mod_interactivevideo')}</a>`);
                 captions.forEach(caption => {
                     $('#changecaption .dropdown-menu')
-                        .append(`<a class="dropdown-item text-white changecaption"
+                        .append(`<a class="dropdown-item changecaption text-white"
                          data-lang="${caption.code}" href="#"><i class="bi fa-fw ml-n3"></i>${caption.label}</a>`);
                 });
 
@@ -1597,10 +1685,14 @@ define([
             });
 
             $(document).on('annotationitemsrendered', function() {
-                $('#wrapper [data-toggle="tooltip"]').tooltip({
-                    container: '#wrapper',
-                    boundary: 'window',
-                });
+                try {
+                    $('#wrapper [data-toggle="tooltip"]').tooltip({
+                        container: '#wrapper',
+                        boundary: 'window',
+                    });
+                } catch (error) {
+                    // Do nothing.
+                }
                 if (displayoptions.disableinteractionclickuntilcompleted == 1) {
                     $interactionNav.find('li:not(.completed)').addClass('no-click');
                 }
@@ -1620,7 +1712,7 @@ define([
                 }
 
                 // Autoplay if enabled and in right conditions.
-                if (!$('body').hasClass('preview-mode') && !firstPlay) {
+                if (!isPreviewMode && !firstPlay) {
                     let autoplay = displayoptions.autoplay == 1;
                     let time = start;
                     if ($('.intro-content').hasClass('hasintro')) {
@@ -1677,6 +1769,7 @@ define([
                 // Update start time to the window.IVANNO item.
                 let windowAnnos = window.ANNOS;
                 let windowAnno = windowAnnos.find(x => x.id == annotation.id);
+
                 if (windowAnno) {
                     windowAnno.starttime = windowAnno.starttime ? windowAnno.starttime : new Date().getTime();
                     windowAnno.newstarttime = new Date().getTime();
@@ -1694,6 +1787,7 @@ define([
                 // Update start time to the window.IVANNO item.
                 let windowAnnos = window.ANNOS;
                 let windowAnno = windowAnnos.find(x => x.id == annotation.id);
+
                 if (windowAnno) {
                     windowAnno.duration = windowAnno.duration + (new Date().getTime() - windowAnno.newstarttime);
                 }
@@ -1718,6 +1812,29 @@ define([
                 windowAnnos = windowAnnos.filter(x => x.id != annotation.id);
                 windowAnnos.push(windowAnno);
                 window.ANNOS = windowAnnos;
+
+                // Handle the dismissible setting.
+                $('#message[data-id=' + annotation.id + ']').addClass('active'); // Make sure the message is active.
+                let anno = releventAnnotations.find(x => x.id == annotation.id);
+                let advanced = anno.advanced;
+                advanced = advanced ? JSON.parse(advanced) : {};
+                if (advanced.advdismissible == 0 && anno.completed) {
+                    $('#controller, #video-wrapper, .sidebar-nav-item')
+                        .removeClass('completion-required');
+                } else if (advanced.advdismissible == 0 && !anno.completed) {
+                    $('#controller').addClass('completion-required');
+                    if ($('#message.active').data('placement') == 'bottom' || $('#message.active').data('placement') == 'side') {
+                        $('#video-wrapper').addClass('completion-required');
+                    }
+                    if ($('#message.active').data('placement') == 'side') {
+                        $('.sidebar-nav-item').addClass('completion-required');
+                    }
+                }
+                if (anno.completed) {
+                    $('.sidebar-nav-item[data-id=' + annotation.id + ']').addClass('completed');
+                } else {
+                    $('.sidebar-nav-item[data-id=' + annotation.id + ']').removeClass('completed');
+                }
             });
 
             $(document).on('iv:autoplayBlocked', function(e) {
@@ -1728,7 +1845,7 @@ define([
                 // Append a error button.
                 $('body').append(`<button id="autoplay-error" data-toggle="tooltip"
                      title="${M.util.get_string('autoplayblocked', 'mod_interactivevideo')}"
-                    class="btn btn-danger btn rounded-circle pulse"><i class="bi bi-ban"></i></button>`);
+                    class="btn btn-danger p-2 rounded-circle pulse"><i class="bi bi-x-lg"></i></button>`);
                 $('#autoplay-error').tooltip('show');
                 $(document).on('click', '#autoplay-error', function() {
                     $('#autoplay-error').tooltip('hide');
@@ -1736,6 +1853,13 @@ define([
                         $(this).remove();
                     });
                 });
+            });
+
+            $(document).on('click', '#message[data-placement]:not(.active)', function(e) {
+                e.preventDefault();
+                $(this).addClass('active');
+                // Dispatch the interaction run event.
+                dispatchEvent('interactionrun', {'annotation': releventAnnotations.find(x => x.id == $(this).data('id'))});
             });
         }
     };

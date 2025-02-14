@@ -23,13 +23,13 @@
 import $ from 'jquery';
 import Notification from 'core/notification';
 import {add as addToast} from 'core/toast';
-import JSZip from 'mod_interactivevideo/libraries/jszip';
-import 'mod_interactivevideo/libraries/jquery.dataTables';
-import 'mod_interactivevideo/libraries/dataTables.bootstrap4';
-import 'mod_interactivevideo/libraries/dataTables.buttons';
-import 'mod_interactivevideo/libraries/buttons.bootstrap4';
-import 'mod_interactivevideo/libraries/buttons.html5';
-
+import JSZip from './libraries/jszip';
+import './libraries/jquery.dataTables';
+import './libraries/dataTables.bootstrap4';
+import './libraries/dataTables.buttons';
+import './libraries/buttons.bootstrap4';
+import './libraries/buttons.html5';
+import quickform from './quickform';
 /**
  * Initializes the report functionality for the interactive video module.
  *
@@ -44,11 +44,14 @@ import 'mod_interactivevideo/libraries/buttons.html5';
  * @param {number} courseid - The course ID.
  * @param {number} start - The start time.
  * @param {number} end - The end time.
+ * @param {Object} access - The access object.
  */
-const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, videotype, cm, courseid, start, end) => {
+const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, videotype, cm, courseid, start, end, access) => {
     window.JSZip = JSZip;
-
+    let DataTable = $.fn.dataTable;
     let player;
+
+    quickform();
 
     const getContentTypes = $.ajax({
         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
@@ -70,12 +73,16 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             sesskey: M.cfg.sesskey,
             contextid: M.cfg.contextid,
             ctxid: M.cfg.courseContextId,
+            courseid: courseid,
             groupid: groupid
         }
     });
 
     let itemsdata = $('#itemsdata').text();
     itemsdata = JSON.parse(itemsdata);
+    // Init the contenttypes that has initonreport.
+    let initonreport = itemsdata.filter(x => JSON.parse(x.prop).initonreport);
+    initonreport = [...new Set(initonreport.map(x => x.type))];
 
     let contentTypes;
     let tabledata;
@@ -97,10 +104,15 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 {
                     data: "picture",
                     render: function(data, type, row) {
-                        let deletebutton = `<button title="${M.util.get_string('reset', 'mod_interactivevideo')}"
+                        let deletebutton = '';
+                        if (access.canedit == 1) {
+                            deletebutton = `<button title="${M.util.get_string('reset', 'mod_interactivevideo')}"
                          class="btn border-0 btn-sm text-danger reset m-1" data-record="${row.completionid}"
                           data-userid="${row.id}">
                          <i class="bi bi-trash3"></i></button>`;
+                        }
+                        // Put _target=blank to open the user profile in a new tab (use regex)
+                        data = data.replace(/<a /g, '<a target="_blank" ');
                         return `<div class="text-truncate d-flex align-items-center justify-content-between">${data}
                         ${row.timecreated > 0 ? deletebutton : ''}</div>`;
                     },
@@ -212,7 +224,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             },
             stateSave: true,
             "dom": `<'d-flex w-100 justify-content-between`
-                + `'<'d-flex align-items-start'Bl>'<''f>>t<'row mt-2'<'col-sm-6'i><'col-sm-6'p>>`,
+                + `'<'d-flex align-items-center'Bl>'<''f>>t<'row mt-2'<'col-sm-6'i><'col-sm-6'p>>`,
             "buttons": [
                 {
                     extend: "copyHtml5",
@@ -273,7 +285,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 $("#reporttable .table-responsive").addClass("p-1");
                 $("#reporttable .spinner-grow").remove();
                 $("table#completiontable").removeClass("d-none");
-
+                $("#background-loading").fadeOut(300);
             }
         };
 
@@ -303,6 +315,16 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         });
 
         tabledata = $('#completiontable').DataTable(datatableOptions);
+
+        initonreport.forEach((type) => {
+            let matchingContentTypes = contentTypes.find(x => x.name === type);
+            let amdmodule = matchingContentTypes.amdmodule;
+            require([amdmodule], function(Module) {
+                new Module(player, itemsdata, cmid, courseid, null,
+                    completionpercentage, null, grademax, videotype, null,
+                    end - start, start, end, null, cm).init();
+            });
+        });
     });
 
     $(document).on('click', '[data-item] a', function() {
@@ -353,7 +375,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 theAnnotation.completed = true;
                 new Module(player, itemsdata, cmid, courseid, null,
                     completionpercentage, null, grademax, videotype, null,
-                    end - start, start, end, theAnnotation.prop, cm).displayReportView(theAnnotation, tabledatajson);
+                    end - start, start, end, theAnnotation.prop, cm).displayReportView(theAnnotation, tabledatajson, DataTable);
             });
             $(this).find('.close-modal').focus();
         });

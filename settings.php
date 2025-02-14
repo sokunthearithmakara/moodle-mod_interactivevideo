@@ -32,7 +32,6 @@ $modfolder = new admin_category(
 );
 $ADMIN->add('modsettings', $modfolder);
 
-
 // General settings page.
 $gsettings = new admin_settingpage('mod_interactivevideo_generalsettings', get_string('generalsettings', 'mod_interactivevideo'));
 
@@ -144,6 +143,13 @@ Trebuchet MS="Trebuchet MS", sans-serif
 Verdana=Verdana, sans-serif',
 ));
 
+$gsettings->add(new admin_setting_configcheckbox(
+    'mod_interactivevideo/enablecoursesettings',
+    get_string('enablecoursesettings', 'mod_interactivevideo'),
+    get_string('enablecoursesettings_desc', 'mod_interactivevideo'),
+    1,
+));
+
 $ADMIN->add('modivfolder', $gsettings);
 
 // Default appearance settings page.
@@ -157,12 +163,20 @@ foreach ($themeobjects as $key => $theme) {
         $themes[$key] = get_string('pluginname', 'theme_' . $theme->name);
     }
 }
-$asettings->add(new admin_setting_configselect(
+$themesetting = new admin_setting_configselect(
     'mod_interactivevideo/defaulttheme',
     get_string('defaulttheme', 'mod_interactivevideo'),
     get_string('defaulttheme_desc', 'mod_interactivevideo'),
     '',
     $themes,
+);
+$asettings->add($themesetting);
+
+$asettings->add(new admin_setting_configcheckbox(
+    'mod_interactivevideo/allowcustomtheme',
+    get_string('allowcustomtheme', 'mod_interactivevideo'),
+    get_string('allowcustomtheme_desc', 'mod_interactivevideo'),
+    1,
 ));
 
 $asettings->add(new admin_setting_configmulticheckbox(

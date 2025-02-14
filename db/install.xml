@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/interactivevideo/db" VERSION="20241222" COMMENT="XMLDB file for Moodle mod/interactivevideo"
+<XMLDB PATH="mod/interactivevideo/db" VERSION="20250131" COMMENT="XMLDB file for Moodle mod/interactivevideo"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -119,6 +119,28 @@
         <KEY NAME="annotationid" TYPE="foreign" FIELDS="annotationid" REFTABLE="interactivevideo_items" REFFIELDS="id"/>
         <KEY NAME="completionid" TYPE="foreign" FIELDS="completionid" REFTABLE="interactivevideo_completion" REFFIELDS="id"/>
       </KEYS>
+    </TABLE>
+    <TABLE NAME="interactivevideo_settings" COMMENT="Default settings per specific course, overriding site defaults.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="20" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="endscreentext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="displayasstartscreen" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="completionpercentage" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="displayoptions" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="extendedcompletion" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="completion" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="courseid" UNIQUE="true" FIELDS="courseid"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>

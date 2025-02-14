@@ -235,6 +235,9 @@ class restore_interactivevideo_activity_structure_step extends restore_activity_
         $this->add_related_files('mod_interactivevideo', 'video', null);
         $this->add_related_files('mod_interactivevideo', 'posterimage', null);
         $this->add_related_files('mod_interactivevideo', 'content', 'annotationitems');
+        $this->add_related_files('mod_interactivevideo', 'itext1', 'annotationitems'); // use i prefix to avoid conflict with the log.
+        $this->add_related_files('mod_interactivevideo', 'itext2', 'annotationitems');
+        $this->add_related_files('mod_interactivevideo', 'itext3', 'annotationitems');
         $this->add_related_files('mod_interactivevideo', 'text1', 'logdata');
         $this->add_related_files('mod_interactivevideo', 'text2', 'logdata');
         $this->add_related_files('mod_interactivevideo', 'text3', 'logdata');

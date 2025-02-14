@@ -1,3 +1,5 @@
+/* eslint-disable complexity */
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -24,6 +26,7 @@ import $ from 'jquery';
 import contentbankutil from 'ivplugin_contentbank/util';
 import ModalForm from 'core_form/modalform';
 import Base from 'mod_interactivevideo/type/base';
+import {notifyFilterContentUpdated as notifyFilter} from 'core_filters/events';
 
 export default class ContentBank extends Base {
     /**
@@ -78,6 +81,13 @@ export default class ContentBank extends Base {
 
             uploadForm.show();
         });
+
+        self.timepicker({
+            modal: true,
+            disablelist: true,
+            required: true,
+        });
+
         return {form, event};
     }
 
@@ -107,13 +117,22 @@ export default class ContentBank extends Base {
         super.renderContainer(annotation);
         let $message = $(`#message[data-id='${annotation.id}']`);
         $message.find('.modal-body').addClass('p-0');
-        let $completiontoggle = $message.find('#completiontoggle');
-        $message.find('#title .info').remove();
-        $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2 info" data-toggle="tooltip"
+        if (annotation.completiontracking !== 'view') {
+            let $completiontoggle = $message.find('#completiontoggle');
+            $message.find('#title .info').remove();
+            $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2 info" data-toggle="tooltip"
             data-container="#wrapper" data-trigger="hover"
             data-title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}"></i>`);
-        $message.find('[data-toggle="tooltip"]').tooltip();
-        return $message;
+            if (annotation.completed) {
+                return;
+            }
+            setTimeout(function() {
+                $message.find('[data-toggle="tooltip"]').tooltip('show');
+            }, 1000);
+            setTimeout(function() {
+                $message.find('[data-toggle="tooltip"]').tooltip('hide');
+            }, 3000);
+        }
     }
 
     /**
@@ -123,6 +142,9 @@ export default class ContentBank extends Base {
      */
     resizeIframe(annotation) {
         const modalbody = document.querySelector(`#message[data-id='${annotation.id}'] .modal-body`);
+        if (!modalbody) {
+            return;
+        }
         const resizeObserver = new ResizeObserver(() => {
             const iframe = modalbody.querySelector('iframe.h5p-player');
             if (iframe) {
@@ -143,7 +165,32 @@ export default class ContentBank extends Base {
     async applyContent(annotation) {
         let self = this;
         let $message = $(`#message[data-id='${annotation.id}']`);
+        // Remove .modal-dialog-centered class to avoid flickering when H5P content resizes.
+        $message.removeClass('modal-dialog-centered');
+
         let annoid = annotation.id;
+
+        const onPassFail = async(passed, time) => {
+            let label = passed ? 'continue' : 'rewatch';
+            $message.find('#content')
+                .append(`<button class="btn btn-${passed ? 'success' : 'danger'} mt-2 btn-rounded"
+                    id="passfail" data-timestamp="${time}"><i class="fa fa-${passed ? 'play' : 'redo'} mr-2"></i>
+                ${M.util.get_string(label, 'ivplugin_contentbank')}
+                </button>`);
+            $message.find('iframe').addClass('no-pointer-events');
+        };
+
+        $(document).off('click', '#passfail').on('click', '#passfail', function(e) {
+            e.preventDefault();
+            let time = $(this).data('timestamp');
+            self.dispatchEvent('interactionclose', {
+                annotation: annotation,
+            });
+            self.player.seek(time);
+            self.player.play();
+            $(this).remove();
+        });
+
         const xAPICheck = (annotation, listenToEvents = true) => {
             const detectH5P = () => {
                 let H5P;
@@ -168,7 +215,7 @@ export default class ContentBank extends Base {
                     }
                     let statements = [];
                     try {
-                        H5P.externalDispatcher.on('xAPI', function(event) {
+                        H5P.externalDispatcher.on('xAPI', async function(event) {
                             if (event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
                                 || event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/answered') {
                                 statements.push(event.data.statement);
@@ -208,11 +255,12 @@ export default class ContentBank extends Base {
                                 if (complete && !annotation.completed) {
                                     let details = {};
                                     const completeTime = new Date();
+                                    let windowAnno = window.ANNOS.find(x => x.id == annotation.id);
                                     details.xp = annotation.xp;
                                     if (annotation.char1 == '1') { // Partial points.
                                         details.xp = (event.data.statement.result.score.scaled * annotation.xp).toFixed(2);
                                     }
-                                    details.duration = completeTime.getTime() - $('#video-wrapper').data('timestamp');
+                                    details.duration = windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime);
                                     details.timecompleted = completeTime.getTime();
                                     const completiontime = completeTime.toLocaleString();
                                     let duration = self.formatTime(details.duration / 1000);
@@ -224,6 +272,51 @@ export default class ContentBank extends Base {
                      <i class="${textclass}"></i><br><span>${Number(details.xp)}</span></span>`;
                                     details.details = statements;
                                     self.toggleCompletion(annoid, 'mark-done', 'automatic', details);
+                                }
+
+                                if (annotation.text1 != '') {
+                                    let condition = JSON.parse(annotation.text1);
+                                    if (event.data.statement.result.score.scaled < 0.5) {
+                                        if (condition.gotoonfailed == 1 && condition.forceonfailed != 1) {
+                                            onPassFail(false, condition.timeonfailed);
+                                        } else if (condition.gotoonfailed == 1 && condition.forceonfailed == 1) {
+                                            setTimeout(function() {
+                                                self.dispatchEvent('interactionclose', {
+                                                    annotation: annotation,
+                                                });
+                                                self.player.seek(condition.timeonfailed);
+                                                self.player.play();
+                                            }, 1000);
+                                        }
+                                        if (condition.showtextonfailed == 1 && condition.textonfailed.text != '') {
+                                            let textonfailed = await self.formatContent(condition.textonfailed.text);
+                                            $message.find('.passfail-message').remove();
+                                            $message.find(`#content`)
+                                                .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
+                                            ${textonfailed}</div>`);
+                                            notifyFilter($('.passfail-message'));
+                                        }
+                                    } else {
+                                        if (condition.gotoonpassing == 1 && condition.forceonpassing != 1) {
+                                            onPassFail(true, condition.timeonpassing);
+                                        } else if (condition.gotoonpassing == 1 && condition.forceonpassing == 1) {
+                                            setTimeout(function() {
+                                                self.dispatchEvent('interactionclose', {
+                                                    annotation: annotation,
+                                                });
+                                                self.player.seek(condition.timeonpassing);
+                                                self.player.play();
+                                            }, 1000);
+                                        }
+                                        if (condition.showtextonpassing == 1 && condition.textonpassing.text != '') {
+                                            let textonpassing = await self.formatContent(condition.textonpassing.text);
+                                            $message.find('.passfail-message').remove();
+                                            $message.find(`#content`)
+                                                .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
+                                            ${textonpassing}</div>`);
+                                            notifyFilter($('.passfail-message'));
+                                        }
+                                    }
                                 }
                             }
                         });
@@ -248,9 +341,8 @@ export default class ContentBank extends Base {
             return;
         }
         if (!annotation.completed && annotation.completiontracking == 'view') {
-            self.toggleCompletion(annoid, 'mark-done', 'automatic');
+            self.completiononview(annotation);
         }
         xAPICheck(annotation, !annotation.completed && annotation.completiontracking != 'manual');
-        this.resizeIframe(annotation);
     }
 }

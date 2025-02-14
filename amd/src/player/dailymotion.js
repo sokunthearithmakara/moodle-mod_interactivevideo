@@ -79,6 +79,7 @@ class DailyMotion {
             video: videoId,
             params: {
                 startTime: start,
+                mute: true,
             },
         };
         let dailymotion;
@@ -113,7 +114,12 @@ class DailyMotion {
                 tracks = tracks.map(track => {
                     const locale = track.split('-')[0];
                     const country = track.split('-')[1];
-                    const displayNames = new Intl.DisplayNames([`${M.cfg.language}`], {type: 'language'});
+                    let displayNames;
+                    try {
+                        displayNames = new Intl.DisplayNames([`${M.cfg.language}`], {type: 'language'});
+                    } catch (e) {
+                        displayNames = new Intl.DisplayNames(['en'], {type: 'language'});
+                    }
                     let label;
                     if (country == 'auto') {
                         label = displayNames.of(locale) + ' (Auto)';
@@ -149,13 +155,6 @@ class DailyMotion {
             // Let it play on mute which sometimes include ads. When the ad is done, the VIDEO_START event will fire.
             // That's when we let user know, player is ready.
             const playerEvents = () => {
-                player.on(dailymotion.events.VIDEO_SEEKEND, function(e) {
-                    if (!ready) {
-                        return;
-                    }
-                    dispatchEvent('iv:playerSeek', e.videoTime);
-                });
-
                 player.on(dailymotion.events.VIDEO_END, function() {
                     self.ended = true;
                     dispatchEvent('iv:playerEnded');
@@ -236,7 +235,7 @@ class DailyMotion {
                     }
                     setTimeout(async() => {
                         if (state.playerIsPlaybackAllowed) {
-                        player.pause();
+                            player.pause();
                         }
                         player.seek(start);
                         player.setMute(false);
@@ -449,6 +448,7 @@ class DailyMotion {
      */
     unMute() {
         player.setMute(false);
+        player.setVolume(1);
     }
     /**
      * Returns the original Dailymotion player instance.

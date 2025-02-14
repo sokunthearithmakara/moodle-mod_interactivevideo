@@ -18,7 +18,7 @@ Example context (json):
 {
 }
 }}
-<div class="navbar fixed-top d-flex flex-row flex-nowrap align-items-center {{^darkmode}}bg-white shadow-sm{{/darkmode}} pl-1 rounded-0 {{#darkmode}}bg-dark text-white border-0{{/darkmode}}" data-completion="{{completed}}">
+<div class="navbar fixed-top d-flex flex-row flex-nowrap align-items-center {{^darkmode}}bg-white{{/darkmode}} pl-1 rounded-0 {{#darkmode}}bg-dark text-white border-0{{/darkmode}}" data-completion="{{completed}}">
     <div class="d-flex align-items-center">
         <a href="{{{returnurl}}}#module-{{cmid}}"
            class="rotatex-360 btn btn-sm mr-2 border-0 p-0 ml-2"
@@ -34,7 +34,7 @@ Example context (json):
     <div class="dropdown"
          title="{{#str}}todo,mod_interactivevideo{{/str}}"
          data-toggle="tooltip" data-placement="right">
-        <button class="btn btn-sm border-0 bg-transparent"
+        <button class="btn btn-sm border-0 bg-transparent btn-hover"
                 type="button"
                 id="completiondropdown"
                 data-toggle="dropdown"
@@ -54,37 +54,38 @@ Example context (json):
     <a href="{{{viewurl}}}"
        title="{{#str}}play,mod_interactivevideo{{/str}}"
        data-toggle="tooltip"
-       class="btn px-1 btn-sm mr-2 border-0"><i class="bi bi-play-circle fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
+       class="btn px-1 btn-sm mr-2 border-0 btn-hover"><i class="bi bi-play-circle fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
 {{/viewurl}}
 {{#interactionsurl}}
 <a href="{{{interactionsurl}}}"
    title="{{#str}}interactions,mod_interactivevideo{{/str}}"
    data-toggle="tooltip"
-   class="btn px-1 btn-sm mr-2 border-0"><i class="bi bi-bullseye fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
+   class="btn px-1 btn-sm mr-2 border-0 btn-hover"><i class="bi bi-bullseye fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
 {{/interactionsurl}}
 {{#reporturl}}
 <a href="{{{reporturl}}}"
    title="{{#str}}report,mod_interactivevideo{{/str}}"
    data-toggle="tooltip"
-   class="btn px-1 btn-sm mr-2 border-0"><i class="bi bi-table fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
+   class="btn px-1 btn-sm mr-2 border-0 btn-hover"><i class="bi bi-table fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
 {{/reporturl}}
 {{#settingurl}}
-<a href="{{{settingurl}}}"
-   title="{{#str}}settings{{/str}}"
-   data-toggle="tooltip"
-   class="btn px-1 btn-sm mr-2 border-0"><i class="bi bi-gear fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
+<a href="javascript:void(0)" data-href="{{{settingurl}}}" data-cmid="{{cmid}}" data-courseid="{{courseid}}"
+    data-contextid="{{contextid}}" data-interaction="{{instance}}" data-origin="navbar"
+   title="{{#str}}settingstooltip, mod_interactivevideo{{/str}}"
+   data-toggle="tooltip" data-html="true"
+   class="btn px-1 btn-sm mr-2 border-0 iv_quickform btn-hover"><i class="bi bi-gear fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
 {{/settingurl}}
 {{#backupurl}}
 <a href="{{{backupurl}}}"
    title="{{#str}}backup{{/str}}"
    data-toggle="tooltip"
-   class="btn px-1 btn-sm mr-2 border-0"><i class="bi bi-cloud-arrow-up fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
+   class="btn px-1 btn-sm mr-2 border-0 btn-hover"><i class="bi bi-cloud-arrow-up fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
 {{/backupurl}}
 {{#restoreurl}}
 <a href="{{{restoreurl}}}"
    title="{{#str}}restore{{/str}}"
    data-toggle="tooltip"
-   class="btn px-1 btn-sm mr-2 border-0"><i class="bi bi-cloud-arrow-down fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
+   class="btn px-1 btn-sm mr-2 border-0 btn-hover"><i class="bi bi-cloud-arrow-down fs-25px {{#darkmode}}text-white{{/darkmode}} "></i></a>
 {{/restoreurl}}
 <span class="ml-2">
     {{#useravatar}}

@@ -24,9 +24,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core\url;
+use core\exception\moodle_exception;
 
 define('INTERACTIVEVIDEO_DISPLAY_INLINE', 1);
+define('INTERACTIVEVIDEO_EVENT_TYPE_DUE', 'due');
+
 /**
  * Return if the plugin supports $feature.
  *
@@ -53,6 +55,8 @@ function interactivevideo_supports($feature) {
             return true;
         case FEATURE_GROUPINGS:
             return true;
+        case FEATURE_MODEDIT_DEFAULT_COMPLETION:
+            return false;
         default:
             return null;
     }
@@ -171,20 +175,6 @@ function interactivevideo_add_instance($moduleinstance, $mform = null, $batch = 
             $DB->set_field('course_modules', 'instance', $moduleinstance->id, ['id' => $cmid]);
         }
 
-        if ($mform && !empty($moduleinstance->text['itemid'])) {
-            $draftitemid = $moduleinstance->text['itemid'];
-            $moduleinstance->endscreentext = file_save_draft_area_files(
-                $draftitemid,
-                $context->id,
-                'mod_interactivevideo',
-                'endscreentext',
-                0,
-                ['subdirs' => 0],
-                $moduleinstance->text['text']
-            );
-            $DB->update_record('interactivevideo', $moduleinstance);
-        }
-
         // Handle the file upload for video.
         if ($moduleinstance->source == 'url') {
             // Make sure the video field is empty.
@@ -215,19 +205,40 @@ function interactivevideo_add_instance($moduleinstance, $mform = null, $batch = 
             $fs = get_file_storage();
             $fs->delete_area_files($usercontext->id, 'user', 'draft', $draftitemid);
         }
-
-        // Save poster image file from draft area.
-        $draftitemid = isset($moduleinstance->posterimagefile) ? $moduleinstance->posterimagefile : null;
-        if ($draftitemid) {
-            $moduleinstance->posterimage = file_save_draft_area_files(
-                $draftitemid,
-                $context->id,
-                'mod_interactivevideo',
-                'posterimage',
-                0
-            );
-        }
     }
+
+    $requiredupdate = false;
+    if (!empty($moduleinstance->text['itemid'])) {
+        $draftitemid = $moduleinstance->text['itemid'];
+        $moduleinstance->endscreentext = file_save_draft_area_files(
+            $draftitemid,
+            $context->id,
+            'mod_interactivevideo',
+            'endscreentext',
+            0,
+            ['subdirs' => 0],
+            $moduleinstance->text['text']
+        );
+        $requiredupdate = true;
+    }
+
+    // Save poster image file from draft area.
+    $draftitemid = isset($moduleinstance->posterimagefile) ? $moduleinstance->posterimagefile : null;
+    if ($draftitemid) {
+        file_save_draft_area_files(
+            $draftitemid,
+            $context->id,
+            'mod_interactivevideo',
+            'posterimage',
+            0
+        );
+        $requiredupdate = true;
+    }
+
+    if ($requiredupdate) {
+        $DB->update_record('interactivevideo', $moduleinstance);
+    }
+
     interactivevideo_grade_item_update($moduleinstance);
 
     // Handle external plugins.
@@ -389,6 +400,8 @@ function interactivevideo_delete_instance($id) {
 
     // Delete all the annotations and their items.
     $DB->delete_records('interactivevideo_items', ['annotationid' => $id]);
+    $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+    $cache->delete($id);
 
     // Delete all the completion records.
     $DB->delete_records('interactivevideo_completion', ['cmid' => $id]);
@@ -542,6 +555,8 @@ function interactivevideo_get_coursemodule_info($coursemodule) {
     $result = new cached_cm_info();
     $result->name = $interactive->name;
     $result->customdata['displayoptions'] = $interactive->displayoptions;
+    $result->customdata['intro'] = $interactive->intro;
+    $result->customdata['displayasstartscreen'] = $interactive->displayasstartscreen;
     if ($coursemodule->showdescription) {
         $result->content = format_module_intro('interactivevideo', $interactive, $coursemodule->id, false);
     }
@@ -553,34 +568,49 @@ function interactivevideo_get_coursemodule_info($coursemodule) {
         foreach (json_decode($result->customdata['extendedcompletion']) as $rule => $value) {
             $result->customdata['customcompletionrules'][$rule] = $value;
         }
-        // Pass startendtime to be used in the completion tracking.
-        $result->customdata['startendtime'] = $interactive->starttime . "-" . $interactive->endtime;
     }
+    // Pass startendtime to be used in the completion tracking.
+    $result->customdata['startendtime'] = $interactive->starttime . "-" . $interactive->endtime;
+    $result->customdata['type'] = $interactive->type;
+    $result->customdata['posterimage'] = $interactive->posterimage;
+    $result->customdata['videourl'] = $interactive->videourl;
+    $context = context_module::instance($coursemodule->id);
+    $endcontent = file_rewrite_pluginfile_urls(
+        $interactive->endscreentext,
+        'pluginfile.php',
+        $context->id,
+        'mod_interactivevideo',
+        'endscreentext',
+        0
+    );
+    $result->customdata['endscreentext'] = $endcontent;
     return $result;
 }
 
 /**
- * Dynamically updates the course module information.
+ * Create an afterlink action buttons.
  *
- * @param cm_info $cm The course module information object.
+ * @param cm_info $cm
+ * @return string
  */
-function interactivevideo_cm_info_dynamic(cm_info $cm) {
-    global $PAGE;
-    if (strpos($PAGE->bodyclasses, 'path-course-view') === false) { // MUST be in course view only.
-        return;
-    }
+function interactivevideo_afterlink(cm_info $cm) {
     // Set after link.
     $afterlink = '';
 
     $context = context_module::instance($cm->id);
     if (has_capability('mod/interactivevideo:edit', $context)) {
         $afterlink .= html_writer::link(
-            new moodle_url('/course/modedit.php?', ['update' => $cm->id]),
+            'javascript:void(0)',
             '<i class="fa fa-edit" aria-hidden="true"></i>',
             [
-                'class' => 'p-1 mr-1',
-                'title' => get_string('edit', 'mod_interactivevideo'),
-                'aria-label' => get_string('edit', 'mod_interactivevideo'),
+                'class' => 'p-1 mr-1 iv_quickform',
+                'title' => get_string('editwithctrlclick', 'mod_interactivevideo'),
+                'aria-label' => get_string('editwithctrlclick', 'mod_interactivevideo'),
+                'data-contextid' => $context->id,
+                'data-courseid' => $cm->course,
+                'data-cmid' => $cm->id,
+                'data-interaction' => $cm->instance,
+                'data-href' => new moodle_url('/course/modedit.php?', ['update' => $cm->id]),
             ]
         );
 
@@ -596,15 +626,33 @@ function interactivevideo_cm_info_dynamic(cm_info $cm) {
     }
     if (has_capability('mod/interactivevideo:viewreport', $context)) {
         $afterlink .= html_writer::link(
-            new moodle_url('/mod/interactivevideo/report.php', ['id' => $cm->id, 'group' => 0]),
+            'javascript:void(0)',
             '<i class="fa fa-table" aria-hidden="true"></i>',
             [
-                'class' => 'p-1 mr-1',
-                'title' => get_string('report', 'mod_interactivevideo'),
-                'aria-label' => get_string('report', 'mod_interactivevideo'),
+                'class' => 'p-1 mr-1 launch-report',
+                'title' => get_string('reportwithctrlclick', 'mod_interactivevideo'),
+                'aria-label' => get_string('reportwithctrlclick', 'mod_interactivevideo'),
+                'data-title' => $cm->get_name(),
+                'data-href' => new moodle_url('/mod/interactivevideo/report.php', ['id' => $cm->id, 'group' => 0]),
             ]
         );
     }
+
+    return $afterlink;
+}
+
+/**
+ * Dynamically updates the course module information.
+ *
+ * @param cm_info $cm The course module information object.
+ */
+function interactivevideo_cm_info_dynamic(cm_info $cm) {
+    global $PAGE;
+    if (strpos($PAGE->bodyclasses, 'path-course-view') === false) { // MUST be in course view only.
+        return;
+    }
+
+    $afterlink = interactivevideo_afterlink($cm);
 
     $customdata = $cm->customdata;
     $displayoptions = json_decode($customdata['displayoptions']);
@@ -632,7 +680,9 @@ function interactivevideo_cm_info_view(cm_info $cm) {
     $displayoptions = json_decode($customdata['displayoptions']);
     $displayinline = isset($displayoptions->displayinline) && $displayoptions->displayinline == INTERACTIVEVIDEO_DISPLAY_INLINE;
     if ($displayinline || $isivformat) {
-        $cm->set_content(interactivevideo_displayinline($cm));
+        if (strpos($PAGE->bodyclasses, 'format-') !== false) { // MUST be in course view only.
+            $cm->set_content(interactivevideo_displayinline($cm));
+        }
     }
 }
 
@@ -643,53 +693,35 @@ function interactivevideo_cm_info_view(cm_info $cm) {
  */
 function interactivevideo_displayinline(cm_info $cm) {
     global $DB, $USER, $CFG, $OUTPUT, $PAGE;
-    // Get data from interactivevideo and interactivevideo_items and interactivevideo_completion for current user.
-    $interactivevideo = $DB->get_record(
-        'interactivevideo',
-        ['id' => $cm->instance],
-        'id, name, starttime, endtime, type, posterimage, intro, introformat, completionpercentage'
-    );
-
-    if (!$interactivevideo) {
-        return '';
+    $customdata = $cm->customdata;
+    if (!isset($customdata['type'])) { // Fall back in case the customdata is not fully built.
+        $interactivevideo = $DB->get_record(
+            'interactivevideo',
+            ['id' => $cm->instance],
+            'id, name, starttime, endtime, type, posterimage, intro, introformat, completionpercentage'
+        );
+        if (!$interactivevideo) {
+            return '';
+        }
+    } else {
+        $startend = explode('-', $customdata['startendtime']);
+        $interactivevideo = [
+            'id' => $cm->instance,
+            'name' => $cm->name,
+            'starttime' => $startend[0],
+            'endtime' => $startend[1],
+            'type' => $customdata['type'],
+            'posterimage' => $customdata['posterimage'],
+            'intro' => $cm->content,
+            'introformat' => FORMAT_HTML,
+            'completionpercentage' => isset($customdata['customcompletionrules']) ? $customdata['customcompletionrules']['completionpercentage'] : 0,
+        ];
     }
+
+    $interactivevideo = (object) $interactivevideo;
 
     // Set after link.
-    $afterlink = '';
-
-    $context = context_module::instance($cm->id);
-    if (has_capability('mod/interactivevideo:edit', $context)) {
-        $afterlink .= html_writer::link(
-            new moodle_url('/course/modedit.php?', ['update' => $cm->id]),
-            '<i class="fa fa-edit" aria-hidden="true"></i>',
-            [
-                'class' => 'p-1 mr-1',
-                'title' => get_string('edit', 'mod_interactivevideo'),
-                'aria-label' => get_string('edit', 'mod_interactivevideo'),
-            ]
-        );
-
-        $afterlink .= html_writer::link(
-            new moodle_url('/mod/interactivevideo/interactions.php', ['id' => $cm->id]),
-            '<i class="fa fa-bullseye" aria-hidden="true"></i>',
-            [
-                'class' => 'p-1 mr-1',
-                'title' => get_string('interactions', 'mod_interactivevideo'),
-                'aria-label' => get_string('interactions', 'mod_interactivevideo'),
-            ]
-        );
-    }
-    if (has_capability('mod/interactivevideo:viewreport', $context)) {
-        $afterlink .= html_writer::link(
-            new moodle_url('/mod/interactivevideo/report.php', ['id' => $cm->id, 'group' => 0]),
-            '<i class="fa fa-table" aria-hidden="true"></i>',
-            [
-                'class' => 'p-1 mr-1',
-                'title' => get_string('report', 'mod_interactivevideo'),
-                'aria-label' => get_string('report', 'mod_interactivevideo'),
-            ]
-        );
-    }
+    $afterlink = interactivevideo_afterlink($cm);
 
     // Support for format_iv.
     // Get course format.
@@ -822,18 +854,29 @@ function interactivevideo_displayinline(cm_info $cm) {
     }
     $datafortemplate['completion'] = $completion;
 
-    // Get interactive_items.
-    $select = "annotationid = ? AND ((timestamp >= ? AND timestamp <= ?) OR timestamp < 0) "
-        . "AND (hascompletion = 1 OR type = 'skipsegment'"
-        . ($datafortemplate['showprogressbar'] ? " OR type = 'analytics')" : ')');
+    // Get interactive_items. Must include skipsegments for filtering later.
+    $enabledcontenttypes = explode(',', get_config('mod_interactivevideo', 'enablecontenttypes'));
+    $includeanalytics = in_array('local_ivanalytics', $enabledcontenttypes);
+    $cache = \cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+    $items = $cache->get($cm->instance);
+    if (empty($items)) {
+        $items = $DB->get_records(
+            'interactivevideo_items',
+            ['annotationid' => $cm->instance]
+        );
+        $cache->set($cm->instance, $items);
+    }
 
-    $relevantitems = $DB->get_records_select(
-        'interactivevideo_items',
-        $select,
-        [$cm->instance, $interactivevideo->starttime, $interactivevideo->endtime],
-        '',
-        'id, type, xp, timestamp, title, char1, hascompletion'
-    );
+    $relevantitems = array_filter($items, function ($item) use ($interactivevideo) {
+        return (($item->timestamp >= $interactivevideo->starttime && $item->timestamp <= $interactivevideo->endtime)
+            || $item->timestamp < 0) && ($item->hascompletion == 1 || $item->type == 'skipsegment' || $item->type == 'analytics');
+    });
+
+    if (!$includeanalytics) {
+        $relevantitems = array_filter($relevantitems, function ($item) {
+            return $item->type != 'analytics';
+        });
+    }
 
     $skipsegment = array_filter($relevantitems, function ($item) {
         return $item->type === 'skipsegment';
@@ -1579,23 +1622,47 @@ function interactivevideo_dndupload_handle($uploadinfo) {
     $behaviorsettings = get_config('mod_interactivevideo', 'defaultbehavior');
     $behaviorsettings = explode(',', $behaviorsettings);
 
+    // Let's get the default settings specific to the course.
+    $cache = \cache::make('mod_interactivevideo', 'interactivevideo_settings');
+    $courseid = $uploadinfo->course->id;
+    $defaultsettings = (object)$cache->get($courseid);
+
+    if (!$defaultsettings) {
+        $defaultsettings = $DB->get_record('interactivevideo_settings', ['course' => $courseid]);
+        $cache->set($courseid, $defaultsettings);
+    }
+    $displayoptions = [];
+    if (isset($defaultsettings->displayoptions) && get_config('mod_interactivevideo', 'enablecoursesettings')) {
+        $displayoptions = json_decode($defaultsettings->displayoptions, true);
+    }
+
     // Prepare moduleinstance data for each video.
     $count = 0;
     $id = false;
+
     foreach ($videoinfo as $video) {
         $data = (array)$video;
         $data['starttime'] = round($data['starttime'], 2, PHP_ROUND_HALF_DOWN);
         $data['endtime'] = round($data['endtime'], 2, PHP_ROUND_HALF_DOWN);
-        $data['completion'] = $video->completion ?? 0;
+
+        $data['completion'] = $video->completion ? $video->completion : (isset($defaultsettings->completion) ? $defaultsettings->completion : 0);
+
         $data['course'] = $uploadinfo->course->id;
         $data['source'] = 'url';
         $data['section'] = $sectionid;
         $data['introformat'] = FORMAT_HTML;
-        $data['completionpercentage'] = is_numeric($video->completionpercentage) ? $video->completionpercentage : 0;
-        $data['completionpercentage'] = $data['completionpercentage'] > 100 ? 100 : $data['completionpercentage'];
-        $data['grade'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ? $video->grade : 0;
-        $data['grade[modgrade_point]'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ? $video->grade : 0;
+        $data['completionpercentage'] =
+            is_numeric($video->completionpercentage) ?
+            $video->completionpercentage : (isset($defaultsettings->completionpercentage) ? $defaultsettings->completionpercentage : 0);
 
+        $data['completionpercentage'] = $data['completionpercentage'] > 100 ? 100 : $data['completionpercentage'];
+        $data['grade'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ?
+            $video->grade : (isset($displayoptions['grade']) ? $displayoptions['grade'] : 0);
+        $data['grade[modgrade_point]'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ?
+            $video->grade : (isset($displayoptions['grade']) ? $displayoptions['grade'] : 0);
+        $data['gradepass'] = $video->gradepass && is_numeric($video->gradepass) && !empty($video->gradepass) ?
+            $video->gradepass : (isset($displayoptions['gradepass']) ? $displayoptions['gradepass'] : 0);
+        $data['showdescription'] = $video->showdescription ? $video->showdescription : (isset($displayoptions['showdescription']) ? $displayoptions['showdescription'] : 0);
         // For the first row, we're using the cm that was created by dndupload. The rest, we're creating new ones.
         if ($count == 0) {
             $data['first'] = true; // We need to return the id of the first video.
@@ -1605,7 +1672,17 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             if ($data['completionpercentage'] > 0) {
                 $data['completion'] = 2;
             }
-            $DB->set_field('course_modules', 'completion', $data['completion'], ['id' => $cmid]);
+            $DB->update_record(
+                'course_modules',
+                [
+                    'id' => $cmid,
+                    'completion' => $data['completion'],
+                    'showdescription' => $data['showdescription'],
+                    'completionview' => isset($displayoptions['completionview']) ? $displayoptions['completionview'] : 0,
+                    'completiongradeitemnumber' =>
+                    isset($displayoptions['completionview']) && $displayoptions['completionusegrade'] == 1 ? 0 : null,
+                ]
+            );
         } else {
             list($module, $context, $cw, $cm, $d) = prepare_new_moduleinfo_data(
                 $uploadinfo->course,
@@ -1619,26 +1696,74 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             }
 
             $d->completion = $data['completion'];
-
+            $d->showdescription = $data['showdescription'];
+            $d->completionview = isset($displayoptions['completionview']) ? $displayoptions['completionview'] : 0;
+            $d->completiongradeitemnumber =
+                isset($displayoptions['completionview']) && $displayoptions['completionusegrade'] == 1 ? 0 : null;
             $data['coursemodule'] = $cmid = add_course_module($d);
         }
 
         $count++;
 
-        // Default appearance settings.
-        foreach ($appearancesettings as $key) {
-            if ($data[$key] == '' || !is_numeric($data[$key])) {
-                $data[$key] = 1;
+        if (isset($defaultsettings->displayoptions)) { // Apply the course settings.
+            // Apply the course settings.
+            $displayoptions = json_decode($defaultsettings->displayoptions, true);
+            $keys = array_keys((array)$displayoptions);
+
+            foreach ($keys as $key) {
+                if (empty($video->$key)) {
+                    $data[$key] = $displayoptions[$key];
+                }
             }
-        }
+            $data['displayasstartscreen'] = $video->displayasstartscreen ?
+                $video->displayasstartscreen : $defaultsettings->displayasstartscreen;
+            $endscreenarray = [
+                'format' => FORMAT_HTML,
+            ];
+            $draftitemid = file_get_submitted_draft_itemid('endscreentext') || 0;
+            $coursecontext = context_course::instance($uploadinfo->course->id);
+            $endscreenarray['text'] = file_prepare_draft_area(
+                $draftitemid,
+                $coursecontext->id,
+                'mod_interactivevideo',
+                'endscreentext',
+                0,
+                ['subdirs' => 0],
+                $defaultsettings->endscreentext
+            );
+            $data['endscreentext'] = [
+                'text' => $endscreenarray['text'],
+                'format' => $endscreenarray['format'],
+                'itemid' => $draftitemid,
+            ];
+            if ($data['usecustomposterimage']) {
+                $draftitemid = file_get_submitted_draft_itemid('posterimagefile');
+                file_prepare_draft_area(
+                    $draftitemid,
+                    $coursecontext->id,
+                    'mod_interactivevideo',
+                    'posterimage',
+                    0,
+                    ['subdirs' => 0]
+                );
+                $data['posterimagefile'] = $draftitemid;
+            }
+        } else { // Apply site settings.
+            // Default appearance settings.
+            foreach ($appearancesettings as $key) {
+                if ($data[$key] == '' || !is_numeric($data[$key])) {
+                    $data[$key] = 1;
+                }
+            }
 
-        // Default card size.
-        $data['cardsize'] = $video->cardsize != '' ? $video->cardsize : $cardsize;
+            // Default card size.
+            $data['cardsize'] = $video->cardsize != '' ? $video->cardsize : $cardsize;
 
-        // Default behavior settings.
-        foreach ($behaviorsettings as $key) {
-            if ($data[$key] == '' || !is_numeric($data[$key])) {
-                $data[$key] = 1;
+            // Default behavior settings.
+            foreach ($behaviorsettings as $key) {
+                if ($data[$key] == '' || !is_numeric($data[$key])) {
+                    $data[$key] = 1;
+                }
             }
         }
 
@@ -1693,4 +1818,592 @@ function interactivevideo_dndupload_handle($uploadinfo) {
     }
 
     return $id;
+}
+
+/**
+ * Form elements for appearance and behavior settings.
+ *
+ * @param mixed $mform
+ * @param mixed $current
+ * @return void
+ */
+function interactivevideo_appearanceandbehavior_form($mform, $current, $sections = ['appearance', 'behavior']) {
+    global $CFG;
+    if (in_array('appearance', $sections)) {
+        $mform->addElement(
+            'html',
+            '<div class="form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0 pr-md-0">
+        <h5 class="w-100 border-bottom">' . get_string('appearancesettings', 'mod_interactivevideo')
+                . '</h5></div></div>',
+        );
+
+        // Set theme.
+        if (get_config('mod_interactivevideo', 'allowcustomtheme')) {
+            $themeobjects = get_list_of_themes();
+            $themes = [];
+            $themes[''] = get_string('forceno');
+            foreach ($themeobjects as $key => $theme) {
+                if (empty($theme->hidefromselector)) {
+                    $themes[$key] = get_string('pluginname', 'theme_' . $theme->name);
+                }
+            }
+            $mform->addElement('select', 'theme', get_string('forcetheme'), $themes);
+        } else {
+            $mform->addElement('hidden', 'theme', '');
+        }
+        $mform->setType('theme', PARAM_TEXT);
+
+        // Use custom poster image.
+        $mform->addElement(
+            'advcheckbox',
+            'usecustomposterimage',
+            get_string('posterimage', 'mod_interactivevideo'),
+            get_string('usecustomposterimage', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        $mform->addElement(
+            'filemanager',
+            'posterimagefile',
+            '',
+            null,
+            [
+                'subdirs' => 0,
+                'maxfiles' => 1,
+                'maxbytes' => 500 * 1024,
+                'accepted_types' => ['web_image'],
+            ]
+        );
+        $mform->hideIf('posterimagefile', 'usecustomposterimage', 'eq', 0);
+
+        $htmlgroup = [];
+        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-secondary">');
+        $mform->addGroup(
+            $htmlgroup,
+            'posterimagehr',
+            '',
+            '',
+            false
+        );
+        $mform->hideIf('posterimagehr', 'usecustomposterimage', 'eq', 0);
+
+        // Show play button on the course page.
+
+        $mform->addElement(
+            'advcheckbox',
+            'displayinline',
+            get_string('activitycard', 'mod_interactivevideo'),
+            get_string('displayinline', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        $mform->addElement(
+            'advcheckbox',
+            'launchinpopup',
+            '',
+            get_string('launchinpopup', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('launchinpopup', 'displayinline', 'eq', 0);
+
+        // Card sizes.
+        if ($CFG->branch >= 403) {
+            $mform->addElement(
+                'static',
+                'cardsizeheader',
+                '',
+                '<b>' . get_string('cardsize', 'mod_interactivevideo') . '</b>'
+            );
+            $mform->hideIf('cardsizeheader', 'displayinline', 'eq', 0);
+        }
+
+        $mform->addElement(
+            'select',
+            'cardsize',
+            $CFG->branch >= 403 ? '' : get_string('cardsize', 'mod_interactivevideo'),
+            [
+                'large' => '100%',
+                'largemedium' => '75%',
+                'mediumlarge' => '67%',
+                'medium' => '50%',
+                'small' => '33%',
+                'tiny' => '25%',
+            ]
+        );
+
+        $mform->hideIf('cardsize', 'displayinline', 'eq', 0);
+
+        // Card only design for small card size.
+        $mform->addElement(
+            'advcheckbox',
+            'cardonly',
+            '',
+            get_string('usecardonlydesign', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('cardonly', 'displayinline', 'eq', 0);
+
+        // Column layout.
+        $mform->addElement(
+            'advcheckbox',
+            'columnlayout',
+            '',
+            get_string('usecolumnlayout', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('columnlayout', 'displayinline', 'eq', 0);
+        $mform->hideIf('columnlayout', 'cardonly', 'eq', 1);
+
+        // Show progress bar.
+        $mform->addElement(
+            'advcheckbox',
+            'showprogressbar',
+            '',
+            get_string('showprogressbar', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('showprogressbar', 'displayinline', 'eq', 0);
+
+        // Show completion requirements.
+        $mform->addElement(
+            'advcheckbox',
+            'showcompletionrequirements',
+            '',
+            get_string('showcompletionrequirements', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('showcompletionrequirements', 'displayinline', 'eq', 0);
+
+        // Show poster image.
+        $mform->addElement(
+            'advcheckbox',
+            'showposterimage',
+            '',
+            get_string('showposterimage', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('showposterimage', 'displayinline', 'eq', 0);
+        $mform->hideIf('showposterimage', 'cardonly', 'eq', 1);
+
+        // Square poster image.
+        $mform->addElement(
+            'advcheckbox',
+            'squareposterimage',
+            '',
+            get_string('squareposterimage', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        // Show name.
+        $mform->addElement(
+            'advcheckbox',
+            'showname',
+            '',
+            get_string('showname', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('showname', 'displayinline', 'eq', 0);
+
+        // Show poster image on the right.
+        $mform->addElement(
+            'advcheckbox',
+            'showposterimageright',
+            '',
+            get_string('showposterimageright', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('showposterimageright', 'displayinline', 'eq', 0);
+        $mform->hideIf('showposterimageright', 'cardonly', 'eq', 1);
+
+        $mform->addElement(
+            'advcheckbox',
+            'usecustomdescription',
+            '',
+            get_string('usecustomdescription', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('usecustomdescription', 'displayinline', 'eq', 0);
+        $mform->hideIf('usecustomdescription', 'cardonly', 'eq', 1);
+
+        if ($CFG->branch >= 403) {
+            $mform->addElement(
+                'static',
+                'customdescriptionheader',
+                '',
+                '<b>' . get_string('customdescription', 'mod_interactivevideo') . '</b>'
+            );
+            $mform->hideIf('customdescriptionheader', 'usecustomdescription', 'eq', 0);
+            $mform->hideIf('customdescriptionheader', 'displayinline', 'eq', 0);
+            $mform->hideIf('customdescriptionheader', 'cardonly', 'eq', 1);
+        }
+
+        $mform->addElement(
+            'textarea',
+            'customdescription',
+            $CFG->branch >= 403 ? '' : get_string('customdescription', 'mod_interactivevideo'),
+            ['rows' => 5, 'cols' => 100]
+        );
+        $mform->hideIf('customdescription', 'usecustomdescription', 'eq', 0);
+        $mform->hideIf('customdescription', 'displayinline', 'eq', 0);
+        $mform->hideIf('customdescription', 'cardonly', 'eq', 1);
+        $mform->setType('customdescription', PARAM_RAW);
+
+        $htmlgroup = [];
+        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-secondary">');
+        $mform->addGroup(
+            $htmlgroup,
+            'displayinlinehr',
+            '',
+            '',
+            false
+        );
+        $mform->hideIf('displayinlinehr', 'displayinline', 'eq', 0);
+
+        // Use distraction-free mode.
+        $mform->addElement(
+            'advcheckbox',
+            'distractionfreemode',
+            get_string('player', 'mod_interactivevideo'),
+            get_string('distractionfreemode', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        // Dark mode.
+        $mform->addElement(
+            'advcheckbox',
+            'darkmode',
+            '',
+            get_string('darkmode', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('darkmode', 'distractionfreemode', 'eq', 0);
+
+        // Fix aspect ratio.
+        $mform->addElement(
+            'advcheckbox',
+            'usefixedratio',
+            '',
+            get_string('usefixedratio', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('userfixedratio', 'distractionfreemode', 'eq', 0);
+
+        // Disable chapter navigation.
+        $mform->addElement(
+            'advcheckbox',
+            'disablechapternavigation',
+            '',
+            get_string('disablechapternavigation', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        // Use orginal video controls.
+        $mform->addElement(
+            'advcheckbox',
+            'useoriginalvideocontrols',
+            '',
+            get_string('useoriginalvideocontrols', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        // Hide main video controls.
+        $mform->addElement(
+            'advcheckbox',
+            'hidemainvideocontrols',
+            '',
+            get_string('hidemainvideocontrols', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        // Hide interactions.
+        $mform->addElement(
+            'advcheckbox',
+            'hideinteractions',
+            '',
+            get_string('hideinteractions', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        $mform->hideIf('hideinteractions', 'hidemainvideocontrols', 'eq', 1);
+    }
+    if (in_array('behavior', $sections)) {
+        $mform->addElement(
+            'html',
+            '<div class="form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0 pr-md-0">
+        <h5 class="w-100 border-bottom">' . get_string('behaviorsettings', 'mod_interactivevideo')
+                . '</h5></div></div>',
+        );
+
+        // Auto play.
+        $mform->addElement(
+            'advcheckbox',
+            'autoplay',
+            '',
+            get_string('autoplay', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->addHelpButton('autoplay', 'autoplay', 'mod_interactivevideo');
+
+        // Pause video if window is not active.
+        $mform->addElement(
+            'advcheckbox',
+            'pauseonblur',
+            '',
+            get_string('pauseonblur', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        // Prevent skipping.
+        $mform->addElement(
+            'advcheckbox',
+            'preventskipping',
+            '',
+            get_string('preventskipping', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->addHelpButton('preventskipping', 'preventskipping', 'mod_interactivevideo');
+
+        // Prevent seeking.
+        $mform->addElement(
+            'advcheckbox',
+            'preventseeking',
+            '',
+            get_string('preventseeking', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        $mform->hideIf('preventseeking', 'hidemainvideocontrols', 'eq', 1);
+
+        // Disable interaction click.
+        $mform->addElement(
+            'advcheckbox',
+            'disableinteractionclick',
+            '',
+            get_string('disableinteractionclick', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        $mform->hideIf('disableinteractionclick', 'preventseeking', 'eq', 1);
+        $mform->hideIf('disableinteractionclick', 'hidemainvideocontrols', 'eq', 1);
+        $mform->hideIf('disableinteractionclick', 'hideinteractions', 'eq', 1);
+
+        // Disable interaction click until completed.
+        $mform->addElement(
+            'advcheckbox',
+            'disableinteractionclickuntilcompleted',
+            '',
+            get_string('disableinteractionclickuntilcompleted', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        $mform->hideIf('disableinteractionclickuntilcompleted', 'preventseeking', 'eq', 1);
+        $mform->hideIf('disableinteractionclickuntilcompleted', 'disableinteractionclick', 'eq', 1);
+        $mform->hideIf('disableinteractionclickuntilcompleted', 'hidemainvideocontrols', 'eq', 1);
+        $mform->hideIf('disableinteractionclickuntilcompleted', 'hideinteractions', 'eq', 1);
+    }
+
+    if ($current && !$current->instance) {
+        // Check if we have course defaults.
+        $cache = \cache::make('mod_interactivevideo', 'interactivevideo_settings');
+        $coursedefaults = $cache->get($current->course);
+        if ($coursedefaults && get_config('mod_interactivevideo', 'enablecoursesettings')) {
+            // We're going to set the defaults later on the mod form with other defaults.
+            return;
+        }
+    }
+
+    $defaults = get_config('mod_interactivevideo', 'defaultappearance') . ','
+        . get_config('mod_interactivevideo', 'defaultbehavior');
+    $defaults = explode(',', $defaults);
+    $defaultarray = [];
+    foreach ($defaults as $default) {
+        if (empty($default)) {
+            continue;
+        }
+        $defaultarray[$default] = 1;
+    }
+
+    $defaultarray['cardsize'] = get_config('mod_interactivevideo', 'cardsize');
+    $defaultarray['source'] = get_config('mod_interactivevideo', 'defaultvideosource');
+    $defaultarray['theme'] = get_config('mod_interactivevideo', 'defaulttheme');
+
+    $mform->setDefaults($defaultarray);
+}
+
+/**
+ * Form elements for completion settings.
+ *
+ * @param mixed $mform
+ * @param mixed $current
+ * @return void
+ */
+/**
+ * This function receives a calendar event and returns the action associated with it, or null if there is none.
+ *
+ * This is used by block_myoverview in order to display the event appropriately. If null is returned then the event
+ * is not displayed on the block.
+ *
+ * @param calendar_event $event
+ * @param \core_calendar\action_factory $factory
+ * @param int $userid User id to use for all capability checks, etc. Set to 0 for current user (default).
+ * @return \core_calendar\local\event\entities\action_interface|null
+ */
+function mod_interactivevideo_core_calendar_provide_event_action(
+    calendar_event $event,
+    \core_calendar\action_factory $factory,
+    int $userid = 0
+) {
+    global $USER;
+
+    if (!$userid) {
+        $userid = $USER->id;
+    }
+
+    $cm = get_fast_modinfo($event->courseid, $userid)->instances['interactivevideo'][$event->instance];
+
+    if (!$cm->uservisible) {
+        // The module is not visible to the user for any reason.
+        return null;
+    }
+
+    $completion = new \completion_info($cm->get_course());
+
+    $completiondata = $completion->get_data($cm, false, $userid);
+
+    if ($completiondata->completionstate != COMPLETION_INCOMPLETE) {
+        return null;
+    }
+
+    $now = time();
+
+    if (!empty($cm->customdata['cutoffdate']) && $cm->customdata['cutoffdate'] < $now) {
+        // The module has closed so the user can no longer submit anything.
+        return null;
+    }
+
+    // The module is actionable if we don't have a start time or the start time is
+    // in the past.
+    $actionable = (empty($cm->customdata['allowsubmissionsfromdate']) || $cm->customdata['allowsubmissionsfromdate'] <= $now);
+
+    return $factory->create_instance(
+        get_string('watch', 'interactivevideo'),
+        new \moodle_url('/mod/interactivevideo/view.php', ['id' => $cm->id]),
+        1,
+        $actionable
+    );
+}
+
+function interactivevideo_update_event($moduleinstance) {
+    global $DB, $CFG;
+    require_once($CFG->dirroot . '/calendar/lib.php');
+
+    // Start with creating the event.
+    $event = new stdClass();
+    $event->modulename  = 'interactivevideo';
+    $event->courseid = $moduleinstance->course;
+    $event->groupid = 0;
+    $event->userid  = 0;
+    $event->instance  = $moduleinstance->id;
+    $event->type = CALENDAR_EVENT_TYPE_ACTION;
+
+    // Convert the links to pluginfile. It is a bit hacky but at this stage the files
+    // might not have been saved in the module area yet.
+    $intro = $moduleinstance->intro;
+    if ($draftid = file_get_submitted_draft_itemid('introeditor')) {
+        $intro = file_rewrite_urls_to_pluginfile($intro, $draftid);
+    }
+
+    // We need to remove the links to files as the calendar is not ready
+    // to support module events with file areas.
+    $intro = strip_pluginfile_content($intro);
+    if ($moduleinstance->showdescription == 1) {
+        $event->description = [
+            'text' => $intro,
+            'format' => $moduleinstance->introformat,
+        ];
+    } else {
+        $event->description = [
+            'text' => '',
+            'format' => $moduleinstance->introformat,
+        ];
+    }
+
+    $eventtype = INTERACTIVEVIDEO_EVENT_TYPE_DUE;
+    if ($moduleinstance->duedate) {
+        $event->name = get_string('calendardue', 'assign', $moduleinstance->name);
+        $event->eventtype = $eventtype;
+        $event->timestart = $moduleinstance->duedate;
+        $event->timesort = $moduleinstance->duedate;
+        $select = "modulename = :modulename
+                       AND instance = :instance
+                       AND eventtype = :eventtype
+                       AND groupid = 0
+                       AND courseid <> 0";
+        $params = ['modulename' => 'interactivevideo', 'instance' => $moduleinstance->id, 'eventtype' => $eventtype];
+        $event->id = $DB->get_field_select('event', 'id', $select, $params);
+
+        // Now process the event.
+        if ($event->id) {
+            $calendarevent = calendar_event::load($event->id);
+            $calendarevent->update($event, false);
+        } else {
+            calendar_event::create($event, false);
+        }
+    } else {
+        $DB->delete_records('event', [
+            'modulename' => 'interactivevideo',
+            'instance' => $moduleinstance->id,
+            'eventtype' => $eventtype,
+        ]);
+    }
+
+    return true;
+}
+
+/**
+ * Add 'Course ratings' to the course administration menu
+ *
+ * @param navigation_node $navigation The navigation node to extend
+ * @param stdClass $course The course to object for the report
+ * @param context $context The context of the course
+ */
+function interactivevideo_extend_navigation_course(\navigation_node $navigation, \stdClass $course, \context $context) {
+    // Get enrolment instance.
+    if (!has_capability('mod/interactivevideo:manage', $context)) {
+        return;
+    }
+    $url = new moodle_url('/mod/interactivevideo/manage.php', ['courseid' => $course->id]);
+    $navigation->add(
+        get_string('managevideos', 'mod_interactivevideo'),
+        $url,
+        navigation_node::TYPE_SETTING,
+        null,
+        null,
+        new pix_icon('i/report', '')
+    );
 }

@@ -68,6 +68,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
              */
             const whenPlayerReady = async function() {
                 window.IVPLAYER = player;
+                player.unMute();
                 if (player.audio) {
                     videowrapper.addClass('audio');
                 }
@@ -508,6 +509,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         });
                     });
                     videoinput.val(e.detail.video);
+                    videotype.val('html5video');
                     uploadfield.hide();
                     deletefield.show();
                 });

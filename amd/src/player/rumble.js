@@ -52,6 +52,7 @@ class Rumble {
     async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.node = node;
         this.start = start;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
@@ -119,7 +120,7 @@ class Rumble {
                     api: function(api) {
                         // Not sure if rumble has a ready event, so we use this to make sure we only dispatch the event once.
                         player = api;
-                        player.setVolume(0);
+                        player.mute();
                         if (!showControls) {
                             $('body').addClass('no-original-controls');
                         }
@@ -292,8 +293,11 @@ class Rumble {
      * Destroys the Rumble player instance by removing it from the DOM.
      */
     destroy() {
-        $("#player").remove();
-        player.off();
+        try {
+            $(`#${this.node}`).remove();
+        } catch (e) {
+            window.console.error(e);
+        }
     }
     /**
      * Retrieves the current state of the player.
@@ -322,6 +326,7 @@ class Rumble {
      */
     unMute() {
         player.unmute();
+        player.setVolume(1);
     }
     /**
      * Returns the original Rumble player instance.

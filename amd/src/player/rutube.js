@@ -310,6 +310,7 @@ class Rutube {
      */
     unMute() {
         this.doCommand({type: 'player:unMute', data: {}});
+        this.doCommand({type: 'player:setVolume', data: {volume: 1}});
     }
 
     /**

@@ -50,6 +50,41 @@
         <licenseversion>?</licenseversion>
     </library>
     <library>
+        <location>amd/src/libraries/buttons.colVis.js</location>
+        <name>Datatables Library</name>
+        <version>1.13.5</version>
+        <license>MIT</license>
+        <licenseversion>?</licenseversion>
+    </library>
+    <library>
+        <location>amd/src/libraries/dataTables.rowGroup.js</location>
+        <name>Datatables Library</name>
+        <version>1.13.5</version>
+        <license>MIT</license>
+        <licenseversion>?</licenseversion>
+    </library>
+    <library>
+        <location>amd/src/libraries/dataTables.select.js</location>
+        <name>Datatables Library</name>
+        <version>1.13.5</version>
+        <license>MIT</license>
+        <licenseversion>?</licenseversion>
+    </library>
+    <library>
+        <location>amd/src/libraries/select.bootstrap4.js</location>
+        <name>Datatables Library</name>
+        <version>1.13.5</version>
+        <license>MIT</license>
+        <licenseversion>?</licenseversion>
+    </library>
+    <library>
+        <location>amd/src/libraries/select2.js</location>
+        <name>Select2 Library</name>
+        <version>4.1.0-rc.0</version>
+        <license>MIT</license>
+        <licenseversion>?</licenseversion>
+    </library>
+    <library>
         <location>amd/src/libraries/jszip.js</location>
         <name>JSZip Library</name>
         <version>3.10.1</version>

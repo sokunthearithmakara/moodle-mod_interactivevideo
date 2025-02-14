@@ -61,7 +61,7 @@ Example context (json):
                             <div class="metadata"></div>
                             <span class="h4 mt-2 mb-0 text-truncate">{{{title}}}</span>
                         </div>
-                        <ul data-region="chapterlists" class="list-group w-100 rounded-0">
+                        <ul data-region="chapterlists" class="list-group w-100 rounded-0 m-0">
                         </ul>
                     </div>
                 </div>
@@ -87,7 +87,7 @@ Example context (json):
                         <span class="sr-only">Loading...</span>
                     </div>
                     <button id="play"
-                            class="btn rounded-circle d-none pulse bg-white position-sticky">
+                            class="btn btn-flex rounded-circle d-none pulse bg-white position-sticky">
                         <i class="bi bi-play-circle-fill text-danger"></i>
                     </button>
                 </div>
@@ -115,7 +115,7 @@ Example context (json):
                     top: calc(50% - 1.5rem)">
             <span class="sr-only">Loading...</span>
         </div>
-        <button class="btn bg-white rounded-circle d-none position-absolute pulse"
+        <button class="btn btn-flex  bg-white rounded-circle d-none position-absolute pulse"
                 id="play">
             <i class="bi bi-play-circle-fill text-danger"></i>
         </button>
@@ -132,14 +132,14 @@ Example context (json):
                 <div class="metadata d-block d-md-none"></div>
                 <span class="h1 line-height-100 mb-0 title">{{{title}}}</span>
             </div>
-            <button class="btn btn-danger rounded-circle pulse position-sticky"
+            <button class="btn btn-flex btn-danger rounded-circle pulse position-sticky"
                     id="restart">
                 <i class="bi bi-arrow-repeat"></i>
             </button>
         </div>
         <div class="p-2 p-md-3">{{{endscreentext}}}</div>
     {{/hasendscreentext}} {{^hasendscreentext}}
-    <button class="btn btn-danger rounded-circle pulse" id="restart">
+    <button class="btn btn-flex btn-danger rounded-circle pulse" id="restart">
         <i class="bi bi-arrow-repeat"></i>
     </button>
 {{/hasendscreentext}}
@@ -159,7 +159,7 @@ Example context (json):
 <div class="mt-0 mt-md-2 bg-dark d-flex flex-column p-0 justify-content-center opacity-1"
      id="controller">
     <div id="taskinfo"
-         class="border-0 flex-column align-items-center justify-content-end w-100 px-3 bg-transparent">
+         class="border-0 flex-column align-items-center justify-content-end px-3 bg-transparent">
         <div class="align-items-start position-relative w-100"
              id="interactions-nav">
             <ul>
@@ -232,7 +232,7 @@ Example context (json):
                    data-trigger="focus"
                    title="{{#str}}changeplaybackspeed,mod_interactivevideo{{/str}}"></i>
             </span>
-            <div class="dropdown-menu dropdown-menu-right bg-black text-white">
+            <div class="dropdown-menu dropdown-menu-right bg-black">
                 <a class="dropdown-item text-white changerate" data-rate="0.5" href="#"><i class="bi fa-fw ml-n3"></i>0.5</a>
                 <a class="dropdown-item text-white changerate" data-rate="0.75" href="#"><i class="bi fa-fw ml-n3"></i>0.75</a>
                 <a class="dropdown-item text-white changerate" data-rate="1" href="#"><i class="bi fa-fw bi-check ml-n3"></i>1</a>

@@ -79,10 +79,22 @@ class custom_completion extends activity_custom_completion {
             $startendtimes = explode("-", $cm->customdata['startendtime']);
             $start = $startendtimes[0];
             $end = $startendtimes[1];
-            $select = "annotationid = ? AND ((timestamp >= ? AND timestamp <= ?) OR timestamp < 0) AND "
-                . "(hascompletion = 1 OR type = 'skipsegment')";
 
-            $relevantitems = $DB->get_records_select('interactivevideo_items', $select, [$cm->instance, $start, $end]);
+            $cache = \cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+            $items = $cache->get($cm->instance);
+            if (empty($items)) {
+                $items = $DB->get_records(
+                    'interactivevideo_items',
+                    ['annotationid' => $cm->instance]
+                );
+                $cache->set($cm->instance, $items);
+            }
+
+            $relevantitems = array_filter($items, function ($item) use ($start, $end) {
+                return (($item->timestamp >= $start && $item->timestamp <= $end)
+                    || $item->timestamp < 0) && ($item->hascompletion == 1 || $item->type == 'skipsegment');
+            });
+
             $skipsegment = array_filter($relevantitems, function ($item) {
                 return $item->type === 'skipsegment';
             });

@@ -30,8 +30,8 @@ Example context (json):
         {{^cardonly}}
         {{#showposterimage}}
         <div class="image-container position-relative {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
-            <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}"
-                 style="background-image: url({{interactivevideo.posterimage}})">
+            <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}">
+                <img src="{{interactivevideo.posterimage}}" loading="lazy">
                 {{#cm.uservisible}}
                 <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}>
                     <i class="fa fa-play"></i>
@@ -67,7 +67,7 @@ Example context (json):
             <a href="{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}"
                class="clamp-2 text-dark h5 text-decoration-none mb-1">{{{formattedname}}}</a>
             {{#hascompletion}}
-            {{#overallcomplete}}<i class="bi bi-check-circle-fill text-success ml-2"></i>{{/overallcomplete}}
+            {{#overallcomplete}}<i class="bi bi-check-circle-fill text-success ml-2 fs-n"></i>{{/overallcomplete}}
             {{^overallcomplete}}<i class="bi bi-circle ml-2"></i>{{/overallcomplete}}
         {{/hascompletion}}
     {{/cm.uservisible}}
@@ -118,8 +118,8 @@ Example context (json):
 {{/cardonly}}
 {{#cardonly}}
 <div class="image-container card-only {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
-    <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}"
-         style="background-image: url({{interactivevideo.posterimage}})">
+    <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}">
+        <img src="{{interactivevideo.posterimage}}" loading="lazy">
         {{#new}}
         <span class="badge badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
     {{/new}}
@@ -190,7 +190,7 @@ Example context (json):
 </div>
 </div>
 {{#showname}}
-<div class="description-container w-auto">
+<div class="description-container w-auto mt-0">
     {{#cm.uservisible}}
     <a href="{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}"
        class="clamp-2 text-dark h5 text-decoration-none mb-1">{{{formattedname}}}</a>

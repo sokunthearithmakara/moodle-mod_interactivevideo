@@ -65,8 +65,10 @@ class Panopto {
         const node = opts.node || 'player';
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
-            showControls = true;
+            dispatchEvent('iv:autoplayBlocked', {
+                requireVideoBlock: true,
+            });
+            // ShowControls = true;
         }
         /**
          * The start time of the video
@@ -91,6 +93,8 @@ class Panopto {
         self.aspectratio = 16 / 9;
         let autoplayBlocked = false;
         const launchSetup = function() {
+            player.unmuteVideo();
+            player.setVolume(1);
             let totaltime = Number(player.getDuration().toFixed(2)) - self.frequency;
             end = !end ? totaltime : Math.min(end, totaltime);
             end = Number(end.toFixed(2));
@@ -172,11 +176,13 @@ class Panopto {
                 onReady: function() { // When video is ready to play.
                     // Do nothing.
                     if (!ready) {
+                        player.muteVideo();
                         player.pauseVideo();
                         launchSetup();
                     }
                 },
                 onIframeReady: async function() { // Iframe is ready, but the video isn't ready yet. (e.g. blocked by the browser)
+                    player.muteVideo();
                     player.loadVideo();
                     player.pauseVideo(); // If the autoplay is blocked by the browser, we'll get the error event. See onError.
                 },
@@ -232,6 +238,11 @@ class Panopto {
                                 autoplayBlocked = true;
                                 dispatchEvent('iv:playerReady', null, document.getElementById(node));
                             }
+                        }
+                        return;
+                    } else if (error === 'playWithSoundNotAllowed') {
+                        if (!ready) {
+                            player.muteVideo();
                         }
                         return;
                     }
@@ -385,6 +396,7 @@ class Panopto {
      */
     unMute() {
         player.unmuteVideo();
+        player.setVolume(1);
     }
     /**
      * Get the original player object

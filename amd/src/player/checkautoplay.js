@@ -25,13 +25,16 @@ const allowAutoplay = (node) => {
     return new Promise((resolve) => {
         // Create a video element after the node.
         const video = document.createElement('video');
+        // Set visibility to hidden.
+        video.style.visibility = 'hidden';
         // Set the video source.
         const src = M.cfg.wwwroot + '/mod/interactivevideo/sounds/sample.mp4';
         video.src = src;
         // Mute the video.
-        video.muted = true;
+        video.setAttribute('muted', true);
         // Set the autoplay attribute.
-        video.autoplay = true;
+        video.setAttribute('autoplay', true);
+        video.setAttribute('playsinline', true);
         // Place the video element after the node.
         node.after(video);
         // Try to play the video.

@@ -63,8 +63,9 @@ class form extends \mod_interactivevideo\form\base_form {
             '/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])(\.\d{2})?$/',
             'client'
         );
-        $this->advanced_form_fields(false, true, true, true);
-
+        $this->advanced_form_fields([
+            'hascompletion' => false,
+        ]);
         $this->close_form();
     }
 

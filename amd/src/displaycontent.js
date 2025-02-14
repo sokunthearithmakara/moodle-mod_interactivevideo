@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -97,6 +98,10 @@ const formatText = async function(text, shorttext = false) {
  * defaultDisplayContent(annotation, player);
  */
 const defaultDisplayContent = async function(annotation, player) {
+    const isPlayerMode = $('body').attr('id') == 'page-mod-interactivevideo-view';
+    const isPreviewMode = annotation.previewMode;
+    const advanced = JSON.parse(annotation.advanced);
+
     const isDarkMode = $('body').hasClass('darkmode');
 
     // Play pop sound
@@ -133,6 +138,17 @@ const defaultDisplayContent = async function(annotation, player) {
 
     displayoptions = responsiveDisplay(displayoptions);
 
+    if (advanced.advdismissible == 0 && annotation.completed == false && annotation.hascompletion == 1
+        && isPlayerMode && !isPreviewMode) {
+        $('#controller').addClass('completion-required');
+        if (displayoptions == 'side' || displayoptions == 'bottom') {
+            $('#video-wrapper').addClass('completion-required');
+        }
+        if (displayoptions == 'side') {
+            $('.sidebar-nav-item').addClass('completion-required');
+        }
+    }
+
     // Add completion button if the annotation has completion criteria.
     let completionbutton = "";
     // Display the xp badge conditionally.
@@ -143,20 +159,22 @@ const defaultDisplayContent = async function(annotation, player) {
     }
     // Display the completion button conditionally.
     if (annotation.hascompletion == 1 && annotation.completed) {
-        completionbutton += `<button id="completiontoggle" class="btn text-truncate mark-undone btn-success btn-sm border-0"
+        completionbutton += `<button id="completiontoggle" class="btn btn-flex text-truncate mark-undone btn-success
+         btn-sm border-0"
              data-id="${annotation.id}"><i class="bi bi-check2"></i>
              <span class="ml-2 d-none d-sm-block">
              ${M.util.get_string('completionmarkincomplete', 'mod_interactivevideo')}</span></button>`;
     } else if (annotation.hascompletion == 1 && annotation.completed == false) {
-        completionbutton += `<button id="completiontoggle" class="btn text-truncate mark-done btn-secondary btn-sm border-0"
+        completionbutton += `<button id="completiontoggle" class="btn btn-flex text-truncate mark-done btn-secondary btn-sm
+         border-0"
              data-id="${annotation.id}"><i class="bi bi-circle"></i>
              <span class="ml-2 d-none d-sm-block">
              ${M.util.get_string('completionmarkcomplete', 'mod_interactivevideo')}</span></button>`;
     }
 
     // Append refresh button after the completion button.
-    if (!$('body').hasClass('page-interactions')) {
-        completionbutton += `<button class="btn btn-secondary btn-sm ml-2 rotatez-360 border-0"
+    if (isPlayerMode && !isPreviewMode) {
+        completionbutton += `<button class="btn btn-flex btn-secondary btn-sm ml-2 rotatez-360 border-0"
          data-id="${annotation.id}" id="refresh">
         <i class="bi bi-arrow-repeat"></i></button>`;
     } else {
@@ -169,7 +187,9 @@ const defaultDisplayContent = async function(annotation, player) {
     <i class="${prop.icon} mr-2 d-none d-md-inline"></i><span>${annotation.formattedtitle}</span></h5>
                             <div class="btns d-flex align-items-center">
                             ${completionbutton}
-                            <button class="btn mx-2 p-0 border-0" id="close-${annotation.id}" aria-label="Close">
+                            <button data-id="${annotation.id}"
+                             class="btn btn-flex mx-2 p-0 border-0 interaction-dismiss" id="close-${annotation.id}"
+                             aria-label="Close">
                             <i class="bi bi-x-lg fa-fw fs-25px"></i>
                             </button>
                             </div>`;
@@ -178,31 +198,55 @@ const defaultDisplayContent = async function(annotation, player) {
     $('#annotation-modal').modal('hide');
 
     // Handle annotation close event:: when user click on the close button of the annotation.
+    let toast;
     $(document).off('click', `#close-${annotation.id}`).on('click', `#close-${annotation.id}`, async function(e) {
         e.preventDefault();
-        if (!$('body').hasClass('page-interactions')) { // Do not auto resume if on interactions page.
+        const anno = window.IVANNO ? window.IVANNO.find(anno => anno.id == annotation.id) : null;
+        // Check if dimiss allowed.
+        if (isPlayerMode && !isPreviewMode) {
+            if (advanced.advdismissible == 0 && anno.completed == false && anno.hascompletion == 1) {
+                if (!toast) {
+                    toast = await import('core/toast');
+                }
+                toast.add(M.util.get_string('dismissnotallowedbeforecompletion', 'mod_interactivevideo'), {
+                    type: 'warning',
+                    delay: 3000
+                });
+                return;
+            }
+
             const isEnded = await player.isEnded();
             const currentTime = await player.getCurrentTime();
             if (!isEnded || currentTime < annotation.end) {
-                player.play();
+                if (anno && (anno.completed == true || advanced.advskippable != 0)) { // Do not auto resume if not skippable.
+                    player.play();
+                }
             }
         }
 
         if (displayoptions == 'side') {
             $('body').removeClass('hassidebar');
             $('#annotation-sidebar').addClass('hide');
+            if (isPlayerMode && !isPreviewMode) {
+                $(this).closest("#message").removeClass('active');
+                dispatchEvent('interactionclose', {
+                    annotation: annotation,
+                });
+            }
             return;
         }
         $(this).closest("#annotation-modal").modal('hide');
         const targetMessage = $(this).closest("#message");
         targetMessage.removeClass('active');
         targetMessage.addClass('bottom-0');
-        setTimeout(function() {
-            targetMessage.remove();
-            dispatchEvent('interactionclose', {
-                annotation: annotation,
-            });
-        }, 100);
+        targetMessage.remove();
+        if (isPlayerMode && !isPreviewMode) {
+            setTimeout(function() {
+                dispatchEvent('interactionclose', {
+                    annotation: annotation,
+                });
+            }, 100);
+        }
     });
 
     const handlePopupDisplay = (annotation, messageTitle) => {
@@ -296,9 +340,10 @@ const defaultDisplayContent = async function(annotation, player) {
                 }
             });
             // Switch between messages.
-            $(document).on('click', '#sidebar-nav .sidebar-nav-item', function() {
+            $(document).on('click', '#sidebar-nav .sidebar-nav-item', async function() {
                 const current = $(`#sidebar-nav .sidebar-nav-item.active`).data('id');
                 if (current) {
+                    $(`#sidebar-content #message[data-id='${current}']`).removeClass('active');
                     dispatchEvent('interactionclose', {
                         annotation: {
                             id: current
@@ -309,31 +354,58 @@ const defaultDisplayContent = async function(annotation, player) {
                 $(this).addClass('active').siblings().removeClass('active');
                 $('#sidebar-content #message').fadeOut(300);
                 $(`#sidebar-content #message[data-id='${target}']`).fadeIn(300).addClass('active');
-                dispatchEvent('interactionrun', {
-                    annotation: {
-                        id: target
-                    }
-                });
+                const isPaused = await player.isPaused();
+                if (isPaused) {
+                    dispatchEvent('interactionrun', {
+                        annotation: {
+                            id: target
+                        }
+                    });
+                }
+
             });
         }
         // Add annotation toggle button if it does not exist.
-        if ($('#wrapper #toolbar #annotation-toggle').length == 0) {
-            $('#wrapper #toolbar')
-                .append(`<button id="annotation-toggle" class="btn btn-secondary btn-sm border-0">
+        if (isPlayerMode || isPreviewMode) {
+            if ($('#wrapper #toolbar #annotation-toggle').length == 0) {
+                $('#wrapper #toolbar')
+                    .append(`<button id="annotation-toggle" class="btn btn-sm border-0">
                     <i class="bi bi-chevron-left"></i></button>`);
+            }
         }
         // Show the sidebar.
         $('#annotation-sidebar').removeClass('hide');
         // Replace the navigation item if it exists.
         if ($(`#sidebar-nav .sidebar-nav-item[data-id='${annotation.id}']`).length == 0) {
             // Add a navigation item.
-            $('#annotation-sidebar #sidebar-nav').append(`<div class="sidebar-nav-item active w-100" data-toggle="tooltip"
+            let clss = '';
+            if (annotation.hascompletion == 1 && annotation.completed == true) {
+                clss += ' completed';
+            }
+            if (annotation.hascompletion != 1) {
+                clss += ' no-completion';
+            }
+
+            $('#annotation-sidebar #sidebar-nav').append(`<div class="sidebar-nav-item active w-100 ${clss}" data-toggle="tooltip"
             data-html="true" title="<i class='${prop.icon} mr-2'></i>${annotation.formattedtitle}"
-            data-id="${annotation.id}"></div>`);
+            data-id="${annotation.id}" data-timestamp="${annotation.timestamp}"></div>`);
+
+            // Sort the navigation items.
+            $('#annotation-sidebar #sidebar-nav .sidebar-nav-item').sort(function(a, b) {
+                return $(a).data('timestamp') - $(b).data('timestamp');
+            }).appendTo('#annotation-sidebar #sidebar-nav');
         }
         // Hide other messages on the sidebar.
         $('#annotation-sidebar #message').fadeOut(300);
         $('#annotation-sidebar #sidebar-nav .sidebar-nav-item:not([data-id="' + annotation.id + '"])').removeClass('active');
+        if ($('#annotation-sidebar #message.active').length > 0) {
+            dispatchEvent('interactionclose', {
+                annotation: {
+                    id: $(`#annotation-sidebar #message.active`).data('id')
+                }
+            });
+        }
+        $(`#annotation-sidebar #message:not([data-id='${annotation.id}'])`).removeClass('active');
         // Append the message to the sidebar.
         $('#annotation-sidebar #sidebar-content').append(`<div id="message" data-placement="side"
                     data-id="${annotation.id}" class="${annotation.type} sticky active">

@@ -62,6 +62,10 @@ switch ($action) {
         $end = required_param('end', PARAM_FLOAT);
         $DB->set_field('interactivevideo', 'starttime', $start, ['id' => $id]);
         $DB->set_field('interactivevideo', 'endtime', $end, ['id' => $id]);
+        $courseid = required_param('courseid', PARAM_INT);
+        $cmid = required_param('cmid', PARAM_INT);
+        // Purge the course module cache after update action.
+        \course_modinfo::purge_course_module_cache($courseid, $cmid);
         echo json_encode(['id' => $id, 'start' => $start, 'end' => $end]);
         break;
     case 'get_items':
@@ -113,6 +117,8 @@ switch ($action) {
             }
             $DB->delete_records('interactivevideo_log', ['annotationid' => $id]);
         }
+        $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+        $cache->delete($cmid);
         echo $id;
         break;
     case 'get_progress':
@@ -162,7 +168,8 @@ switch ($action) {
         $groupid = required_param('groupid', PARAM_INT);
         $cmid = required_param('cmid', PARAM_INT);
         $ctxid = required_param('ctxid', PARAM_INT);
-        echo json_encode(array_values(interactivevideo_util::get_report_data_by_group($cmid, $groupid, $ctxid)));
+        $courseid = required_param('courseid', PARAM_INT);
+        echo json_encode(array_values(interactivevideo_util::get_report_data_by_group($cmid, $groupid, $ctxid, $courseid)));
         break;
     case 'get_log':
         require_capability('mod/interactivevideo:view', $context);
@@ -244,5 +251,11 @@ switch ($action) {
         $watchedpoint = required_param('watchedpoint', PARAM_INT);
         $DB->set_field('interactivevideo_completion', 'lastviewed', $watchedpoint, ['id' => $id]);
         echo json_encode(['id' => $id, 'watchedpoint' => $watchedpoint]);
+        break;
+    case 'update_ivitems_cache':
+        require_capability('mod/interactivevideo:edit', $context);
+        $cmid = required_param('cmid', PARAM_INT);
+        $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+        $cache->delete($cmid);
         break;
 }

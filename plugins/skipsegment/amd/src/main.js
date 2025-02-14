@@ -22,7 +22,6 @@
  */
 import $ from 'jquery';
 import Base from 'mod_interactivevideo/type/base';
-import {dispatchEvent} from 'core/event_dispatcher';
 import Ajax from 'core/ajax';
 export default class SkipSegment extends Base {
     /**
@@ -108,7 +107,7 @@ export default class SkipSegment extends Base {
         }])[0];
 
         let newAnnotation = JSON.parse(ajax.data);
-        dispatchEvent('annotationupdated', {
+        self.dispatchEvent('annotationupdated', {
             annotation: newAnnotation,
             action: 'add'
         });
@@ -212,7 +211,7 @@ export default class SkipSegment extends Base {
         await this.player.seek(Number(annotation.title) + 0.1);
         this.player.pause();
         if (annotation.title >= this.end) {
-            dispatchEvent('iv:playerEnded', {});
+            self.dispatchEvent('iv:playerEnded', {});
         }
         if (this.isEditMode()) {
             return;

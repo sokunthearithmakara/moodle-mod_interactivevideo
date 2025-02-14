@@ -56,6 +56,24 @@ $capabilities = [
             'editingteacher' => CAP_ALLOW,
         ],
     ],
+    'mod/interactivevideo:editreport' => [ // This capability is used to edit/delete the report of the interactive video.
+        'riskbitmask' => RISK_XSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+        ],
+    ],
+    'mod/interactivevideo:manage' => [ // This capability is used to manage the interactive videos in the course.
+        'riskbitmask' => RISK_XSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+        ],
+    ],
     'mod/interactivevideo:view' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,

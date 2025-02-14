@@ -48,7 +48,6 @@ class Wistia {
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked');
-            $('#start-screen, .video-block, #video-block').remove();
         }
         this.start = start;
         if (opts.passwordprotected) {
@@ -64,8 +63,9 @@ class Wistia {
         const videoId = match[1];
         this.videoId = videoId;
         $(`#${node}`).html(`<div class="wistia_embed wistia_async_${videoId} wmode=transparent
-             controlsVisibleOnLoad=${showControls} playButton=${showControls} videoFoam=false silentAutoPlay=allow playsinline=true
-              fullscreenButton=false time=${start} fitStrategy=contain" style="height:100%;width:100%"></div>`);
+             controlsVisibleOnLoad=true playButton=true videoFoam=false silentAutoPlay=allow playsinline=true
+              fullscreenButton=false ${this.allowAutoplay ? `time=${start}` : ``}
+               fitStrategy=contain" style="height:100%;width:100%"></div>`);
         let self = this;
         if (opts.editform) {
             $.get('https://fast.wistia.com/oembed.json?url=' + url)
@@ -323,6 +323,7 @@ class Wistia {
      */
     unMute() {
         player.unmute();
+        player.volume(1);
     }
     /**
      * Returns the original Wistia player instance.

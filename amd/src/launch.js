@@ -21,18 +21,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/str'], function($, str) {
+define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
     return {
         init: async function() {
-            let strings = await str.get_strings([
-                {key: 'close', component: 'mod_interactivevideo'},
-                {key: 'lock', component: 'mod_interactivevideo'},
-                {key: 'unlock', component: 'mod_interactivevideo'},
-                {key: 'openinnewtab', component: 'mod_interactivevideo'},
-                {key: 'togglecontrols', component: 'mod_interactivevideo'},
-            ]);
             // Launch the interactive video in modal
-            $(document).on('click', '.launch-interactivevideo', function(e) {
+            $(document).on('click', '.launch-interactivevideo', async function(e) {
                 // Save the current document title.
                 let title = document.title;
                 // Get showcontrols from cache.
@@ -44,58 +37,14 @@ define(['jquery', 'core/str'], function($, str) {
                 const contextid = $(this).data('contextid');
                 const $card = $(this).closest('#interactivevideo-' + instance);
                 $card.find('.image-container').addClass('hovered');
-                const modal = `<div class="modal fade p-0 modal-fullscreen rounded-0" id="playermodal"
-                data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="playermodalLabel"
-                aria-hidden="true">
-                   <div class="rounded-0 modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl position-relative">
-                    <div class="position-fixed w-100 h-100 no-pointer bg-transparent z-index-1" id="background-loading">
-                        <div class="d-flex h-100 align-items-center justify-content-center">
-                            <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                       <div class="modal-content ${showcontrols ? 'show-control' : ''} rounded-0 border-0">
-                       <div class="modal-header border-0 text-white align-items-center py-0 h-0
-                        position-absolute w-100 z-index-1 rounded-0">
-                         <div class="modal-background w-100 position-absolute"></div>
-                               <span class="modal-title position-relative z-index-1 d-flex align-items-center overflow-hidden"
-                                id="playermodalLabel">
-                                <span class="h5 mb-0">
-                                    <button type="button" class="btn border-0 m-1 p-1 h5 bg-transparent" data-dismiss="modal"
-                                     aria-label="Close" title="${strings[0]}">
-                                        <i class="fa fa-arrow-left text-white m-0 fa-2x" aria-hidden="true"></i>
-                                    </button>
-                                </span>
+                let dataForTemplate = {
+                    id: id,
+                    showcontrols: showcontrols,
+                    root: M.cfg.wwwroot,
+                };
 
-                                <div class="d-sm-none d-block small ml-2" data-region="activity-completion">
-                                </div>
-                               </span>
+                const modal = await Templates.render('mod_interactivevideo/playermodal', dataForTemplate);
 
-                               <div class="modal-action d-flex align-items-center position-relative z-index-1">
-                               <div class="d-none d-sm-block small" data-region="activity-completion">
-                               </div>
-                               <span type="button" class="btn ml-2 border-0 h5 mb-0 lock-bar"
-                                title="${strings[1]}"
-                                data-href="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}">
-                               <i class="fa fa-unlock text-white m-0 fa-xl" aria-hidden="true"></i></span>
-                               <span type="button" class="btn ml-2 border-0 h5 mb-0 open-external-link"
-                                title="${strings[3]}"
-                                data-href="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}">
-                               <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i></span>
-                               </div>
-                           </div>
-                           <div class="modal-body p-0 position-relative overflow-hidden ">
-                           <iframe id="ivplayer" src="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${id}&embed=1" frameborder=0
-                           class="w-100 position-absolute h-100" allow="autoplay"></iframe>
-                                <button type="button" class="btn border-0 m-1 p-1 h5 toggle-controls d-none"
-                                 title="${strings[4]}">
-                                   <i class="fa fa-chevron-up text-white m-0 fa-2x" aria-hidden="true"></i>
-                                </button></span>
-                           </div>
-                       </div>
-                   </div>
-               </div>`;
                 $('#playermodal').remove(); // Important:: Remove the previous modal ONLY after the new one is created.
                 $('body').append(modal);
                 $('#playermodal').modal('show');
@@ -315,7 +264,7 @@ define(['jquery', 'core/str'], function($, str) {
                         .scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
 
                     if (iframeDoc) {
-                       $(iframeDoc).off();
+                        $(iframeDoc).off();
                     }
                 });
 
@@ -326,19 +275,19 @@ define(['jquery', 'core/str'], function($, str) {
                     }
                 };
 
-                $(document).off('click', '.lock-bar').on('click', '.lock-bar', function(e) {
+                $(document).off('click', '.lock-bar').on('click', '.lock-bar', async function(e) {
                     e.preventDefault();
                     $(this).toggleClass('locked');
                     $('#playermodal').toggleClass('locked');
                     if ($(this).hasClass('locked')) {
-                        $(this).attr('title', strings[2]);
+                        $(this).attr('title', await str.get_string('unlock', 'mod_interactivevideo'));
                         $(this).find('i').removeClass('fa-unlock').addClass('fa-lock');
                         $('#playermodal .modal-header').addClass('show');
                         // Save to local storage.
                         localStorage.setItem('lock-bar', '1');
                         headerFunction();
                     } else {
-                        $(this).attr('title', strings[1]);
+                        $(this).attr('title', await str.get_string('lock', 'mod_interactivevideo'));
                         $(this).find('i').removeClass('fa-lock').addClass('fa-unlock');
                         // Remove from local storage.
                         localStorage.removeItem('lock-bar');
@@ -355,13 +304,11 @@ define(['jquery', 'core/str'], function($, str) {
                 window.open($(this).data('href'), '_blank');
             });
 
-
-            $(document).on('click', '.interactivevideo-card .description-show',
-                function() {
-                    const $description = $(this).closest('.top-section').find('.description');
-                    $description.slideToggle('fast', 'swing');
-                    $(this).toggleClass('rotate');
-                });
+            $(document).on('click', '.interactivevideo-card .description-show', function() {
+                const $description = $(this).closest('.top-section').find('.description');
+                $description.slideToggle('fast', 'swing');
+                $(this).toggleClass('rotate');
+            });
 
             // Get the #hash from the url and scroll to the element and hover it.
             $(document).ready(function() {
@@ -378,6 +325,120 @@ define(['jquery', 'core/str'], function($, str) {
                         }, 1000);
                     }
                 }
+            });
+
+            // Launch report modal.
+            $(document).on('click', '.launch-report', async function(e) {
+                e.preventDefault();
+                const href = $(this).data('href');
+
+                // If control or command key is pressed, open the modal. Otherwise, follow the link.
+                if (!e.ctrlKey && !e.metaKey) {
+                    window.location.href = href;
+                    return;
+                }
+
+                const data = {
+                    id: 'reportModal',
+                    title: await str.get_string('reportfor', 'mod_interactivevideo', $(this).data('title')),
+                    body: `<iframe src="${href}&embed=1"
+                                        style="width: 100%; height: 100%; border: 0; z-index:1050; position:absolute;"></iframe>`,
+                };
+                let Modal = await Templates.render('mod_interactivevideo/fullscreenmodal', data);
+
+                $('body').append(Modal);
+                $('#reportModal').modal('show');
+                $('#reportModal').on('shown.bs.modal', function() {
+                    $(this).focus();
+                });
+                $('#reportModal').on('hidden.bs.modal', function() {
+                    $(this).remove();
+                });
+            });
+
+            // Quick form for interactive video settings.
+            let ModalForm, addToast;
+            $(document).on('click', '.iv_quickform', async function(e) {
+                const $this = $(this);
+                e.preventDefault();
+                const href = $this.data('href');
+                if (!e.ctrlKey && !e.metaKey) {
+                    window.location.href = href;
+                    return;
+                }
+
+                let formdata = {
+                    contextid: $(this).data('contextid'),
+                    cmid: $(this).data('cmid'),
+                    courseid: $(this).data('courseid'),
+                    interaction: $(this).data('interaction'),
+                    origin: 'coursepage',
+                };
+
+                if (!ModalForm) {
+                    ModalForm = await import('core_form/modalform');
+                }
+
+                if (!addToast) {
+                    addToast = await import('core/toast');
+                }
+
+                let form = new ModalForm({
+                    formClass: 'mod_interactivevideo\\form\\quicksettings_form',
+                    args: formdata,
+                    modalConfig: {
+                        title: await str.get_string('quicksettings', 'mod_interactivevideo'),
+                        removeOnClose: true,
+                    }
+                });
+
+                form.show();
+
+                form.addEventListener(form.events.LOADED, (e) => {
+                    e.stopImmediatePropagation();
+                    // Replace the .modal-lg class with .modal-xl.
+                    setTimeout(() => {
+                        $('.modal-dialog').removeClass('modal-lg').addClass('modal-xl path-mod-interactivevideo');
+                    }, 1000);
+                    setTimeout(async() => {
+                        let strings = await str.get_strings([
+                            {key: 'moresettings', component: 'mod_interactivevideo'},
+                            {key: 'resettodefaults', component: 'mod_interactivevideo'},
+                        ]);
+                        $('[data-region="footer"]').css('align-items', 'unset')
+                            .prepend(`<span class="btn btn-secondary mr-1 default" title="${strings[1]}">
+                        <i class="fa fa-refresh"></i></span>
+                        <a type="button" class="btn btn-secondary mr-auto" target="_blank" data-dismiss="modal"
+                            title="${strings[0]}"
+                            href="${M.cfg.wwwroot}/course/modedit.php?update=${formdata.cmid}"><i class="fa fa-cog"></i>
+                            </a>`);
+                    }, 2000);
+                });
+
+                form.addEventListener(form.events.FORM_SUBMITTED, (e) => {
+                    e.stopImmediatePropagation();
+                    addToast.add(str.get_string('settingssaved', 'mod_interactivevideo'), {
+                        type: 'success',
+                    });
+                    // Replace the activity card with the new one.
+                    let $newcard = $(e.detail.html);
+                    $this.closest('.modtype_interactivevideo').replaceWith($newcard).trigger('click');
+                });
+
+                let DynamicForm;
+                $(document).off('click', '.default').on('click', '.default', async function(e) {
+                    e.preventDefault();
+                    formdata.action = 'reset';
+                    if (!DynamicForm) {
+                        DynamicForm = await import('core_form/dynamicform');
+                    }
+                    let form = new DynamicForm(document.querySelector('[data-region="body"]'),
+                        'mod_interactivevideo\\form\\quicksettings_form');
+                    form.load(formdata);
+                    addToast.add(str.get_string('formvaluesarereset', 'mod_interactivevideo'), {
+                        type: 'info',
+                    });
+                });
             });
         },
     };

@@ -51,7 +51,9 @@ class form extends \mod_interactivevideo\form\base_form {
         $mform->setDefault('char1', 1);
         $mform->addHelpButton('char1', 'showtitle', 'ivplugin_chapter');
 
-        $this->advanced_form_fields(false, true, true, true);
+        $this->advanced_form_fields([
+            'hascompletion' => false,
+        ]);
 
         $this->close_form();
     }

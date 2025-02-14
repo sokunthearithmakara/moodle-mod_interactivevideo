@@ -127,6 +127,9 @@ $primarymenu = $primary->export_for_template($renderer);
 // Display page navigation.
 $datafortemplate = [
     "cmid" => $cm->id,
+    "instance" => $cm->instance,
+    "contextid" => $modulecontext->id,
+    "courseid" => $course->id,
     "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
     "canedit" => has_capability('mod/interactivevideo:edit', $modulecontext),
     "completion" => ($attempted ? '<span class="mb-0 border-left border-danger pl-3"><button class="btn btn-sm"
@@ -178,6 +181,7 @@ $PAGE->requires->js_call_amd(
         $USER->id,
         $moduleinstance->posterimage,
         $moduleinstance->extendedcompletion, // Extended completion settings.
+
     ]
 );
 
