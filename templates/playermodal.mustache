@@ -43,13 +43,11 @@ Example context (json):
                 </span>
                 <div class="modal-action d-flex align-items-center position-relative z-index-1">
                     <div class="d-none d-sm-block small" data-region="activity-completion"></div>
-                    <span type="button"
-                          class="btn ml-2 border-0 h5 mb-0 lock-bar"
+                    <span class="btn ml-2 border-0 h5 mb-0 lock-bar"
                           title="{{#str}}lock,mod_interactivevideo{{/str}}"
                           data-href="{{root}}/mod/interactivevideo/view.php?id={{id}}">
                         <i class="fa fa-unlock text-white m-0 fa-xl" aria-hidden="true"></i></span>
-                    <span type="button"
-                          class="btn border-0 h5 mb-0 open-external-link"
+                    <span class="btn border-0 h5 mb-0 open-external-link"
                           title="{{#str}}openinnewtab,mod_interactivevideo{{/str}}"
                           data-href="{{root}}/mod/interactivevideo/view.php?id={{id}}">
                         <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i></span>
@@ -69,8 +67,7 @@ Example context (json):
                 </div>
                 <iframe id="ivplayer"
                         src="{{root}}/mod/interactivevideo/view.php?id={{id}}&embed=1"
-                        frameborder="0"
-                        class="w-100 position-absolute h-100"
+                        class="w-100 position-absolute h-100 border-0"
                         allow="autoplay"></iframe>
                 <button type="button"
                         class="btn border-0 m-1 p-1 h5 toggle-controls d-none"

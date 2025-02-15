@@ -40,13 +40,7 @@ Transform your video/audio content into an interactive learning adventure! Add d
 - Rich text: Text content using the text editor.
 
 ## Optional content types: ##
-- Annotations: Add persistant annotations on top of the video/canvas.
-- Decision: Add a crossroad/decision point.
-- H5P viewer: Upload H5P activity in .h5p and .html format. (You can convert .h5p to .html using Lumi). Tracking completion using xAPI events is supported in both formats.
-- HTML viewer: Include content such as HTML5 games, simulations, etc.
-- PDF viewer: Display PDF file using PDFjs viewer.
-- Paused annotation: Superimpose audio/image/video/text/shape/file on the video at a certain point.
-- XP reward: Simply reward learners with XP points.
+https://buymeacoffee.com/tsmakara
 
 ## Installing via uploaded ZIP file ##
 

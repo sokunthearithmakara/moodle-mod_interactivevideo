@@ -1825,6 +1825,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
  *
  * @param mixed $mform
  * @param mixed $current
+ * @param mixed $sections
  * @return void
  */
 function interactivevideo_appearanceandbehavior_form($mform, $current, $sections = ['appearance', 'behavior']) {

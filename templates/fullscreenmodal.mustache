@@ -11,23 +11,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Moodle.  If not, see <http://www.gnu.org/licenses />.
 }}
-{{ !
-@template core/modal
-Moodle modal template.
-The purpose of this template is to render a modal
-Classes required for JS:
-* none
-Data attributes required for JS:
-* none
-Context variables required for this template:
-* title A cleaned string (use clean_text() ) to display.
-* body HTML content for the boday
-* footer HTML content for the footer
+{{!
+@template mod_interactivevideo/fullscreenmodal
+Modal template for report.
 Example context (json):
 {
-"title": "Example modal",
-"body": "Some example content for the body",
-"footer": "Footer text, right here!"
 }
 }}
 <div class="modal modal-fullscreen iv-modal fade p-0"
@@ -42,7 +30,7 @@ Example context (json):
          tabindex="0">
         <div class="modal-content position-relative">
             <div class="modal-header" data-region="header">
-                <h5 id="{{uniqid}}-modal-title" class="modal-title" data-region="title">{{{title}}}</h5>
+                <h5 id="{{uniqid}}-modal-title" class="modal-title" data-region="title">{{#title}}{{{title}}}{{/title}}</h5>
                 <button type="button"
                         class="btn btn-close"
                         data-dismiss="modal"

@@ -15,6 +15,13 @@
         <licenseversion>?</licenseversion>
     </library>
     <library>
+        <location>libraries/select2</location>
+        <name>Select2 Library</name>
+        <version>4.1.0-rc.0</version>
+        <license>MIT</license>
+        <licenseversion>?</licenseversion>
+    </library>
+    <library>
         <location>amd/src/libraries/buttons.bootstrap4.js</location>
         <name>Datatables Bootstrap4 Button Style</name>
         <version>2.4.1</version>

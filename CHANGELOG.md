@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2025-02-15
+### Fixed
+- The action menu was hidden on the activity card in Moodle 4.1.
+- Update thirdpartylibs.xml
+
+## [1.1.0] - 2025-02-15
+https://mod-interactive-video.canny.io/changelog/interactive-video-v11
+
 ## [1.0.3] - 2025-01-25
 ### Fixed
 - Player didn't fire `ivplayerReady` event if the browser blocked autoplay.
