@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2025-03-01
+https://mod-interactive-video.canny.io/changelog/interactive-video-v112
+
 ## [1.1.1] - 2025-02-15
 ### Fixed
 - The action menu was hidden on the activity card in Moodle 4.1.
