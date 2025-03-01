@@ -194,12 +194,12 @@ class Vimeo {
                 }
             });
 
-            player.on('seeked', function(e) {
-                if (!ready) {
-                    return;
-                }
-                dispatchEvent('iv:playerSeek', {time: e.seconds});
-            });
+            // Player.on('seeked', function(e) {
+            //     if (!ready) {
+            //         return;
+            //     }
+            //     dispatchEvent('iv:playerSeek', {time: e.seconds});
+            // });
 
             player.on('playbackratechange', function(e) {
                 if (!ready) {
@@ -302,6 +302,7 @@ class Vimeo {
         }
         this.ended = false;
         await player.setCurrentTime(time);
+        dispatchEvent('iv:playerSeek', {time: time});
         return time;
     }
     /**

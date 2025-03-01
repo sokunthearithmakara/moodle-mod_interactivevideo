@@ -22,6 +22,29 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die;
+require_once($CFG->dirroot . '/user/profile/lib.php');
+
+// Basic fields available in user table.
+$fields = [
+    'username'    => new lang_string('username'),
+    'idnumber'    => new lang_string('idnumber'),
+    'email'       => new lang_string('email'),
+    'phone1'      => new lang_string('phone1'),
+    'phone2'      => new lang_string('phone2'),
+    'department'  => new lang_string('department'),
+    'institution' => new lang_string('institution'),
+    'city'        => new lang_string('city'),
+    'country'     => new lang_string('country'),
+];
+
+// Custom profile fields.
+$profilefields = profile_get_custom_fields();
+foreach ($profilefields as $field) {
+    $fields['profile_field_' . $field->shortname] = format_string(
+        $field->name,
+        true
+    ) . ' *';
+}
 
 $settings = null; // Must first tell Moodle not to add the default node.
 
@@ -257,6 +280,24 @@ $bsettings->add(new admin_setting_configmulticheckbox(
 ));
 
 $ADMIN->add('modivfolder', $bsettings);
+
+// Report settings page.
+$rsettings = new admin_settingpage(
+    'mod_interactivevideo_reportsettings',
+    get_string('reportsettings', 'mod_interactivevideo')
+);
+
+// Identify the fields to display in the report.
+$rsettings->add(new admin_setting_configmultiselect(
+    'mod_interactivevideo/reportfields',
+    get_string('reportfields', 'mod_interactivevideo'),
+    get_string('reportfields_desc', 'mod_interactivevideo'),
+    ['email'],
+    $fields
+));
+
+$ADMIN->add('modivfolder', $rsettings);
+
 
 // Content types node.
 $modcontenttype = new admin_category(

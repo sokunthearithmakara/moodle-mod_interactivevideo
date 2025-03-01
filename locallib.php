@@ -260,6 +260,7 @@ class interactivevideo_util {
                 $log->timecreated = time();
                 $log->text1 = $details;
                 $log->timemodified = time();
+                $log->completionid = $record->id;  // Store the completion id.
                 $DB->insert_record('interactivevideo_log', $log);
             }
         }
@@ -304,37 +305,51 @@ class interactivevideo_util {
      * @return array
      */
     public static function get_report_data_by_group($interactivevideo, $group, $contextid, $courseid = 0) {
-        global $DB, $OUTPUT, $PAGE;
+        global $DB, $OUTPUT, $PAGE, $CFG;
+        require_once($CFG->dirroot . '/user/profile/lib.php');
+        require_once($CFG->dirroot . '/user/lib.php');
         $context = context::instance_by_id($contextid);
         $PAGE->set_context($context);
         // Get fields for userpicture.
         $fields = \core_user\fields::get_picture_fields();
-        $fields = 'u.' . implode(', u.', $fields);
+        $identityfields = get_config('mod_interactivevideo', 'reportfields');
+        if (!empty($identityfields)) {
+            $fields = array_merge($fields, explode(',', $identityfields));
+        }
+        $customfields = array_filter($fields, function ($field) {
+            return strpos($field, 'profile_field_') !== false;
+        });
+        $corefields = array_filter($fields, function ($field) {
+            return strpos($field, 'profile_field_') === false;
+        });
+        $dbfields = 'u.' . implode(', u.', $corefields);
         // Graded roles.
         $roles = get_config('core', 'gradebookroles');
         if (empty($roles)) {
             return [];
         }
+        list($inparams, $inparamsvalues) = $DB->get_in_or_equal(explode(',', $roles));
         if ($group == 0) {
             // Get all enrolled users (student only).
-            $sql = "SELECT " . $fields . ", ac.timecompleted, ac.timecreated,
+            $sql = "SELECT " . $dbfields . ", ac.timecompleted, ac.timecreated,
              ac.completionpercentage, ac.completeditems, ac.xp, ac.completiondetails, ac.id as completionid
                     FROM {user} u
-                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = :cmid
-                    WHERE u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = :contextid AND roleid
-                     IN (" . $roles . "))
+                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = ?
+                    WHERE u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = ? AND roleid $inparams)
                     ORDER BY u.lastname, u.firstname";
-            $records = $DB->get_records_sql($sql, ['cmid' => $interactivevideo, 'contextid' => $contextid]);
+            $params = array_merge([$interactivevideo, $contextid], $inparamsvalues);
+            $records = $DB->get_records_sql($sql, $params);
         } else {
             // Get users in group (student only).
-            $sql = "SELECT " . $fields . ", ac.timecompleted, ac.timecreated,
+            $sql = "SELECT " . $dbfields . ", ac.timecompleted, ac.timecreated,
              ac.completionpercentage, ac.completeditems, ac.xp, ac.completiondetails, ac.id as completionid
                     FROM {user} u
-                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = :cmid
-                    WHERE u.id IN (SELECT userid FROM {groups_members} WHERE groupid = :groupid)
-                    AND u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = :contextid AND roleid IN (" . $roles . "))
+                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = ?
+                    WHERE u.id IN (SELECT userid FROM {groups_members} WHERE groupid = ?)
+                    AND u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = ? AND roleid $inparams)
                     ORDER BY u.lastname, u.firstname";
-            $records = $DB->get_records_sql($sql, ['cmid' => $interactivevideo, 'groupid' => $group, 'contextid' => $contextid]);
+            $params = array_merge([$interactivevideo, $group, $contextid], $inparamsvalues);
+            $records = $DB->get_records_sql($sql, $params);
         }
 
         // Render the photo of the user.
@@ -349,6 +364,29 @@ class interactivevideo_util {
             $userpic->link = true;
             $userpic->popup = true;
             $record->picture = $OUTPUT->render($userpic);
+            $record->fullname = fullname($record);
+
+            // Handle custom fields.
+            if (!empty($customfields)) {
+                foreach ($customfields as $field) {
+                    $record->{$field} = '';
+                }
+                $profile = user_get_user_details($record, null, ['customfields']);
+                $customfieldarray = (array)$profile['customfields'];
+                foreach ($customfieldarray as $key => $value) {
+                    $field = (object)$value;
+                    // We don't want to attach the fields that isn't in the list.
+                    if (in_array('profile_field_' . $field->shortname, $customfields)) {
+                        $record->{'profile_field_' . $field->shortname} = $field->displayvalue;
+                        unset($customfieldarray[$key]['displayvalue']);
+                        unset($customfieldarray[$key]['name']);
+                    } else {
+                        // Remove the field from $customfieldarray.
+                        unset($customfieldarray[$key]);
+                    }
+                }
+                $record->customfields = $customfieldarray;
+            }
         }
         return $records;
     }
@@ -820,7 +858,7 @@ class interactivevideo_util {
         // Delete completion record.
         $DB->delete_records('interactivevideo_completion', ['id' => $recordid]);
         // Delete logs.
-        $logs = $DB->get_field('interactivevideo_log', 'id', ['completionid' => $recordid], IGNORE_MISSING);
+        $logs = $DB->get_records('interactivevideo_log', ['completionid' => $recordid], 'id', 'id, userid');
         // Delete associated files.
         if ($logs) {
             $fs = get_file_storage();
@@ -833,6 +871,10 @@ class interactivevideo_util {
             $DB->delete_records('interactivevideo_log', ['completionid' => $recordid]);
         }
 
+        $userids = array_column($logs, 'userid');
+        $userids = array_unique($userids);
+        $userids = array_values($userids);
+
         // Update completion state.
         $cm = get_coursemodule_from_instance('interactivevideo', $cmid);
         require_once($CFG->libdir . '/completionlib.php');
@@ -840,7 +882,54 @@ class interactivevideo_util {
             $course = new stdClass();
             $course->id = $courseid;
             $completion = new completion_info($course);
-            $completion->update_state($cm);
+            foreach ($userids as $userid) {
+                $completion->update_state($cm, null, $userid);
+            }
+        }
+
+        return 'deleted';
+    }
+
+    /**
+     * Delete progress by IDs.
+     *
+     * @param int $contextid The context ID.
+     * @param array $recordids The record IDs.
+     * @param int $courseid The course ID.
+     * @param int $cmid The course module ID.
+     * @return string The result of the deletion.
+     */
+    public static function delete_progress_by_ids($contextid, $recordids, $courseid, $cmid) {
+        global $DB, $CFG;
+        // Delete completion record.
+        $DB->delete_records_list('interactivevideo_completion', 'id', $recordids);
+        // Delete logs.
+        $logs = $DB->get_records_list('interactivevideo_log', 'completionid', $recordids, 'id', 'id, userid');
+        // Delete associated files.
+        if ($logs) {
+            $fs = get_file_storage();
+            foreach ($logs as $log) {
+                $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments', $log->id);
+                $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text1', $log->id);
+                $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2', $log->id);
+                $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3', $log->id);
+            }
+            $DB->delete_records_list('interactivevideo_log', 'completionid', $recordids);
+        }
+
+        // Update completion state.
+        $cm = get_coursemodule_from_instance('interactivevideo', $cmid);
+        require_once($CFG->libdir . '/completionlib.php');
+        if ($cm->completion == COMPLETION_TRACKING_AUTOMATIC) {
+            $course = new stdClass();
+            $course->id = $courseid;
+            $completion = new completion_info($course);
+            $userids = array_column($logs, 'userid');
+            $userids = array_unique($userids);
+            $userids = array_values($userids);
+            foreach ($userids as $userid) {
+                $completion->update_state($cm, null, $userid);
+            }
         }
 
         return 'deleted';

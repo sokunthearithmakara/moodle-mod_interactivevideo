@@ -190,11 +190,19 @@ switch ($action) {
         echo json_encode($log);
         break;
     case 'delete_progress_by_id':
-        require_capability('mod/interactivevideo:viewreport', $context);
+        require_capability('mod/interactivevideo:editreport', $context);
         $recordid = required_param('recordid', PARAM_INT);
         $courseid = required_param('courseid', PARAM_INT);
         $cmid = required_param('cmid', PARAM_INT);
         echo interactivevideo_util::delete_progress_by_id($contextid, $recordid, $courseid, $cmid);
+        break;
+    case 'delete_progress_by_ids':
+        require_capability('mod/interactivevideo:editreport', $context);
+        $ids = required_param('completionids', PARAM_TEXT);
+        $ids = explode(',', $ids);
+        $courseid = required_param('courseid', PARAM_INT);
+        $cmid = required_param('cmid', PARAM_INT);
+        echo interactivevideo_util::delete_progress_by_ids($contextid, $ids, $courseid, $cmid);
         break;
     case 'get_taught_courses':
         require_capability('mod/interactivevideo:edit', $context);
@@ -257,5 +265,52 @@ switch ($action) {
         $cmid = required_param('cmid', PARAM_INT);
         $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
         $cache->delete($cmid);
+        break;
+    case 'delete_completion_data':
+        require_capability('mod/interactivevideo:editreport', $context);
+        $id = required_param('id', PARAM_INT);
+        $itemid = required_param('itemid', PARAM_INT);
+        $userid = required_param('userid', PARAM_INT);
+        $completion = $DB->get_record('interactivevideo_completion', ['id' => $id]);
+        if ($completion) {
+            $completeditems = json_decode($completion->completeditems);
+            $key = array_search($itemid, $completeditems);
+            if ($key !== false) {
+                unset($completeditems[$key]);
+                $completion->completeditems = json_encode(array_values($completeditems));
+            }
+            $completiondetails = json_decode($completion->completiondetails);
+            // Update the item with id = $itemid to mark its detail as "deleted".
+            $completiondetails = array_map(function ($item) use ($itemid) {
+                $decoded = json_decode($item);
+                if ($decoded->id == $itemid) {
+                    $new = [
+                        'id' => $decoded->id,
+                        'deleted' => true,
+                    ];
+                    return json_encode($new);
+                }
+                return json_encode($decoded);
+            }, $completiondetails);
+            $completion->completiondetails = json_encode(array_values($completiondetails));
+            $DB->update_record('interactivevideo_completion', $completion);
+
+            // Delete associated logs.
+            $logs = $DB->get_records('interactivevideo_log', ['userid' => $userid, 'annotationid' => $itemid]);
+            $fs = get_file_storage();
+            if ($logs) {
+                foreach ($logs as $log) {
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments', $log->id);
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text1', $log->id);
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2', $log->id);
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3', $log->id);
+                }
+                $DB->delete_records('interactivevideo_log', ['userid' => $userid, 'annotationid' => $itemid]);
+            }
+            echo json_encode(['id' => $id, 'itemid' => $itemid]);
+
+        } else {
+            echo json_encode(['error' => 'Completion record not found']);
+        }
         break;
 }

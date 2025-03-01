@@ -62,9 +62,9 @@ define([
             await import('mod_interactivevideo/libraries/dataTables.buttons');
             await import('mod_interactivevideo/libraries/buttons.html5');
             await import('mod_interactivevideo/libraries/dataTables.select');
+            await import('mod_interactivevideo/libraries/select.bootstrap4');
             await import('mod_interactivevideo/libraries/buttons.bootstrap4');
             await import('mod_interactivevideo/libraries/buttons.colVis');
-            await import('mod_interactivevideo/libraries/select.bootstrap4');
             await import('mod_interactivevideo/libraries/dataTables.rowGroup');
             await import('mod_interactivevideo/libraries/select2');
             const addSelect2 = function() {
@@ -341,6 +341,7 @@ define([
                 "rowId": "id",
                 "pageLength": 10,
                 "order": [[5, "asc"]],
+                "pagingType": "full",
                 "language": {
                     "lengthMenu": "_MENU_",
                     "zeroRecords": M.util.get_string('nofound', "mod_interactivevideo"),
@@ -349,10 +350,10 @@ define([
                     "infoEmpty": M.util.get_string('datatableinfoempty', "mod_interactivevideo"),
                     "infoFiltered": M.util.get_string('datatableinfofiltered', "mod_interactivevideo"),
                     "paginate": {
-                        "first": M.util.get_string('first', 'mod_interactivevideo'),
-                        "last": M.util.get_string('last', 'mod_interactivevideo'),
-                        "next": M.util.get_string('next', 'mod_interactivevideo'),
-                        "previous": M.util.get_string('previous', 'mod_interactivevideo')
+                        "first": '<i class="bi bi-chevron-double-left fs-unset"></i>',
+                        "last": '<i class="bi bi-chevron-double-right fs-unset"></i>',
+                        "next": '<i class="bi bi-chevron-right fs-unset"></i>',
+                        "previous": '<i class="bi bi-chevron-left fs-unset"></i>'
                     },
                     "select": {
                         rows: {
@@ -427,6 +428,7 @@ define([
                 selectedRows.every(function() {
                     var row = this.node();
                     $(row).find("td:first-child input").prop("checked", true);
+                    return true;
                 });
 
                 var deselectedRows = datatable.rows({selected: false});
@@ -434,6 +436,7 @@ define([
                 deselectedRows.every(function() {
                     var row = this.node();
                     $(row).find("td:first-child input").prop("checked", false);
+                    return true;
                 });
 
                 if (deselectedRows.count() === 0) {
@@ -474,6 +477,7 @@ define([
                 let ids = [];
                 selectedRows.every(function() {
                     ids.push(this.data().id);
+                    return true;
                 });
                 let bulkdata = {
                     courseid: courseid,

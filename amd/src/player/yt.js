@@ -52,6 +52,7 @@ class Yt {
             quality: false,
             password: true,
         };
+        this.live = false; // Added flag for live video support
     }
     /**
      * Load the video
@@ -141,11 +142,18 @@ class Yt {
                     $(`#video-wrapper`).removeClass('d-none');
                     self.title = e.target.videoTitle;
                     // We don't want to use the end time from the player, just to avoid any issue restarting the video.
-                    if (e.target.getDuration() <= 0) {
+                    if (e.target.getDuration() <= 0 && e.target.videoTitle == '') {
                         dispatchEvent('iv:playerError', {error: 'Video not found'});
                         return;
                     }
                     let totaltime = Number(e.target.getDuration().toFixed(2)) - self.frequency;
+                    if (e.target.getDuration() == 0) {
+                        totaltime = 0.1;
+                        self.live = true;
+                    }
+                    if (end == 0.1 && !self.live) {
+                        end = totaltime;
+                    }
                     end = !end ? totaltime : Math.min(end, totaltime);
                     end = Number(end.toFixed(2));
                     self.end = end;
@@ -174,6 +182,10 @@ class Yt {
                                 if (hasError) {
                                     return;
                                 }
+                                if (self.live) {
+                                    self.start = e.target.getCurrentTime();
+                                    self.end = e.target.getCurrentTime() + 1;
+                                }
                                 e.target.seekTo(self.start);
                                 e.target.pauseVideo();
                                 e.target.unMute();
@@ -197,13 +209,16 @@ class Yt {
                     if (ready === false) {
                         return;
                     }
-                    if (player.getCurrentTime() < self.start) {
-                        player.seekTo(self.start);
-                        player.playVideo();
-                    }
-                    if (player.getCurrentTime() >= self.end + self.frequency) {
-                        player.seekTo(self.end - self.frequency);
-                        player.playVideo();
+                    // For non-live videos, enforce start/end boundaries
+                    if (!self.live) {
+                        if (player.getCurrentTime() < self.start) {
+                            player.seekTo(self.start);
+                            player.playVideo();
+                        }
+                        if (player.getCurrentTime() >= self.end + self.frequency) {
+                            player.seekTo(self.end - self.frequency);
+                            player.playVideo();
+                        }
                     }
                     switch (e.data) {
                         case YT.PlayerState.ENDED:
@@ -222,7 +237,7 @@ class Yt {
                                 }
                             }
                             dispatchEvent('iv:playerPlaying');
-                            if (player.getCurrentTime() >= self.end) {
+                            if (!self.live && player.getCurrentTime() >= self.end) {
                                 self.ended = true;
                                 self.paused = true;
                                 dispatchEvent('iv:playerEnded');
@@ -233,7 +248,7 @@ class Yt {
                             dispatchEvent('iv:playerPaused');
                             break;
                         case YT.PlayerState.CUED:
-                            if (player.getCurrentTime() >= self.end) {
+                            if (!self.live && player.getCurrentTime() >= self.end) {
                                 player.seekTo(self.start);
                             }
                             break;

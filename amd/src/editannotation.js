@@ -169,9 +169,16 @@ define(['jquery',
              * @returns
              */
             const renderAnnotationItems = (annotations) => {
-                renderVideoNav(annotations, start, totaltime);
                 $('#annotationwrapper .loader').remove();
                 $('#annotation-list').empty().removeClass("d-flex align-items-center justify-content-center");
+                if (player.live) {
+                    $('#timeline-wrapper').addClass('no-pointer-events');
+                    $('#annotation-list').html(
+                        `${M.util.get_string('interactionsnotsupportedonlivevideo', 'mod_interactivevideo')}`)
+                        .addClass("d-flex align-items-center justify-content-center");
+                    return;
+                }
+                renderVideoNav(annotations, start, totaltime);
                 if (annotations.length == 0) {
                     $('#annotation-list').html(`${M.util.get_string('clickaddtoaddinteraction', 'mod_interactivevideo')}`)
                         .addClass("d-flex align-items-center justify-content-center");
@@ -229,6 +236,9 @@ define(['jquery',
 
                 $.when(getItems, getContentTypes).done(async function(items, contenttypes) {
                     annotations = JSON.parse(items[0]);
+                    if (player.live) {
+                        annotations = [];
+                    }
                     contentTypes = JSON.parse(contenttypes[0]);
                     // Remove all annotations that are not in the enabled content types.
                     annotations = annotations.filter(x => contentTypes.find(y => y.name === x.type));
@@ -239,8 +249,8 @@ define(['jquery',
                                 ctRenderer[x.name] = new Type(player, annotations, interaction,
                                     course, 0, 0, 0, 0, type, 0, totaltime, start, end, x, coursemodule,
                                     null, displayoptions, null, extendedcompletion, {
-                                        isEditMode: true,
-                                    });
+                                    isEditMode: true,
+                                });
                                 count++;
                                 ctRenderer[x.name].init();
                                 if (count == contentTypes.length) {
@@ -407,10 +417,15 @@ define(['jquery',
              * Set of events to run after the video player is ready.
              */
             const onReady = async() => {
+                if (player.live) {
+                    end = Number.MAX_SAFE_INTEGER;
+                }
                 player.pause();
                 const isPaused = await player.isPaused();
                 if (!isPaused) {
-                    await player.seek(start);
+                    if (!player.live) {
+                        await player.seek(start);
+                    }
                     onReady();
                     return;
                 }
@@ -573,6 +588,9 @@ define(['jquery',
                 if (player.audio && !visualized) {
                     player.visualizer();
                     visualized = true;
+                }
+                if (player.live) {
+                    return;
                 }
                 const intervalFunction = async function() {
                     let thisTime = await player.getCurrentTime();

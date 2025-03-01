@@ -1591,7 +1591,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         if (!isset($fileextension) || empty($fileextension)) {
             continue;
         }
-        $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac'];
+        $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac', '.mpd', '.m3u8'];
         if (in_array($fileextension, $acceptedextensions) && in_array('videolink', $videotypes)) {
             $video->type = 'html5video';
             $video->posterimage = '';
@@ -2300,25 +2300,20 @@ function mod_interactivevideo_core_calendar_provide_event_action(
         return null;
     }
 
-    $now = time();
-
-    if (!empty($cm->customdata['cutoffdate']) && $cm->customdata['cutoffdate'] < $now) {
-        // The module has closed so the user can no longer submit anything.
-        return null;
-    }
-
-    // The module is actionable if we don't have a start time or the start time is
-    // in the past.
-    $actionable = (empty($cm->customdata['allowsubmissionsfromdate']) || $cm->customdata['allowsubmissionsfromdate'] <= $now);
-
     return $factory->create_instance(
         get_string('watch', 'interactivevideo'),
         new \moodle_url('/mod/interactivevideo/view.php', ['id' => $cm->id]),
         1,
-        $actionable
+        true
     );
 }
 
+/**
+ * This function is called when a module instance is updated.
+ *
+ * @param stdClass $moduleinstance The module instance object.
+ * @return bool
+ */
 function interactivevideo_update_event($moduleinstance) {
     global $DB, $CFG;
     require_once($CFG->dirroot . '/calendar/lib.php');
@@ -2355,11 +2350,11 @@ function interactivevideo_update_event($moduleinstance) {
     }
 
     $eventtype = INTERACTIVEVIDEO_EVENT_TYPE_DUE;
-    if ($moduleinstance->duedate) {
+    if ($moduleinstance->completionexpected) {
         $event->name = get_string('calendardue', 'assign', $moduleinstance->name);
         $event->eventtype = $eventtype;
-        $event->timestart = $moduleinstance->duedate;
-        $event->timesort = $moduleinstance->duedate;
+        $event->timestart = $moduleinstance->completionexpected;
+        $event->timesort = $moduleinstance->completionexpected;
         $select = "modulename = :modulename
                        AND instance = :instance
                        AND eventtype = :eventtype

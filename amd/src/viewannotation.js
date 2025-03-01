@@ -299,6 +299,9 @@ define([
 
                 $.when(annnoitems, userprogress, getContentTypes).done(async function(annos, progress, ct) {
                     annotations = JSON.parse(annos[0]);
+                    if (player.live) { // Live video does not have end time.
+                        annotations = [];
+                    }
                     progress = JSON.parse(progress[0]);
                     uprogress = progress;
                     contentTypes = JSON.parse(ct[0]);
@@ -718,6 +721,19 @@ define([
                     return;
                 }
                 vwrapper.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+
+                if (player.live) {
+                    // Remove the slash.
+                    $('#currenttime').next().remove();
+                    $('#currenttime').remove();
+                    $('#duration').text(M.util.get_string('live', 'mod_interactivevideo'));
+                    $('#remainingtime').text(M.util.get_string('live', 'mod_interactivevideo'));
+                    $('#taskinfo').addClass('no-pointer-events');
+                    end = Number.MAX_SAFE_INTEGER;
+                    // Progress 100%.
+                    replaceProgressBars(100);
+                    return;
+                }
             };
 
             /**
@@ -756,7 +772,9 @@ define([
                 player.pause();
                 const isPaused = await player.isPaused();
                 if (!isPaused) {
-                    await player.seek(start);
+                    if (!player.live) {
+                        await player.seek(start);
+                    }
                     onReady();
                     return;
                 }
@@ -775,7 +793,12 @@ define([
                 $(".video-block").css('background', 'transparent');
                 $("#annotation-canvas").removeClass('d-none');
 
+
                 await getAnnotations();
+
+                if (player.live) {
+                    return;
+                }
 
                 $('#seekhead').draggable({
                     'containment': '#video-nav',
@@ -841,6 +864,9 @@ define([
                 }
                 $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
                 $('#playpause').attr('data-original-title', M.util.get_string('play', 'mod_interactivevideo'));
+                if (player.live) {
+                    return;
+                }
                 cancelAnimationFrame(playingInterval);
                 // Save watched progress to database.
                 let t = await player.getCurrentTime();
@@ -881,7 +907,7 @@ define([
                 if (!playerReady) {
                     return;
                 }
-                if (videoEnded) {
+                if (videoEnded || player.live) {
                     return;
                 }
 
@@ -911,6 +937,9 @@ define([
              */
             const onSeek = async(t) => {
                 if (!playerReady) {
+                    return;
+                }
+                if (player.live) {
                     return;
                 }
                 if (t) {
@@ -972,6 +1001,13 @@ define([
                     $("#fullscreen").trigger('click');
                 }
 
+                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
+                $('#playpause').attr('data-original-title', M.util.get_string('pause', 'mod_interactivevideo'));
+
+                if (player.live) {
+                    return;
+                }
+
                 if ($('#message.active').length > 0) {
                     $('#message.active').each(function() {
                         const mid = $(this).data('id');
@@ -984,8 +1020,7 @@ define([
 
                 $('#annotation-modal').modal('hide');
                 $('#message').not('[data-placement=bottom]').not('.sticky').remove();
-                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
-                $('#playpause').attr('data-original-title', M.util.get_string('pause', 'mod_interactivevideo'));
+
                 if (!videoEnded) {
                     $('#end-screen, #start-screen').fadeOut(300);
                     $('#restart').addClass('d-none');
@@ -1167,7 +1202,7 @@ define([
             };
 
             $(document).on('timeupdate', async function(e) {
-                if (!playerReady || isPreviewMode) {
+                if (!playerReady || isPreviewMode || player.live) {
                     return;
                 }
                 const t = e.originalEvent.detail.time;
@@ -1496,6 +1531,9 @@ define([
                     return;
                 }
                 e.preventDefault();
+                if (player.live) {
+                    firstPlay = true;
+                }
                 if (!firstPlay) {
                     player.play();
                     return;
@@ -1637,6 +1675,9 @@ define([
             });
 
             $(document).on('iv:playerSeek', function(e) {
+                if (player.live) {
+                    return;
+                }
                 onSeek(e.detail.time);
             });
 
@@ -1725,6 +1766,9 @@ define([
                     }
                     window.resumetime = time;
                     replaceProgressBars(((time - start) / totaltime) * 100);
+                    if (player.live) {
+                        replaceProgressBars(100);
+                    }
                     if (autoplay && player.allowAutoplay) {
                         setTimeout(async() => {
                             // Make sure to unmute.

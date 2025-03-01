@@ -666,7 +666,7 @@ class Base {
                 id: id,
                 contextid: M.cfg.contextid,
                 token: this.token,
-                cmid: this.cm,
+                cmid: this.interaction,
             },
             success: function() {
                 dispatchEvent('annotationdeleted', {
@@ -1267,6 +1267,41 @@ class Base {
                 }
             });
         });
+    }
+
+    /**
+     * Delete the completion data for an item for a user
+     * @param {number} recordid The record id
+     * @param {number} itemid The item id
+     * @param {number} userid The user id
+     * @returns
+     */
+    async deleteCompletionData(recordid, itemid, userid) {
+        let self = this;
+        let deleted = await new Promise((resolve) => {
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                method: "POST",
+                dataType: "text",
+                data: {
+                    action: 'delete_completion_data',
+                    id: recordid,
+                    itemid: itemid,
+                    userid: userid,
+                    sesskey: M.cfg.sesskey,
+                    cmid: self.cm,
+                    contextid: M.cfg.contextid,
+                },
+                success: (data) => {
+                    if (data.id) {
+                        resolve(true);
+                    }
+                    resolve(false);
+                }
+            });
+        }
+        );
+        return deleted;
     }
 
     /**

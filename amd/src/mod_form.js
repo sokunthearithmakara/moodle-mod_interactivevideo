@@ -101,7 +101,17 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     endassistinput.val(convertSecondsToHMS(totaltime));
                     endinput.val(totaltime);
                 }
-                $("#videototaltime").text(convertSecondsToHMS(totaltime));
+                $("#videototaltime").text(
+                    !player.live ? convertSecondsToHMS(totaltime) : await str.get_string('live', 'mod_interactivevideo'));
+                if (player.live) {
+                    // Read only.
+                    startassistinput.prop('readonly', true);
+                    endassistinput.prop('readonly', true);
+                } else {
+                    // Enable.
+                    startassistinput.prop('readonly', false);
+                    endassistinput.prop('readonly', false);
+                }
                 posterimage.val(player.posterImage);
             };
 
@@ -119,16 +129,49 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
             });
 
             const checkVideo = (url) => new Promise((resolve) => {
+                // Check if URL appears to be an HLS or DASH stream.
+                if (url.includes('.m3u8') || url.includes('.mpd')) {
+                    // First check if the file is accessible.
+                    let video = document.createElement('video');
+                    // For HLS (m3u8) and DASH (mpd), use appropriate MIME types.
+                    let type = url.includes('.m3u8') ? 'application/vnd.apple.mpegurl' : 'application/dash+xml';
+                    // Check if the browser can play the stream type.
+                    if (video.canPlayType(type)) {
+                        resolve(true);
+                    } else {
+                        if (url.includes('.m3u8')) {
+                            require(['mod_interactivevideo/player/hls'], function(Hls) {
+                                if (Hls.isSupported()) {
+                                    resolve(true);
+                                } else {
+                                    resolve(false);
+                                }
+                            });
+                        } else if (url.includes('.mpd')) {
+                            require(['mod_interactivevideo/player/dash'], function(dashjs) {
+                                if (dashjs.MediaPlayer()) {
+                                    resolve(true);
+                                } else {
+                                    resolve(false);
+                                }
+                            });
+                        } else {
+                            resolve(false);
+                        }
+                    }
+                    return;
+                }
+
                 // Remove video element if it exists.
-                if (document.querySelector('video')) {
-                    document.querySelector('video').remove();
+                const existingVideo = document.querySelector('video');
+                if (existingVideo) {
+                    existingVideo.remove();
                 }
                 let video = document.createElement('video');
                 video.src = url;
                 video.addEventListener('canplay', function() {
                     resolve(true);
                 });
-
                 video.addEventListener('error', function() {
                     resolve(false);
                 });

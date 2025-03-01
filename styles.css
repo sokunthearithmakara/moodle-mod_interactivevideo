@@ -55,13 +55,23 @@
     }
 
     .btn-circle {
-        border-radius: 50%!important;
-        display: inline-block!important;
+        border-radius: 50% !important;
+        display: inline-block !important;
     }
 
     .input-group .form-control,
     .input-group .custom-select {
         border-radius: 0;
+    }
+
+    .input-group .form-control:first-child,
+    .input-group .custom-select:first-child {
+        border-radius: var(--ivrounded-sm) 0 0 var(--ivrounded-sm);
+    }
+
+    .input-group .form-control:last-child,
+    .input-group .custom-select:last-child {
+        border-radius: 0 var(--ivrounded-sm) var(--ivrounded-sm) 0;
     }
 
     ul {
@@ -74,12 +84,13 @@
     }
 
     .fs-n {
-        font-size: 16px!important;
+        font-size: 16px !important;
     }
 
     div.dataTables_wrapper div.dataTables_length label {
         margin: 0;
     }
+
     .dataTables_filter input {
         height: unset;
     }
@@ -397,8 +408,8 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo #toolbar {
-    right: 0;
-    width: 25px;
+    right: 25px;
+    width: 0;
     overflow: visible;
     z-index: 1032;
     height: calc(100dvh - 110px);
@@ -769,14 +780,6 @@ html:has(.path-mod-interactivevideo) {
     top: 0;
 }
 
-.path-mod-interactivevideo #message[data-placement]:not(.active):not([data-placement=popup]) {
-    opacity: 0.75;
-
-    * {
-        pointer-events: none;
-    }
-}
-
 .path-mod-interactivevideo.embed-mode #video-wrapper #message {
     position: fixed;
     height: calc(100dvh - 55px);
@@ -1121,7 +1124,11 @@ html:has(.path-mod-interactivevideo) {
     justify-content: start;
     left: calc(50% - 16px);
     position: absolute;
-    bottom: 0.5rem;
+    bottom: 1.75rem;
+
+    .rotate-0 {
+        transform: rotate(90deg);
+    }
 }
 
 #page-mod-interactivevideo-report th.rotate>div>a {
@@ -1545,6 +1552,10 @@ html:has(.path-mod-interactivevideo) {
     line-height: 16px;
 }
 
+.path-mod-interactivevideo td#xp {
+    line-height: unset;
+}
+
 .path-mod-interactivevideo .rotatey-180:hover i {
     transform: rotateY(180deg);
 }
@@ -1862,6 +1873,10 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo #user-menu-toggle {
     border: 0;
+}
+
+.path-mod-interactivevideo.darkmode .viewingas {
+    color: #fff;
 }
 
 .path-mod-interactivevideo:not(.iframe) .alternative {
@@ -2272,6 +2287,7 @@ html:has(.path-mod-interactivevideo) {
 
 #page-mod-interactivevideo-report .completiontablewrapper {
     max-height: calc(100dvh - 200px);
+    scrollbar-width: none;
 }
 
 #page-mod-interactivevideo-report.embed-mode .completiontablewrapper {
@@ -2406,7 +2422,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 .path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-basis {
-    display: none!important;
+    display: none !important;
 }
 
 .path-course-view .modtype_interactivevideo .image-container a.overlay {
@@ -3240,5 +3256,44 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 @container messageheader (max-width: 767.98px) {
     .path-mod-interactivevideo #title.modal-header #completiontoggle span {
         display: none !important;
+    }
+}
+
+div.dt-buttons div.dropdown-menu {
+    z-index: 1050;
+}
+
+div.dataTables_wrapper div.dataTables_filter label {
+    margin: 0;
+}
+
+.path-mod-interactivevideo #completiontable {
+    margin: 0!important;
+
+    tfoot {
+        font-weight: bold;
+        background: #fff;
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .data-cell {
+        position: relative;
+    }
+
+    .data-cell .bi.bi-trash3.text-danger {
+        position: absolute;
+        left: 2px;
+        bottom: 0;
+        display: none;
+    }
+
+    .data-cell:hover .bi.bi-trash3.text-danger {
+        display: block;
+    }
+
+    .data-cell i.text-success {
+        font-size: unset!important;
     }
 }

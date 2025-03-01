@@ -157,6 +157,7 @@ $itemids = array_map(function ($item) {
 
 // Use Bootstrap icons instead of fontawesome icons to avoid issues fontawesome icons support in Moodle 4.1.
 $PAGE->requires->css(new moodle_url('/mod/interactivevideo/libraries/bootstrap-icons/bootstrap-icons.min.css'));
+$PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/interactivevideo/libraries/select2/select2.min.css'));
 
 echo $OUTPUT->header();
 $primary = new core\navigation\output\primary($PAGE);
@@ -201,9 +202,27 @@ $totalxp = array_reduce($items, function ($carry, $item) {
 
 $items = array_values($items);
 
+$identity = get_config('mod_interactivevideo', 'reportfields');
+$identity = explode(',', $identity);
+$identity = array_filter($identity);
+// Map the identity to ['name' => 'field', 'label' => 'label'].
+$identity = array_map(function ($field) {
+    if (strpos($field, 'profile_field_') !== false) {
+        $label = \core_user\fields::get_display_name($field);
+    } else {
+        $label = get_string($field, 'moodle');
+    }
+    return [
+        'name' => $field,
+        'label' => $label,
+    ];
+}, $identity);
 $reporttabledata = [
     'groupselector' => groups_print_activity_menu($cm, $PAGE->url, true),
     'totalxp' => $totalxp,
+    'identity' => $identity,
+    'completionpercentage' => $moduleinstance->completionpercentage,
+    'completionfilter' => $moduleinstance->completionpercentage > 0,
     'items' => array_map(function ($item) {
         return [
             'id' => $item->id,
