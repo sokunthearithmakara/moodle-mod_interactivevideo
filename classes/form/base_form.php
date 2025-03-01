@@ -347,7 +347,8 @@ class base_form extends \core_form\dynamic_form {
                 'advcheckbox',
                 'visiblebeforecompleted',
                 '',
-                $options['hascompletion'] ? get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
+                $options['hascompletion'] ?
+                    get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
                 ["group" => 1],
                 [0, 1]
             );
@@ -366,7 +367,8 @@ class base_form extends \core_form\dynamic_form {
                 'static',
                 'visibilityonvideonav',
                 '',
-                '<span class="text-muted small w-100 d-block">' . get_string('visibilityonvideonav_desc', 'mod_interactivevideo') . '</span>'
+                '<span class="text-muted small w-100 d-block">'
+                    . get_string('visibilityonvideonav_desc', 'mod_interactivevideo') . '</span>'
             );
 
             $mform->addGroup($elementarray, '', get_string('visibilityonvideonav', 'mod_interactivevideo'));
@@ -382,7 +384,8 @@ class base_form extends \core_form\dynamic_form {
                 'advcheckbox',
                 'clickablebeforecompleted',
                 '',
-                $options['hascompletion'] ? get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
+                $options['hascompletion'] ?
+                    get_string('beforecompletion', 'mod_interactivevideo') : get_string('yes', 'mod_interactivevideo'),
                 ["group" => 1],
                 [0, 1]
             );
@@ -401,7 +404,8 @@ class base_form extends \core_form\dynamic_form {
                 'static',
                 'clickability',
                 '',
-                '<span class="text-muted small w-100 d-block">' . get_string('clickability_desc', 'mod_interactivevideo') . '</span>'
+                '<span class="text-muted small w-100 d-block">'
+                    . get_string('clickability_desc', 'mod_interactivevideo') . '</span>'
             );
             $mform->addGroup($elementarray, '', get_string('clickability', 'mod_interactivevideo'));
             $mform->setDefault('clickablebeforecompleted', 1);
@@ -454,7 +458,8 @@ class base_form extends \core_form\dynamic_form {
                 'static',
                 'dismissibleandskippable',
                 '',
-                '<span class="text-muted small w-100 d-block">' . get_string('dismissibleandskippable', 'mod_interactivevideo') . '</span>'
+                '<span class="text-muted small w-100 d-block">'
+                 . get_string('dismissibleandskippable', 'mod_interactivevideo') . '</span>'
             );
             $mform->addGroup($elementarray, '', get_string('dismissible', 'mod_interactivevideo'));
             $mform->setDefault('advdismissible', 1);

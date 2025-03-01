@@ -149,7 +149,7 @@ class backup_interactivevideo_activity_structure_step extends backup_activity_st
         // Contentbank content is at course level, so we must indicate the course context id.
         $item->annotate_files('contentbank', 'public', 'contentid', context_course::instance($this->task->get_courseid())->id);
         $item->annotate_files('mod_interactivevideo', 'content', 'id'); // Itemid is the id of the annotationitem.
-        $item->annotate_files('mod_interactivevideo', 'itext1', 'id'); // use i prefix to avoid conflict with the log.
+        $item->annotate_files('mod_interactivevideo', 'itext1', 'id'); // Use i prefix to avoid conflict with the log.
         $item->annotate_files('mod_interactivevideo', 'itext2', 'id');
         $item->annotate_files('mod_interactivevideo', 'itext3', 'id');
         // Return the root element (interactivevideo), wrapped into standard activity structure.

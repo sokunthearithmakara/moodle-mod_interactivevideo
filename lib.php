@@ -714,7 +714,8 @@ function interactivevideo_displayinline(cm_info $cm) {
             'posterimage' => $customdata['posterimage'],
             'intro' => $cm->content,
             'introformat' => FORMAT_HTML,
-            'completionpercentage' => isset($customdata['customcompletionrules']) ? $customdata['customcompletionrules']['completionpercentage'] : 0,
+            'completionpercentage' => isset($customdata['customcompletionrules'])
+                ? $customdata['customcompletionrules']['completionpercentage'] : 0,
         ];
     }
 
@@ -1645,7 +1646,8 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         $data['starttime'] = round($data['starttime'], 2, PHP_ROUND_HALF_DOWN);
         $data['endtime'] = round($data['endtime'], 2, PHP_ROUND_HALF_DOWN);
 
-        $data['completion'] = $video->completion ? $video->completion : (isset($defaultsettings->completion) ? $defaultsettings->completion : 0);
+        $data['completion'] = $video->completion ?
+            $video->completion : (isset($defaultsettings->completion) ? $defaultsettings->completion : 0);
 
         $data['course'] = $uploadinfo->course->id;
         $data['source'] = 'url';
@@ -1653,7 +1655,8 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         $data['introformat'] = FORMAT_HTML;
         $data['completionpercentage'] =
             is_numeric($video->completionpercentage) ?
-            $video->completionpercentage : (isset($defaultsettings->completionpercentage) ? $defaultsettings->completionpercentage : 0);
+            $video->completionpercentage :
+            (isset($defaultsettings->completionpercentage) ? $defaultsettings->completionpercentage : 0);
 
         $data['completionpercentage'] = $data['completionpercentage'] > 100 ? 100 : $data['completionpercentage'];
         $data['grade'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ?
@@ -1662,7 +1665,8 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             $video->grade : (isset($displayoptions['grade']) ? $displayoptions['grade'] : 0);
         $data['gradepass'] = $video->gradepass && is_numeric($video->gradepass) && !empty($video->gradepass) ?
             $video->gradepass : (isset($displayoptions['gradepass']) ? $displayoptions['gradepass'] : 0);
-        $data['showdescription'] = $video->showdescription ? $video->showdescription : (isset($displayoptions['showdescription']) ? $displayoptions['showdescription'] : 0);
+        $data['showdescription'] = $video->showdescription ?
+            $video->showdescription : (isset($displayoptions['showdescription']) ? $displayoptions['showdescription'] : 0);
         // For the first row, we're using the cm that was created by dndupload. The rest, we're creating new ones.
         if ($count == 0) {
             $data['first'] = true; // We need to return the id of the first video.

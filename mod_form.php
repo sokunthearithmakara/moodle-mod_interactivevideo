@@ -675,7 +675,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             }
 
             // Handle completion requirements.
-            $defaultvalues['completionpercentageenabled' . $suffix] = !empty($defaultvalues['completionpercentage' . $suffix]) ? 1 : 0;
+            $defaultvalues['completionpercentageenabled' . $suffix] =
+                !empty($defaultvalues['completionpercentage' . $suffix]) ? 1 : 0;
             if (empty($defaultvalues['completionpercentage' . $suffix])) {
                 $defaultvalues['completionpercentage' . $suffix] = 0;
             }

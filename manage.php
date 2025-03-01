@@ -161,7 +161,8 @@ if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesetti
         $item['posterimage'] = $cm->customdata['posterimage'];
         $displayoptions = $cm->customdata['displayoptions'];
         $displayoptions = json_decode($displayoptions, true);
-        $item['squareposter'] = isset($displayoptions['squareposterimage']) && $displayoptions['squareposterimage'] == 1 ? 'square' : '';
+        $item['squareposter'] = isset($displayoptions['squareposterimage']) && $displayoptions['squareposterimage'] == 1 ?
+            'square' : '';
         if ($displayoptions['usecustomposterimage']) {
             if ($displayoptions['usecustomposterimage']) {
                 $file = $fs->get_area_files(

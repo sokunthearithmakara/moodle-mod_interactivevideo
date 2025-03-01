@@ -62,12 +62,19 @@ class quicksettings_form extends \core_form\dynamic_form {
         $data['displayoptions'] = $cm->customdata['displayoptions'];
         $data['posterimage'] = $cm->customdata['posterimage'];
         $draftitemid = file_get_submitted_draft_itemid('posterimagefile') ?? 0;
-        file_prepare_draft_area($draftitemid, $this->optional_param('contextid', null, PARAM_INT), 'mod_interactivevideo', 'posterimage', 0, [
-            'subdirs' => 0,
-            'maxfiles' => 1,
-            'maxbytes' => 500 * 1024,
-            'accepted_types' => ['web_image'],
-        ]);
+        file_prepare_draft_area(
+            $draftitemid,
+            $this->optional_param('contextid', null, PARAM_INT),
+            'mod_interactivevideo',
+            'posterimage',
+            0,
+            [
+                'subdirs' => 0,
+                'maxfiles' => 1,
+                'maxbytes' => 500 * 1024,
+                'accepted_types' => ['web_image'],
+            ]
+        );
         $data['posterimagefile'] = $draftitemid;
 
         $data['displayasstartscreen'] = $cm->customdata['displayasstartscreen'];
