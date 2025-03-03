@@ -260,6 +260,8 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             });
         }
 
+        window.console.log(itemids);
+
         columns = columns.concat([
             {
                 data: "timecreated",
@@ -309,7 +311,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                         return data;
                     }
                 },
-                className: "exportable"
+                className: "exportable" + (itemids.length == 0 ? " inv d-none" : "")
             },
             {
                 data: "completionpercentage",
@@ -323,7 +325,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                         return 0;
                     }
                 },
-                className: "exportable"
+                className: "exportable" + (itemids.length == 0 ? " inv d-none" : "")
             },
             {
                 data: "xp",
@@ -334,7 +336,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                         return "";
                     }
                 },
-                className: "exportable"
+                className: "exportable" + (itemids.length == 0 ? " inv d-none" : "")
             }
         ]);
 
@@ -390,6 +392,12 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 data.start = 0;
                 data.columns.forEach(function(column) {
                     column.search.search = "";
+                });
+                // Reset the inv columns.
+                data.columns.forEach(function(column) {
+                    if (column.visible === false) {
+                        column.visible = true;
+                    }
                 });
                 return data;
             },
@@ -556,6 +564,9 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             "initComplete": function() {
                 if (hasCompletion) {
                     $("#completiontable th .controls").removeClass("d-none");
+                }
+                if (itemids.length == 0) {
+                    $("#completiontable th .controls").addClass("d-none");
                 }
                 $("table#completiontable")
                     .wrap("<div style='overflow:auto;position:relative' class='completiontablewrapper my-2'></div>");
