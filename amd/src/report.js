@@ -58,6 +58,9 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
 
     quickform();
 
+    require(['theme_boost/bootstrap/modal']);
+    require(['theme_boost/bootstrap/tooltip']);
+
     const getContentTypes = $.ajax({
         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
         method: "POST",
@@ -259,8 +262,6 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 });
             });
         }
-
-        window.console.log(itemids);
 
         columns = columns.concat([
             {

@@ -188,6 +188,9 @@ define([
                 interaction,
             });
 
+            require(['theme_boost/bootstrap/modal']);
+            require(['theme_boost/bootstrap/tooltip']);
+
             // Convert start to number if string
             start = Number(start);
             if (isNaN(start)) {

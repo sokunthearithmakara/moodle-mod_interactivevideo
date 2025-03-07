@@ -232,6 +232,39 @@ class form extends \mod_interactivevideo\form\base_form {
 
         $elements = [];
         $elements[] = $mform->createElement(
+            'advcheckbox',
+            'gotoonpassing',
+            '',
+            get_string('gototimestamp', 'ivplugin_contentbank'),
+            null,
+            [0, 1]
+        );
+        $elements[] = $mform->createElement(
+            'advcheckbox',
+            'forceonpassing',
+            '',
+            get_string('force', 'ivplugin_contentbank'),
+            null,
+            [0, 1]
+        );
+        $elements[] = $mform->createElement(
+            'static',
+            'gotosegment_desc',
+            '',
+            '<span class="text-muted small w-100 d-block">'
+                . get_string('gotosegmentpassing_desc', 'ivplugin_contentbank') . '</span>'
+        );
+        $mform->addGroup(
+            $elements,
+            'gotosegmentpassing',
+            get_string('onpassinggrade', 'ivplugin_contentbank'),
+            '',
+            false
+        );
+        $mform->disabledIf('forceonpassing', 'gotoonpassing', 'eq', 0);
+
+        $elements = [];
+        $elements[] = $mform->createElement(
             'text',
             'timeonpassing',
             '<i class="bi bi-clock mr-2"></i>' . get_string('timeonpassing', 'ivplugin_contentbank'),
@@ -255,8 +288,7 @@ class form extends \mod_interactivevideo\form\base_form {
         ]);
         $mform->addGroup($elements, 'timeonpassinggroup', get_string('timeonpassing', 'ivplugin_contentbank'), '', false);
         // Text to display when passing.
-        $element = [];
-        $element[] = $mform->createElement(
+        $mform->addElement(
             'advcheckbox',
             'showtextonpassing',
             '',
@@ -264,16 +296,16 @@ class form extends \mod_interactivevideo\form\base_form {
             null,
             [0, 1]
         );
-        $element[] = $mform->createElement(
+        $mform->addElement(
             'editor',
             'textonpassing',
         );
         $mform->setType('textonpassing', PARAM_RAW);
-        $mform->addGroup($element, 'textonpassinggroup', '', '', false);
 
         $mform->hideIf('gotosegmentpassing', 'completiontracking', 'in', ['none', 'manual', 'view']);
         $mform->hideIf('timeonpassinggroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
-        $mform->hideIf('textonpassinggroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('showtextonpassing', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('textonpassing', 'completiontracking', 'in', ['none', 'manual', 'view']);
         $mform->hideIf('timeonpassinggroup', 'gotoonpassing', 'eq', 0);
         $mform->hideIf('textonpassing', 'showtextonpassing', 'eq', 0);
 
@@ -330,8 +362,7 @@ class form extends \mod_interactivevideo\form\base_form {
         $mform->addGroup($elements, 'timeonfailedgroup', get_string('timeonfailed', 'ivplugin_contentbank'), '', false);
 
         // Text to display when failed.
-        $element = [];
-        $element[] = $mform->createElement(
+        $mform->addElement(
             'advcheckbox',
             'showtextonfailed',
             '',
@@ -339,16 +370,16 @@ class form extends \mod_interactivevideo\form\base_form {
             null,
             [0, 1]
         );
-        $element[] = $mform->createElement(
+        $mform->addElement(
             'editor',
             'textonfailed',
         );
         $mform->setType('textonfailed', PARAM_RAW);
-        $mform->addGroup($element, 'textonfailedgroup', '', '', false);
 
         $mform->hideIf('gotosegment', 'completiontracking', 'in', ['none', 'manual', 'view']);
         $mform->hideIf('timeonfailedgroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
-        $mform->hideIf('textonfailedgroup', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('showtextonfailed', 'completiontracking', 'in', ['none', 'manual', 'view']);
+        $mform->hideIf('textonfailed', 'completiontracking', 'in', ['none', 'manual', 'view']);
         $mform->hideIf('timeonfailedgroup', 'gotoonfailed', 'eq', 0);
         $mform->hideIf('textonfailed', 'showtextonfailed', 'eq', 0);
 

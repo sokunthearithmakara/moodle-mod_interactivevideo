@@ -164,6 +164,9 @@ class Html5Video {
 
         player.addEventListener('loadedmetadata', function() {
             self.aspectratio = self.ratio();
+            if (isNaN(self.aspectratio)) {
+                self.aspectratio = 16 / 9;
+            }
             let totaltime = Number((player.duration).toFixed(2)) - self.frequency;
             if (player.duration === Infinity || isNaN(player.duration) ||
                 (self.hls && self.hls.latencyController.levelDetails.live)) {

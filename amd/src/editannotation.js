@@ -94,6 +94,8 @@ define(['jquery',
 
             quickform();
 
+            require(['theme_boost/bootstrap/modal']);
+            require(['theme_boost/bootstrap/tooltip']);
             /**
              * Util function to display notification
              * @param {String} msg message text
