@@ -397,6 +397,10 @@ html:has(.path-mod-interactivevideo) {
     transform: rotate(90deg);
 }
 
+:dir(rtl) .path-mod-interactivevideo .rotate i {
+    transform: rotate(-90deg);
+}
+
 .path-mod-interactivevideo .btn-flex,
 .path-mod-interactivevideo .btn {
     display: inline-flex;
@@ -1745,8 +1749,12 @@ html:has(.path-mod-interactivevideo) {
     transition: width ease-in-out 300ms;
 }
 
-.path-mod-interactivevideo.hassidebar.default-mode #page {
+:dir(ltr) .path-mod-interactivevideo.hassidebar.default-mode #page {
     margin-inline-end: 475px;
+}
+
+:dir(rtl) .path-mod-interactivevideo.hassidebar.default-mode #page {
+    margin-inline-start: 475px;
 }
 
 .path-mod-interactivevideo.hassidebar.default-mode #interactivevideo-container {
