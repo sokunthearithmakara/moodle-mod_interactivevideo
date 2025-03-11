@@ -92,17 +92,12 @@ class base_form extends \core_form\dynamic_form {
             $data->requiremintimeview = $this->optional_param('requiremintime', 0, PARAM_INT);
             $data->requiremintime = 0;
         }
+        // Advanced settings: is a single field that contains all the advanced settings.
         $advancedsettings = json_decode($this->optional_param('advanced', null, PARAM_RAW));
-        $data->visiblebeforecompleted = $advancedsettings->visiblebeforecompleted;
-        $data->visibleaftercompleted = $advancedsettings->visibleaftercompleted;
-        $data->clickablebeforecompleted = $advancedsettings->clickablebeforecompleted;
-        $data->clickableaftercompleted = $advancedsettings->clickableaftercompleted;
-        $data->replaybehavior = $advancedsettings->replaybehavior;
-        if (isset($advancedsettings->advdismissible)) {
-            $data->advdismissible = $advancedsettings->advdismissible;
-        }
-        if (isset($advancedsettings->advskippable)) {
-            $data->advskippable = $advancedsettings->advskippable;
+        if (is_object($advancedsettings)) {
+            foreach ($advancedsettings as $key => $value) {
+                $data->{$key} = $value;
+            }
         }
         return $data;
     }

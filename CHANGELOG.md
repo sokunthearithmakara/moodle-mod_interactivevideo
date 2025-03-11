@@ -2,10 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.4] - 2025-03-11
+### Updated
+- Initial support for RTL.
+- Generalize advanced field for interactivevideo_items, allowing plugins to add any field to the advanced object.
+
 ## [1.1.3] - 2025-03-07
 ### Fixed
-- Content bank item form missed fields for setting actions after passing grade
-
+- Content bank item form missed fields for setting actions after passing grade.
 
 ## [1.1.2] - 2025-03-01
 https://mod-interactive-video.canny.io/changelog/interactive-video-v112

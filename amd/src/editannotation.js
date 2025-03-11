@@ -34,6 +34,7 @@ define(['jquery',
     let totaltime;
     let currentTime;
     let playerReady = false;
+    const isRTL = $('html').attr('dir') == 'rtl';
     let $loader = $('#background-loading');
     /**
      * Replace the progress bar on the video navigation.
@@ -1555,8 +1556,13 @@ define(['jquery',
                 drag: function() {
                     const parentOffset = $(this).offset();
                     const width = parentOffset.left;
-                    $('#player-region').css('width', width + 'px');
-                    $('#content-region').css('width', 'calc(100% - ' + width + 'px)');
+                    if (!isRTL) {
+                        $('#player-region').css('width', width + 'px');
+                        $('#content-region').css('width', 'calc(100% - ' + width + 'px)');
+                    } else {
+                        $('#player-region').css('width', 'calc(100% - ' + width + 'px)');
+                        $('#content-region').css('width', width + 'px');
+                    }
                 },
                 stop: function() {
                     const width = $(this).offset().left;
@@ -1569,9 +1575,19 @@ define(['jquery',
             // Set player region width from the saved width in local storage.
             const playerWidth = localStorage.getItem('player-width');
             if (playerWidth && window.innerWidth > 992) {
-                $('#separator').css('left', playerWidth + 'px');
-                $('#player-region').css('width', playerWidth + 'px');
-                $('#content-region').css('width', 'calc(100% - ' + playerWidth + 'px)');
+                if (!isRTL) {
+                    $('#separator').css('right', playerWidth + 'px');
+                    $('#player-region').css('width', playerWidth + 'px');
+                    $('#content-region').css('width', 'calc(100% - ' + playerWidth + 'px)');
+                } else {
+                    $('#separator').css('left', playerWidth + 'px');
+                    $('#player-region').css('width', 'calc(100% - ' + playerWidth + 'px)');
+                    $('#content-region').css('width', playerWidth + 'px');
+                }
+            } else {
+                $('#separator').css('left', `${isRTL ? 40 : 60}%`);
+                $('#player-region').css('width', '60%');
+                $('#content-region').css('width', '40%');
             }
 
             // Set timeline height from saved height in local storage.
@@ -1693,6 +1709,12 @@ define(['jquery',
             });
 
             document.getElementById('timeline').addEventListener('scroll', function() {
+                const isRTL = document.dir == 'rtl';
+                if (!isRTL) {
+
+                } else {
+
+                }
                 document.getElementById('minute-markers-wrapper').scrollLeft = this.scrollLeft;
                 document.getElementById('vseek').style.left = -this.scrollLeft + 'px';
                 document.getElementById('minute-markers-bg-wrapper').style.left = -this.scrollLeft + 'px';
@@ -1809,8 +1831,8 @@ define(['jquery',
                 let qualities = quality.qualities;
                 let qualitiesLabel = quality.qualitiesLabel;
                 qualities.forEach((q, i) => {
-                    $('#qualitieslist').append(`<a class="dropdown-item changequality" data-quality="${q}"
-                         href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw ml-n3"></i>${qualitiesLabel[i]}</a>`);
+                    $('#qualitieslist').append(`<a class="dropdown-item changequality px-3" data-quality="${q}"
+                         href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw"></i>${qualitiesLabel[i]}</a>`);
                 });
                 $(this).find('[data-toggle=dropdown]').dropdown('update');
             });

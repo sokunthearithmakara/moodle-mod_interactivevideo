@@ -1628,8 +1628,8 @@ define([
                 let qualities = quality.qualities;
                 let qualitiesLabel = quality.qualitiesLabel;
                 qualities.forEach((q, i) => {
-                    $('#qualitieslist').append(`<a class="dropdown-item changequality text-white" data-quality="${q}"
-                         href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw ml-n3"></i>${qualitiesLabel[i]}</a>`);
+                    $('#qualitieslist').append(`<a class="dropdown-item changequality text-white px-3" data-quality="${q}"
+                         href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw"></i>${qualitiesLabel[i]}</a>`);
                 });
                 $(this).find('[data-toggle=dropdown]').dropdown('update');
             });
@@ -1692,13 +1692,13 @@ define([
                 }
                 $('#changecaption').removeClass('d-none');
                 $('#changecaption .dropdown-menu')
-                    .html(`<a class="dropdown-item changecaption"
+                    .html(`<a class="dropdown-item changecaption px-3"
                      data-lang="" href="#">
-                     <i class="bi fa-fw bi-check ml-n3"></i>${M.util.get_string('off', 'mod_interactivevideo')}</a>`);
+                     <i class="bi fa-fw bi-check"></i>${M.util.get_string('off', 'mod_interactivevideo')}</a>`);
                 captions.forEach(caption => {
                     $('#changecaption .dropdown-menu')
-                        .append(`<a class="dropdown-item changecaption text-white"
-                         data-lang="${caption.code}" href="#"><i class="bi fa-fw ml-n3"></i>${caption.label}</a>`);
+                        .append(`<a class="dropdown-item changecaption text-white px-3"
+                         data-lang="${caption.code}" href="#"><i class="bi fa-fw"></i>${caption.label}</a>`);
                 });
 
                 const lang = localStorage.getItem(`caption-${userid}`);

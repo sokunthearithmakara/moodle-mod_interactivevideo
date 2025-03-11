@@ -5,6 +5,11 @@
     border-top-right-radius: 0.15rem;
 }
 
+:dir(rtl) .path-mod-interactivevideo .skipsegment .ui-resizable-e {
+    right: auto;
+    left: -7px;
+}
+
 .path-mod-interactivevideo .skipsegment .ui-resizable-w {
     left: -7px;
     background-color: var(--ivlight);
