@@ -1574,20 +1574,20 @@ define(['jquery',
 
             // Set player region width from the saved width in local storage.
             const playerWidth = localStorage.getItem('player-width');
+            window.console.log(playerWidth);
             if (playerWidth && window.innerWidth > 992) {
+                $('#separator').css('left', playerWidth + 'px');
                 if (!isRTL) {
-                    $('#separator').css('right', playerWidth + 'px');
                     $('#player-region').css('width', playerWidth + 'px');
                     $('#content-region').css('width', 'calc(100% - ' + playerWidth + 'px)');
                 } else {
-                    $('#separator').css('left', playerWidth + 'px');
                     $('#player-region').css('width', 'calc(100% - ' + playerWidth + 'px)');
                     $('#content-region').css('width', playerWidth + 'px');
                 }
             } else {
                 $('#separator').css('left', `${isRTL ? 40 : 60}%`);
-                $('#player-region').css('width', '60%');
-                $('#content-region').css('width', '40%');
+                $('#player-region').css('width', `${isRTL ? 60 : 40}%`);
+                $('#content-region').css('width', `${isRTL ? 40 : 60}%`);
             }
 
             // Set timeline height from saved height in local storage.
