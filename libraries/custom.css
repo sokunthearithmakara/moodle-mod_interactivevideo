@@ -1,4 +1,6 @@
+/* stylelint-disable csstree/validator */
 /* stylelint-disable declaration-no-important */
+/* stylelint-disable selector-combinator-space-before */
 :root {
     --iv-animate-duration: 1s;
     --iv-animate-delay: 1s;
@@ -277,8 +279,6 @@ html:has(.path-mod-interactivevideo) {
     background-color: inherit;
     border-radius: inherit;
     -webkit-transition: opacity 0.3s, -webkit-transform 0.3s;
-    transition: opacity 0.3s, -webkit-transform 0.3s;
-    transition: opacity 0.3s, transform 0.3s;
     transition: opacity 0.3s, transform 0.3s, -webkit-transform 0.3s;
     -webkit-animation: pulse-animation 1s cubic-bezier(0.24, 0, 0.38, 1) infinite;
     animation: pulse-animation 1s cubic-bezier(0.24, 0, 0.38, 1) infinite;
@@ -978,11 +978,11 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo #wrapper.fullscreen #content .no-overflow,
-.path-mod-interactivevideo #wrapper.fullscreen #content>.h5p,
+.path-mod-interactivevideo #wrapper.fullscreen #content > .h5p,
 .path-mod-interactivevideo #wrapper.fullscreen #start-screen .no-overflow,
 .path-mod-interactivevideo #wrapper.fullscreen #end-screen .no-overflow,
 .path-mod-interactivevideo.embed-mode #message[data-placement="inline"] .no-overflow,
-.path-mod-interactivevideo.embed-mode #message[data-placement="inline"] #content>.h5p {
+.path-mod-interactivevideo.embed-mode #message[data-placement="inline"] #content > .h5p {
     max-width: 1000px;
     margin: 0 auto;
 }
@@ -1114,7 +1114,7 @@ html:has(.path-mod-interactivevideo) {
     position: relative;
 }
 
-#page-mod-interactivevideo-report th.rotate>div {
+#page-mod-interactivevideo-report th.rotate > div {
     transform: rotate3d(0, 0, 1, -90deg);
     width: 30px;
     display: flex;
@@ -1124,15 +1124,15 @@ html:has(.path-mod-interactivevideo) {
     bottom: 1.75rem;
 }
 
-:dir(rtl) #page-mod-interactivevideo-report th.rotate>div {
+:dir(rtl) #page-mod-interactivevideo-report th.rotate > div {
     transform: rotate3d(0, 0, 1, 90deg);
 }
 
-#page-mod-interactivevideo-report th.rotate>div .rotate-0 {
+#page-mod-interactivevideo-report th.rotate > div .rotate-0 {
     transform: rotate(90deg);
 }
 
-#page-mod-interactivevideo-report th.rotate>div>a {
+#page-mod-interactivevideo-report th.rotate > div > a {
     margin-inline-start: 0.25rem;
 }
 
@@ -1360,7 +1360,7 @@ html:has(.path-mod-interactivevideo) {
     display: none !important;
 }
 
-.path-mod-interactivevideo [data-region="chapterlists"] .chapter.active-chapter>div {
+.path-mod-interactivevideo [data-region="chapterlists"] .chapter.active-chapter > div {
     color: #fff;
     background: var(--ivprimary);
 }
@@ -1443,8 +1443,8 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo.no-original-controls video::-webkit-media-controls-panel,
 .path-mod-interactivevideo.no-original-controls .w-bottom-bar,
-.path-mod-interactivevideo.no-original-controls .player-Rumble-cls>div>div:not(#pac),
-.path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls>div>div:not(#pac) {
+.path-mod-interactivevideo.no-original-controls .player-Rumble-cls > div > div:not(#pac),
+.path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls > div > div:not(#pac) {
     display: none !important;
 }
 
@@ -1606,9 +1606,9 @@ html:has(.path-mod-interactivevideo) {
     height: 100dvh;
 }
 
-.path-mod-interactivevideo .modal-fullscreen>.modal-dialog,
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog,
-.iv-modal.modal-fullscreen>.modal-dialog {
+.path-mod-interactivevideo .modal-fullscreen > .modal-dialog,
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog,
+.iv-modal.modal-fullscreen > .modal-dialog {
     max-width: 100% !important;
     width: 100% !important;
     justify-content: start;
@@ -1617,27 +1617,27 @@ html:has(.path-mod-interactivevideo) {
     margin: 0;
 }
 
-.path-mod-interactivevideo .modal-fullscreen>.modal-dialog .modal-content,
-.iv-modal.modal-fullscreen>.modal-dialog .modal-content {
+.path-mod-interactivevideo .modal-fullscreen > .modal-dialog .modal-content,
+.iv-modal.modal-fullscreen > .modal-dialog .modal-content {
     border-radius: 0 !important;
     height: 100dvh;
     border: 0;
     max-height: 100dvh;
 }
 
-.path-mod-interactivevideo .modal-fullscreen>.modal-dialog .modal-body,
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog .modal-body,
-.iv-modal.modal-fullscreen>.modal-dialog .modal-body {
+.path-mod-interactivevideo .modal-fullscreen > .modal-dialog .modal-body,
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-body,
+.iv-modal.modal-fullscreen > .modal-dialog .modal-body {
     height: 100dvh;
     padding: 1rem;
     scrollbar-width: thin;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog {
     transition: all ease-in-out 300ms, he;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog:not(:has(.show-control)) {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog:not(:has(.show-control)) {
     max-width: 100% !important;
     width: 100% !important;
     justify-content: start;
@@ -2210,7 +2210,7 @@ html:has(.path-mod-interactivevideo) {
     padding-bottom: 1rem;
 }
 
-#page-mod-interactivevideo-interactions #timeline-wrapper>.ui-resizable-handle:hover {
+#page-mod-interactivevideo-interactions #timeline-wrapper > .ui-resizable-handle:hover {
     transition: all ease-in-out 300ms;
     background-color: #328cdb;
     z-index: 105;
@@ -2222,7 +2222,7 @@ html:has(.path-mod-interactivevideo) {
     margin-top: 70px;
 }
 
-#page-mod-interactivevideo-interactions #top-region>.row {
+#page-mod-interactivevideo-interactions #top-region > .row {
     min-width: 100%;
     height: 100%;
 }
@@ -2295,7 +2295,7 @@ html:has(.path-mod-interactivevideo) {
     height: calc(100dvh - 55px);
 }
 
-#page-mod-interactivevideo-view.embed-mode #interactivevideo-container>.row {
+#page-mod-interactivevideo-view.embed-mode #interactivevideo-container > .row {
     width: 100%;
 }
 
@@ -2323,10 +2323,10 @@ html:has(.path-mod-interactivevideo) {
     pointer-events: none;
 }
 
-.path-mod-interactivevideo .input-group>input,
-.path-mod-interactivevideo .input-group>select,
-.path-mod-interactivevideo .input-group>.input-group-prepend,
-.path-mod-interactivevideo .input-group>.input-group-append,
+.path-mod-interactivevideo .input-group > input,
+.path-mod-interactivevideo .input-group > select,
+.path-mod-interactivevideo .input-group > .input-group-prepend,
+.path-mod-interactivevideo .input-group > .input-group-append,
 .path-mod-interactivevideo .input-group .input-group-text {
     height: 40px;
 }
@@ -2776,7 +2776,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     padding-top: 0.25rem;
 }
 
-/* @container section (width > 1200px) {
+/* @container section (width  >  1200px) {
     .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-large) {
         width: calc(50% - 0.5rem);
         display: inline-block;
@@ -2974,12 +2974,12 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     left: 0;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog .modal-content {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content {
     height: calc(100dvh + 55px);
     transition: height ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog .modal-content .toggle-controls {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content .toggle-controls {
     position: absolute;
     bottom: calc(55px + 0.25rem);
     left: 0.25rem;
@@ -2991,21 +2991,21 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     opacity: 0.4;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog .modal-content .toggle-controls:hover {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content .toggle-controls:hover {
     background: rgba(0, 0, 0, 0.5);
     opacity: 1;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog .modal-content.show-control {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content.show-control {
     height: 100dvh;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog .modal-content.show-control .toggle-controls {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content.show-control .toggle-controls {
     transform: rotate(180deg);
     transition: transform ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.modal-fullscreen>.modal-dialog .automatic-completion-conditions .badge {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog .automatic-completion-conditions .badge {
     font-size: 100%;
 }
 
@@ -3016,7 +3016,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     bottom: 0;
 }
 
-.path-course-view #playermodal>.modal-dialog .modal-body {
+.path-course-view #playermodal > .modal-dialog .modal-body {
     transition: all ease-in-out 300ms;
 }
 
@@ -3025,7 +3025,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     display: flex !important;
 }
 
-.path-course-view #playermodal.locked>.modal-dialog .modal-body {
+.path-course-view #playermodal.locked > .modal-dialog .modal-body {
     margin-top: 50px;
     height: calc(100dvh - 50px);
     transition: all ease-in-out 300ms;
