@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.5] - 2025-03-30
+https://mod-interactive-video.canny.io/changelog/interactive-video-v115
+
 ## [1.1.4] - 2025-03-11
 ### Updated
 - Initial support for RTL.
