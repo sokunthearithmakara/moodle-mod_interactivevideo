@@ -444,23 +444,25 @@ class Base {
     addAnnotation(annotations, timestamp, coursemodule) {
         let self = this;
         this.annotations = annotations;
-        if (!this.isBetweenStartAndEnd(timestamp)) {
-            const message = M.util.get_string('interactioncanonlybeaddedbetweenstartandendtime', 'mod_interactivevideo', {
-                "start": self.convertSecondsToHMS(self.start),
-                "end": self.convertSecondsToHMS(self.end),
-            });
-            self.addNotification(message);
-            return;
-        }
+        if (timestamp >= 0) {
+            if (!this.isBetweenStartAndEnd(timestamp)) {
+                const message = M.util.get_string('interactioncanonlybeaddedbetweenstartandendtime', 'mod_interactivevideo', {
+                    "start": self.convertSecondsToHMS(self.start),
+                    "end": self.convertSecondsToHMS(self.end),
+                });
+                self.addNotification(message);
+                return;
+            }
 
-        if (self.isAlreadyAdded(timestamp)) {
-            self.addNotification(M.util.get_string('interactionalreadyexists', 'mod_interactivevideo'));
-            return;
-        }
+            if (self.isAlreadyAdded(timestamp)) {
+                self.addNotification(M.util.get_string('interactionalreadyexists', 'mod_interactivevideo'));
+                return;
+            }
 
-        if (self.isInSkipSegment(timestamp)) {
-            self.addNotification(M.util.get_string('interactionisbetweentheskipsegment', 'mod_interactivevideo'));
-            return;
+            if (self.isInSkipSegment(timestamp)) {
+                self.addNotification(M.util.get_string('interactionisbetweentheskipsegment', 'mod_interactivevideo'));
+                return;
+            }
         }
 
         const startHMS = self.convertSecondsToHMS(self.start);

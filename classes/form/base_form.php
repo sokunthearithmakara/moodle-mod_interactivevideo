@@ -173,7 +173,7 @@ class base_form extends \core_form\dynamic_form {
      * Used to set the form elements for the standard fields
      * that are common to all interactions
      */
-    public function standard_elements() {
+    public function standard_elements($section = true) {
         $mform = &$this->_form;
         $attributes = $mform->getAttributes();
         $attributes['data-name'] = 'interaction-form';
@@ -211,7 +211,9 @@ class base_form extends \core_form\dynamic_form {
         $mform->setType('timestamp', PARAM_FLOAT);
         $mform->setDefault('timestamp', 0);
 
-        $mform->addElement('header', 'general', get_string('general', 'form'));
+        if ($section) {
+            $mform->addElement('header', 'general', get_string('general', 'form'));
+        }
 
         $mform->addElement(
             'hidden',

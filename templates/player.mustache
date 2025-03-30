@@ -145,7 +145,7 @@ Example context (json):
 {{/hasendscreentext}}
 </div>
 </div>
-<div id="annotation-canvas" class="d-none">
+<div id="annotation-canvas" class="d-none w-0">
     {{#html5}}
     <video id="player">
     </video>
@@ -207,53 +207,9 @@ Example context (json):
               data-toggle="tooltip"
               data-trigger="focus"
               title="{{#str}}mute,mod_interactivevideo{{/str}}"><i class="bi bi-volume-up"></i></span>
-        <div class="btn-group dropup d-none" id="changecaption">
-            <span role="button"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1">
-                <i class="bi bi-badge-cc"
-                   data-toggle="tooltip"
-                   data-trigger="focus"
-                   title="{{#str}}subtitle,mod_interactivevideo{{/str}}"></i>
-            </span>
-            <div id="caption-dropdown"
-                 class="dropdown-menu dropdown-menu-right bg-black text-white"></div>
-        </div>
-        <div class="btn-group dropup d-none" id="changerate">
-            <span role="button"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1">
-                <i class="bi bi-speedometer2"
-                   data-toggle="tooltip"
-                   data-trigger="focus"
-                   title="{{#str}}changeplaybackspeed,mod_interactivevideo{{/str}}"></i>
-            </span>
-            <div class="dropdown-menu dropdown-menu-right bg-black">
-                <a class="dropdown-item text-white changerate px-3" data-rate="0.5" href="#"><i class="bi fa-fw"></i>0.5</a>
-                <a class="dropdown-item text-white changerate px-3" data-rate="0.75" href="#"><i class="bi fa-fw"></i>0.75</a>
-                <a class="dropdown-item text-white changerate px-3" data-rate="1" href="#"><i class="bi fa-fw bi-check"></i>1</a>
-                <a class="dropdown-item text-white changerate px-3" data-rate="1.5" href="#"><i class="bi fa-fw"></i>1.5</a>
-                <a class="dropdown-item text-white changerate px-3" data-rate="2" href="#"><i class="bi fa-fw"></i>2</a>
-            </div>
-        </div>
-        <div class="d-none btn-group dropup" id="changequality" data-current="">
-            <span role="button"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1">
-                <i class="bi bi-gear"
-                   data-toggle="tooltip"
-                   data-trigger="focus"
-                   title="{{#str}}videoquality,mod_interactivevideo{{/str}}"></i>
-            </span>
-            <div class="dropdown-menu dropdown-menu-right bg-black text-white"
-                 id="qualitieslist"></div>
-        </div>
+        {{> mod_interactivevideo/captionmenu }}
+        {{> mod_interactivevideo/speedmenu }}
+        {{> mod_interactivevideo/qualitymenu }}
         <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1"
               id="share"
               data-toggle="tooltip"

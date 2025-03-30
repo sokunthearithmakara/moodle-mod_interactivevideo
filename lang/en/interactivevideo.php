@@ -383,6 +383,7 @@ $string['unknowncontenttype'] = 'Unknown content type';
 $string['unlock'] = 'Locked: click to unlock';
 $string['unmute'] = 'Unmute';
 $string['unsavedchanges'] = 'You have unsaved changes. Are you sure you want to leave this page?';
+$string['updateavailable'] = 'Update available';
 $string['upload'] = 'Upload';
 $string['uploadanimagebelow'] = 'Upload a poster image below';
 $string['uploadcontent'] = 'Upload content';
@@ -423,3 +424,4 @@ $string['youmustcompletethistaskfirst'] = 'You must complete this task first.';
 $string['youmustspendatleastminutesbeforemarkingcomplete'] = 'You must spend at least <b>{$a->timerequire} minutes</b> before marking this as complete.<br><br><b>Time you spent: {$a->timespent} minutes.</b>';
 $string['youtube'] = 'YouTube';
 $string['yt'] = 'YouTube';
+

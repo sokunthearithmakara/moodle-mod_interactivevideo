@@ -1,0 +1,136 @@
+{
+    "subplugins": [
+        {
+            "name": "transcript",
+            "title": "Interactive Transcript",
+            "component": "local_ivtranscript",
+            "description": "Upload and display a transcript of the video.",
+            "icon": "bi bi-badge-cc",
+            "version": "2025033000",
+            "type": "paid",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivtranscript",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/391901"
+        },
+        {
+            "name": "scorm",
+            "title": "SCORM Content",
+            "component": "local_ivscorm",
+            "description": "Embed SCORM-compliant content",
+            "icon": "bi bi-box2",
+            "version": "2025032801",
+            "type": "paid",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivscorm",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/391059"
+        },
+        {
+            "name": "analytics",
+            "title": "Analytics",
+            "component": "local_ivanalytics",
+            "description": "Track user interactions with the video.",
+            "icon": "bi bi-graph-up",
+            "version": "2025021300",
+            "type": "paid",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivanalytics",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/373340"
+        },
+        {
+            "name": "annotation",
+            "title": "Annotation",
+            "component": "local_ivannotation",
+            "description": "Add persistent annotations on top of the video.",
+            "icon": "bi bi-pip",
+            "version": "2025021300",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivannnotation",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/355182"
+        },
+        {
+            "name": "decision",
+            "title": "Decision",
+            "component": "local_ivdecision",
+            "description": "Have viewers decide where to go next.",
+            "icon": "bi bi-signpost-split-fill",
+            "version": "2025021000",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivdecision",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/371274"
+        },
+        {
+            "name": "h5pupload",
+            "title": "H5P content",
+            "component": "local_ivh5pupload",
+            "description": "Upload an H5P package in .html or .h5p format.",
+            "icon": "bi bi-file-zip",
+            "version": "2025021000",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivh5pupload",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/371285"
+        },
+        {
+            "name": "htmlviewer",
+            "title": "HTML content",
+            "component": "local_ivhtmlviewer",
+            "description": "Embed HTML content in the video.",
+            "icon": "bi bi-filetype-html",
+            "version": "2025021000",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivhtmlviewer",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/371717"
+        },
+        {
+            "name": "inlineannotation",
+            "title": "Paused Annotation",
+            "component": "local_ivinlineannotation",
+            "description": "Superimpose an audio, image, or video on the video.",
+            "icon": "bi bi-pip-fill",
+            "version": "2025021000",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivinlineannotation",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/371268"
+        },
+        {
+            "name": "officeviewer",
+            "title": "Office document",
+            "component": "local_ivofficeviewer",
+            "description": "Embed an Office document in the video.",
+            "icon": "bi bi-file-word",
+            "version": "2025021100",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivofficeviewer",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/371733"
+        },
+        {
+            "name": "pdfviewer",
+            "title": "PDF document",
+            "component": "local_ivpdfviewer",
+            "description": "Embed a PDF document in the video.",
+            "icon": "bi bi-file-pdf",
+            "version": "2025021000",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivpdfviewer",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/3371724"
+        },
+        {
+            "name": "playlist",
+            "title": "Playlist",
+            "component": "local_ivplaylist",
+            "description": "Add a playlist",
+            "icon": "bi bi-view-list",
+            "version": "2025030100",
+            "type": "paid",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivplaylist",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/373332"
+        },
+        {
+            "name": "xpreward",
+            "title": "XP Reward",
+            "component": "local_ivxpreward",
+            "description": "Reward viewers with experience points.",
+            "icon": "bi bi-fast-forward-fill",
+            "version": "2025021100",
+            "type": "free",
+            "description_url": "https://buymeacoffee.com/tsmakara/ivxpreward",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/371736"
+        }
+    ]
+}

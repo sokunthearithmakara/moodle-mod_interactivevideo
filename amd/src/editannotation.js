@@ -473,7 +473,7 @@ define(['jquery',
                 $("#video-wrapper").css('padding-bottom', (1 / ratio) * 100 + '%');
 
                 playerReady = true;
-                $('#annotation-canvas').removeClass('d-none');
+                $('#annotation-canvas').removeClass('d-none w-0');
 
                 // Handle timeline block.
                 $("#timeline-wrapper #video-timeline").css({
@@ -840,7 +840,7 @@ define(['jquery',
                     return;
                 }
                 currentTime = null;
-                ctRenderer[ctype].addAnnotation(annotations, timestamp, coursemodule);
+                ctRenderer[ctype].addAnnotation(annotations, contenttype.hastimestamp ? timestamp : -1, coursemodule);
             });
 
             // Implement edit annotation
@@ -1574,8 +1574,7 @@ define(['jquery',
 
             // Set player region width from the saved width in local storage.
             const playerWidth = localStorage.getItem('player-width');
-            window.console.log(playerWidth);
-            if (playerWidth && window.innerWidth > 992) {
+            if (playerWidth > 0 && window.innerWidth > 992) {
                 $('#separator').css('left', playerWidth + 'px');
                 if (!isRTL) {
                     $('#player-region').css('width', playerWidth + 'px');
@@ -1585,9 +1584,9 @@ define(['jquery',
                     $('#content-region').css('width', playerWidth + 'px');
                 }
             } else {
-                $('#separator').css('left', `${isRTL ? 40 : 60}%`);
-                $('#player-region').css('width', `${isRTL ? 60 : 40}%`);
-                $('#content-region').css('width', `${isRTL ? 40 : 60}%`);
+                $('#separator').css('left', `50%`);
+                $('#player-region').css('width', `50%`);
+                $('#content-region').css('width', `50%`);
             }
 
             // Set timeline height from saved height in local storage.
@@ -1709,12 +1708,6 @@ define(['jquery',
             });
 
             document.getElementById('timeline').addEventListener('scroll', function() {
-                const isRTL = document.dir == 'rtl';
-                if (!isRTL) {
-
-                } else {
-
-                }
                 document.getElementById('minute-markers-wrapper').scrollLeft = this.scrollLeft;
                 document.getElementById('vseek').style.left = -this.scrollLeft + 'px';
                 document.getElementById('minute-markers-bg-wrapper').style.left = -this.scrollLeft + 'px';

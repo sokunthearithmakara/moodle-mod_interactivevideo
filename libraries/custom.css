@@ -1174,6 +1174,10 @@ html:has(.path-mod-interactivevideo) {
     max-width: 940px;
 }
 
+.path-mod-interactivevideo #annotation-modal .modal-dialog.modal-xl {
+    max-width: 1140px;
+}
+
 .path-mod-interactivevideo #annotation-modal {
     padding-inline-end: 0 !important;
     background-color: rgba(0, 0, 0, 0.5);

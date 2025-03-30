@@ -174,12 +174,14 @@ define([
          * @param {string} token - The token.
          * @param {string} extendedcompletion - The extended completion requirements.
          * @param {boolean} isPreviewMode - The preview mode flag.
+         * @param {boolean} isCompleted - The completed flag.
          * @return {void}
          */
         init: function(
             url, cmid, interaction, course, userid, start = 0, end,
             completionpercentage, gradeiteminstance, grademax, vtype,
-            preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null, isPreviewMode = false) {
+            preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null, isPreviewMode = false,
+            isCompleted = false) {
 
             quickform({
                 contextid: M.cfg.contextid,
@@ -498,7 +500,8 @@ define([
                                 ctRenderer[contentType.name] = new Type(player, releventAnnotations, interaction, course, userid,
                                     completionpercentage, gradeiteminstance, grademax, vtype, preventskip, totaltime, start,
                                     end, contentType, cmid, token, displayoptions, completionid, extendedcompletion, {
-                                    isPreviewMode: isPreviewMode
+                                    isPreviewMode,
+                                    isCompleted,
                                 });
                                 try {
                                     ctRenderer[contentType.name].init();
@@ -794,7 +797,7 @@ define([
                 // So we're tricking it by hiding the canvas which also hides the #player first
                 // and only shows it when player is ready.
                 $(".video-block").css('background', 'transparent');
-                $("#annotation-canvas").removeClass('d-none');
+                $("#annotation-canvas").removeClass('d-none w-0');
 
 
                 await getAnnotations();
@@ -1514,6 +1517,7 @@ define([
                     $('#annotation-toggle').trigger('click');
                     $('#annotation-sidebar, #annotation-toggle').remove();
                     $('body').removeClass('hassidebar');
+                    $('.iv-sidebar').addClass('hide');
                 }
 
                 viewedAnno = [];
@@ -1784,15 +1788,6 @@ define([
                     shareMoment();
                 }
             });
-
-            if ($("body").hasClass('mobiletheme')) {
-                $('[data-toggle="tooltip"]').on('click', function() {
-                    const $this = $(this);
-                    setTimeout(function() {
-                        $this.tooltip('hide');
-                    }, 2000); // Hide after 3 seconds
-                });
-            }
 
             if ($("body").hasClass('mobiletheme')) {
                 $('[data-toggle="tooltip"]').on('click', function() {

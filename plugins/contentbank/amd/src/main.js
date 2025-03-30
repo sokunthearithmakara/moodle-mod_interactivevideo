@@ -101,6 +101,7 @@ export default class ContentBank extends Base {
      */
     postContentRender(annotation, callback) {
         $(`#message[data-id='${annotation.id}']`).addClass('hascontentbank');
+        $(`#message[data-id='${annotation.id}']`).find('.modal-dialog').addClass('modal-xl');
         if (annotation.hascompletion == 1
             && annotation.completiontracking != 'manual' && !annotation.completed) {
             return callback;

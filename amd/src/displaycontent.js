@@ -254,7 +254,7 @@ const defaultDisplayContent = async function(annotation, player) {
              id="annotation-modal" role="dialog" aria-labelledby="annotation-modal"
          aria-hidden="true" data-backdrop="static" data-keyboard="false">
          <div id="message" data-id="${annotation.id}" data-placement="popup"
-          class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable ${annotation.type} active" role="document">
+          class="modal-dialog modal-dialog-centered modal-dialog-scrollable ${annotation.type} active" role="document">
                 <div class="modal-content rounded-lg">
                     <div class="modal-header d-flex align-items-center shadow-sm pr-0" id="title">
                         ${messageTitle}

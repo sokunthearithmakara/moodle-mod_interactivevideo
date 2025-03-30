@@ -34,3 +34,11 @@ Interestingly, doing it this way, the code is compiled correctly. Use this file 
     background-image: url([[pix:mod_interactivevideo|radio-unchecked]]);
 }
 
+.path-admin-setting .ivname {
+    display: inline-block;
+    width: 300px;
+}
+
+.path-mod-interactivevideo #annotation-canvas.w-0 {
+    width: 100px;
+}

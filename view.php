@@ -110,6 +110,11 @@ if ($preview && has_capability('mod/interactivevideo:edit', $modulecontext)) {
     $PAGE->add_body_class('preview-mode');
 }
 
+if (optional_param('mobileapp', 0, PARAM_INT)) {
+    $PAGE->set_pagelayout('embedded');
+    $PAGE->add_body_class('mobiletheme');
+}
+
 // Prepare strings for js files using string manager.
 $subplugins = explode(',', get_config('mod_interactivevideo', 'enablecontenttypes'));
 $stringman = get_string_manager();
@@ -389,5 +394,6 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $token ?? '', // Token for mobile app.
     $moduleinstance->extendedcompletion, // Extended completion settings.
     $preview && has_capability('mod/interactivevideo:edit', $modulecontext) ? true : false, // Preview mode.
+    $datafortemplate['completed'] ?? false, // Completed status.
 ]);
 echo $OUTPUT->footer();
