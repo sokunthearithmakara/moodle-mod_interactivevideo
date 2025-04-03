@@ -55,12 +55,21 @@ $modfolder = new admin_category(
 );
 $ADMIN->add('modsettings', $modfolder);
 
-// Get file content from GitHub.
-$plugins = @file_get_contents('https://raw.githubusercontent.com/sokunthearithmakara/moodle-mod_interactivevideo/refs/heads/main/plugins.json');
-if ($plugins === false) {
-    debugging('Failed to retrieve plugins.json from GitHub. Using empty plugins configuration.');
-    $plugins = '{}';
+$plugins = '{}';
+if (
+    $PAGE->bodyid == 'page-admin-setting-modivfolder' ||
+    $PAGE->bodyid == 'page-admin-setting-mod_interactivevideo_generalsettings'
+) {
+    // Get file content from GitHub.
+    $file = 'https://raw.githubusercontent.com/sokunthearithmakara/moodle-mod_interactivevideo/refs/heads/main/plugins.json';
+    $plugins = @file_get_contents($file);
+    if ($plugins === false) {
+        $plugins = '{}';
+    }
+    // Launch popup modal when the button is clicked.
+    $PAGE->requires->js_call_amd('mod_interactivevideo/settings', 'init');
 }
+
 $plugins = json_decode($plugins, true);
 
 // General settings page.
@@ -152,9 +161,6 @@ if ($hasplugindata) {
         </textarea>'
     ));
 }
-
-// Launch popup modal when the button is clicked.
-$PAGE->requires->js_call_amd('mod_interactivevideo/settings', 'init');
 
 // Enable source selector.
 $sources = [

@@ -1207,9 +1207,9 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
     });
 
     $(document).on('click', 'td .completion-detail', function() {
-        let id = $(this).data('id');
-        let userid = $(this).data('userid');
-        let type = $(this).data('type');
+        let id = $(this).closest('td').data('item');
+        let userid = $(this).closest('tr').attr('id');
+        let type = $(this).closest('td').data('type');
         let matchingContentTypes = contentTypes.find(x => x.name === type);
         let amdmodule = matchingContentTypes.amdmodule;
         // Get column header with the item id.

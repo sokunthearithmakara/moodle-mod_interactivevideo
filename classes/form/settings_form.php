@@ -206,7 +206,6 @@ class settings_form extends \core_form\dynamic_form {
         $fromform->displayoptions = json_encode($displayoptions);
         $data = new \stdClass();
         $data->courseid = $fromform->courseid;
-        $data->usermodified = $fromform->userid;
         $data->timemodified = time();
         $data->endscreenarray = $fromform->endscreentext;
         $draftitemid = $data->endscreenarray['itemid'];

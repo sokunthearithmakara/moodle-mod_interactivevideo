@@ -938,6 +938,17 @@ function interactivevideo_displayinline(cm_info $cm) {
         $usercompletion['completeditems'] = '[]';
     }
     $completeditems = json_decode($usercompletion['completeditems'], true);
+    // Make sure $completeditems are in the relevantitems.
+    $completeditems = array_filter($completeditems, function ($item) use ($relevantitems) {
+        foreach ($relevantitems as $ri) {
+            if ($item == $ri->id) {
+                return true;
+            }
+        }
+        return false;
+    });
+    // Must be unique.
+    $completeditems = array_unique($completeditems);
     $datafortemplate['completeditems'] = count($completeditems);
 
     // Remove analytics that does not have completion.

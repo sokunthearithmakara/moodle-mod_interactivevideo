@@ -546,24 +546,38 @@ class interactivevideo_util {
     /**
      * Save log.
      *
-     * @param int $interactionid
-     * @param int $courseid
      * @param int $userid
-     * @param int $activityid
-     * @param string $log
-     * @return int
+     * @param int $annotationid
+     * @param int $cmid
+     * @param string $data
+     * @param int $contextid
+     * @param int $replace
+     * @return mixed $record
      */
-    public static function save_log($interactionid, $courseid, $userid, $activityid, $log) {
-        global $DB, $USER;
-        $record = new stdClass();
-        $record->interactionid = $interactionid;
-        $record->courseid = $courseid;
-        $record->userid = $userid ?? $USER->id;
-        $record->cmid = $activityid;
-        $record->text1 = $log;
+    public static function save_log($userid, $annotationid, $cmid, $data, $contextid, $replace) {
+        global $DB;
+        $record = json_decode($data);
+        $record->userid = $userid;
+        $record->annotationid = $annotationid;
+        $record->cmid = $cmid;
         $record->timecreated = time();
-        $id = $DB->insert_record('interactivevideo_log', $record);
-        return $id;
+        $record->timemodified = time();
+        if ($replace) {
+            $existingrecord = $DB->get_record('interactivevideo_log', ['userid' => $userid, 'annotationid' => $annotationid]);
+            if ($existingrecord) {
+                $record->id = $existingrecord->id;
+                $record->timemodified = time();
+                $DB->update_record('interactivevideo_log', $record);
+            } else {
+                $record->id = $DB->insert_record('interactivevideo_log', $record);
+            }
+        } else {
+            $record->id = $DB->insert_record('interactivevideo_log', $record);
+        }
+        $record->formattedtimecreated = userdate($record->timecreated, get_string('strftimedatetime'));
+        $record->formattedtimemodified = userdate($record->timemodified, get_string('strftimedatetime'));
+
+        return $record;
     }
 
     /**

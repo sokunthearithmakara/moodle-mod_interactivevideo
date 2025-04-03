@@ -61,7 +61,7 @@
             "component": "local_ivh5pupload",
             "description": "Upload an H5P package in .html or .h5p format.",
             "icon": "bi bi-file-zip",
-            "version": "2025021000",
+            "version": "2025040200",
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivh5pupload",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371285"

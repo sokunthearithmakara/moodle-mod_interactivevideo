@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.6] - 2025-04-03
+### Added
+- Implemented `State Saving` for H5P contents. The state will be saved in the database and restored when the user reopens the content.
+- Chapters can now be locked.
+See more details in https://mod-interactive-video.canny.io/changelog/interactive-video-v116
+
+### Updated
+- Dropping usermodified column from interactivevideo_settings table. This column is not used anymore.
+
 ## [1.1.5] - 2025-03-30
 https://mod-interactive-video.canny.io/changelog/interactive-video-v115
 

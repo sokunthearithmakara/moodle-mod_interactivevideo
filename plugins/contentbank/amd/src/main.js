@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable complexity */
 
 // This file is part of Moodle - http://moodle.org/
@@ -27,6 +28,7 @@ import contentbankutil from 'ivplugin_contentbank/util';
 import ModalForm from 'core_form/modalform';
 import Base from 'mod_interactivevideo/type/base';
 import {notifyFilterContentUpdated as notifyFilter} from 'core_filters/events';
+import Notification from 'core/notification';
 
 export default class ContentBank extends Base {
     /**
@@ -160,10 +162,11 @@ export default class ContentBank extends Base {
     /**
      * Apply the content to the annotation
      * @param {Object} annotation The annotation object
+     * @param {Object} existingstate The existing state of the annotation
      * @returns {Promise<void>} - Returns a promise that resolves when the content is applied.
      * @override
      */
-    async applyContent(annotation) {
+    async applyContent(annotation, existingstate) {
         let self = this;
         let $message = $(`#message[data-id='${annotation.id}']`);
         // Remove .modal-dialog-centered class to avoid flickering when H5P content resizes.
@@ -192,158 +195,274 @@ export default class ContentBank extends Base {
             $(this).remove();
         });
 
-        const xAPICheck = (annotation, listenToEvents = true) => {
-            const detectH5P = () => {
-                let H5P;
-                try { // Try to get the H5P object.
-                    H5P = document.querySelector(`#message[data-id='${annoid}'] iframe`).contentWindow.H5P;
-                } catch (e) {
-                    H5P = null;
-                }
-                if (typeof H5P !== 'undefined' && H5P !== null) {
-                    if (H5P.externalDispatcher === undefined) {
-                        requestAnimationFrame(detectH5P);
-                        return;
+        let saveState = 0;
+        let condition = null;
+        if (annotation.text1 != '' && annotation.text1 !== null) {
+            condition = JSON.parse(annotation.text1);
+        }
+
+        if (JSON.parse(annotation.advanced).savecurrentstate == 1) {
+            saveState = 1;
+        }
+
+        const afterLog = async(log) => {
+            const xAPICheck = (annotation) => {
+                const detectH5P = () => {
+                    let H5P;
+                    try { // Try to get the H5P object.
+                        H5P = document.querySelector(`#message[data-id='${annoid}'] iframe`).contentWindow.H5P;
+                    } catch (e) {
+                        H5P = null;
                     }
-                    if (!listenToEvents) {
-                        return;
-                    }
-                    if (self.isEditMode()) {
-                        $message.find(`#title .btns .xapi`).remove();
-                        $message.find(`#title .btns`)
-                            .prepend(`<div class="xapi alert-secondary px-2
+                    if (typeof H5P !== 'undefined' && H5P !== null) {
+                        if (H5P.externalDispatcher === undefined) {
+                            requestAnimationFrame(detectH5P);
+                            return;
+                        }
+                        if (document.querySelector(`#message[data-id='${annoid}'] iframe`).contentWindow.H5PIntegration === undefined) {
+                            requestAnimationFrame(detectH5P);
+                            return;
+                        }
+
+                        if (self.isEditMode()) {
+                            $message.find(`#title .btns .xapi`).remove();
+                            $message.find(`#title .btns`)
+                                .prepend(`<div class="xapi alert-secondary px-2
                          rounded-pill">${M.util.get_string('xapicheck', 'ivplugin_contentbank')}</div>`);
-                    }
-                    let statements = [];
-                    try {
-                        H5P.externalDispatcher.on('xAPI', async function(event) {
-                            if (event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
-                                || event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/answered') {
-                                statements.push(event.data.statement);
-                            }
-                            if ((event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
-                                || event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/answered')
-                                && event.data.statement.object.id.indexOf('subContentId') < 0) {
-                                if (self.isEditMode()) {
-                                    $(`#message[data-id='${annotation.id}'] #title .btns .xapi`).remove();
-                                    $(`#message[data-id='${annotation.id}'] #title .btns`)
-                                        .prepend(`<div class="xapi alert-success d-inline px-2 rounded-pill">
-                                        <i class="fa fa-check mr-2"></i>
-                                        ${M.util.get_string('xapieventdetected', 'ivplugin_h5pupload')}
-                                        </div>`);
-                                    const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
-                                    audio.play();
-                                    return;
-                                }
-                                let complete = false;
-                                let textclass = '';
-                                if (annotation.completiontracking == 'completepass'
-                                    && event.data.statement.result && event.data.statement.result.score.scaled >= 0.5) {
-                                    complete = true;
-                                } else if (annotation.completiontracking == 'completefull'
-                                    && event.data.statement.result && event.data.statement.result.score.scaled == 1) {
-                                    complete = true;
-                                } else if (annotation.completiontracking == 'complete') {
-                                    complete = true;
-                                }
-                                if (event.data.statement.result.score.scaled < 0.5) {
-                                    textclass = 'fa fa-check text-danger';
-                                } else if (event.data.statement.result.score.scaled < 1) {
-                                    textclass = 'fa fa-check text-success';
-                                } else {
-                                    textclass = 'bi bi-check2-all text-success';
-                                }
-                                if (complete && !annotation.completed) {
-                                    let details = {};
-                                    const completeTime = new Date();
-                                    let windowAnno = window.ANNOS.find(x => x.id == annotation.id);
-                                    details.xp = annotation.xp;
-                                    if (annotation.char1 == '1') { // Partial points.
-                                        details.xp = (event.data.statement.result.score.scaled * annotation.xp).toFixed(2);
+                        }
+
+                        window.H5PIntegration = document.querySelector(`#message[data-id='${annoid}'] iframe`)
+                        .contentWindow.H5PIntegration || {};
+                        window.H5PIntegration.saveFreq = 1;
+                        let content = window.H5PIntegration.contents;
+                        let id = Object.keys(content)[0];
+                        if (existingstate !== null && existingstate !== undefined) {
+                            log = existingstate;
+                        }
+                        window.H5PIntegration.contents[id].contentUserData[0].state = log;
+                        window.H5P = H5P;
+                        if (annotation.completed) {
+                            return;
+                        }
+                        try {
+                            H5P.externalDispatcher.on('xAPI', async function(event) {
+                                let statement = event.data.statement;
+                                if ((statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
+                                    || statement.verb.id == 'http://adlnet.gov/expapi/verbs/answered')
+                                    && statement.object.id.indexOf('subContentId') < 0
+                                    && !statement.context.contextActivities.parent) {
+                                    if (self.isEditMode()) {
+                                        $(`#message[data-id='${annotation.id}'] #title .btns .xapi`).remove();
+                                        $(`#message[data-id='${annotation.id}'] #title .btns`)
+                                            .prepend(`<div class="xapi alert-success d-inline px-2 rounded-pill">
+                                                    <i class="fa fa-check mr-2"></i>
+                                                    ${M.util.get_string('xapieventdetected', 'ivplugin_contentbank')}
+                                                    </div>`);
+                                        const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
+                                        audio.play();
+                                        return;
                                     }
-                                    details.duration = windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime);
-                                    details.timecompleted = completeTime.getTime();
-                                    const completiontime = completeTime.toLocaleString();
-                                    let duration = self.formatTime(details.duration / 1000);
-                                    details.reportView = `<span data-toggle="tooltip" data-html="true"
+                                    let complete = false;
+                                    let textclass = '';
+                                    let result = statement.result;
+                                    if (annotation.completiontracking == 'completepass'
+                                        && result && result.score.scaled >= 0.5) {
+                                        complete = true;
+                                    } else if (annotation.completiontracking == 'completefull'
+                                        && result && result.score.scaled == 1) {
+                                        complete = true;
+                                    } else if (annotation.completiontracking == 'complete') {
+                                        complete = true;
+                                    }
+                                    if (result.score.scaled < 0.5) {
+                                        textclass = 'fa fa-check text-danger';
+                                    } else if (result.score.scaled < 1) {
+                                        textclass = 'fa fa-check text-success';
+                                    } else {
+                                        textclass = 'bi bi-check2-all text-success';
+                                    }
+                                    if (complete && !annotation.completed) {
+                                        let details = {};
+                                        const completeTime = new Date();
+                                        let windowAnno = window.ANNOS.find(x => x.id == annotation.id);
+                                        details.xp = annotation.xp;
+                                        if (annotation.char1 == '1') { // Partial points.
+                                            details.xp = (result.score.scaled * annotation.xp).toFixed(2);
+                                        }
+                                        details.duration = windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime);
+                                        details.timecompleted = completeTime.getTime();
+                                        const completiontime = completeTime.toLocaleString();
+                                        let duration = self.formatTime(details.duration / 1000);
+                                        details.reportView = `<span data-toggle="tooltip" data-html="true"
                      data-title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar mr-2"></i>
                      ${completiontime}</span><span><i class="bi bi-stopwatch mr-2"></i>${duration}</span>
                      <span><i class="bi bi-list-check mr-2"></i>
-                     ${event.data.statement.result.score.raw}/${event.data.statement.result.score.max}</span></span>'>
+                     ${result.score.raw}/${result.score.max}</span></span>'>
                      <i class="${textclass}"></i><br><span>${Number(details.xp)}</span></span>`;
-                                    details.details = statements;
-                                    self.toggleCompletion(annoid, 'mark-done', 'automatic', details);
-                                }
+                                        details.details = saveState == 1 ? window.H5PIntegration.contents[id].contentUserData[0].state : '';
+                                        // Must wait 1.5 seconds or so to let the saveState finish.
+                                        // Otherwise, the completion will be incomplete.
+                                        setTimeout(function() {
+                                            self.toggleCompletion(annoid, 'mark-done', 'automatic', details);
+                                        }, 1500);
+                                    }
 
-                                if (annotation.text1 != '') {
-                                    let condition = JSON.parse(annotation.text1);
-                                    if (event.data.statement.result.score.scaled < 0.5) {
-                                        if (condition.gotoonfailed == 1 && condition.forceonfailed != 1) {
-                                            onPassFail(false, condition.timeonfailed);
-                                        } else if (condition.gotoonfailed == 1 && condition.forceonfailed == 1) {
-                                            setTimeout(function() {
-                                                self.dispatchEvent('interactionclose', {
-                                                    annotation: annotation,
-                                                });
-                                                self.player.seek(condition.timeonfailed);
-                                                self.player.play();
-                                            }, 1000);
-                                        }
-                                        if (condition.showtextonfailed == 1 && condition.textonfailed.text != '') {
-                                            let textonfailed = await self.formatContent(condition.textonfailed.text);
-                                            $message.find('.passfail-message').remove();
-                                            $message.find(`#content`)
-                                                .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
+                                    if (condition !== null) {
+                                        if (result.score.scaled < 0.5) {
+                                            if (condition.gotoonfailed == 1 && condition.forceonfailed != 1) {
+                                                onPassFail(false, condition.timeonfailed);
+                                            } else if (condition.gotoonfailed == 1 && condition.forceonfailed == 1) {
+                                                setTimeout(function() {
+                                                    self.dispatchEvent('interactionclose', {
+                                                        annotation: annotation,
+                                                    });
+                                                    self.player.seek(condition.timeonfailed);
+                                                    self.player.play();
+                                                }, 1000);
+                                            }
+                                            if (condition.showtextonfailed == 1 && condition.textonfailed.text != '') {
+                                                let textonfailed = await self.formatContent(condition.textonfailed.text);
+                                                $message.find('.passfail-message').remove();
+                                                $message.find(`#content`)
+                                                    .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
                                             ${textonfailed}</div>`);
-                                            notifyFilter($('.passfail-message'));
-                                        }
-                                    } else {
-                                        if (condition.gotoonpassing == 1 && condition.forceonpassing != 1) {
-                                            onPassFail(true, condition.timeonpassing);
-                                        } else if (condition.gotoonpassing == 1 && condition.forceonpassing == 1) {
-                                            setTimeout(function() {
-                                                self.dispatchEvent('interactionclose', {
-                                                    annotation: annotation,
-                                                });
-                                                self.player.seek(condition.timeonpassing);
-                                                self.player.play();
-                                            }, 1000);
-                                        }
-                                        if (condition.showtextonpassing == 1 && condition.textonpassing.text != '') {
-                                            let textonpassing = await self.formatContent(condition.textonpassing.text);
-                                            $message.find('.passfail-message').remove();
-                                            $message.find(`#content`)
-                                                .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
+                                                notifyFilter($('.passfail-message'));
+                                            }
+                                        } else {
+                                            if (condition.gotoonpassing == 1 && condition.forceonpassing != 1) {
+                                                onPassFail(true, condition.timeonpassing);
+                                            } else if (condition.gotoonpassing == 1 && condition.forceonpassing == 1) {
+                                                setTimeout(function() {
+                                                    self.dispatchEvent('interactionclose', {
+                                                        annotation: annotation,
+                                                    });
+                                                    self.player.seek(condition.timeonpassing);
+                                                    self.player.play();
+                                                }, 1000);
+                                            }
+                                            if (condition.showtextonpassing == 1 && condition.textonpassing.text != '') {
+                                                let textonpassing = await self.formatContent(condition.textonpassing.text);
+                                                $message.find('.passfail-message').remove();
+                                                $message.find(`#content`)
+                                                    .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
                                             ${textonpassing}</div>`);
-                                            notifyFilter($('.passfail-message'));
+                                                notifyFilter($('.passfail-message'));
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        });
-                    } catch (e) {
+                            });
+                        } catch (e) {
+                            requestAnimationFrame(detectH5P);
+                        }
+                    } else {
                         requestAnimationFrame(detectH5P);
                     }
-                } else {
-                    requestAnimationFrame(detectH5P);
-                }
+                };
+                requestAnimationFrame(detectH5P);
             };
-            requestAnimationFrame(detectH5P);
+            // We don't need to run the render method every time the content is applied. We can cache the content.
+            let firstview = false;
+            if (!self.cache[annotation.id] || self.isEditMode()) {
+                self.cache[annotation.id] = await self.render(annotation);
+                firstview = true;
+            }
+            const data = self.cache[annotation.id];
+
+            $message.find(`.modal-body`).html(data).attr('id', 'content').fadeIn(300);
+
+            xAPICheck(annotation);
+
+            if (existingstate !== null && existingstate !== undefined) {
+                return;
+            }
+
+            if (self.isEditMode()) {
+                return;
+            }
+
+            // If annotation is incomplete, we want to save the state when the interaction is closed.
+            if (!annotation.completed && firstview && saveState == 1) {
+                $(document).on('interactionclose interactionrefresh', async function(e) {
+                    if (e.detail.annotation.id == annotation.id) {
+                        try {
+                            let content = window.H5PIntegration.contents;
+                            let id = Object.keys(content)[0];
+                            let contentuserData = window.H5PIntegration.contents[id].contentUserData[0];
+                            let state = contentuserData.state;
+                            await self.saveLog(annotation, {
+                                text1: JSON.stringify(state),
+                                char1: annotation.type,
+                            }, self.userid, true);
+                        } catch (e) {
+                            window.console.log('Error: ', e);
+                        }
+                    }
+                });
+            }
+            if (annotation.hascompletion != 1) {
+                return;
+            }
+            if (!annotation.completed && annotation.completiontracking == 'view') {
+                self.completiononview(annotation);
+            }
         };
 
-        // We don't need to run the render method every time the content is applied. We can cache the content.
-        if (!self.cache[annotation.id] || self.isEditMode()) {
-            self.cache[annotation.id] = await self.render(annotation);
-        }
-        const data = self.cache[annotation.id];
-
-        $message.find(`.modal-body`).html(data).attr('id', 'content').fadeIn(300);
-        if (annotation.hascompletion != 1 || self.isEditMode()) {
+        if (existingstate !== null && existingstate !== undefined) { // Report view.
+            afterLog(existingstate);
             return;
         }
-        if (!annotation.completed && annotation.completiontracking == 'view') {
-            self.completiononview(annotation);
+
+        // Get exiting state.
+        if (self.isEditMode()) {
+            afterLog('');
+            return;
         }
-        xAPICheck(annotation, !annotation.completed && annotation.completiontracking != 'manual');
+        if (saveState !== 1) {
+            afterLog('');
+            return;
+        }
+        let logs = await self.getLogs(annotation, [self.userid]);
+        let log = '';
+        if (logs.length <= 0) {
+            afterLog('');
+            return;
+        }
+        if (logs.length > 0) {
+            log = JSON.parse(logs[0].text1);
+
+            // Show a confirmation message if the state is not empty.
+            if (log !== '' && log !== null) {
+                Notification.saveCancel(
+                    M.util.get_string('resume', 'ivplugin_contentbank'),
+                    M.util.get_string('resumeconfirm', 'ivplugin_contentbank'),
+                    M.util.get_string('resume', 'ivplugin_contentbank'),
+                    function() {
+                        // Do nothing.
+                        afterLog(log);
+                    },
+                    function() {
+                        afterLog('');
+                    }
+                );
+            } else {
+                afterLog(log);
+            }
+        }
+    }
+
+    async getCompletionData(annotation, userid) {
+        let logs = await this.getLogs(annotation, [userid]);
+        let log = '';
+        if (logs.length > 0) {
+            log = JSON.parse(logs[0].text1);
+        }
+        annotation.displayoptions = 'popup';
+        annotation.hascompletion = 0;
+        annotation.completed = true;
+        await this.renderViewer(annotation);
+        this.renderContainer(annotation);
+        this.applyContent(annotation, log);
+        return log;
     }
 }

@@ -171,6 +171,7 @@ class base_form extends \core_form\dynamic_form {
 
     /**
      * Used to set the form elements for the standard fields
+     * @param bool $section Whether to add the General section header
      * that are common to all interactions
      */
     public function standard_elements($section = true) {

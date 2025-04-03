@@ -27,3 +27,17 @@
     position: absolute;
     background-color: #fff;
 }
+
+.path-mod-interactivevideo .chapter.locked {
+    pointer-events: none;
+}
+
+.path-mod-interactivevideo #video-nav ul li.chapter .item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.path-mod-interactivevideo #video-nav ul li.chapter .item i {
+    font-size: xx-small;
+}

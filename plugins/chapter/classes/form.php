@@ -35,6 +35,19 @@ class form extends \mod_interactivevideo\form\base_form {
     }
 
     /**
+     * Process advanced settings
+     *
+     * @param \stdClass $data
+     * @return string
+     */
+    public function process_advanced_settings($data) {
+        $adv = parent::process_advanced_settings($data);
+        $adv = json_decode($adv);
+        $adv->lock = $data->lock;
+        return json_encode($adv);
+    }
+
+    /**
      * Form definition
      *
      * @return void
@@ -54,6 +67,27 @@ class form extends \mod_interactivevideo\form\base_form {
         $this->advanced_form_fields([
             'hascompletion' => false,
         ]);
+
+        $group = [];
+        $group[] = $mform->createElement(
+            'select',
+            'lock',
+            '',
+            [
+                '' => get_string('unlock', 'ivplugin_chapter'),
+                'untilprevious' => get_string('untilprevious', 'ivplugin_chapter'),
+                'untilallprevious' => get_string('untilallprevious', 'ivplugin_chapter'),
+                'untilcomplete' => get_string('untilcomplete', 'ivplugin_chapter'),
+            ]
+        );
+        $group[] = $mform->createElement(
+            'static',
+            'lockdesc',
+            '',
+            '<span class="text-muted small w-100 d-block">'
+            . get_string('lockdesc', 'ivplugin_chapter') . '</span>'
+        );
+        $mform->addGroup($group, 'lockgroup', get_string('lockchapter', 'ivplugin_chapter'), null, false);
 
         $this->close_form();
     }

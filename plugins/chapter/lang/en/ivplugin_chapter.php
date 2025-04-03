@@ -27,10 +27,16 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['chaptercontent'] = 'Chapter';
 $string['chapterdescription'] = 'Separate the video into chapters.';
+$string['chapterlocked'] = 'Chapter is locked: {$a}';
+$string['lockchapter'] = 'Lock chapter';
+$string['lockdesc'] = 'Locked chapter is not viewable, and interactions within this chapter are not available until the chapter is unlocked.';
 $string['pluginname'] = 'Chapter';
 $string['privacy:metadata'] = 'The Chapter plugin doesn\'t store any personal data.';
 $string['showtitle'] = 'Show title';
 $string['showtitle_help'] = 'If enabled, the chapter title will be displayed on the video at the beginning of the chapter.';
 $string['startchapter'] = 'Start';
 $string['tutorialurl'] = 'https://youtu.be/hzkummjWDj0';
-
+$string['unlock'] = 'Not locked';
+$string['untilallprevious'] = 'Until all previous chapters are completed';
+$string['untilcomplete'] = 'Until the activity is completed';
+$string['untilprevious'] = 'Until the previous chapter is completed';

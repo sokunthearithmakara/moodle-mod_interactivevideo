@@ -171,5 +171,25 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025011309, 'interactivevideo');
     }
 
+    if ($oldversion < 2025033001) {
+
+        // Define key usermodified (foreign) to be dropped form interactivevideo_settings.
+        $table = new xmldb_table('interactivevideo_settings');
+        $key = new xmldb_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Launch drop key usermodified.
+        $dbman->drop_key($table, $key);
+
+        $field = new xmldb_field('usermodified');
+
+        // Conditionally launch drop field usermodified.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025033001, 'interactivevideo');
+    }
+
     return true;
 }

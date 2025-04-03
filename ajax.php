@@ -181,6 +181,16 @@ switch ($action) {
         $log = interactivevideo_util::get_log($userid, $cmid, $annotationid, $contextid);
         echo json_encode($log);
         break;
+    case 'save_log':
+        require_capability('mod/interactivevideo:view', $context);
+        $userid = required_param('userid', PARAM_INT);
+        $annotationid = required_param('annotationid', PARAM_INT);
+        $cmid = required_param('cmid', PARAM_INT);
+        $data = required_param('data', PARAM_RAW);
+        $replaceexisting = optional_param('replaceexisting', 0, PARAM_INT);
+        $log = interactivevideo_util::save_log($userid, $annotationid, $cmid, $data, $contextid, $replaceexisting);
+        echo json_encode($log);
+        break;
     case 'get_logs_by_userids':
         require_capability('mod/interactivevideo:view', $context);
         $userids = required_param('userids', PARAM_TEXT);

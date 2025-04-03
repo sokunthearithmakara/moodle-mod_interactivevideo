@@ -92,6 +92,7 @@ define([
         }
 
         $("#interactions-nav ul").empty();
+        $("#video-nav ul").empty();
 
         if (displayoptions.preventseeking == 1) {
             $videoNav.addClass('no-pointer-events');
@@ -796,9 +797,9 @@ define([
                 // Explanation: YT shows annoying related videos if the player is large enough when the script is loading.
                 // So we're tricking it by hiding the canvas which also hides the #player first
                 // and only shows it when player is ready.
+                $("#annotation-canvas").removeClass('w-0');
                 $(".video-block").css('background', 'transparent');
-                $("#annotation-canvas").removeClass('d-none w-0');
-
+                $("#annotation-canvas").removeClass('d-none');
 
                 await getAnnotations();
 

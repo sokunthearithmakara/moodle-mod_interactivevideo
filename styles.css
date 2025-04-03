@@ -40,5 +40,5 @@ Interestingly, doing it this way, the code is compiled correctly. Use this file 
 }
 
 .path-mod-interactivevideo #annotation-canvas.w-0 {
-    width: 100px;
+    width: 0;
 }

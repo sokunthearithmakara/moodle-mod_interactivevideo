@@ -1377,6 +1377,48 @@ class Base {
             }
         });
     }
+
+    saveLog(annotation, data, userid, replaceexisting = 1) {
+        let self = this;
+        return new Promise((resolve) => {
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                method: "POST",
+                dataType: "text",
+                data: {
+                    action: 'save_log',
+                    annotationid: annotation.id,
+                    contextid: annotation.contextid,
+                    data: JSON.stringify({
+                        'text1': data.text1 || '',
+                        'text2': data.text2 || '',
+                        'text3': data.text3 || '',
+                        'char1': data.char1 || '',
+                        'char2': data.char2 || '',
+                        'char3': data.char3 || '',
+                        'intg1': data.intg1 || 0,
+                        'intg2': data.intg2 || 0,
+                        'intg3': data.intg3 || 0,
+                        'completionid': self.completionid || 0,
+                    }),
+                    userid: userid,
+                    sesskey: M.cfg.sesskey,
+                    token: self.token,
+                    cmid: self.interaction,
+                    replaceexisting: replaceexisting ? 1 : 0,
+                },
+                success: function(res) {
+                    // Do nothing.
+                    try {
+                        res = JSON.parse(res);
+                    } catch (e) {
+                        res = {};
+                    }
+                    resolve(res);
+                }
+            });
+        });
+    }
 }
 
 export default Base;

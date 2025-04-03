@@ -1,3 +1,4 @@
+/* eslint-disable max-depth */
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -81,16 +82,142 @@ export default class Chapter extends Base {
         $(document).on('timeupdate', async(e) => {
             const currenttime = e.originalEvent.detail.time;
             const currentchapter = chapters.find((chapter) => currenttime >= chapter.start && currenttime < chapter.end);
+            if (!currentchapter) {
+                return;
+            }
             if (currentchapter) {
+                const settings = JSON.parse(currentchapter.advanced || '{}');
+                let locked = false;
+                if (!self.isEditMode() && !self.isPreviewMode() && !$('body').hasClass('editorview')) {
+                    if (settings.lock && settings.lock != '') {
+                        if (settings.lock == 'untilprevious') {
+                            let previousIndex = chapters.findIndex((chapter) => chapter.id == currentchapter.id) - 1;
+                            if (previousIndex < 0) {
+                                locked = false;
+                            } else {
+                                let previouschapter = chapters[previousIndex];
+                                // Check if the annotations in the previous chapter are completed.
+                                let previouschapterannotations = self.annotations.filter((annotation) => {
+                                    return annotation.timestamp >= previouschapter.start
+                                        && annotation.timestamp < previouschapter.end && annotation.hascompletion == '1';
+                                });
+                                let completed = previouschapterannotations.every((annotation) => {
+                                    return annotation.completed;
+                                });
+                                if (completed) {
+                                    locked = false;
+                                } else {
+                                    locked = true;
+                                }
+                            }
+                        } else if (settings.lock == 'untilallprevious') {
+                            let previousAnnotations = self.annotations.filter((annotation) => {
+                                return annotation.timestamp < currentchapter.start && annotation.hascompletion == '1';
+                            });
+                            let completed = previousAnnotations.every((annotation) => {
+                                return annotation.completed;
+                            });
+                            if (completed) {
+                                locked = false;
+                            } else {
+                                locked = true;
+                            }
+                        } else if (settings.lock == 'untilcomplete') {
+                            if (self.options.isCompleted == false) {
+                                locked = true;
+                            }
+                        }
+                    }
+                }
+
+                if (locked) {
+                    let lockstring = M.util.get_string(settings.lock, 'ivplugin_chapter');
+                    self.addNotification(M.util.get_string('chapterlocked', 'ivplugin_chapter', lockstring), 'danger');
+                    // Go to the next chapter.
+                    self.player.pause();
+                    self.player.seek(currentchapter.start - 0.3);
+                    // Show the message.
+                }
+
                 $chapterlists.find('.chapter').removeClass('active-chapter');
                 $chapterlists.find(`.chapter[data-id=${currentchapter.id}]`).addClass('active-chapter');
                 if (currentchapter.id != 0) {
-                    $('#controller #chaptertitle').text(currentchapter.formattedtitle);
+                    $('#controller #chaptertitle').html(locked ? '<i class="fa fa-lock mx-2"></i>' : currentchapter.formattedtitle);
                 } else {
                     $('#controller #chaptertitle').text('');
                 }
             }
         });
+
+        // Hide or show annotations in the chapter if the chapter is locked.
+        if (!self.isEditMode() && !self.isPreviewMode() && !$('body').hasClass('editorview')) {
+            $(document).on('chapterrendered', (e) => {
+                let annotations = e.originalEvent.detail.annotations;
+                // If the first chapter doesn't start at the beginning, add a chapter at the beginning.
+                chapters.forEach((chapter) => {
+                    let settings = JSON.parse(chapter.advanced || '{}');
+                    let locked = false;
+                    if (settings.lock && settings.lock != '') {
+                        if (settings.lock == 'untilprevious') {
+                            let previousIndex = chapters.findIndex((c) => c.id == chapter.id) - 1;
+                            if (previousIndex < 0) {
+                                locked = false;
+                            } else {
+                                let previouschapter = chapters[previousIndex];
+                                // Check if the annotations in the previous chapter are completed.
+                                let previouschapterannotations = annotations.filter((annotation) => {
+                                    return annotation.timestamp >= previouschapter.start
+                                        && annotation.timestamp < previouschapter.end && annotation.hascompletion == '1';
+                                });
+                                let completed = previouschapterannotations.every((annotation) => {
+                                    return annotation.completed;
+                                });
+                                if (completed) {
+                                    locked = false;
+                                } else {
+                                    locked = true;
+                                }
+                            }
+                        } else if (settings.lock == 'untilallprevious') {
+                            let previousAnnotations = annotations.filter((annotation) => {
+                                return annotation.timestamp < chapter.start && annotation.hascompletion == '1';
+                            });
+                            let completed = previousAnnotations.every((annotation) => {
+                                return annotation.completed;
+                            });
+                            if (completed) {
+                                locked = false;
+                            } else {
+                                locked = true;
+                            }
+                        } else if (settings.lock == 'untilcomplete') {
+                            if (self.options.isCompleted == false) {
+                                locked = true;
+                            }
+                        }
+                    }
+                    if (locked) {
+                        $chapterlists.find(`.chapter[data-id=${chapter.id}]`).addClass('locked');
+                        $chapterlists.find(`.chapter[data-id=${chapter.id}] .annolistinchapter`).hide();
+                        $(`#video-nav ul li[data-id=${chapter.id}]`).html(`<div class="item locked" data-toggle="tooltip"
+                    data-container="#wrapper" data-trigger="hover" data-html="true"
+                    data-original-title='<i class="fa fa-lock mr-1"></i>${M.util.get_string(settings.lock, 'ivplugin_chapter')}'>
+                        <i class="fa fa-lock"></i></div>`);
+                        // Remove the annos within the chapter.
+                        const annotationsInChapter = annotations.filter((annotation) => {
+                            return annotation.timestamp >= chapter.start && annotation.timestamp < chapter.end;
+                        });
+                        annotationsInChapter.forEach((annotation) => {
+                            $(`#interactions-nav li[data-id=${annotation.id}]`).remove();
+                        });
+                    } else {
+                        $chapterlists.find(`.chapter[data-id=${chapter.id}]`).removeClass('locked');
+                        $chapterlists.find(`.chapter[data-id=${chapter.id}] .annolistinchapter`).show();
+                        $(`#video-nav ul li[data-id=${chapter.id}] .item i`).remove();
+                    }
+                });
+            });
+        }
 
         $chapterlists.on('click', '.chapter .chapter-title', function(e) {
             e.preventDefault();
@@ -149,6 +276,11 @@ export default class Chapter extends Base {
         if (Number(item.timestamp) > this.end || Number(item.timestamp) < this.start || this.isSkipped(item.timestamp)) {
             listItem.find('.title').addClass('text-muted');
         }
+        let lock = JSON.parse(item.advanced).lock;
+        if (JSON.parse(item.advanced).lock && JSON.parse(item.advanced).lock != '') {
+            listItem.find('.type-name')
+                .before(`<i class="fa fa-lock ml-2" title="${M.util.get_string(lock, 'ivplugin_chapter')}"></i>`);
+        }
         return listItem;
     }
 
@@ -189,6 +321,9 @@ export default class Chapter extends Base {
      * @param {object} annotation The annotation object
      */
     async runInteraction(annotation) {
+        if ($(document).find('#video-nav ul li[data-id=' + annotation.id + '] .item').hasClass('locked')) {
+            return;
+        }
         if (annotation.char1 != '1') {
             this.player.play();
             // Show the tooltip for 2 seconds.
