@@ -3,7 +3,8 @@ Ex. @container and clusterring. So, the workaround is to keep the code in the cu
 Interestingly, doing it this way, the code is compiled correctly. Use this file for styles that need processing, e.g. pix .
 Issue with doing it this way: Moodle is in subfolder ex. www.website.com/moodle */
 
-@import url("../mod/interactivevideo/libraries/custom-1.2.css"); /* Fallback for subfolder issue */
+@import url("../mod/interactivevideo/libraries/custom-1-2.css"); /* Fallback for subfolder issue */
+@import url("/mod/interactivevideo/libraries/custom-1-2.css");
 
 .path-mod-interactivevideo iframe[name="h5player"],
 .path-mod-interactivevideo #iframe,
