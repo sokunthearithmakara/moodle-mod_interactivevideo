@@ -27,6 +27,8 @@ define([
 ], function($, eventDispatcher, Toast, quickform) {
     const {dispatchEvent} = eventDispatcher;
     const ctRenderer = {};
+    const isBS5 = $('body').hasClass('bs-5');
+    const bsAffix = isBS5 ? '-bs' : '';
     let annotations, // Array of annotations.
         totaltime, // Video total time.
         activityType, // Current activityType.
@@ -84,11 +86,11 @@ define([
 
         $(".metadata").empty();
         if (actualAnnotationCounts > 0) {
-            $(".metadata").append(`<span class="d-inline-block mr-3">
-            <i class="bi bi-stopwatch mr-2"></i>${formatTime(Math.ceil(actualduration))}</span>
-            <span class="d-inline-block mr-3">
-        <i class="bi bi-bullseye mr-2"></i>${completedAnnos.length} / ${actualAnnotationCounts}</span>
-        <span class="d-inline-block"><i class="bi bi-star mr-2"></i>${xpEarned} / ${xp}</span>`);
+            $(".metadata").append(`<span class="d-inline-block iv-mr-3">
+            <i class="bi bi-stopwatch iv-mr-2"></i>${formatTime(Math.ceil(actualduration))}</span>
+            <span class="d-inline-block iv-mr-3">
+        <i class="bi bi-bullseye iv-mr-2"></i>${completedAnnos.length} / ${actualAnnotationCounts}</span>
+        <span class="d-inline-block"><i class="bi bi-star iv-mr-2"></i>${xpEarned} / ${xp}</span>`);
         }
 
         $("#interactions-nav ul").empty();
@@ -140,10 +142,10 @@ define([
                             .append(`<li class="border-bottom anno d-flex align-items-center justify-content-between
                          px-3 py-2 ${x.completed ? "completed" : ""}" data-id="${x.id}" data-timestamp="${x.timestamp}">
                          <span class="text-nowrap">
-                         <i class="small bi ${x.completed ? "bi-check-circle-fill text-success" : 'bi-circle'} mr-2"></i>
-                         <i class="${JSON.parse(x.prop).icon} mr-2"></i></span>
+                         <i class="small bi ${x.completed ? "bi-check-circle-fill text-success" : 'bi-circle'} iv-mr-2"></i>
+                         <i class="${JSON.parse(x.prop).icon} iv-mr-2"></i></span>
                          <span class="flex-grow-1 text-truncate">${x.formattedtitle}</span>
-                         <span class="text-nowrap">${x.xp}<i class="bi bi-star ml-1"></i></span></li>`);
+                         <span class="text-nowrap">${x.xp}<i class="bi bi-star iv-ml-1"></i></span></li>`);
                     }
                 });
             }
@@ -1287,7 +1289,7 @@ define([
                 if (document.fullscreenElement) {
                     $('#wrapper, #interactivevideo-container').addClass('fullscreen');
                     $("#video-wrapper").css('padding-bottom', '0');
-                    $('#wrapper [data-toggle="tooltip"]').tooltip({
+                    $(`#wrapper [data${bsAffix}-toggle="tooltip"]`).tooltip({
                         container: '#wrapper',
                         boundary: 'window',
                     });
@@ -1365,8 +1367,6 @@ define([
             $(document).on('click', '#controller #share', async function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                const $this = $(this);
-                $this.find('i').toggleClass('bi-share-fill bi-share');
                 let time = await player.getCurrentTime();
                 const url = window.location.href;
                 let shareurl = url + (url.indexOf('?') > 0 ? '&' : '?') + 't=' + Math.round(time);
@@ -1374,14 +1374,12 @@ define([
                 shareurl = shareurl.replace(/&embed=1/g, '');
                 // Add shareurl to clipboard.
                 await navigator.clipboard.writeText(shareurl);
-                $this.attr('data-original-title', M.util.get_string("copied", "mod_interactivevideo")).tooltip('show');
-                setTimeout(function() {
-                    // Change tooltip back to share.
-                    $this
-                        .attr('data-original-title', M.util.get_string("sharethismoment", "mod_interactivevideo"))
-                        .tooltip('hide');
-                    $this.find('i').toggleClass('bi-share-fill bi-share');
-                }, 2000);
+                const copied = M.util.get_string('copiedtoclipboard', 'mod_interactivevideo');
+                Toast.add(copied, {
+                    type: 'success',
+                    autohide: true,
+                    delay: 2000,
+                });
             });
 
             // Display time when user hover on the progress bar.
@@ -1636,7 +1634,7 @@ define([
                     $('#qualitieslist').append(`<a class="dropdown-item changequality text-white px-3" data-quality="${q}"
                          href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw"></i>${qualitiesLabel[i]}</a>`);
                 });
-                $(this).find('[data-toggle=dropdown]').dropdown('update');
+                $(this).find(`[data${bsAffix}-toggle=dropdown]`).dropdown('update');
             });
 
             $(document).on('click', '.changequality', function(e) {
@@ -1735,7 +1733,7 @@ define([
 
             $(document).on('annotationitemsrendered', function() {
                 try {
-                    $('#wrapper [data-toggle="tooltip"]').tooltip({
+                    $(`#wrapper [data${bsAffix}-toggle="tooltip"]`).tooltip({
                         container: '#wrapper',
                         boundary: 'window',
                     });
@@ -1791,7 +1789,7 @@ define([
             });
 
             if ($("body").hasClass('mobiletheme')) {
-                $('[data-toggle="tooltip"]').on('click', function() {
+                $(`[data${bsAffix}-toggle="tooltip"]`).on('click', function() {
                     const $this = $(this);
                     setTimeout(function() {
                         $this.tooltip('hide');
@@ -1886,9 +1884,9 @@ define([
                     $('.video-block').remove();
                 }
                 // Append a error button.
-                $('body').append(`<button id="autoplay-error" data-toggle="tooltip"
+                $('body').append(`<button id="autoplay-error" data${bsAffix}-toggle="tooltip"
                      title="${M.util.get_string('autoplayblocked', 'mod_interactivevideo')}"
-                    class="btn btn-danger p-2 rounded-circle pulse"><i class="bi bi-x-lg"></i></button>`);
+                    class="btn btn-danger p-2 iv-rounded-circle pulse"><i class="bi bi-x-lg"></i></button>`);
                 $('#autoplay-error').tooltip('show');
                 $(document).on('click', '#autoplay-error', function() {
                     $('#autoplay-error').tooltip('hide');

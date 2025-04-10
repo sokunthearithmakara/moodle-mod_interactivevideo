@@ -53,13 +53,14 @@ class form extends \mod_interactivevideo\form\base_form {
      * @return void
      */
     public function definition() {
-        global $COURSE, $OUTPUT;
+        global $COURSE, $OUTPUT, $CFG;
 
+        $bsaffix = $CFG->branch >= 500 ? '-bs' : '';
         $mform = &$this->_form;
 
         $this->standard_elements();
 
-        $mform->addElement('text', 'title', '<i class="bi bi-quote mr-2"></i>' . get_string('title', 'mod_interactivevideo'));
+        $mform->addElement('text', 'title', '<i class="bi bi-quote iv-mr-2"></i>' . get_string('title', 'mod_interactivevideo'));
         $mform->setType('title', PARAM_TEXT);
         $mform->setDefault('title', get_string('defaulttitle', 'mod_interactivevideo'));
         $mform->addRule('title', get_string('required'), 'required', null, 'client');
@@ -70,8 +71,8 @@ class form extends \mod_interactivevideo\form\base_form {
         $coursecontext = \context_course::instance($COURSE->id);
         $cb = new contentbank();
         // Prepare the toolbar.
-        $toolbar = '<div class="contentbank-toolbar bg-white p-2 d-flex align-items-center justify-content-between rounded-top">
-            <span class="font-weight-bold text-truncate mx-2">'
+        $toolbar = '<div class="contentbank-toolbar bg-white p-2 d-flex align-items-center justify-content-between iv-rounded-top">
+            <span class="iv-font-weight-bold text-truncate mx-2">'
             . get_string('selectoruploadcontent', 'ivplugin_contentbank') . '</span>';
 
         $contenttypes = [];
@@ -93,12 +94,12 @@ class form extends \mod_interactivevideo\form\base_form {
             }
 
             if (!empty($contenttypes)) {
-                $toolbar .= '<div class="dropdown ml-auto">
+                $toolbar .= '<div class="dropdown iv-ml-auto">
                                 <button class="btn btn-primary text-uppercase dropdown-toggle" type="button" id="addnewcontent"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="bi bi-plus-lg mr-2"></i>' . get_string('add', 'ivplugin_contentbank') . '
+                                data' . $bsaffix . '-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="bi bi-plus-lg iv-mr-2"></i>' . get_string('add', 'ivplugin_contentbank') . '
                                 </button>
-                                <div class="dropdown-menu dropdown-menu-right" id="addnewcontentdropdown"
+                                <div class="dropdown-menu dropdown-menu-right dropdown-menu-end" id="addnewcontentdropdown"
                                 aria-labelledby="addnewcontent">';
                 foreach ($contenttypes as $type) {
                     $icon = $type->typeicon;
@@ -126,16 +127,17 @@ class form extends \mod_interactivevideo\form\base_form {
 
         // Upload button.
         if (has_capability('moodle/contentbank:upload', $coursecontext)) {
-            $toolbar .= '<div class="btn btn-secondary ' . (empty($contenttypes) ? 'ml-auto' : 'ml-2') .
-                '" id="uploadcontentbank" data-toggle="tooltip" data-trigger="hover"  data-title="'
-                . get_string('upload', 'ivplugin_contentbank')
-                . '"><i class="bi bi-upload"></i></div>';
+            $toolbar .= '<div class="btn btn-secondary ' . (empty($contenttypes) ? 'iv-ml-auto' : 'iv-ml-2') .
+                '" id="uploadcontentbank" data' . $bsaffix . '-toggle="tooltip" data' . $bsaffix . '-trigger="hover"
+                data' . $bsaffix . '-title="' . get_string('upload', 'ivplugin_contentbank')
+                 . '"><i class="bi bi-upload"></i></div>';
         }
 
         // Refresh button.
-        $toolbar .= '<div class="btn btn-secondary ml-2"
-            id="refreshcontentbank" data-toggle="tooltip" data-editable="'
-            . has_capability('moodle/contentbank:useeditor', $coursecontext) . '" data-trigger="hover" data-title="'
+        $toolbar .= '<div class="btn btn-secondary iv-ml-2"
+            id="refreshcontentbank" data' . $bsaffix . '-toggle="tooltip" data-editable="'
+            . has_capability('moodle/contentbank:useeditor', $coursecontext) . '" data' . $bsaffix . '-trigger="hover" data'
+            . $bsaffix . '-title="'
             . get_string('resync', 'ivplugin_contentbank')
             . '"><i class="bi bi-arrow-repeat"></i></div></div>';
 
@@ -157,7 +159,7 @@ class form extends \mod_interactivevideo\form\base_form {
             return strcmp($a['name'], $b['name']);
         });
 
-        $html = '<div class="contentbank-container rounded-bottom bg-white">';
+        $html = '<div class="contentbank-container iv-rounded-bottom bg-white">';
 
         foreach ($contents as $content) {
             $editurl = new moodle_url(
@@ -171,20 +173,22 @@ class form extends \mod_interactivevideo\form\base_form {
                 . '"><div class="contentbank-item-details d-flex align-items-center">';
 
             if ($content['icon']) {
-                $html .= '<div class="contentbank-item-icon ml-3 mr-3" style="background-image: url('
+                $html .= '<div class="contentbank-item-icon iv-ml-3 iv-mr-3" style="background-image: url('
                     . $content['icon']
                     . ')"/></div>';
             } else {
-                $html .= '<div class="contentbank-item-icon ml-3 mr-3"></div>';
+                $html .= '<div class="contentbank-item-icon iv-ml-3 iv-mr-3"></div>';
             }
 
             $html .= '<div class="contentbank-item-name w-100">' . $content['name'] . '</div></div>';
-            $html .= '<div class="btn btn-sm ml-auto contentbankview" data-toggle="tooltip"  data-trigger="hover" data-title="'
+            $html .= '<div class="btn btn-sm iv-ml-auto contentbankview" data' . $bsaffix . '-toggle="tooltip"  data' . $bsaffix
+                . '-trigger="hover" data' . $bsaffix . '-title="'
                 . get_string('preview', 'ivplugin_contentbank')
                 . '"><i class="bi bi-eye-fill"></i></div>';
 
             if (has_capability('moodle/contentbank:useeditor', $coursecontext)) {
-                $html .= '<a class="btn btn-sm ml-2" target="_blank" data-toggle="tooltip" data-trigger="hover" data-title="'
+                $html .= '<a class="btn btn-sm iv-ml-2" target="_blank" data' . $bsaffix . '-toggle="tooltip" data' . $bsaffix
+                    . '-trigger="hover" data' . $bsaffix . '-title="'
                     . get_string('edit', 'ivplugin_contentbank')
                     . '" href="' . $editurl . '"><i class="bi bi-pencil-square"></i></a>';
             }
@@ -199,7 +203,7 @@ class form extends \mod_interactivevideo\form\base_form {
         }
         $html .= '</div>';
 
-        $mform->addElement('html', '<div class="contentbank contentbank rounded border border-secondary">'
+        $mform->addElement('html', '<div class="contentbank contentbank iv-rounded border border-secondary">'
             . $toolbar . $html . '</div><div id="contentbank-preview" class="mt-3"></div>');
 
         $mform->addElement('static', 'contentvalidation', '');
@@ -286,7 +290,7 @@ class form extends \mod_interactivevideo\form\base_form {
         $elements[] = $mform->createElement(
             'text',
             'timeonpassing',
-            '<i class="bi bi-clock mr-2"></i>' . get_string('timeonpassing', 'ivplugin_contentbank'),
+            '<i class="bi bi-clock iv-mr-2"></i>' . get_string('timeonpassing', 'ivplugin_contentbank'),
             [
                 'size' => 25,
                 'class' => 'timestamp-input',
@@ -359,7 +363,7 @@ class form extends \mod_interactivevideo\form\base_form {
         $elements[] = $mform->createElement(
             'text',
             'timeonfailed',
-            '<i class="bi bi-clock mr-2"></i>' . get_string('timeonfailed', 'ivplugin_contentbank'),
+            '<i class="bi bi-clock iv-mr-2"></i>' . get_string('timeonfailed', 'ivplugin_contentbank'),
             [
                 'size' => 25,
                 'class' => 'timestamp-input',

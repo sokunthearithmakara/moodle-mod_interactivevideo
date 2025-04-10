@@ -59,7 +59,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      */
     public function definition() {
         global $CFG, $PAGE, $USER;
-
+        $bsaffix = $CFG->branch >= 500 ? '-bs' : '';
         $current = $this->current;
 
         $mform = $this->_form;
@@ -238,12 +238,12 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         // Adding the standard "name" field.
         $mform->addElement('text', 'name', get_string('interactivevideoname', 'mod_interactivevideo'), [
             'size' => '100',
-            'data-toggle' => "tooltip",
-            'data-trigger' => "hover",
-            'data-placement' => "auto",
-            'data-boundary' => "viewport",
-            'data-original-title' => '💡' . get_string('nametip', 'mod_interactivevideo'),
-            'data-html' => "true",
+            "data$bsaffix-toggle" => "tooltip",
+            "data$bsaffix-trigger" => "hover",
+            "data$bsaffix-placement" => "auto",
+            "data$bsaffix-boundary" => "viewport",
+            "data$bsaffix-title" => '💡' . get_string('nametip', 'mod_interactivevideo'),
+            "data$bsaffix-html" => "true",
         ]);
 
         if (!empty($CFG->formatstringstriptags)) {
@@ -269,12 +269,12 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 [
                     'size' => '100',
                     'placeholder' => '00:00:00.00',
-                    'data-toggle' => "tooltip",
-                    'data-trigger' => "hover",
-                    'data-placement' => "auto",
-                    'data-boundary' => "viewport",
-                    'data-original-title' => '💡' . get_string('starttip', 'mod_interactivevideo'),
-                    'data-html' => "true",
+                    "data$bsaffix-toggle" => "tooltip",
+                    "data$bsaffix-trigger" => "hover",
+                    "data$bsaffix-placement" => "auto",
+                    "data$bsaffix-boundary" => "viewport",
+                    "data$bsaffix-title" => '💡' . get_string('starttip', 'mod_interactivevideo'),
+                    "data$bsaffix-html" => "true",
                     'data-timestamp' => "true",
                 ]
             );
@@ -296,12 +296,12 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 [
                     'size' => '100',
                     'placeholder' => '00:00:00.00',
-                    'data-toggle' => "tooltip",
-                    'data-trigger' => "hover",
-                    'data-placement' => "auto",
-                    'data-boundary' => "viewport",
-                    'data-original-title' => '💡' . get_string('endtip', 'mod_interactivevideo'),
-                    'data-html' => "true",
+                    "data$bsaffix-toggle" => "tooltip",
+                    "data$bsaffix-trigger" => "hover",
+                    "data$bsaffix-placement" => "auto",
+                    "data$bsaffix-boundary" => "viewport",
+                    "data$bsaffix-title" => '💡' . get_string('endtip', 'mod_interactivevideo'),
+                    "data$bsaffix-html" => "true",
                     'data-timestamp' => "true",
                 ]
             );
@@ -320,7 +320,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'static',
                 'endtip',
                 '',
-                '<small class="text-muted"><i class="fa fa-stopwatch mr-1"></i><span
+                '<small class="text-muted"><i class="fa fa-stopwatch iv-mr-1"></i><span
                  id="videototaltime"></span></small>'
             );
         }

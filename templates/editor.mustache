@@ -21,20 +21,25 @@ Example context (json):
 }}
 <div id="wrapper">
     <div id="top-region">
-        <div class="row m-0 position-relative">
+        <div class="iv-row m-0 position-relative">
             <div class="p-3" id="player-region">
                 {{! Player }}
                 <div id="video-wrapper">
-                {{! start of toolbar}}
-                <div id="toolbar" class="bg-transparent pt-5 position-fixed"></div>
-                {{! end of toolbar }}
-                <div class="position-absolute w-100 h-100 no-pointer bg-transparent" id="background-loading" style="display:none;">
-                    <div class="d-flex h-100 align-items-center justify-content-center">
-                        <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;" role="status">
-                            <span class="sr-only">Loading...</span>
+                    {{! start of toolbar}}
+                    <div id="toolbar" class="bg-transparent pt-5 position-fixed"></div>
+                    {{! end of toolbar }}
+                    <div class="position-absolute w-100 h-100 no-pointer bg-transparent"
+                         id="background-loading"
+                         style="display:none">
+                        <div class="d-flex h-100 align-items-center justify-content-center">
+                            <div class="spinner-border text-danger"
+                                 style="width: 3rem;
+                                        height: 3rem"
+                                 role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
                         </div>
                     </div>
-                </div>
                     <div id="annotation-canvas" class="d-none w-0">
                         <div id="video-block"
                              class="position-absolute w-100 h-100"
@@ -42,32 +47,33 @@ Example context (json):
                         {{#html5}}
                         <video id="player" class="w-100 bg-black">
                         </video>
-                        {{/html5}}
-                        {{^html5}}
-                        <div id="player" class="w-100 p-0"></div>
-                        {{/html5}}
-                </div>
+                    {{/html5}}
+                    {{^html5}}
+                    <div id="player" class="w-100 p-0"></div>
+                {{/html5}}
+            </div>
         </div>
         <div id="annotation-content" class="w-100 position-relative"></div>
     </div>
     <div id="separator"
-         class="d-none border-left d-lg-flex align-items-center justify-content-center h-100 position-absolute z-index-1">
+         class="d-none iv-border-left d-lg-flex align-items-center justify-content-center h-100 position-absolute z-index-1">
         <i class="position-absolute bi bi-grip-vertical"></i>
     </div>
     <div class="p-3 position-relative" id="content-region">
-        <div class="w-100 h-100 overflow-auto border rounded-lg" id="contentblock">
+        <div class="w-100 h-100 overflow-auto border iv-rounded-lg" id="contentblock">
             {{! action bar }}
             <div id="video-action"
                  class="px-3 py-2 bg-light d-flex align-items-center justify-content-between mx-auto w-100 position-sticky">
                 <div class="text-truncate">
-                    <span class="h4 mb-0 text-truncate font-weight-bold">{{{title}}}</span>
+                    <span class="h4 mb-0 text-truncate iv-font-weight-bold">{{{title}}}</span>
                 </div>
                 <div class="d-flex align-items-center">
                     <div class="btn border-0" id="xp">
-                        <span class="font-weight-bold">0</span>
-                        <i class="bi bi-star ml-1"></i>
+                        <span class="iv-font-weight-bold">0</span>
+                        <i class="bi bi-star iv-ml-1"></i>
                     </div>
-                    <span class="mx-2 font-weight-bold text-truncate" title="{{#str}}gradenoun{{/str}}"> / {{grade}}</span>
+                    <span class="mx-2 iv-font-weight-bold text-truncate"
+                          title="{{#str}}gradenoun{{/str}}">/ {{grade}}</span>
                 </div>
             </div>
             {{! content item list }}
@@ -81,6 +87,16 @@ Example context (json):
                         </tr>
                     </tbody>
                 </table>
+                <div id="annotation-list-bulk">
+                    <button class="btn btn-sm" id="annotation-list-bulk-edit">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <div class="bulk-actions" style="display:none">
+                        <button class="btn btn-sm" id="annotation-list-bulk-delete">
+                            <i class="bi bi-trash3-fill text-danger"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
             {{! content item template }}
             <table>
@@ -90,22 +106,25 @@ Example context (json):
                     data-id="0"
                     data-type="">
                     <td>
-                        <span data-editable="timestamp"
-                              title="{{#str}}goto, mod_interactivevideo{{/str}}"
-                              class="timestamp bg-light px-2 py-1 rounded-sm text-truncate">0</span>
-                        <input type="text"
-                               name="timestampassist"
-                               data-field="timestamp" title="{{#str}}rightclicktosetcurrenttime, mod_interactivevideo{{/str}}"
-                               class="form-control form-control-sm d-none">
+                        <div class="d-flex align-items-center">
+                            <span data-editable="timestamp"
+                                  title="{{#str}}goto, mod_interactivevideo{{/str}}"
+                                  class="timestamp bg-light px-2 py-1 iv-rounded-sm text-truncate">0</span>
+                            <input type="text"
+                                   name="timestampassist"
+                                   data-field="timestamp"
+                                   title="{{#str}}rightclicktosetcurrenttime, mod_interactivevideo{{/str}}"
+                                   class="form-control form-control-sm d-none">
+                        </div>
                     </td>
                     <td>
                         <div class="w-100 d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center flex-grow-1 type-name rotatey-360">
-                                <button class="border-0 btn btn-sm type-icon mr-2" title="">
+                                <button class="border-0 btn btn-sm type-icon iv-mr-2" title="">
                                     <i class="fa fa-fw"></i>
                                 </button>
                                 <span data-editable="title"
-                                      class="title font-weight-bold text-primary cursor-pointer"></span>
+                                      class="title iv-font-weight-bold text-primary cursor-pointer"></span>
                                 <input type="text"
                                        data-field="title"
                                        class="form-control form-control-sm d-none">
@@ -115,7 +134,7 @@ Example context (json):
                                       title="{{#str}}xppoint, mod_interactivevideo{{/str}}"
                                       class="border-0 p-1 btn btn-sm xp">
                                     <span></span>
-                                    <i class="bi bi-star ml-1"></i>
+                                    <i class="bi bi-star iv-ml-1"></i>
                                 </span>
                                 <input type="number"
                                        min="0"
@@ -146,6 +165,5 @@ Example context (json):
 {{! content type modal }}
 {{> mod_interactivevideo/addcontenttype }}
 {{> mod_interactivevideo/editortimeline }}
-
 {{! a little hack for sites that use classic-based themes }}
 {{> mod_interactivevideo/blocksettingshack }}

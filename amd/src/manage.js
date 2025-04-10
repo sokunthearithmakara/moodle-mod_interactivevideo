@@ -21,9 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define([
-    'jquery',
-], function($) {
+define(['jquery'], function($) {
+    const bsAffix = $('body').hasClass('bs-5') ? '-bs' : '';
     return {
         settings: async function(courseid, coursecontextid, userid) {
             let addToast = await import('core/toast');
@@ -75,15 +74,15 @@ define([
                 sectionname = tabledata.column(sectionnameIndex).data().unique().sort();
                 const videotypeIndex = $(`#videolist thead th.type`).index();
                 videotype = tabledata.column(videotypeIndex).data().unique().sort();
-                $(`<a class="btn rounded-sm btn-secondary font-weight-bold ml-1" href="javascript:void(0)"
+                $(`<a class="btn iv-rounded-sm btn-secondary iv-font-weight-bold iv-ml-1" href="javascript:void(0)"
                      id="filters" title="${M.util.get_string('filters', "mod_interactivevideo")}">
                      <i class="fa fa-filter"></i></a>`)
                     .insertAfter("#videolist_filter");
                 $(`.btn#filters`).on('click', function() {
                     $('.search-container').slideToggle('fast', 'swing');
                 });
-                $(`<div class="bg-light rounded hide mb-0 search-container w-100 p-3" id="video-filters">
-                    <div class="px-0 form-group form-group-sm font-size-sm form-row pt-1 w-100 mb-0">
+                $(`<div class="bg-light iv-rounded hide mb-0 search-container w-100 p-3" id="video-filters">
+                    <div class="px-0 iv-form-group iv-form-group-sm font-size-sm form-row row pt-1 w-100 mb-0">
                     <div class="col-4 mb-1 title">
                         <label class="small text-muted d-block">${M.util.get_string('title', "mod_interactivevideo")}</label>
                         <input type="text" class="form-control form-control-sm mb-1 w-100" data-col="title">
@@ -134,13 +133,13 @@ define([
                             retrn += `<a href="javascript:void(0)" data-href="${M.cfg.wwwroot}/course/modedit.php?update=${row.id}"
                              class="p-1 iv_quickform" data-contextid="${row.contextid}" data-cmid="${row.id}"
                               data-interaction="${row.instance}" data-courseid="${row.courseid}"
-                              data-toggle="tooltip" data-placement="right" data-html="true"
+                              data${bsAffix}-toggle="tooltip" data${bsAffix}-placement="right" data${bsAffix}-html="true"
                               title="${M.util.get_string('edit', 'mod_interactivevideo')}">
                              <i class="fa fa-edit" aria-hidden="true"></i></a>`;
                         }
                         if (row.editinteraction) {
                             retrn += `<a href="${M.cfg.wwwroot}/mod/interactivevideo/interactions.php?id=${row.id}" target="_blank"
-                            class="p-1" data-toggle="tooltip" data-placement="right"
+                            class="p-1" data${bsAffix}-toggle="tooltip" data${bsAffix}-placement="right"
                              title="${M.util.get_string('interactions', 'mod_interactivevideo')}">
                              <i class="fa fa-bullseye" aria-hidden="true"></i></a>`;
                         }
@@ -148,7 +147,7 @@ define([
                             retrn += `<a href="${M.cfg.wwwroot}/mod/interactivevideo/report.php?id=${row.id}" target="_blank"
                              data-title="${row.title}"
                              data-href="${M.cfg.wwwroot}/mod/interactivevideo/report.php?id=${row.id}"
-                              data-toggle="tooltip" data-placement="right" data-html="true"
+                              data${bsAffix}-toggle="tooltip" data${bsAffix}-placement="right" data${bsAffix}-html="true"
                              title="${M.util.get_string('report', 'mod_interactivevideo')}"
                              class="p-1 launch-report"><i class="fa fa-table" aria-hidden="true"></i></a>`;
                         }
@@ -179,7 +178,7 @@ define([
                                         </div>
                                 </div>
                                 <a href="${M.cfg.wwwroot + '/mod/interactivevideo/view.php?id='
-                                + row.id}" target="_blank" class="title font-weight-bold py-2 px-3"
+                                + row.id}" target="_blank" class="title iv-font-weight-bold py-2 px-3"
                                       title="${row.title}">${row.title}</a>
                                 </div>`;
                         }
@@ -326,9 +325,10 @@ define([
                     }
                 ],
                 "initComplete": function() {
+                    $(`[data${bsAffix}-toggle="tooltip"]`).tooltip();
                     $("table#videolist").wrap("<div style='overflow:auto;position:relative' class='tablewrapper'></div>");
-                    $("#list .dataTables_length").addClass("d-inline ml-1");
-                    $("#list .dataTables_filter").addClass("d-inline float-right");
+                    $("#list .dataTables_length").addClass("d-inline iv-ml-1");
+                    $("#list .dataTables_filter").addClass("d-inline iv-float-right");
                     $("#list .table-responsive").addClass("p-1");
                     $("#list .spinner-grow").remove();
                     $("table#videolist").removeClass("d-none");
@@ -451,13 +451,13 @@ define([
                     // Insert the bulk actions
                     $('#bulkactions').remove();
                     $('#videolist_length').after(`<div class="d-flex align-items-center" id="bulkactions"><button type="button"
-                        class="btn btn-sm btn-secondary ml-1" id="bulkreset">
+                        class="btn btn-sm btn-secondary iv-ml-1" id="bulkreset">
                         ${M.util.get_string('resetsettings', 'mod_interactivevideo')}</button>
                         <button type="button"
-                        class="btn btn-sm btn-secondary ml-1" id="bulkappearance">
+                        class="btn btn-sm btn-secondary iv-ml-1" id="bulkappearance">
                         ${M.util.get_string('appearancesettings', 'mod_interactivevideo')}</button>
                         <button type="button"
-                        class="btn btn-sm btn-secondary ml-1" id="bulkbehavior">
+                        class="btn btn-sm btn-secondary iv-ml-1" id="bulkbehavior">
                         ${M.util.get_string('behaviorsettings', 'mod_interactivevideo')}</button>
                         </div>`);
                 } else {
@@ -630,10 +630,10 @@ define([
                             {key: 'resettodefaults', component: 'mod_interactivevideo'},
                         ]);
                         $('[data-region="footer"]').css('align-items', 'unset')
-                            .prepend(`<span class="btn btn-secondary mr-1 default" title="${strings[1]}">
+                            .prepend(`<span class="btn btn-secondary iv-mr-1 default" title="${strings[1]}">
                                 <i class="fa fa-refresh"></i></span>
-                                <a type="button" class="btn btn-secondary mr-auto" target="_blank" data-dismiss="modal"
-                                 title="${strings[0]}"
+                                <a type="button" class="btn btn-secondary iv-mr-auto" target="_blank" data-dismiss="modal"
+                                 title="${strings[0]}"  data-bs-dismiss="modal"
                                  href="${M.cfg.wwwroot}/course/modedit.php?update=${formdata.cmid}"><i class="fa fa-cog"></i>
                                  </a>`);
                     }, 2000);

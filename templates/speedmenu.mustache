@@ -25,16 +25,16 @@
 }}
 <div class="btn-group dropup d-none" id="changerate">
             <span role="button"
-                  data-toggle="dropdown"
+                  data{{bs}}-toggle="dropdown"
                   aria-haspopup="true"
                   aria-expanded="false"
                   class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1">
                 <i class="bi bi-speedometer2"
-                   data-toggle="tooltip"
-                   data-trigger="focus"
-                   title="{{#str}}changeplaybackspeed,mod_interactivevideo{{/str}}"></i>
+                   data{{bs}}-toggle="tooltip" data-bs-container="#wrapper"
+                   data{{bs}}-trigger="hover"
+                   data{{bs}}-title="{{#str}}changeplaybackspeed,mod_interactivevideo{{/str}}"></i>
             </span>
-            <div class="dropdown-menu dropdown-menu-right bg-black">
+            <div class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black">
                 <a class="dropdown-item text-white changerate px-3" data-rate="0.5" href="#"><i class="bi fa-fw"></i>0.5</a>
                 <a class="dropdown-item text-white changerate px-3" data-rate="0.75" href="#"><i class="bi fa-fw"></i>0.75</a>
                 <a class="dropdown-item text-white changerate px-3" data-rate="1" href="#"><i class="bi fa-fw bi-check"></i>1</a>

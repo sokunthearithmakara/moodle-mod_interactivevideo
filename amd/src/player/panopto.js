@@ -225,7 +225,7 @@ class Panopto {
                         $('#start-screen #spinner').remove();
                         $('.video-block, #video-block').addClass('no-pointer bg-transparent');
                         // $('#start-screen').addClass('no-pointer');
-                        $('#annotation-canvas').removeClass('d-none');
+                        $('#annotation-canvas').removeClass('d-none w-0');
                         if (opts.editform) {
                             if (!ready) {
                                 const errorString = await getString('errorplaynotallowed', 'mod_interactivevideo');
@@ -251,7 +251,7 @@ class Panopto {
                 onLoginShown: function() {
                     $('#start-screen').addClass('d-none');
                     $('.video-block, #video-block').addClass('no-pointer bg-transparent');
-                    $('#annotation-canvas').removeClass('d-none');
+                    $('#annotation-canvas').removeClass('d-none w-0');
                 }
             }
         };

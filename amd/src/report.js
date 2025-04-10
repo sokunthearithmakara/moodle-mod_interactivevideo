@@ -55,6 +55,8 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
     window.JSZip = JSZip;
     let DataTable = $.fn.dataTable;
     let player;
+    const isBS5 = $('body').hasClass('bs-5');
+    // Const bsAffix = isBS5 ? '-bs' : '';
 
     quickform();
 
@@ -114,13 +116,14 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                     // Don't include empty options.
                     options = options.filter(x => x !== '');
                     if (options.length > 1) {
-                    options.sort();
-                    input = `<select class="custom-select custom-select-sm w-100" multiple id="filter-${element.index}"
+                        options.sort();
+                        input = `<select class="${isBS5 ? 'form' : 'custom'}-select ${isBS5 ? 'form' : 'custom'}-select-sm w-100"
+                         multiple id="filter-${element.index}"
                          data-index="${element.index}">
                             ${options.map(x => `<option value="${x}">${x}</option>`).join('')}
                         </select>`;
                     } else {
-                    input = `<input type="text" class="form-control form-control-sm" id="filter-${element.index}"
+                        input = `<input type="text" class="form-control form-control-sm" id="filter-${element.index}"
                          data-index="${element.index}"/>`;
                     }
                     break;
@@ -130,8 +133,9 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                     // Don't include empty options.
                     optionsc = optionsc.filter(x => x !== '');
                     if (optionsc.length > 1) {
-                    optionsc.sort();
-                    input = `<select class="custom-select custom-select-sm w-100" multiple id="filter-${element.index}"
+                        optionsc.sort();
+                        input = `<select class="${isBS5 ? 'form' : 'custom'} ${isBS5 ? 'form' : 'custom'}-sm w-100"
+                         multiple id="filter-${element.index}"
                          data-index="${element.index}">
                             ${optionsc.map(x => `<option value="${x}">${x}</option>`).join('')}
                         </select>`;
@@ -154,8 +158,8 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                          data-index="${element.index}"/>`;
                     break;
             }
-            return `<div class="col-sm-6 col-md-4 col-lg-3 col-xl-${element.type == 'datetime' ? '4' : '2'} pl-0 pr-2 mb-2">
-                                    <div class="form-group mb-1">
+            return `<div class="col-sm-6 col-md-4 col-lg-3 col-xl-${element.type == 'datetime' ? '4' : '2'} iv-pl-0 iv-pr-2 mb-2">
+                                    <div class="iv-form-group mb-1">
                                     <label for="filter-${element.index}">${element.text}</label>
                                         ${input}
                                     </div>
@@ -229,7 +233,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                     // Put _target=blank to open the user profile in a new tab (use regex)
                     data = data.replace(/<a /g, '<a target="_blank" ');
                     return `<div class="d-flex align-items-center">
-                    ${access.canedit == 1 ? `<input class="mr-3" type="checkbox"
+                    ${access.canedit == 1 ? `<input class="iv-mr-3" type="checkbox"
                          data-record="${row.completionid}" ${row.timecreated > 0 ? '' : 'disabled'}
                          data-userid="${row.id}"/>` : ''}
                     <div class="text-truncate d-flex align-items-center justify-content-between flex-grow-1">${data}
@@ -321,7 +325,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                         return data + "%";
                     } else {
                         if (type === 'display') {
-                        return "";
+                            return "";
                         }
                         return 0;
                     }
@@ -405,7 +409,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             stateSave: true,
             "dom": `<'d-flex w-100 justify-content-between`
                 + `'<'d-flex align-items-center'Bl>'<''f>>`
-                + `<'#filterregion.w-100 row mx-0 my-2 p-3 bg-light rounded border'>t<'row mt-2'<'col-sm-6'i><'col-sm-6'p>>`,
+                + `<'#filterregion.w-100 row mx-0 my-2 p-3 bg-light iv-rounded border'>t<'row mt-2'<'col-sm-6'i><'col-sm-6'p>>`,
             "buttons": [
                 {
                     extend: "copyHtml5",
@@ -571,14 +575,14 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 }
                 $("table#completiontable")
                     .wrap("<div style='overflow:auto;position:relative' class='completiontablewrapper my-2'></div>");
-                $("#reporttable .dataTables_length ").addClass("d-inline ml-1");
-                $("#reporttable .dataTables_filter").addClass("d-inline float-right");
+                $("#reporttable .dataTables_length ").addClass("d-inline iv-ml-1");
+                $("#reporttable .dataTables_filter").addClass("d-inline iv-float-right");
                 $("#reporttable .table-responsive").addClass("p-1");
                 $("#reporttable .spinner-grow").remove();
                 $("table#completiontable").removeClass("d-none");
                 $("#background-loading").fadeOut(300);
 
-                $(`<a class="btn btn-sm btn-secondary font-weight-bold ml-1 d-inline-block"
+                $(`<a class="btn btn-sm btn-secondary iv-font-weight-bold iv-ml-1 d-inline-block"
                     href="javascript:void(0)" id="filters"
                     title="Filter"><i class="bi bi-funnel left fa-fw fs-unset"></i></a>`).insertAfter(".dataTables_filter label");
                 $(document).off('click', '#filters').on('click', '#filters', function() {
@@ -592,21 +596,22 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 });
 
                 // Init select2
-                $('#filterregion .custom-select[multiple]').select2({
+                $(`#filterregion .${isBS5 ? 'form' : 'custom'}-select[multiple]`).select2({
                     dropdownParent: $('body'), // Little hack to prevent page overflow when select2 is open
                     width: '100%',
                     placeholder: M.util.get_string('select', 'mod_interactivevideo'),
                     allowClear: true,
                 });
-                $('.custom-select').on('select2:open', function(e) { // Little hack to prevent page overflow when select2 is open
-                    const evt = "scroll.select2";
-                    $(e.target).parents().off(evt);
-                    $(window).off(evt);
-                });
+                $(`.${isBS5 ? 'form' : 'custom'}-select`)
+                    .on('select2:open', function(e) { // Little hack to prevent page overflow when select2 is open
+                        const evt = "scroll.select2";
+                        $(e.target).parents().off(evt);
+                        $(window).off(evt);
+                    });
 
                 // Date range for timecreated.
-                $("#filterregion").append(`<div class="col-sm-6 col-md-4 col-lg-3 col-xl-4 pl-0 pr-2 mb-2">
-                    <div class="form-group mb-1" id="timecreatedrange">
+                $("#filterregion").append(`<div class="col-sm-6 col-md-4 col-lg-3 col-xl-4 iv-pl-0 iv-pr-2 mb-2">
+                    <div class="iv-form-group mb-1" id="timecreatedrange">
                     <label for="timecreatedrange">${M.util.get_string('timecreatedrange', 'mod_interactivevideo')}</label>
                     <div class="input-group input-group-sm">
                         <input type="date" class="form-control" id="timecreatedstart"/>
@@ -614,8 +619,8 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                     </div>
                     </div>
                 </div>
-                <div class="col-sm-6 col-md-4 col-lg-3 col-xl-4 pl-0 pr-2 mb-2">
-                    <div class="form-group mb-1" id="timecompletedrange">
+                <div class="col-sm-6 col-md-4 col-lg-3 col-xl-4 iv-pl-0 iv-pr-2 mb-2">
+                    <div class="iv-form-group mb-1" id="timecompletedrange">
                     <label for="timecompletedrange">${M.util.get_string('timecompletedrange', 'mod_interactivevideo')}</label>
                     <div class="input-group input-group-sm">
                         <input type="date" class="form-control" id="timecompletedstart"/>
@@ -628,6 +633,10 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 $("#filterregion").append(`<div class="col-12 p-0 mx-0">
                     <span class="text-muted small">${M.util.get_string('separatesearchtermsbyslash', 'mod_interactivevideo')}</span>
                     </div>`);
+                $(`table [data${isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip();
+                if (isBS5) {
+                    $('.custom-select').toggleClass('custom-select form-select');
+                }
             }
             // ...existing datatableOptions properties if any
         };
@@ -656,6 +665,14 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                             } else {
                                 return '-';
                             }
+                        }
+                        // Convert tooltip bs4 to bs5 for reportView.
+                        if (isBS5) {
+                            details.reportView = details.reportView.replace(/data-toggle="tooltip"/g, 'data-bs-toggle="tooltip"');
+                            details.reportView = details.reportView.replace(/data-original-title/g, 'data-bs-original-title');
+                            details.reportView = details.reportView.replace(/data-title/g, 'title');
+                            details.reportView = details.reportView.replace(/data-placement/g, 'data-bs-placement');
+                            details.reportView = details.reportView.replace(/data-html/g, 'data-bs-html');
                         }
                         let res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"
                                  data-id="${itemid}" data-userid="${row.id}" data-type="${ctype}">${details.reportView}</span>`;
@@ -719,6 +736,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             deselectedRows.every(function() {
                 var row = this.node();
                 $(row).find("td:first-child input").prop("checked", false);
+                return true;
             });
 
             // Allow 20 rows to be selected at once.
@@ -727,8 +745,8 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             if (selectedRows.count() > 0 && selectedRows.count() <= 20) {
                 // Insert the bulk actions
                 $('#completiontable_length').after(`<div class="d-flex align-items-center" id="bulkactions">
-                    <button class="btn btn-sm btn-danger ml-1" id="bulkdelete">
-                        <i class="bi bi-trash3 mr-1 fs-unset"></i>${M.util.get_string('delete', 'mod_interactivevideo')}
+                    <button class="btn btn-sm btn-danger iv-ml-1" id="bulkdelete">
+                        <i class="bi bi-trash3 iv-mr-1 fs-unset"></i>${M.util.get_string('delete', 'mod_interactivevideo')}
                          (${selectedRows.count()})
                     </button>
                     </div>`);
@@ -939,7 +957,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 return;
             }
             let userid = $this.closest('tr').attr('id');
-            let userfullname = $this.closest('tr').find('td').eq(0).text();
+            let userfullname = data.find(x => x.id == userid).fullname;
             let recordid = $this.closest('tr').find('td').eq(0).find('button').data('record');
             let cellIndex = $this.index();
             let title = $this.closest('table').find('th').eq(cellIndex).text();
@@ -1041,11 +1059,11 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
          aria-hidden="true" data-backdrop="static" data-keyboard="false">
          <div id="message" data-id="${theAnnotation.id}" data-placement="popup"
           class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable ${theAnnotation.type}" role="document">
-            <div class="modal-content rounded-lg">
+            <div class="modal-content iv-rounded-lg">
                 <div class="modal-header d-flex align-items-center shadow-sm" id="title">
                     <h5 class="modal-title text-truncate mb-0">${title}</h5>
                     <div class="btns d-flex align-items-center">
-                        <button class="btn close-modal p-0 border-0" aria-label="Close" data-dismiss="modal">
+                        <button class="btn close-modal p-0 border-0" aria-label="Close" data${isBS5 ? '-bs' : ''}-dismiss="modal">
                         <i class="bi bi-x-lg fa-fw fs-25px"></i>
                         </button>
                     </div>
@@ -1170,6 +1188,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                             targetdata.completiondetails = null;
                             targetdata.completionid = null;
                             tabledata.row(this.node()).data(targetdata);
+                            return true;
                         });
                         tabledata.draw();
                         addToast(M.util.get_string('completionresetsuccess', 'mod_interactivevideo'), {
@@ -1315,8 +1334,8 @@ const renderAnnotationLogs = (data, node, title) => {
         "initComplete": function() {
             $(`${node} table`)
                 .wrap("<div style='overflow:auto;position:relative;width:100%' class='completiontablewrapper'></div>");
-            $(`${node} .dataTables_length`).addClass("d-inline ml-1");
-            $(`${node} .dataTables_filter`).addClass("d-inline float-right");
+            $(`${node} .dataTables_length`).addClass("d-inline iv-ml-1");
+            $(`${node} .dataTables_filter`).addClass("d-inline iv-float-right");
             $(`${node} .table-responsive`).addClass("p-1");
         }
     };

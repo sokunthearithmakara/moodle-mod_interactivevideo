@@ -24,36 +24,36 @@ Example context (json):
             <button class="btn btn-sm py-0 px-2 btn-primary text-uppercase mx-2 border-0"
                     type="button"
                     id="addcontent">
-                <i class="bi bi-plus-lg mx-1"></i>{{#str}}add,mod_interactivevideo{{/str}}
+                <i class="bi bi-plus-lg mx-1"></i><span class="d-none d-md-inline">{{#str}}add,mod_interactivevideo{{/str}}</span>
             </button>
             <button class="btn btn-sm py-0 px-2 btn-secondary text-uppercase mx-1 rotatez-360 border-0"
                     type="button"
                     id="importcontent">
-                <i class="bi bi-arrow-down mx-1"></i>{{#str}}import,mod_interactivevideo{{/str}}
+                <i class="bi bi-arrow-down mx-1"></i><span class="d-none d-md-inline">{{#str}}import,mod_interactivevideo{{/str}}</span>
             </button>
         </div>
         <div class="col text-center d-flex align-items-center justify-content-center"
              id="playbutton" >
-            <button class="btn btn-sm py-0 px-1 text-white border-0 bg-transparent" type="button" id="rewind" title="{{#str}}rewind200,mod_interactivevideo{{/str}}" >
+            <button class="btn btn-sm py-0 px-1 text-white border-0 bg-transparent d-none d-sm-inline" type="button" id="rewind" title="{{#str}}rewind200,mod_interactivevideo{{/str}}" >
                 <i class="bi bi-rewind-fill"></i>
             </button>
             <button class="btn btn-sm py-0 px-1 text-white mx-3 border-0 bg-transparent" title="{{#str}}playpause,mod_interactivevideo{{/str}}" type="button" id="playpause">
                 <i class="bi bi-play-fill fs-35px"></i>
             </button>
-            <button class="btn btn-sm py-0 px-1 text-white border-0 bg-transparent" type="button" id="fast-forward" title="{{#str}}fastforward200,mod_interactivevideo{{/str}}" >
+            <button class="btn btn-sm py-0 px-1 text-white border-0 bg-transparent d-none d-sm-inline" type="button" id="fast-forward" title="{{#str}}fastforward200,mod_interactivevideo{{/str}}" >
                 <i class="bi bi-fast-forward-fill"></i>
             </button>
-            <span id="timeline-timestamp"><span class="text-white" id="currenttime">00:00</span><span class="mx-1">/</span><span class="text-white" id="duration">00:00</span></span>
+            <span id="timeline-timestamp" class="d-none d-md-inline"><span class="text-white" id="currenttime">00:00</span><span class="mx-1">/</span><span class="text-white" id="duration">00:00</span></span>
             <div class="btn-group dropup d-none" id="changerate">
                 <span role="button"
-                      data-toggle="dropdown"
+                      data{{bs}}-toggle="dropdown"
                       aria-haspopup="true"
                       aria-expanded="false"
                       class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1"><i class="bi bi-speedometer2"
-   data-toggle="tooltip"
-   data-trigger="focus"
+   data{{bs}}-toggle="tooltip"
+   data{{bs}}-trigger="focus"
    title="{{#str}}changeplaybackspeed,mod_interactivevideo{{/str}}"></i></span>
-                <div class="dropdown-menu dropdown-menu-right bg-black">
+                <div class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black">
                     <a class="dropdown-item changerate px-3" data-rate="0.5" href="#"><i class="bi fa-fw"></i>0.5</a>
                     <a class="dropdown-item changerate px-3" data-rate="0.75" href="#"><i class="bi fa-fw"></i>0.75</a>
                     <a class="dropdown-item changerate px-3" data-rate="1" href="#"><i class="bi fa-fw bi-check"></i>1</a>
@@ -63,16 +63,16 @@ Example context (json):
             </div>
             <div class="d-none btn-group dropup mx-3" id="changequality" data-current="">
             <span role="button"
-                  data-toggle="dropdown"
+                  data{{bs}}-toggle="dropdown"
                   aria-haspopup="true"
                   aria-expanded="false"
                   class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1">
                 <i class="bi bi-gear"
-                   data-toggle="tooltip"
-                   data-trigger="focus"
+                   data{{bs}}-toggle="tooltip"
+                   data{{bs}}-trigger="focus"
                    title="{{#str}}videoquality,mod_interactivevideo{{/str}}"></i>
             </span>
-            <div class="dropdown-menu dropdown-menu-right bg-black text-white"
+            <div class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black text-white"
                  id="qualitieslist"></div>
             </div>
         </div>
@@ -80,7 +80,7 @@ Example context (json):
             <button class="btn btn-sm py-0 px-2 btn-secondary text-uppercase mx-4 border-0"
                     disabled
                     id="savedraft">
-                <i class="bi bi-floppy mx-1"></i>{{#str}}save,mod_interactivevideo{{/str}}
+                <i class="bi bi-floppy mx-1"></i><span class="d-none d-md-inline">{{#str}}save,mod_interactivevideo{{/str}}</span>
             </button>
             <div id="zoomlevel" class="d-flex align-items-center">
                 <button class="btn btn-sm p-0 text-white mx-2 border-0 bg-transparent"
@@ -94,12 +94,12 @@ Example context (json):
                 </button>
             </div>
             <button class="border-0 btn btn-sm p-0 text-white mx-2 bg-transparent"
-                    data-toggle="popover"
-                    data-trigger="hover"
-                    data-placement="auto"
-                    data-boundary="viewport"
-                    data-content='{{#str}}videonavhelp,mod_interactivevideo{{/str}}'
-                    data-html="true">
+                    data{{bs}}-toggle="popover"
+                    data{{bs}}-trigger="hover"
+                    data{{bs}}-placement="auto"
+                    data{{bs}}-boundary="viewport"
+                    data{{bs}}-content='{{#str}}videonavhelp,mod_interactivevideo{{/str}}'
+                    data{{bs}}-html="true">
                 <i class="bi bi-info-circle"></i>
             </button>
         </div>
@@ -115,7 +115,7 @@ Example context (json):
         <div class="w-100" id="bar"></div>
     </div>
     <div id="timeline" class="px-5">
-        <div id="timeline-items-wrapper" class="pl-0" dir="ltr">
+        <div id="timeline-items-wrapper" class="iv-pl-0" dir="ltr">
             <div id="timeline-items" dir="ltr">
                 <div id="scrollbar" class="snap">
                     <div id="scrollhead" class="opacity-0 bg-transparent"></div>
@@ -128,7 +128,7 @@ Example context (json):
                     </div>
                 </div>
                 <div id="video-timeline-wrapper" dir="ltr">
-                    <div id="video-timeline" class="rounded-sm" dir="ltr"></div>
+                    <div id="video-timeline" class="iv-rounded-sm" dir="ltr"></div>
                 </div>
                 <div id="annotation-timeline" dir="ltr"></div>
             </div>

@@ -183,6 +183,12 @@ class Base {
          * @type {Object}
          */
         this.cache = {};
+
+        /**
+         * Is bs-5.
+         * @type {boolean}
+         */
+        this.isBS5 = $('body').hasClass('bs-5');
     }
 
     /**
@@ -330,7 +336,7 @@ class Base {
             listItem.attr('data-xp', 0);
             // Append a badge to the title
             listItem.find('.title')
-                .append(`<span class="badge badge-warning ml-2">
+                .append(`<span class="badge badge-warning iv-ml-2">
                             ${M.util.get_string('skipped', 'mod_interactivevideo')}</span>`);
         }
 
@@ -653,9 +659,10 @@ class Base {
      * Delete an annotation
      * @param {Array} annotations The annotations array
      * @param {number} id The annotation id
+     * @param {boolean} [bulk=false] If true, the event will not be dispatched
      * @returns {void}
      */
-    deleteAnnotation(annotations, id) {
+    deleteAnnotation(annotations, id, bulk = false) {
         this.annotations = annotations;
         const annotation = this.annotations.find(x => x.id == id);
         $.ajax({
@@ -671,10 +678,28 @@ class Base {
                 cmid: this.interaction,
             },
             success: function() {
-                dispatchEvent('annotationdeleted', {
-                    annotation: annotation,
-                });
+                if (!bulk) {
+                    dispatchEvent('annotationdeleted', {
+                        annotation: annotation,
+                    });
+                }
             },
+        });
+    }
+
+    async deleteAnnotations(annotations, ids) {
+        this.annotations = annotations;
+        const promises = ids.map((id) => {
+            return new Promise((resolve) => {
+                this.deleteAnnotation(this.annotations, id, true);
+                resolve();
+            });
+        });
+
+        await Promise.all(promises);
+        dispatchEvent('annotationsdeleted', {
+            annotations: this.annotations,
+            ids: ids,
         });
     }
 
@@ -746,6 +771,7 @@ class Base {
      * @returns {void}
      */
     renderItemOnVideoNavigation(annotation) {
+        let self = this;
         if (annotation.timestamp < this.start || annotation.timestamp > this.end) {
             return;
         }
@@ -770,16 +796,19 @@ class Base {
             if (this.isEditMode()) {
                 $("#video-nav ul").append(`<li class="${classes}"  data-timestamp="${annotation.timestamp}"
         data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
-        <div class="item" data-toggle="tooltip" data-container="#wrapper"
-        data-trigger="hover" data-placement="top" data-html="true" data-original-title='<div class="d-flex align-items-center">
-        <i class="${this.prop.icon} mr-2"></i>
+        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
+        data${self.isBS5 ? '-bs' : ''}-trigger="hover" data${self.isBS5 ? '-bs' : ''}-placement="top"
+         data${self.isBS5 ? '-bs' : ''}-html="true" title='<div class="d-flex align-items-center">
+        <i class="${this.prop.icon} iv-mr-2"></i>
         <span>${annotation.formattedtitle}</span></div>'></div></li>`);
             } else {
                 $("#interactions-nav ul").append(`<li class="${classes}"  data-timestamp="${annotation.timestamp}"
-                    data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)"><div class="item" data-toggle="tooltip"
-                     data-container="#wrapper" data-trigger="hover" data-placement="top" data-html="true"
-                       data-original-title='<div class="d-flex align-items-center">
-                        <i class="${this.prop.icon} mr-2"></i>
+                    data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
+                    <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+                     data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
+                      data${self.isBS5 ? '-bs' : ''}-trigger="hover" data-placement="top" data${self.isBS5 ? '-bs' : ''}-html="true"
+                      title='<div class="d-flex align-items-center">
+                        <i class="${this.prop.icon} iv-mr-2"></i>
                         <span>${annotation.formattedtitle}</span></div>'></div></li>`);
             }
         }
@@ -819,14 +848,14 @@ class Base {
             && annotation.requiremintime > 0) {
             let $completiontoggle = $message.find('#completiontoggle');
             $message.find('#title .info').remove();
-            $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2 info" data-toggle="tooltip"
-            data-container="#wrapper" data-trigger="hover"
-            data-title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`);
+            $completiontoggle.before(`<i class="bi bi-info-circle-fill iv-mr-2 info" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+            data${self.isBS5 ? '-bs' : ''}-container="#wrapper" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
+            title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`);
             setTimeout(function() {
-                $message.find('[data-toggle="tooltip"]').tooltip('show');
+                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('show');
             }, 1000);
             setTimeout(function() {
-                $message.find('[data-toggle="tooltip"]').tooltip('hide');
+                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('hide');
             }, 3000);
         }
     }
@@ -901,7 +930,7 @@ class Base {
             // Play a popup sound.
             audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/point-awarded.mp3');
             audio.play();
-            $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('badge-secondary').addClass('alert-success');
+            $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('iv-badge-secondary').addClass('alert-success');
             if (thisItem.xp > 0) {
                 $(`#message[data-id='${thisItem.id}'] #title .badge`).text(thisItem.earned == thisItem.xp ?
                     Number(thisItem.earned) + ' XP' : `${Number(thisItem.earned)}/${thisItem.xp} XP`);
@@ -914,7 +943,7 @@ class Base {
             // Play a popup sound.
             audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
             audio.play();
-            $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('alert-success').addClass('badge-secondary');
+            $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('alert-success').addClass('iv-badge-secondary');
         }
 
         // Update the completion button.
@@ -986,9 +1015,9 @@ class Base {
             const completiontime = completeTime.toLocaleString();
             let duration = this.formatTime(completionDetails.duration / 1000);
             completionDetails.reportView = details.reportView ||
-                `<span data-toggle="tooltip" data-html="true"
-                 data-title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar mr-2"></i>
-                 ${completiontime}</span><span><i class="bi bi-stopwatch mr-2"></i>${duration}</span></span>'>
+                `<span data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-html="true"
+                 title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar iv-mr-2"></i>
+                 ${completiontime}</span><span><i class="bi bi-stopwatch iv-mr-2"></i>${duration}</span></span>'>
                  <i class="fa fa-check text-success"></i><br><span>${Number(completionDetails.xp)}</span></span>`;
         }
         if (action == 'mark-done') {

@@ -100,7 +100,7 @@ $string['deletecompletion'] = 'លុបទិន្នន័យបំពេញ�
 $string['deleteinteraction'] = 'លុបអន្តរកម្ម';
 $string['deleteinteractionconfirm'] = 'តើអ្នកប្រាកដថាអ្នកចង់លុបអន្តរកម្មនេះឬ?';
 $string['deletevideo'] = 'លុបវីដេអូ';
-$string['deletevideobutton'] = '<i class="fa fa-trash fa-fw mr-2"></i>លុបវីដេអូ';
+$string['deletevideobutton'] = '<i class="fa fa-trash fa-fw iv-mr-2"></i>លុបវីដេអូ';
 $string['deletevideoconfirm'] = 'តើអ្នកពិតជាចង់លុបវីដេអូនេះមែនទេ?';
 $string['disablechapternavigation'] = 'បិទផ្ទាំងបញ្ជីមាតិកា';
 $string['disablecustomtime'] = 'បិទការកំណត់ពេលវេលា';
@@ -158,7 +158,7 @@ $string['interactiondeleted'] = 'បានលុបអន្តរកម្ម�
 $string['interactionimported'] = 'បាននាំចូលមាតិកាដោយជោគជ័យ';
 $string['interactionisbetweentheskipsegment'] = 'អ្នកមិនអាចបញ្ចូលមាតិកានៅចន្លោះដែលត្រូវរំលងទេ';
 $string['interactions'] = 'អន្តរកម្ម';
-$string['interactionscannotbeedited'] = '<i class="fa fa-warning mr-2 fa-xl"></i>យ៉ាងហោចណាស់មានសិស្សម្នាក់បានសាកល្បងមេរៀននេះ ។ អ្នកនៅតែអាចបន្ថែម ឬកែប្រែអន្តរកម្ម តែទិន្នន័យពិន្ទុ និងការបញ្ចប់នឹងមិនត្រូវបានអាប់ដែតទេ ទាល់តែសិស្សល្បងមេរៀននេះជាថ្មី ។';
+$string['interactionscannotbeedited'] = '<i class="fa fa-warning iv-mr-2 fa-xl"></i>យ៉ាងហោចណាស់មានសិស្សម្នាក់បានសាកល្បងមេរៀននេះ ។ អ្នកនៅតែអាចបន្ថែម ឬកែប្រែអន្តរកម្ម តែទិន្នន័យពិន្ទុ និងការបញ្ចប់នឹងមិនត្រូវបានអាប់ដែតទេ ទាល់តែសិស្សល្បងមេរៀននេះជាថ្មី ។';
 $string['interactionsin'] = 'អន្តរកម្មក្នុង {$a}';
 $string['interactionupdated'] = 'បានកែប្រែអន្តរកម្មដោយជោគជ័យ';
 $string['interactivevideo:addinstance'] = 'បញ្ចូលម៉ូឌុលមាតិកាអន្តរកម្ម';
@@ -324,7 +324,7 @@ $string['upload'] = 'ផ្ទុកឡើង';
 $string['uploadanimagebelow'] = 'ផ្ទុករូបភាពនៅខាងក្រោម';
 $string['uploadcontent'] = 'ផ្ទុកឡើងមាតិកា';
 $string['uploadvideo'] = 'ផ្ទុកឡើងវីដេអូ';
-$string['uploadvideobutton'] = '<i class="fa fa-upload fa-fw mr-2"></i>ផ្ទុកឡើងវីដេអូ';
+$string['uploadvideobutton'] = '<i class="fa fa-upload fa-fw iv-mr-2"></i>ផ្ទុកឡើងវីដេអូ';
 $string['url'] = 'តំណ';
 $string['usecardonlydesign'] = 'ប្រើកាតសាមញ្ញ';
 $string['usecolumnlayout'] = 'ប្រើទម្រង់ដេក';
@@ -335,7 +335,7 @@ $string['useoriginalvideocontrols'] = 'ប្រើឧបករណ៍លេង�
 $string['video'] = 'វីដេអូ';
 $string['videodisplayoptions'] = 'រូបរាង';
 $string['videolink'] = 'វីដេអូ/សម្លេងខាងក្រៅ';
-$string['videonavhelp'] = '<h5>គន្លឹះ</h5><ul class="pl-3"><li>ចុចលើរបារវីដេអូដើម្បីផ្លាស់ទីទៅកាន់ពេលណាមួយក្នុងវីដេអូ</li><li>ចុចម៉ៅស៍ស្តាំលើរបារវីដេអូ ដើម្បីបញ្ចូលអន្តរកម្មនៅទីនោះ។</li><li>ចុចលើរូបតំណាងអន្តរកម្មដើម្បីដំណើរការអន្តរកម្ម។</li><li>ចុចម៉ៅស៍ស្តាំលើរូបតំណាងអន្តរកម្មដើម្បីកែប្រែវា។</li><li>ចុច Shift និងអូសលើម៉ៅស៍ ដើម្បីអូសថែមឡាញឆ្វេងស្តាំ </li><li>ចុច Ctrl/Cmd និងអូសលើម៉ៅស៍ នៅលើថែមឡាញដើម្បីពង្រីក/បង្រួម</li><li>អូសរូបតំណាងអន្តរកម្មដើម្បីប្តូរទីតាំង</li></ul>';
+$string['videonavhelp'] = '<h5>គន្លឹះ</h5><ul class="iv-pl-3"><li>ចុចលើរបារវីដេអូដើម្បីផ្លាស់ទីទៅកាន់ពេលណាមួយក្នុងវីដេអូ</li><li>ចុចម៉ៅស៍ស្តាំលើរបារវីដេអូ ដើម្បីបញ្ចូលអន្តរកម្មនៅទីនោះ។</li><li>ចុចលើរូបតំណាងអន្តរកម្មដើម្បីដំណើរការអន្តរកម្ម។</li><li>ចុចម៉ៅស៍ស្តាំលើរូបតំណាងអន្តរកម្មដើម្បីកែប្រែវា។</li><li>ចុច Shift និងអូសលើម៉ៅស៍ ដើម្បីអូសថែមឡាញឆ្វេងស្តាំ </li><li>ចុច Ctrl/Cmd និងអូសលើម៉ៅស៍ នៅលើថែមឡាញដើម្បីពង្រីក/បង្រួម</li><li>អូសរូបតំណាងអន្តរកម្មដើម្បីប្តូរទីតាំង</li></ul>';
 $string['videoquality'] = 'គុណភាពវីដេអូ';
 $string['videosharinginstructions'] = 'សេចក្តីណែនាំពីការប្រើប្រាស់មេឌា';
 $string['videosharinginstructions_desc'] = 'បញ្ចូលសេចក្តីណែនាំសម្រាប់ការចែករំលែកមេឌា។ ឧទាហរណ៍៖ ប្រសិនបើស្ថាប័នរបស់អ្នកមានគោលការណ៍ផ្សេងៗដែលត្រូវអនុវត្តពេលប្រើប្រាស់មេឌាពីខាងក្រៅ អ្នកអាចបញ្ចូលគោលការណ៍ទាំងនោះនៅទីនេះបាន។ សេចក្តីណែនាំទាំងនេះនឹងត្រូវបង្ហាញនៅលើទម្រង់ពេលកែប្រែ ឬបញ្ចូលសកម្មភាពវីដេអូអន្តរកម្ម។';

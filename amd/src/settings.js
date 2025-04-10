@@ -64,15 +64,15 @@ define(['jquery'], function($) {
             plugins.forEach((plugin) => {
                 table += '<tr>';
                 const row = `<td>
-                <p class="font-weight-bold mb-1 d-flex justify-content-between"><span>${plugin.title}</span>
-                <span><a href="${plugin.description_url}" class="mr-2" target="_blank">
+                <p class="iv-font-weight-bold mb-1 d-flex justify-content-between"><span>${plugin.title}</span>
+                <span><a href="${plugin.description_url}" class="iv-mr-2" target="_blank">
                 <i class="fa fa-circle-info"></i></a>
-                <a href="${plugin.download_url}" class="mr-2" target="_blank">
+                <a href="${plugin.download_url}" class="iv-mr-2" target="_blank">
                 <i class="fa fa-cloud-download"></i></a>
                 </span></p>
                 <p>${plugin.description}</p>
                 <div class="d-flex justify-content-between">
-                <div class="small font-weight-bold">
+                <div class="small iv-font-weight-bold">
                 ${plugin.installed ? '<span class="text-success">Installed</span>' : 'Not installed'}
                 </div>
                 <div>${plugin.type == 'free' ? 'Free' : 'Paid'}</div>

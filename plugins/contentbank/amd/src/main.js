@@ -118,22 +118,23 @@ export default class ContentBank extends Base {
      */
     renderContainer(annotation) {
         super.renderContainer(annotation);
+        let self = this;
         let $message = $(`#message[data-id='${annotation.id}']`);
         $message.find('.modal-body').addClass('p-0');
         if (annotation.completiontracking !== 'view') {
             let $completiontoggle = $message.find('#completiontoggle');
             $message.find('#title .info').remove();
-            $completiontoggle.before(`<i class="bi bi-info-circle-fill mr-2 info" data-toggle="tooltip"
-            data-container="#wrapper" data-trigger="hover"
-            data-title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}"></i>`);
+            $completiontoggle.before(`<i class="bi bi-info-circle-fill iv-mr-2 info" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+            data${self.isBS5 ? '-bs' : ''}-container="#wrapper" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
+            title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}"></i>`);
             if (annotation.completed) {
                 return;
             }
             setTimeout(function() {
-                $message.find('[data-toggle="tooltip"]').tooltip('show');
+                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('show');
             }, 1000);
             setTimeout(function() {
-                $message.find('[data-toggle="tooltip"]').tooltip('hide');
+                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('hide');
             }, 3000);
         }
     }
@@ -178,7 +179,7 @@ export default class ContentBank extends Base {
             let label = passed ? 'continue' : 'rewatch';
             $message.find('#content')
                 .append(`<button class="btn btn-${passed ? 'success' : 'danger'} mt-2 btn-rounded"
-                    id="passfail" data-timestamp="${time}"><i class="fa fa-${passed ? 'play' : 'redo'} mr-2"></i>
+                    id="passfail" data-timestamp="${time}"><i class="fa fa-${passed ? 'play' : 'redo'} iv-mr-2"></i>
                 ${M.util.get_string(label, 'ivplugin_contentbank')}
                 </button>`);
             $message.find('iframe').addClass('no-pointer-events');
@@ -228,7 +229,7 @@ export default class ContentBank extends Base {
                             $message.find(`#title .btns .xapi`).remove();
                             $message.find(`#title .btns`)
                                 .prepend(`<div class="xapi alert-secondary px-2
-                         rounded-pill">${M.util.get_string('xapicheck', 'ivplugin_contentbank')}</div>`);
+                         iv-rounded-pill">${M.util.get_string('xapicheck', 'ivplugin_contentbank')}</div>`);
                         }
 
                         window.H5PIntegration = document.querySelector(`#message[data-id='${annoid}'] iframe`)
@@ -254,8 +255,8 @@ export default class ContentBank extends Base {
                                     if (self.isEditMode()) {
                                         $(`#message[data-id='${annotation.id}'] #title .btns .xapi`).remove();
                                         $(`#message[data-id='${annotation.id}'] #title .btns`)
-                                            .prepend(`<div class="xapi alert-success d-inline px-2 rounded-pill">
-                                                    <i class="fa fa-check mr-2"></i>
+                                            .prepend(`<div class="xapi alert-success d-inline px-2 iv-rounded-pill">
+                                                    <i class="fa fa-check iv-mr-2"></i>
                                                     ${M.util.get_string('xapieventdetected', 'ivplugin_contentbank')}
                                                     </div>`);
                                         const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
@@ -294,9 +295,9 @@ export default class ContentBank extends Base {
                                         const completiontime = completeTime.toLocaleString();
                                         let duration = self.formatTime(details.duration / 1000);
                                         details.reportView = `<span data-toggle="tooltip" data-html="true"
-                     data-title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar mr-2"></i>
-                     ${completiontime}</span><span><i class="bi bi-stopwatch mr-2"></i>${duration}</span>
-                     <span><i class="bi bi-list-check mr-2"></i>
+                     data-title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar iv-mr-2"></i>
+                     ${completiontime}</span><span><i class="bi bi-stopwatch iv-mr-2"></i>${duration}</span>
+                     <span><i class="bi bi-list-check iv-mr-2"></i>
                      ${result.score.raw}/${result.score.max}</span></span>'>
                      <i class="${textclass}"></i><br><span>${Number(details.xp)}</span></span>`;
                                         details.details = saveState == 1 ? window.H5PIntegration.contents[id].contentUserData[0].state : '';

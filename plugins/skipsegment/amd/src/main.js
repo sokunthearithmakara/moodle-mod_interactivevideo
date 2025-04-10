@@ -61,10 +61,10 @@ export default class SkipSegment extends Base {
         listItem.find('[data-editable]').removeAttr('data-editable');
         listItem.find('.btn.copy').remove();
         listItem.find('.title').replaceWith(`<span class="skipend timestamp
-            bg-light px-2 py-1 rounded-sm text-truncate"
+            bg-light px-2 py-1 iv-rounded-sm text-truncate"
             data-timestamp="${item.title}">${this.convertSecondsToHMS(item.title, this.totaltime < 3600, true)}</span>`);
         if (this.isSkipped(item.timestamp)) {
-            listItem.find('.skipend').after(`<span class="badge badge-warning ml-2">
+            listItem.find('.skipend').after(`<span class="badge badge-warning iv-ml-2">
                             ${M.util.get_string('skipped', 'ivplugin_skipsegment')}</span>`);
         }
         return listItem;
@@ -171,6 +171,7 @@ export default class SkipSegment extends Base {
      * @param {string} annotation.id - The unique identifier of the annotation.
      */
     renderItemOnVideoNavigation(annotation) {
+        let self = this;
         if (annotation.timestamp < this.start || annotation.timestamp > this.end) {
             return;
         }
@@ -181,9 +182,10 @@ export default class SkipSegment extends Base {
             $("#video-nav ul").append(`<li class="annotation ${annotation.type}
              ${this.isClickable(annotation) ? '' : 'no-pointer-events'} position-absolute bg-dark progress-bar-striped progress-bar"
               data-timestamp="${annotation.timestamp}" data-id="${annotation.id}"
-               style="left: ${percentage}%; width: ${length}%;" data-toggle="tooltip"
-               data-container="#wrapper" data-trigger="hover"
-         data-html="true" data-original-title='<i class="${this.prop.icon}"></i>'></li>`);
+               style="left: ${percentage}%; width: ${length}%;" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+               data${self.isBS5 ? '-bs' : ''}-container="#wrapper" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
+         data${self.isBS5 ? '-bs' : ''}-html="true"
+          data${self.isBS5 ? '-bs' : ''}-title='<i class="${this.prop.icon}"></i>'></li>`);
         }
         if (this.isEditMode()) {
             $("#video-timeline-wrapper").append(`<div class="position-absolute skipsegment cursor-pointer"

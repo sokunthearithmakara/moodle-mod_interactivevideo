@@ -98,6 +98,7 @@ const formatText = async function(text, shorttext = false) {
  * defaultDisplayContent(annotation, player);
  */
 const defaultDisplayContent = async function(annotation, player) {
+    const isBS5 = $('body').hasClass('bs-5');
     const isPlayerMode = $('body').attr('id') == 'page-mod-interactivevideo-view';
     const isPreviewMode = annotation.previewMode;
     const advanced = JSON.parse(annotation.advanced);
@@ -154,7 +155,7 @@ const defaultDisplayContent = async function(annotation, player) {
     // Display the xp badge conditionally.
     if (annotation.hascompletion == 1 && annotation.xp > 0) {
         const earned = annotation.earned == annotation.xp ? annotation.earned : annotation.earned + '/' + annotation.xp;
-        completionbutton += `<span class="badge ${annotation.completed ? 'alert-success' : 'badge-secondary'} mr-2">
+        completionbutton += `<span class="badge ${annotation.completed ? 'alert-success' : 'iv-badge-secondary'} iv-mr-2">
         ${annotation.completed ? earned : Number(annotation.xp)} XP</span>`;
     }
     // Display the completion button conditionally.
@@ -162,19 +163,19 @@ const defaultDisplayContent = async function(annotation, player) {
         completionbutton += `<button id="completiontoggle" class="btn btn-flex text-truncate mark-undone btn-success
          btn-sm border-0"
              data-id="${annotation.id}"><i class="bi bi-check2"></i>
-             <span class="ml-2 d-none d-sm-block">
+             <span class="iv-ml-2 d-none d-sm-block">
              ${M.util.get_string('completionmarkincomplete', 'mod_interactivevideo')}</span></button>`;
     } else if (annotation.hascompletion == 1 && annotation.completed == false) {
         completionbutton += `<button id="completiontoggle" class="btn btn-flex text-truncate mark-done btn-secondary btn-sm
          border-0"
              data-id="${annotation.id}"><i class="bi bi-circle"></i>
-             <span class="ml-2 d-none d-sm-block">
+             <span class="iv-ml-2 d-none d-sm-block">
              ${M.util.get_string('completionmarkcomplete', 'mod_interactivevideo')}</span></button>`;
     }
 
     // Append refresh button after the completion button.
     if (isPlayerMode && !isPreviewMode) {
-        completionbutton += `<button class="btn btn-flex btn-secondary btn-sm ml-2 rotatez-360 border-0"
+        completionbutton += `<button class="btn btn-flex btn-secondary btn-sm iv-ml-2 rotatez-360 border-0"
          data-id="${annotation.id}" id="refresh">
         <i class="bi bi-arrow-repeat"></i></button>`;
     } else {
@@ -184,7 +185,7 @@ const defaultDisplayContent = async function(annotation, player) {
     // Message title.
     let prop = JSON.parse(annotation.prop);
     let messageTitle = `<h5 class="modal-title text-truncate mb-0">
-    <i class="${prop.icon} mr-2 d-none d-md-inline"></i><span>${annotation.formattedtitle}</span></h5>
+    <i class="${prop.icon} iv-mr-2 d-none d-md-inline"></i><span>${annotation.formattedtitle}</span></h5>
                             <div class="btns d-flex align-items-center">
                             ${completionbutton}
                             <button data-id="${annotation.id}"
@@ -255,8 +256,8 @@ const defaultDisplayContent = async function(annotation, player) {
          aria-hidden="true" data-backdrop="static" data-keyboard="false">
          <div id="message" data-id="${annotation.id}" data-placement="popup"
           class="modal-dialog modal-dialog-centered modal-dialog-scrollable ${annotation.type} active" role="document">
-                <div class="modal-content rounded-lg">
-                    <div class="modal-header d-flex align-items-center shadow-sm pr-0" id="title">
+                <div class="modal-content iv-rounded-lg">
+                    <div class="modal-header d-flex align-items-center shadow-sm iv-pr-0 iv-pl-3" id="title">
                         ${messageTitle}
                     </div>
                     <div class="modal-body" id="content"></div>
@@ -278,8 +279,9 @@ const defaultDisplayContent = async function(annotation, player) {
 
     const handleInlineDisplay = (annotation, messageTitle) => {
         $('#video-wrapper').append(`<div id="message" style="z-index:105;top:100%" data-placement="inline"
-         data-id="${annotation.id}" class="${annotation.type} active">
-        <div id="title" class="modal-header shadow-sm pr-0 rounded-0">${messageTitle}</div><div class="modal-body" id="content">
+         data-id="${annotation.id}" class="${annotation.type} active modal">
+        <div id="title" class="modal-header shadow-sm iv-pr-0 iv-pl-3 iv-rounded-0">
+        ${messageTitle}</div><div class="modal-body" id="content">
         </div></div>`);
         $(`#message[data-id='${annotation.id}']`).animate({
             top: '0',
@@ -291,8 +293,8 @@ const defaultDisplayContent = async function(annotation, player) {
     const handleBottomDisplay = (annotation, messageTitle, isDarkMode) => {
         $('#annotation-content').empty();
         $('#annotation-content').append(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
-                 rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}">
-                 <div id='title' class='modal-header shadow-sm pr-0'>${messageTitle}</div>
+                 iv-rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}">
+                 <div id='title' class='modal-header shadow-sm iv-pr-0 iv-pl-3'>${messageTitle}</div>
                 <div class="modal-body" id="content"></div></div>`);
         $('html, body, #page.drawers, .modal-body').animate({
             scrollTop: $("#annotation-content").offset().top
@@ -386,8 +388,9 @@ const defaultDisplayContent = async function(annotation, player) {
                 clss += ' no-completion';
             }
 
-            $('#annotation-sidebar #sidebar-nav').append(`<div class="sidebar-nav-item active w-100 ${clss}" data-toggle="tooltip"
-            data-html="true" title="<i class='${prop.icon} mr-2'></i>${annotation.formattedtitle}"
+            $('#annotation-sidebar #sidebar-nav').append(`<div class="sidebar-nav-item active w-100 ${clss}"
+                 data${isBS5 ? '-bs' : ''}-toggle="tooltip"
+            data${isBS5 ? '-bs' : ''}-html="true" title="<i class='${prop.icon} iv-mr-2'></i>${annotation.formattedtitle}"
             data-id="${annotation.id}" data-timestamp="${annotation.timestamp}"></div>`);
 
             // Sort the navigation items.
@@ -409,7 +412,7 @@ const defaultDisplayContent = async function(annotation, player) {
         // Append the message to the sidebar.
         $('#annotation-sidebar #sidebar-content').append(`<div id="message" data-placement="side"
                     data-id="${annotation.id}" class="${annotation.type} sticky active">
-                    <div id="title" class="modal-header shadow-sm pr-0">${messageTitle}</div>
+                    <div id="title" class="modal-header shadow-sm iv-pr-0 iv-pl-3 border-bottom">${messageTitle}</div>
                     <div class="modal-body" id="content"></div>
                     </div>`);
     };

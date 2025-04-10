@@ -75,7 +75,7 @@ class Spotify {
         this.videoId = videoId;
         let self = this;
         $('.video-block, #start-screen').remove();
-        $('#annotation-canvas').removeClass('d-none');
+        $('#annotation-canvas').removeClass('d-none w-0');
 
         const getData = function() {
             return $.ajax({

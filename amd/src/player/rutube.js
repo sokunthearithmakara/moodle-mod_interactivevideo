@@ -163,7 +163,7 @@ class Rutube {
                         if (message.data.state === 'play') { // Ad started
                             $(".video-block, #video-block").addClass('d-none');
                             $("#start-screen").addClass('bg-transparent d-none');
-                            $('#annotation-canvas').removeClass('d-none');
+                            $('#annotation-canvas').removeClass('d-none w-0');
                         } else if (message.data.state === 'complete') { // Ad complete/error
                             $(".video-block, #video-block").removeClass('d-none');
                             $("#start-screen").removeClass('bg-transparent d-none');

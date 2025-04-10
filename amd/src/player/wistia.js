@@ -91,7 +91,7 @@ class Wistia {
                 }
             },
             onReady: async function(video) {
-                $('#annotation-canvas').removeClass('d-none');
+                $('#annotation-canvas').removeClass('d-none w-0');
                 player = video;
                 self.aspectratio = self.ratio();
                 // We don't want to use the end time from the player, just to avoid any issue restarting the video.

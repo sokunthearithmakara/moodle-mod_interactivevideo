@@ -219,7 +219,7 @@ class base_form extends \core_form\dynamic_form {
         $mform->addElement(
             'hidden',
             'timestampassist',
-            '<i class="bi bi-stopwatch mr-2"></i>' . get_string('timestamp', 'mod_interactivevideo') . ' ['
+            '<i class="bi bi-stopwatch iv-mr-2"></i>' . get_string('timestamp', 'mod_interactivevideo') . ' ['
                 . $this->optional_param('start', '00:00:00.00', PARAM_TEXT) . ' - '
                 . $this->optional_param(
                     'end',
@@ -253,7 +253,7 @@ class base_form extends \core_form\dynamic_form {
         }
         $this->render_dropdown(
             'completiontracking',
-            '<i class="bi bi-check2-square mr-2"></i>' . get_string('completiontracking', 'mod_interactivevideo'),
+            '<i class="bi bi-check2-square iv-mr-2"></i>' . get_string('completiontracking', 'mod_interactivevideo'),
             $options
         );
         $mform->setType('completiontracking', PARAM_TEXT);
@@ -261,7 +261,7 @@ class base_form extends \core_form\dynamic_form {
         $mform->addElement(
             'text',
             'requiremintime',
-            '<i class="bi bi-clock mr-2"></i>' . get_string('requiremintime', 'mod_interactivevideo')
+            '<i class="bi bi-clock iv-mr-2"></i>' . get_string('requiremintime', 'mod_interactivevideo')
         );
         $mform->setType('requiremintime', PARAM_INT);
         $mform->setDefault('requiremintime', 0);
@@ -272,7 +272,7 @@ class base_form extends \core_form\dynamic_form {
         $mform->addElement(
             'text',
             'requiremintimeview',
-            '<i class="bi bi-clock mr-2"></i>' . get_string('requiremintime', 'mod_interactivevideo')
+            '<i class="bi bi-clock iv-mr-2"></i>' . get_string('requiremintime', 'mod_interactivevideo')
         );
         $mform->setType('requiremintimeview', PARAM_INT);
         $mform->setDefault('requiremintimeview', 0);
@@ -292,7 +292,7 @@ class base_form extends \core_form\dynamic_form {
         // Display options.
         $this->render_dropdown(
             'displayoptions',
-            '<i class="bi bi-aspect-ratio mr-2"></i>' . get_string('displayoptions', 'mod_interactivevideo'),
+            '<i class="bi bi-aspect-ratio iv-mr-2"></i>' . get_string('displayoptions', 'mod_interactivevideo'),
             [
                 'inline' => get_string('displayoptionsinline', 'mod_interactivevideo'),
                 'popup' => get_string('displayoptionspopup', 'mod_interactivevideo'),
@@ -312,7 +312,7 @@ class base_form extends \core_form\dynamic_form {
      */
     public function xp_form_field($xp = 0) {
         $mform = &$this->_form;
-        $mform->addElement('text', 'xp', '<i class="bi bi-star mr-2"></i>' . get_string('xp', 'mod_interactivevideo'));
+        $mform->addElement('text', 'xp', '<i class="bi bi-star iv-mr-2"></i>' . get_string('xp', 'mod_interactivevideo'));
         $mform->setType('xp', PARAM_INT);
         $mform->addRule('xp', null, 'numeric', null, 'client');
         $mform->setDefault('xp', $xp);

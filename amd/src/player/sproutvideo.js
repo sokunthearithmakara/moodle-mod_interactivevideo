@@ -190,7 +190,7 @@ class SproutVideo {
         });
 
         $('.video-block').remove();
-        $('#annotation-canvas').removeClass('d-none');
+        $('#annotation-canvas').removeClass('d-none w-0');
         $(`#${node}`).replaceWith(`<iframe id="${node}" class='sproutvideo-player'
                  src='${iframeurl}' frameborder='0' referrerpolicy="no-referrer-when-downgrade"
                   allow="autoplay; fullscreen; picture-in-picture; encrypted-media;"></iframe>`);

@@ -37,7 +37,7 @@ Example context (json):
         </div>
     </div>
     <table id="completiontable"
-           class="table table-sm table-bordered table-striped w-100 m-0">
+           class="table table-sm table-bordered border table-striped w-100 m-0">
         <thead class="sticky-top bg-white">
             <tr>
                 <th id="id">{{#str}}id,mod_interactivevideo{{/str}}</th>
@@ -49,7 +49,7 @@ Example context (json):
             {{/identity}}
             <th id="timecreated" class="text-truncate">
                 {{#str}}timestarted,mod_interactivevideo{{/str}}
-                <div class="position-absolute font-weight-normal controls d-none"
+                <div class="position-absolute iv-font-weight-normal controls d-none"
                      style="bottom: 0">
                     <div class="d-flex align-items-center">
                         <input type="checkbox" checked data-start="true">
@@ -57,13 +57,13 @@ Example context (json):
                     </div>
                     <div class="d-flex align-items-center">
                         <input type="checkbox" checked data-start="false">
-                        <small class="ml-2">{{#str}}notstarted,mod_interactivevideo{{/str}}</small>
+                        <small class="iv-ml-2">{{#str}}notstarted,mod_interactivevideo{{/str}}</small>
                     </div>
                 </div>
             </th>
             <th id="timecompleted" class="text-truncate">
                 {{#str}}timecompleted,mod_interactivevideo{{/str}}
-                <div class="position-absolute font-weight-normal controls d-none"
+                <div class="position-absolute iv-font-weight-normal controls d-none"
                      style="bottom: 0">
                     <div class="d-flex align-items-center">
                         <input type="checkbox" checked data-completed="true">
@@ -71,21 +71,21 @@ Example context (json):
                     </div>
                     <div class="d-flex align-items-center">
                         <input type="checkbox" checked data-completed="false">
-                        <small class="ml-2">{{#str}}incomplete,mod_interactivevideo{{/str}}</small>
+                        <small class="iv-ml-2">{{#str}}incomplete,mod_interactivevideo{{/str}}</small>
                     </div>
                 </div>
             </th>
             <th id="completionpercentage">
                 {{#str}}completionpercentage,mod_interactivevideo{{/str}}
                 {{#completionfilter}}
-                <div class="position-absolute font-weight-normal controls d-none"
+                <div class="position-absolute iv-font-weight-normal controls d-none"
                      style="bottom: 0">
                     <div class="d-flex align-items-center">
                         <input type="checkbox"
                                checked
                                class="less"
                                data-percentage="{{completionpercentage}}">
-                        <small class="ml-2">< {{
+                        <small class="iv-ml-2">< {{
                         completionpercentage}}%</small>
                     </div>
                     <div class="d-flex align-items-center">
@@ -93,7 +93,7 @@ Example context (json):
                                checked
                                class="more"
                                data-percentage="{{completionpercentage}}">
-                        <small class="ml-2">>= {{completionpercentage}}%</small>
+                        <small class="iv-ml-2">>= {{completionpercentage}}%</small>
                     </div>
                 </div>
             {{/completionfilter}}
@@ -104,9 +104,9 @@ Example context (json):
             id="item-{{id}}"
             data-item="{{id}}"
             data-type="{{type}}"
-            data-toggle="tooltip"
-            data-trigger="focus"
-            data-placement="top"
+            data{{bs}}-toggle="tooltip"
+            data{{bs}}-trigger="hover"
+            data{{bs}}-placement="top"
             title="{{title}}">
             <div>
                 <input type="checkbox"

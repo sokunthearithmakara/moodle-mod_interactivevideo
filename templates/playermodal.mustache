@@ -18,22 +18,23 @@ Example context (json):
 {
 }
 }}
-<div class="modal fade p-0 modal-fullscreen rounded-0"
+<div class="modal fade p-0 modal-fullscreen iv-rounded-0"
      id="playermodal"
      data-backdrop="static"
      data-keyboard="false"
      tabindex="-1"
      aria-labelledby="playermodalLabel"
      aria-hidden="true">
-    <div class="rounded-0 modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl position-relative">
-        <div class="modal-content {{#showcontrols}}show-control{{/showcontrols}} rounded-0 border-0">
-            <div class="modal-header border-0 text-white align-items-center py-0 h-0 position-absolute w-100 z-index-1 rounded-0">
+    <div class="iv-rounded-0 modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl position-relative">
+        <div class="modal-content {{#showcontrols}}show-control{{/showcontrols}} iv-rounded-0 border-0">
+            <div class="modal-header border-0 text-white align-items-center py-0 h-0 position-absolute w-100 z-index-1 iv-rounded-0">
                 <div class="modal-background w-100 position-absolute"></div>
                 <span class="modal-title position-relative z-index-1 d-flex align-items-center overflow-hidden"
                       id="playermodalLabel">
                     <span class="h5 mb-0">
                         <button type="button"
                                 class="btn border-0 m-1 p-1 h5 bg-transparent"
+                                data-bs-dismiss="modal"
                                 data-dismiss="modal"
                                 aria-label="Close"
                                 title="{{#str}}close,mod_interactivevideo{{/str}}">
@@ -43,7 +44,7 @@ Example context (json):
                 </span>
                 <div class="modal-action d-flex align-items-center position-relative z-index-1">
                     <div class="d-none d-sm-block small" data-region="activity-completion"></div>
-                    <span class="btn ml-2 border-0 h5 mb-0 lock-bar"
+                    <span class="btn iv-ml-2 border-0 h5 mb-0 lock-bar"
                           title="{{#str}}lock,mod_interactivevideo{{/str}}"
                           data-href="{{root}}/mod/interactivevideo/view.php?id={{id}}">
                         <i class="fa fa-unlock text-white m-0 fa-xl" aria-hidden="true"></i></span>

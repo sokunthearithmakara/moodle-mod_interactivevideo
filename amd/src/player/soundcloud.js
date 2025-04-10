@@ -68,7 +68,7 @@ class SoundCloud {
         // e.g https://soundcloud.com/forss/flickermood
         let self = this;
         $('.video-block').remove();
-        $('#annotation-canvas').removeClass('d-none');
+        $('#annotation-canvas').removeClass('d-none w-0');
 
         const getData = function() {
             return $.ajax({

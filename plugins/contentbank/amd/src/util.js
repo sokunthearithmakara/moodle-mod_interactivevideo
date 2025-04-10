@@ -109,7 +109,7 @@ const init = (contextid) => {
                     }
                     $("#contentbank-preview .xapi").remove();
                     $(`#contentbank-preview[data-contentid=${id}]`)
-                        .prepend(`<div class="xapi float-right alert-secondary d-inline px-2 text-center rounded-pill mb-2">
+                        .prepend(`<div class="xapi iv-float-right alert-secondary d-inline px-2 text-center iv-rounded-pill mb-2">
                 ${xapicheck}</div>`);
                     H5P.externalDispatcher.on('xAPI', function(event) {
                         if ((event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
@@ -117,8 +117,9 @@ const init = (contextid) => {
                             && event.data.statement.object.id.indexOf('subContentId') < 0) {
                             $("#contentbank-preview .xapi").remove();
                             $("#contentbank-preview")
-                                .prepend(`<div class="xapi float-right alert-success d-inline px-2 text-center rounded-pill mb-2">
-                        <i class="fa fa-check mr-2"></i>${M.util.get_string('xapieventdetected', 'ivplugin_contentbank')}</div>`);
+                                .prepend(`<div class="xapi iv-float-right alert-success d-inline
+                                     px-2 text-center iv-rounded-pill mb-2"><i class="fa fa-check iv-mr-2"></i>
+                                     ${M.util.get_string('xapieventdetected', 'ivplugin_contentbank')}</div>`);
                             const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
                             audio.play();
                         }
@@ -142,6 +143,7 @@ const init = (contextid) => {
  * @returns {Promise<void>} - A promise that resolves when the content bank is refreshed.
  */
 const refreshContentBank = async(id, coursecontextid, edit = true, callback) => {
+    const isBS5 = $('body').hasClass('bs-5');
     $('#contentbank-preview').empty();
     let contentbankitems = await Ajax.call([{
         args: {
@@ -161,19 +163,22 @@ const refreshContentBank = async(id, coursecontextid, edit = true, callback) => 
             + (content.id == id ? "selected" : "") + ' " data-contentid="' + content.id
             + '"><div class="contentbank-item-details d-flex align-items-center">';
         if (content.icon) {
-            html += '<img class="contentbank-item-icon mr-2" src="' + content.icon + '"/>';
+            html += '<img class="contentbank-item-icon iv-mr-2" src="' + content.icon + '"/>';
         } else {
-            html += '<div class="contentbank-item-icon mr-2"></div>';
+            html += '<div class="contentbank-item-icon iv-mr-2"></div>';
         }
 
         html += '<div class="contentbank-item-name w-100">' + content.name + '</div></div>';
-        html += `<div class="btn btn-sm ml-auto contentbankview" data-toggle="tooltip" data-container="#wrapper"
-                 data-trigger="hover" data-title="${M.util.get_string('preview', 'ivplugin_contentbank')}">
+        html += `<div class="btn btn-sm iv-ml-auto contentbankview" data${isBS5 ? '-bs' : ''}-toggle="tooltip"
+         data${isBS5 ? '-bs' : ''}-container="#wrapper"
+                 data${isBS5 ? '-bs' : ''}-trigger="hover"
+                 data${isBS5 ? '-bs' : ''}-title="${M.util.get_string('preview', 'ivplugin_contentbank')}">
                  <i class="bi bi-eye-fill"></i></div>`;
         if (edit) {
-            html += `<a class="btn btn-sm ml-2" target="_blank" href="${editurl}"
-                     data-toggle="tooltip" data-container="#wrapper" data-trigger="hover"
-                      data-title="${M.util.get_string('edit', 'ivplugin_contentbank')}">
+            html += `<a class="btn btn-sm iv-ml-2" target="_blank" href="${editurl}"
+                     data${isBS5 ? '-bs' : ''}-toggle="tooltip" data${isBS5 ? '-bs' : ''}-container="#wrapper"
+                      data${isBS5 ? '-bs' : ''}-trigger="hover"
+                      data${isBS5 ? '-bs' : ''}-title="${M.util.get_string('edit', 'ivplugin_contentbank')}">
                      <i class="bi bi-pencil-square"></i></a>`;
         }
 

@@ -69,12 +69,13 @@ export default class Chapter extends Base {
         const $chapterlists = $('[data-region=chapterlists]');
         $chapterlists.empty();
         chapters.forEach((chapter) => {
-            $chapterlists.append(`<li class="p-0 flex-column border-left-0 border-right-0 chapter
+            $chapterlists.append(`<li class="p-0 flex-column border-${self.isBS5 ? 'start' : 'left'}-0
+                 border-${self.isBS5 ? 'end' : 'start'}-0 chapter
             list-group-item bg-transparent d-flex justify-content-between align-items-center cursor-pointer"
             data-id="${chapter.id}" data-start="${chapter.start}" data-end="${chapter.end}">
             <div class="w-100 d-flex align-items-center justify-content-between p-2">
-            <span class="flex-grow-1 text-truncate font-weight-bold"><i class="bi bi-chevron-down mr-2 toggle"></i>
-            <span class="chapter-title">${chapter.formattedtitle}</span></span><span class="badge badge-primary badge-pill">
+            <span class="flex-grow-1 text-truncate iv-font-weight-bold"><i class="bi bi-chevron-down iv-mr-2 toggle"></i>
+            <span class="chapter-title">${chapter.formattedtitle}</span></span><span class="badge iv-badge-primary badge-pill">
             ${convertSecondsToHMS(chapter.start - this.start)}</span></div>
             <ul class="annolistinchapter w-100 p-0"></ul></li>`);
         });
@@ -199,9 +200,13 @@ export default class Chapter extends Base {
                     if (locked) {
                         $chapterlists.find(`.chapter[data-id=${chapter.id}]`).addClass('locked');
                         $chapterlists.find(`.chapter[data-id=${chapter.id}] .annolistinchapter`).hide();
-                        $(`#video-nav ul li[data-id=${chapter.id}]`).html(`<div class="item locked" data-toggle="tooltip"
-                    data-container="#wrapper" data-trigger="hover" data-html="true"
-                    data-original-title='<i class="fa fa-lock mr-1"></i>${M.util.get_string(settings.lock, 'ivplugin_chapter')}'>
+                        $(`#video-nav ul li[data-id=${chapter.id}]`).html(`<div class="item locked"
+                             data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+                    data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
+                    data${self.isBS5 ? '-bs' : ''}-trigger="hover"
+                    data${self.isBS5 ? '-bs' : ''}-html="true"
+                    data${self.isBS5 ? '-bs' : ''}-title='<i class="fa fa-lock iv-mr-1"></i>
+                    ${M.util.get_string(settings.lock, 'ivplugin_chapter')}'>
                         <i class="fa fa-lock"></i></div>`);
                         // Remove the annos within the chapter.
                         const annotationsInChapter = annotations.filter((annotation) => {
@@ -279,7 +284,7 @@ export default class Chapter extends Base {
         let lock = JSON.parse(item.advanced).lock;
         if (JSON.parse(item.advanced).lock && JSON.parse(item.advanced).lock != '') {
             listItem.find('.type-name')
-                .before(`<i class="fa fa-lock ml-2" title="${M.util.get_string(lock, 'ivplugin_chapter')}"></i>`);
+                .before(`<i class="fa fa-lock iv-ml-2" title="${M.util.get_string(lock, 'ivplugin_chapter')}"></i>`);
         }
         return listItem;
     }
@@ -290,6 +295,7 @@ export default class Chapter extends Base {
      * @returns {void}
      */
     renderItemOnVideoNavigation(annotation) {
+        let self = this;
         if (annotation.hide) {
             return;
         }
@@ -311,8 +317,9 @@ export default class Chapter extends Base {
             }
             $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
               data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
-        <div class="item" data-toggle="tooltip" data-container="#wrapper" data-trigger="hover" data-html="true"
-        data-original-title='<i class="${this.prop.icon} mr-1"></i>${annotation.formattedtitle}'></div></li>`);
+        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
+        data${self.isBS5 ? '-bs' : ''}-trigger="hover" data${self.isBS5 ? '-bs' : ''}-html="true"
+        data${self.isBS5 ? '-bs' : ''}-title='<i class="${this.prop.icon} iv-mr-1"></i>${annotation.formattedtitle}'></div></li>`);
         }
     }
 

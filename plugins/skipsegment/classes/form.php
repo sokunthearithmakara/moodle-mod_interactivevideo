@@ -51,7 +51,7 @@ class form extends \mod_interactivevideo\form\base_form {
         $mform->addElement(
             'text',
             'titleassist',
-            '<i class="bi bi-stopwatch mr-2"></i>' . get_string('endtime', 'ivplugin_skipsegment'),
+            '<i class="bi bi-stopwatch iv-mr-2"></i>' . get_string('endtime', 'ivplugin_skipsegment'),
             ['placeholder' => '00:00:00.00']
         );
         $mform->setType('titleassist', PARAM_TEXT);

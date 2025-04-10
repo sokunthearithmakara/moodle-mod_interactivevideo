@@ -80,7 +80,7 @@ $PAGE->set_title(get_string('interactionsin', 'interactivevideo', format_string(
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 $PAGE->set_pagelayout('embedded');
-$PAGE->add_body_class('page-interactions ' . $moduleinstance->type);
+$PAGE->add_body_class('page-interactions ' . $moduleinstance->type . ($CFG->branch >= 500 ? ' bs-5' : ''));
 
 // Sort the content types by title.
 usort($contentoptions, function ($a, $b) {
@@ -132,7 +132,7 @@ $datafortemplate = [
     "courseid" => $course->id,
     "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
     "canedit" => has_capability('mod/interactivevideo:edit', $modulecontext),
-    "completion" => ($attempted ? '<span class="mb-0 border-left border-danger pl-3"><button class="btn btn-sm"
+    "completion" => ($attempted ? '<span class="mb-0 iv-border-left border-danger iv-pl-3"><button class="btn btn-sm"
           type="button" data-toggle="popover" data-html="true" data-content=\'' .
         get_string('interactionscannotbeedited', 'mod_interactivevideo') . '\'>
          <i class="bi bi-exclamation-circle-fill text-warning fs-25px"></i></button></span>' : ''),
@@ -152,6 +152,7 @@ $datafortemplate = [
         '/backup/restorefile.php',
         ['contextid' => $modulecontext->id]
     ) : '',
+    "bs" => $CFG->branch >= 500 ? '-bs' : '',
 ];
 
 echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $datafortemplate);
@@ -161,6 +162,7 @@ $datafortemplate = [
     "html5" => $moduleinstance->type == 'html5video',
     "title" => format_string($moduleinstance->name),
     "grade" => $moduleinstance->grade,
+    "bs" => $CFG->branch >= 500 ? '-bs' : '',
 ];
 
 echo $OUTPUT->render_from_template('mod_interactivevideo/editor', $datafortemplate);

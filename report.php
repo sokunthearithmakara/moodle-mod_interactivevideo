@@ -58,6 +58,7 @@ $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/interactivevideo/libra
 if ($embed = optional_param('embed', 0, PARAM_INT) == 1) {
     $PAGE->add_body_class('embed-mode');
 }
+$PAGE->add_body_class($CFG->branch >= 500 ? ' bs-5' : '');
 $PAGE->set_url('/mod/interactivevideo/report.php', ['id' => $cm->id, 'group' => $group, 'embed' => $embed]);
 $PAGE->set_title(get_string('reportfor', 'interactivevideo', format_string($moduleinstance->name)));
 $PAGE->set_heading(format_string($course->fullname));
@@ -169,7 +170,7 @@ $datafortemplate = [
     "contextid" => $context->id,
     "courseid" => $course->id,
     "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
-    "completion" => '<h4 class="mb-0 border-left border-danger pl-3">'
+    "completion" => '<h4 class="mb-0 iv-border-left border-danger iv-pl-3">'
         . format_string($moduleinstance->name) . '</h4>',
     "manualcompletion" => 1,
     "settingurl" => has_capability('mod/interactivevideo:edit', $context)
@@ -187,6 +188,7 @@ $datafortemplate = [
         '/backup/restorefile.php',
         ['contextid' => $context->id]
     ) : '',
+    "bs" => $CFG->branch >= 500 ? '-bs' : '',
 ];
 
 
@@ -232,6 +234,7 @@ $reporttabledata = [
             'typetitle' => $item->typetitle,
         ];
     }, $items),
+    'bs' => $CFG->branch >= 500 ? '-bs' : '',
 ];
 
 echo $OUTPUT->render_from_template('mod_interactivevideo/reporttable', $reporttabledata);

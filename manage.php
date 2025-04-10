@@ -36,7 +36,7 @@ $PAGE->set_url(new moodle_url('/mod/interactivevideo/manage.php', ['courseid' =>
 $PAGE->set_context($coursecontext);
 $PAGE->set_title(get_string('manageivfor', 'mod_interactivevideo', $pageheading));
 $PAGE->set_heading($pageheading);
-
+$PAGE->add_body_class($CFG->branch >= 500 ? 'bs-5' : '');
 $stringman = get_string_manager();
 $strings = $stringman->load_component_strings('mod_interactivevideo', current_language());
 $PAGE->requires->strings_for_js(array_keys($strings), 'mod_interactivevideo');
@@ -228,7 +228,10 @@ if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesetti
     }
     echo '<textarea id="listdata" style="display: none;">' . json_encode($list) . '</textarea>';
     echo '<div id="list">';
-    echo $OUTPUT->render_from_template('mod_interactivevideo/managelist', ['type' => $activitytypes]);
+    echo $OUTPUT->render_from_template('mod_interactivevideo/managelist', [
+        'type' => $activitytypes,
+        'bs' => $CFG->branch >= 500 ? '-bs' : '',
+    ]);
     echo '</div>';
     $PAGE->requires->js_call_amd('mod_interactivevideo/manage', $tab, [
         $courseid,

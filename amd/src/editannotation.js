@@ -35,6 +35,8 @@ define(['jquery',
     let currentTime;
     let playerReady = false;
     const isRTL = $('html').attr('dir') == 'rtl';
+    const isBS5 = $('body').hasClass('bs-5');
+    const bsAffix = isBS5 ? '-bs' : '';
     let $loader = $('#background-loading');
     /**
      * Replace the progress bar on the video navigation.
@@ -537,7 +539,7 @@ define(['jquery',
                 // Cover the video with a message on a white background div.
                 $('#video-wrapper').append(`<div id="end-screen" class="border position-absolute w-100 h-100 bg-white d-flex
                      justify-content-center align-items-center" style="top: 0; left: 0;">
-                     <button class="btn btn-danger border-0 rounded-circle" style="font-size: 1.5rem;" id="restart">
+                     <button class="btn btn-danger border-0 iv-rounded-circle" style="font-size: 1.5rem;" id="restart">
                     <i class="bi bi-arrow-repeat" style="font-size: x-large;"></i></button></div>`);
                 $('#video-nav #progress').css('width', '100%');
                 $('#scrollbar, #scrollhead-top').css('left', '100%');
@@ -850,10 +852,14 @@ define(['jquery',
                 const id = $(this).closest('.annotation').data('id');
                 const contenttype = $(this).closest('.annotation').data('type');
                 ctRenderer[contenttype].editAnnotation(annotations, id, coursemodule);
-                if (timestamp) {
+                const t = await player.getCurrentTime();
+                if (timestamp && t != timestamp) {
                     await player.seek(timestamp, true);
                 }
-                player.pause();
+                const isPlaying = await player.isPlaying();
+                if (isPlaying) {
+                    player.pause();
+                }
             });
 
             // Implement copy annotation
@@ -866,9 +872,12 @@ define(['jquery',
             });
 
             // Implement delete annotation.
-            $(document).on('click', 'tr.annotation .delete', function(e) {
+            $(document).on('click', 'tr.annotation .delete', async function(e) {
                 e.preventDefault();
-                player.pause();
+                const isPaused = await player.isPaused();
+                if (!isPaused) {
+                    player.pause();
+                }
                 const id = $(this).closest('.annotation').data('id');
                 const annotation = annotations.find(annotation => annotation.id == id);
                 try {
@@ -932,7 +941,10 @@ define(['jquery',
                 const percentage = e.offsetX / $(this).width();
                 replaceProgressBars(percentage * 100);
                 currentTime = (percentage * totaltime) + start;
-                await player.seek(currentTime);
+                let t = await player.getCurrentTime();
+                if (t != currentTime) {
+                    await player.seek(currentTime);
+                }
                 player.pause();
                 $("#addcontent").trigger('click');
             });
@@ -1149,7 +1161,7 @@ define(['jquery',
             };
 
             $(document).on('annotationitemsrendered', function() {
-                $('#timeline-wrapper [data-toggle="tooltip"]').tooltip({
+                $(`#timeline-wrapper [data${bsAffix}-toggle="tooltip"]`).tooltip({
                     'boundary': 'window',
                     'container': '#timeline',
                 });
@@ -1521,6 +1533,10 @@ define(['jquery',
                         percentage = 100;
                     }
                     $('#scrollbar, #scrollhead-top').css('left', percentage + '%');
+                    let t = await player.getCurrentTime();
+                    if (t === timestamp) {
+                        return;
+                    }
                     const isPaused = await player.isPaused();
                     if (!isPaused) {
                         player.pause();
@@ -1659,13 +1675,18 @@ define(['jquery',
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 const percentage = e.offsetX / $(this).width();
+                const time = percentage * (totaltime) + start;
+                const t = await player.getCurrentTime();
+                if (t === time) {
+                    return;
+                }
                 replaceProgressBars(percentage * 100);
                 $loader.fadeIn(300);
                 const isPaused = await player.isPaused();
                 if (!isPaused) {
                     player.pause();
                 }
-                await player.seek((percentage * totaltime) + start);
+                await player.seek(time);
                 $loader.fadeOut(300);
                 $("#message, #end-screen").remove();
             });
@@ -1827,7 +1848,7 @@ define(['jquery',
                     $('#qualitieslist').append(`<a class="dropdown-item changequality px-3" data-quality="${q}"
                          href="#"><i class="bi ${q == currentQuality ? 'bi-check' : ''} fa-fw"></i>${qualitiesLabel[i]}</a>`);
                 });
-                $(this).find('[data-toggle=dropdown]').dropdown('update');
+                $(this).find(`[data${bsAffix}-toggle=dropdown]`).dropdown('update');
             });
 
             $(document).on('click', '.changequality', function(e) {
@@ -1855,16 +1876,16 @@ define(['jquery',
                     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="importmodalLabel">
+                                <h5 class="modal-title flex-grow-1" id="importmodalLabel">
                                 ${M.util.get_string('importcontent', 'mod_interactivevideo')}</h5>
-                                <button type="button" class="btn p-0 border-0" data-dismiss="modal" aria-label="Close">
+                                <button type="button" class="btn p-0 border-0" data${bsAffix}-dismiss="modal" aria-label="Close">
                                     <i class="bi bi-x-lg fa-fw fs-25px"></i>
                                 </button>
                             </div>
                             <div class="modal-body">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary border-0" data-dismiss="modal">
+                                <button type="button" class="btn btn-secondary border-0" data${bsAffix}-dismiss="modal">
                                 ${M.util.get_string('cancel', 'mod_interactivevideo')}</button>
                                 <button type="button" class="btn btn-primary border-0" id="importcontentbutton">
                                 ${M.util.get_string('import', 'mod_interactivevideo')}</button>
@@ -1899,13 +1920,13 @@ define(['jquery',
                             let courses = JSON.parse(data);
                             // Sort courses by name.
                             courses.sort((a, b) => a.fullname.localeCompare(b.fullname));
-                            let courseSelect = `<select class="custom-select w-100" id="importcourse">`;
+                            let courseSelect = `<select class="${isBS5 ? 'form' : 'custom'}-select w-100" id="importcourse">`;
                             courses.forEach(course => {
                                 courseSelect += `<option value="${course.id}">${course.fullname} (${course.shortname})</option>`;
                             });
                             courseSelect += `</select>`;
-                            let selectfield = `<div class="form-group selectcourse">
-                            <label class="font-weight-bold" for="importcourse">
+                            let selectfield = `<div class="iv-form-group selectcourse">
+                            <label class="iv-font-weight-bold form-label" for="importcourse">
                             ${M.util.get_string('selectcourse', 'mod_interactivevideo')}</label>
                             ${courseSelect}</div>`;
                             $('#importmodal .modal-body').append(selectfield);
@@ -1932,14 +1953,14 @@ define(['jquery',
                     success: function(data) {
                         let cms = JSON.parse(data);
                         cms.sort((a, b) => a.name.localeCompare(b.name));
-                        let cmSelect = `<select class="custom-select w-100" id="importcm">
+                        let cmSelect = `<select class="${isBS5 ? 'form' : 'custom'}-select w-100" id="importcm">
                         <option value="">${M.util.get_string('select', 'mod_interactivevideo')}</option>`;
                         cms.forEach(cm => {
                             cmSelect += `<option value="${cm.id}" ${cm.id == interaction ? 'disabled' : ''}>${cm.name}</option>`;
                         });
                         cmSelect += `</select>`;
-                        let selectfield = `<div class="form-group selectcm">
-                        <label for="importcm" class="font-weight-bold">
+                        let selectfield = `<div class="iv-form-group selectcm">
+                        <label for="importcm" class="iv-font-weight-bold form-label">
                         ${M.util.get_string('selectactivity', 'mod_interactivevideo')}</label>
                         ${cmSelect}</div>`;
                         $(`#importmodal .selectcourse`).after(selectfield);
@@ -1977,15 +1998,15 @@ define(['jquery',
                      <div class="input-group-prepend border-0 invisible">
                             <label class="input-group-text bg-white">
                                 <input type="checkbox"/>
-                                <i class="bi bi-plus ml-3 fs-unset"></i>
+                                <i class="bi bi-plus iv-ml-3 fs-unset"></i>
                             </label>
                         </div>
-                <input type="text" class="form-control border-0 font-weight-bold"
+                <input type="text" class="form-control border-0 iv-font-weight-bold"
                  value="${M.util.get_string('title', 'mod_interactivevideo')}">
-                <input type="text" class="form-control border-0 font-weight-bold" style="max-width: 50px;"
+                <input type="text" class="form-control border-0 iv-font-weight-bold" style="max-width: 50px;"
                 value="XP">
                 <input type="text" style="max-width: 150px;" value="${M.util.get_string('timestamp', 'mod_interactivevideo')}"
-                 class="form-control border-0 font-weight-bold"></div>`);
+                 class="form-control border-0 iv-font-weight-bold"></div>`);
 
                 interactions = interactions.map(int => {
                     // Get the icon and check if the interaction is out of range (start, end time);
@@ -2011,7 +2032,7 @@ define(['jquery',
                         <div class="input-group-prepend">
                             <label class="input-group-text">
                                 <input type="checkbox" ${int.disabled ? 'disabled' : ''}/>
-                                <i class="${int.icon} ml-3 fs-unset"></i>
+                                <i class="${int.icon} iv-ml-3 fs-unset"></i>
                             </label>
                         </div>
                 <input type="text" class="form-control name" ${int.timestamp < 0 ? 'readonly' : ''}
@@ -2198,6 +2219,93 @@ define(['jquery',
             window.addEventListener('beforeunload', function() {
                 $(document).off();
                 cancelAnimationFrame(onPlayingInterval);
+            });
+
+            // Event lister for bulk action.
+            $(document).on('click', '#annotation-list-bulk-edit', async function(e) {
+                e.preventDefault();
+                if ($(this).hasClass('active')) {
+                    // Remove all checkboxes.
+                    $('#annotation-list').find('.form-check').remove();
+                    $(this).removeClass('active');
+                    $('#annotation-list').find('tr').each(function() {
+                        $(this).removeClass('b-active');
+                    });
+                    $('body').removeClass('iv-bulk-edit');
+                    return;
+                }
+                $(this).addClass('active');
+                $('body').addClass('iv-bulk-edit');
+                let li = $('#annotation-list').find('tr');
+                li.each(function() {
+                    let id = $(this).data('id');
+                    let type = $(this).data('type');
+                    // Find first td.
+                    let td = $(this).find('td').first().find('div');
+                    td.prepend(`<div class="form-check form-check-inline iv-mr-0">
+                        <input class="form-check-input" type="checkbox" data-type="${type}" id="annotation-${id}" value="${id}">
+                        <label class="form-check-label" for="annotation-${id}"></label></div>`);
+                });
+            });
+
+            $(document).on('click', 'tr.annotation .form-check-input', function(e) {
+                e.stopImmediatePropagation();
+                if ($(this).is(':checked')) {
+                    $(this).closest('tr').addClass('b-active');
+                } else {
+                    $(this).closest('tr').removeClass('b-active');
+                }
+
+                let checked = $('#annotation-list').find('tr .form-check-input:checked');
+
+                if (checked.length == 0) {
+                    $('#annotation-list-bulk .bulk-actions').hide();
+                } else {
+                    $('#annotation-list-bulk .bulk-actions').show();
+                }
+            });
+
+            $(document).on('click', '#annotation-list-bulk-delete', async function(e) {
+                e.preventDefault();
+                let ids = [];
+                let types = [];
+                let checked = $('#annotation-list').find('tr .form-check-input:checked');
+                checked.each(function() {
+                    ids.push($(this).val());
+                    types.push($(this).data('type'));
+                });
+                if (ids.length == 0) {
+                    return;
+                }
+                const promises = ids.map((id, index) => {
+                    return new Promise((resolve) => {
+                        let type = types[index];
+                        ctRenderer[type].deleteAnnotation(annotations, id, true);
+                        resolve();
+                    });
+                });
+
+                await Promise.all(promises);
+                dispatchEvent('annotationsdeleted', {
+                    annotations: this.annotations,
+                    ids: ids,
+                });
+            });
+
+            // Bulk deleted
+            $(document).on('annotationsdeleted', function(e) {
+                const ids = e.originalEvent.detail.ids;
+                ids.forEach(function(id) {
+                    $(`tr[data-id="${id}"]`).addClass('deleted');
+                });
+                $('#annotation-list-bulk-edit').trigger('click');
+                setTimeout(function() {
+                    annotations = annotations.filter(function(item) {
+                        return !ids.includes(item.id);
+                    });
+                    renderAnnotationItems(annotations);
+                    addNotification(M.util.get_string('interactionsdeleted', 'mod_interactivevideo', ids.length), 'success');
+                }, 1000);
             });
         }
     };

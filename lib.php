@@ -603,7 +603,7 @@ function interactivevideo_afterlink(cm_info $cm) {
             'javascript:void(0)',
             '<i class="fa fa-edit" aria-hidden="true"></i>',
             [
-                'class' => 'p-1 mr-1 iv_quickform',
+                'class' => 'p-1 iv-mr-1 iv_quickform',
                 'title' => get_string('editwithctrlclick', 'mod_interactivevideo'),
                 'aria-label' => get_string('editwithctrlclick', 'mod_interactivevideo'),
                 'data-contextid' => $context->id,
@@ -618,7 +618,7 @@ function interactivevideo_afterlink(cm_info $cm) {
             new moodle_url('/mod/interactivevideo/interactions.php', ['id' => $cm->id]),
             '<i class="fa fa-bullseye" aria-hidden="true"></i>',
             [
-                'class' => 'p-1 mr-1',
+                'class' => 'p-1 iv-mr-1',
                 'title' => get_string('interactions', 'mod_interactivevideo'),
                 'aria-label' => get_string('interactions', 'mod_interactivevideo'),
             ]
@@ -629,7 +629,7 @@ function interactivevideo_afterlink(cm_info $cm) {
             'javascript:void(0)',
             '<i class="fa fa-table" aria-hidden="true"></i>',
             [
-                'class' => 'p-1 mr-1 launch-report',
+                'class' => 'p-1 iv-mr-1 launch-report',
                 'title' => get_string('reportwithctrlclick', 'mod_interactivevideo'),
                 'aria-label' => get_string('reportwithctrlclick', 'mod_interactivevideo'),
                 'data-title' => $cm->get_name(),
@@ -679,6 +679,9 @@ function interactivevideo_cm_info_view(cm_info $cm) {
     $isivformat = strpos($PAGE->bodyclasses, 'format-test') !== false && !$PAGE->user_is_editing();
     $displayoptions = json_decode($customdata['displayoptions']);
     $displayinline = isset($displayoptions->displayinline) && $displayoptions->displayinline == INTERACTIVEVIDEO_DISPLAY_INLINE;
+    if ($displayoptions->launchinpopup) {
+        $cm->set_extra_classes('launchinpopup');
+    }
     if ($displayinline || $isivformat) {
         if (strpos($PAGE->bodyclasses, 'format-') !== false) { // MUST be in course view only.
             $cm->set_content(interactivevideo_displayinline($cm));
@@ -1848,7 +1851,7 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
     if (in_array('appearance', $sections)) {
         $mform->addElement(
             'html',
-            '<div class="form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0 pr-md-0">
+            '<div class="iv-form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0  iv-pr-md-0">
         <h5 class="w-100 border-bottom">' . get_string('appearancesettings', 'mod_interactivevideo')
                 . '</h5></div></div>',
         );
@@ -1923,7 +1926,6 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             ['group' => 1],
             [0, 1]
         );
-        $mform->hideIf('launchinpopup', 'displayinline', 'eq', 0);
 
         // Card sizes.
         if ($CFG->branch >= 403) {
@@ -2164,7 +2166,7 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
     if (in_array('behavior', $sections)) {
         $mform->addElement(
             'html',
-            '<div class="form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0 pr-md-0">
+            '<div class="iv-form-group row fitem"><div class="col-md-12 col-form-label d-flex pb-0  iv-pr-md-0">
         <h5 class="w-100 border-bottom">' . get_string('behaviorsettings', 'mod_interactivevideo')
                 . '</h5></div></div>',
         );

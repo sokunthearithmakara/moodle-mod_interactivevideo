@@ -24,19 +24,11 @@
 define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
     return {
         init: async function() {
-            // Launch the interactive video in modal
-            $(document).on('click', '.launch-interactivevideo', async function(e) {
+            const launchVideo = async($card, course, contextid, id) => {
                 // Save the current document title.
                 let title = document.title;
                 // Get showcontrols from cache.
                 let showcontrols = localStorage.getItem('showcontrols') ? true : false;
-                e.preventDefault();
-                const id = $(this).data('id');
-                const instance = $(this).data('instance');
-                const course = $(this).data('course');
-                const contextid = $(this).data('contextid');
-                const $card = $(this).closest('#interactivevideo-' + instance);
-                $card.find('.image-container').addClass('hovered');
                 let dataForTemplate = {
                     id: id,
                     showcontrols: showcontrols,
@@ -73,9 +65,11 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                         $(this).find('.lock-bar').trigger('click');
                     }
                     // Copy the activity information to the modal header.
-                    let $completion = $card.find('[data-region=activity-information]');
-                    $completion = $completion.clone();
-                    $(this).find('[data-region="activity-completion"]').html($completion);
+                    if ($card) {
+                        let $completion = $card.find('[data-region=activity-information]');
+                        $completion = $completion.clone();
+                        $(this).find('[data-region="activity-completion"]').html($completion);
+                    }
                     // Listen the player timeupdate event in the iframe.
                     let checkIframeDoc = function() {
                         try {
@@ -154,6 +148,9 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                             });
 
                             // Analytics progress bar.
+                            if ($card === null) {
+                                return;
+                            }
                             let $progressbar = $card.find('.analytics.progress .progress-bar');
                             if ($progressbar.length == 0) {
                                 return;
@@ -181,23 +178,31 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                         .on('click', '#playermodal [data-action="toggle-manual-completion"]', function() {
                             $(this).parent().addClass('updated');
                             if ($(this).data('withavailability') == 1) {
-                                history.pushState(null, null, M.cfg.wwwroot + '/course/view.php?id=' + course + '#module-' + id);
+                                history.pushState(null, null, M.cfg.wwwroot + '/course/view.php?id='
+                                    + course + '#module-' + id);
                             }
                         });
+
 
                     // Update the browser url to the current activity.
                     history.pushState(null, null, M.cfg.wwwroot + '/mod/interactivevideo/view.php?id=' + id);
                     // Update the title of tab to the activity name.
-                    let activitytitle = $card.data('title');
-                    document.title = activitytitle;
+                    if ($card) {
+                        let activitytitle = $card.data('title');
+                        document.title = activitytitle;
+                    } else {
+                        document.title = $('li[data-id="' + id + '"] .activityname').text();
+                    }
                 });
 
                 $('#playermodal').on('hide.bs.modal', async function() {
                     $('body').removeClass('overflow-hidden');
                     // Trigger hover on .image-container for 2 seconds.
-                    setTimeout(function() {
-                        $card.find('.image-container').removeClass('hovered');
-                    }, 1000);
+                    if ($card) {
+                        setTimeout(function() {
+                            $card.find('.image-container').removeClass('hovered');
+                        }, 1000);
+                    }
 
                     if (player) { // Must check this in case user close modal before the player is ready.
                         await player.pause();
@@ -205,49 +210,52 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                         $(this).remove();
                         return;
                     }
-                    // If there is automatic completion conditions, we have to update it.
-                    let $autocompletion = $card.find('.automatic-completion-conditions');
-                    if ($autocompletion.length > 0) {
-                        const completion = await $.ajax({
-                            url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                            method: 'POST',
-                            dataType: 'text',
-                            data: {
-                                action: 'get_cm_completion',
-                                cmid: id,
-                                sesskey: M.cfg.sesskey,
-                                contextid: contextid,
-                                courseid: course,
-                                userid: M.cfg.userId || 0,
-                            }
-                        });
 
-                        if (completion) {
-                            const completiondata = JSON.parse(completion);
-                            $card.find('[data-region=activity-information]')
-                                .html($(completiondata.completion).html());
+                    if ($card) {
+                        // If there is automatic completion conditions, we have to update it.
+                        let $autocompletion = $card.find('.automatic-completion-conditions');
+                        if ($autocompletion.length > 0) {
+                            const completion = await $.ajax({
+                                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                                method: 'POST',
+                                dataType: 'text',
+                                data: {
+                                    action: 'get_cm_completion',
+                                    cmid: id,
+                                    sesskey: M.cfg.sesskey,
+                                    contextid: contextid,
+                                    courseid: course,
+                                    userid: M.cfg.userId || 0,
+                                }
+                            });
+
+                            if (completion) {
+                                const completiondata = JSON.parse(completion);
+                                $card.find('[data-region=activity-information]')
+                                    .html($(completiondata.completion).html());
+                            }
                         }
-                    }
 
-                    // If there is manual completion, we have to copy the button to the course page.
-                    let $manualcompletion = $(this).find('.completion-info.updated');
-                    if ($manualcompletion.length > 0) {
-                        $card.find('.completion-info').html($manualcompletion.html());
-                    }
+                        // If there is manual completion, we have to copy the button to the course page.
+                        let $manualcompletion = $(this).find('.completion-info.updated');
+                        if ($manualcompletion.length > 0) {
+                            $card.find('.completion-info').html($manualcompletion.html());
+                        }
 
-                    if (details) {
-                        let progressbar = $card.find('.tasks .progress-bar');
-                        if (progressbar.length > 0) {
-                            progressbar.css('width', Math.round(details.completed / details.total * 100) + '%');
-                            if (details.completed == details.total) {
-                                progressbar.addClass('bg-success').removeClass('bg-primary');
-                            } else {
-                                progressbar.removeClass('bg-success').addClass('bg-primary');
+                        if (details) {
+                            let progressbar = $card.find('.tasks .progress-bar');
+                            if (progressbar.length > 0) {
+                                progressbar.css('width', Math.round(details.completed / details.total * 100) + '%');
+                                if (details.completed == details.total) {
+                                    progressbar.addClass('bg-success').removeClass('bg-primary');
+                                } else {
+                                    progressbar.removeClass('bg-success').addClass('bg-primary');
+                                }
+                                $card.find('.percentage')
+                                    .text(Math.round(details.completed / details.total * 100));
+                                $card.find('.items').text(`(${details.completed}/${details.total})`);
+                                $card.find('.xp').text(details.xp);
                             }
-                            $card.find('.percentage')
-                                .text(Math.round(details.completed / details.total * 100));
-                            $card.find('.items').text(`(${details.completed}/${details.total})`);
-                            $card.find('.xp').text(details.xp);
                         }
                     }
 
@@ -255,13 +263,15 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     history.pushState(null, null, M.cfg.wwwroot + '/course/view.php?id=' + course);
                     document.title = title;
 
-                    if (iframeAnnos) {
-                        // Remove the new-bagde from the poster.
-                        $card.find('.new-badge').remove();
-                    }
+                    if ($card) {
+                        if (iframeAnnos) {
+                            // Remove the new-bagde from the poster.
+                            $card.find('.new-badge').remove();
+                        }
 
-                    $card.closest('.modtype_interactivevideo')[0]
-                        .scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+                        $card.closest('.modtype_interactivevideo')[0]
+                            .scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+                    }
 
                     if (iframeDoc) {
                         $(iframeDoc).off();
@@ -297,6 +307,26 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     }
 
                 });
+            };
+            // Launch the interactive video in modal
+            $(document).on('click', '.launch-interactivevideo', async function(e) {
+
+                e.preventDefault();
+                const id = $(this).data('id');
+                const instance = $(this).data('instance');
+                const course = $(this).data('course');
+                const contextid = $(this).data('contextid');
+                const $card = $(this).closest('#interactivevideo-' + instance);
+                $card.find('.image-container').addClass('hovered');
+                launchVideo($card, course, contextid, id);
+            });
+
+            $(document).on('click', '.activityname a[href*="mod/interactivevideo/view.php"]', async function(e) {
+                if ($(this).closest('li').hasClass('launchinpopup')) {
+                    e.preventDefault();
+                    const id = $(this).closest('li').data('id');
+                    launchVideo(null, M.cfg.courseId, null, id);
+                }
             });
 
             $(document).on('click', '.open-external-link', function() {
@@ -406,10 +436,10 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                             {key: 'resettodefaults', component: 'mod_interactivevideo'},
                         ]);
                         $('[data-region="footer"]').css('align-items', 'unset')
-                            .prepend(`<span class="btn btn-secondary mr-1 default" title="${strings[1]}">
+                            .prepend(`<span class="btn btn-secondary iv-mr-1 default" title="${strings[1]}">
                         <i class="fa fa-refresh"></i></span>
-                        <a type="button" class="btn btn-secondary mr-auto" target="_blank" data-dismiss="modal"
-                            title="${strings[0]}"
+                        <a type="button" class="btn btn-secondary iv-mr-auto" target="_blank" data-dismiss="modal"
+                         data-bs-dismiss="modal" title="${strings[0]}"
                             href="${M.cfg.wwwroot}/course/modedit.php?update=${formdata.cmid}"><i class="fa fa-cog"></i>
                             </a>`);
                     }, 2000);

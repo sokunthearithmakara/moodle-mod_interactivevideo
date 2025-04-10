@@ -109,7 +109,7 @@ foreach ($customs as $custom) {
                 if (!empty($plugininfo)) {
                     $plugininfo = reset($plugininfo);
                     $newversion = $plugininfo['version'];
-                    if ($newversion !== $version) {
+                    if ($newversion > $version) {
                         $updateavailable = true;
                     }
                 }

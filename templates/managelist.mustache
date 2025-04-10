@@ -32,26 +32,26 @@ Example context (json):
             <th id="col-type">{{#str}}type, mod_interactivevideo{{/str}}</th>
             <th id="col-view">
                 <i class="bi bi-people-fill"
-                   data-toggle="tooltip"
+                   data{{bs}}-toggle="tooltip"
                    title="{{#str}}views, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}views, mod_interactivevideo{{/str}}</span>
             </th>
             <th id="col-duration">
                 <i class="bi bi-stopwatch"
-                   data-toggle="tooltip"
+                   data{{bs}}-toggle="tooltip"
                    title="{{#str}}duration, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}duration, mod_interactivevideo{{/str}}</span>
             </th>
             <th id="col-xp">
                 <i class="bi bi-star"
-                   data-toggle="tooltip"
+                   data{{bs}}-toggle="tooltip"
                    title="{{#str}}xp, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}xp, mod_interactivevideo{{/str}}</span>
             </th>
             <th id="col-count">
                 <i class="bi bi-bullseye"
-                   data-toggle="tooltip"
+                   data{{bs}}-toggle="tooltip"
                    title="{{#str}}interactioncount, mod_interactivevideo{{/str}}"></i><span class="sr-only">{{#str}}interactioncount, mod_interactivevideo{{/str}}</span>
             </th>
             {{#type}}
-            <th id="col-{{name}}" data-toggle="tooltip" title="{{title}}">
+            <th id="col-{{name}}" data{{bs}}-toggle="tooltip" title="{{title}}">
                 <i class="{{icon}}"></i>
             </th>
             {{/type}}

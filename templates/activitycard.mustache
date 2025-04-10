@@ -41,10 +41,10 @@ Example context (json):
             {{#passwordprotected}}<span class="badge password" title="{{#str}}passwordrequired,interactivevideo{{/str}}"><i class="fa fa-key"></i></span>{{/passwordprotected}}
             {{#cm.uservisible}}
             {{#new}}
-            <span class="badge badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
+            <span class="badge iv-badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
         {{/new}}
         {{#hasanalytics}}
-        <div class="analytics rounded-0 progress">
+        <div class="analytics iv-rounded-0 progress">
             <div class="progress-bar"
                  role="progressbar"
                  style="width: {{analytics}}%"
@@ -67,8 +67,8 @@ Example context (json):
             <a href="{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}"
                class="clamp-2 text-dark h5 text-decoration-none mb-1">{{{formattedname}}}</a>
             {{#hascompletion}}
-            {{#overallcomplete}}<i class="bi bi-check-circle-fill text-success ml-2 fs-n"></i>{{/overallcomplete}}
-            {{^overallcomplete}}<i class="bi bi-circle ml-2"></i>{{/overallcomplete}}
+            {{#overallcomplete}}<i class="bi bi-check-circle-fill text-success iv-ml-2 fs-n"></i>{{/overallcomplete}}
+            {{^overallcomplete}}<i class="bi bi-circle iv-ml-2"></i>{{/overallcomplete}}
         {{/hascompletion}}
     {{/cm.uservisible}}
     {{^cm.uservisible}}
@@ -78,7 +78,7 @@ Example context (json):
 {{/showname}}
 {{#showdescription}}
 {{#formattedintro}}
-{{^usecustomdesc}}<i class="fa fa-chevron-right description-show ml-auto mr-1 mb-0 cursor-pointer"></i>{{/usecustomdesc}}{{/formattedintro}}
+{{^usecustomdesc}}<i class="fa fa-chevron-right description-show iv-ml-auto iv-mr-1 mb-0 cursor-pointer"></i>{{/usecustomdesc}}{{/formattedintro}}
 {{/showdescription}}
 </div>
 {{#showdescription}}
@@ -102,9 +102,9 @@ Example context (json):
              aria-valuemax="100"></div>
     </div>
     <div class="d-flex justify-content-between">
-        <small title="{{#str}}taskscompleted,interactivevideo{{/str}}"><i class="fa fa-bullseye mr-1"></i><span class="percentage">{{usercompletion.completionpercentage}}</span>% <span class="items">({{completeditems}}/{{totalitems}})</span></small>
+        <small title="{{#str}}taskscompleted,interactivevideo{{/str}}"><i class="fa fa-bullseye iv-mr-1"></i><span class="percentage">{{usercompletion.completionpercentage}}</span>% <span class="items">({{completeditems}}/{{totalitems}})</span></small>
         {{^noxp}}
-        <small title="{{#str}}xpcompleted,interactivevideo{{/str}}"><i class="fa fa-star mr-1"></i><span class="xp">{{usercompletion.xp}}</span>/{{totalxp}}</small>
+        <small title="{{#str}}xpcompleted,interactivevideo{{/str}}"><i class="fa fa-star iv-mr-1"></i><span class="xp">{{usercompletion.xp}}</span>/{{totalxp}}</small>
     {{/noxp}}
 </div>
 {{/noitems}}
@@ -121,7 +121,7 @@ Example context (json):
     <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}">
         <img src="{{interactivevideo.posterimage}}" loading="lazy">
         {{#new}}
-        <span class="badge badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
+        <span class="badge iv-badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
     {{/new}}
     {{#cm.uservisible}}
     <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}><i class="fa fa-play"></i></a>
@@ -131,12 +131,12 @@ Example context (json):
 {{#cm.uservisible}}
 {{^noitems}}
 <span class="position-absolute badge percentage-badge d-flex">
-    <i class="fa fa-bullseye mr-1"></i>
+    <i class="fa fa-bullseye iv-mr-1"></i>
     <span class="percentage">{{usercompletion.completionpercentage}}</span>%
 </span>
 {{/noitems}}
 {{#hasanalytics}}
-<div class="analytics rounded-0 progress">
+<div class="analytics iv-rounded-0 progress">
     <div class="progress-bar bg-danger"
          role="progressbar"
          style="width: {{analytics}}%"
@@ -151,7 +151,7 @@ Example context (json):
 </div>
 <div class="info p-2 w-100 position-absolute small">
     <a href="{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}"
-       class="title font-weight-bold nolink no-pointer text-decoration-none text-white">{{{formattedname}}}</a>
+       class="title iv-font-weight-bold nolink no-pointer text-decoration-none text-white">{{{formattedname}}}</a>
     {{#hasanalytics}}
     <div class="analytics progress position-relative mt-2">
         <div class="progress-bar bg-danger"
@@ -164,7 +164,7 @@ Example context (json):
              data-expected="{{analyticsexpected}}"></div>
     </div>
     <small class="d-flex align-items-center"
-           title="{{#str}}watched,interactivevideo{{/str}}"><i class="fa fa-stopwatch mr-auto"></i><span class="analytics-percentage">{{analytics}}</span>%</small>
+           title="{{#str}}watched,interactivevideo{{/str}}"><i class="fa fa-stopwatch iv-mr-auto"></i><span class="analytics-percentage">{{analytics}}</span>%</small>
 {{/hasanalytics}}
 {{^noitems}}
 <div class="tasks progress mt-2 bg-primary-alt">
@@ -177,10 +177,10 @@ Example context (json):
 </div>
 <div class="task-percentage d-flex justify-content-between mt-1">
     <small class="d-flex align-items-center"
-           title="{{#str}}taskscompleted,interactivevideo{{/str}}"><i class="fa fa-bullseye mr-1"></i><span class="percentage">{{usercompletion.completionpercentage}}</span>%<span class="items ml-1">({{completeditems}}/{{totalitems}})</span></small>
+           title="{{#str}}taskscompleted,interactivevideo{{/str}}"><i class="fa fa-bullseye iv-mr-1"></i><span class="percentage">{{usercompletion.completionpercentage}}</span>%<span class="items iv-ml-1">({{completeditems}}/{{totalitems}})</span></small>
     {{^noxp}}
     <small class="d-flex align-items-center"
-           title="{{#str}}xpcompleted,interactivevideo{{/str}}"><i class="fa fa-star mr-1"></i><span class="xp">{{usercompletion.xp}}</span>/{{totalxp}}</small>
+           title="{{#str}}xpcompleted,interactivevideo{{/str}}"><i class="fa fa-star iv-mr-1"></i><span class="xp">{{usercompletion.xp}}</span>/{{totalxp}}</small>
 {{/noxp}}
 </div>
 {{/noitems}}

@@ -65,7 +65,7 @@ class form extends \mod_interactivevideo\form\base_form {
 
         $this->standard_elements();
 
-        $mform->addElement('text', 'title', '<i class="bi bi-quote mr-2"></i>' . get_string('title', 'mod_interactivevideo'));
+        $mform->addElement('text', 'title', '<i class="bi bi-quote iv-mr-2"></i>' . get_string('title', 'mod_interactivevideo'));
         $mform->setType('title', PARAM_TEXT);
         $mform->setDefault('title', get_string('defaulttitle', 'mod_interactivevideo'));
         $mform->addRule('title', get_string('required'), 'required', null, 'client');
@@ -73,7 +73,7 @@ class form extends \mod_interactivevideo\form\base_form {
         $mform->addElement(
             'text',
             'iframeurl',
-            '<i class="bi bi-link-45deg mr-2"></i>' . get_string('iframeurl', 'ivplugin_iframe')
+            '<i class="bi bi-link-45deg iv-mr-2"></i>' . get_string('iframeurl', 'ivplugin_iframe')
         );
         $mform->setType('iframeurl', PARAM_TEXT);
 
@@ -83,7 +83,7 @@ class form extends \mod_interactivevideo\form\base_form {
         $mform->addElement(
             'textarea',
             'content',
-            '<i class="bi bi-code-slash mr-2"></i>' . get_string('embedcode', 'ivplugin_iframe'),
+            '<i class="bi bi-code-slash iv-mr-2"></i>' . get_string('embedcode', 'ivplugin_iframe'),
             ['rows' => 5]
         );
         $mform->setType('content', PARAM_RAW);

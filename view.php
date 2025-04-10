@@ -246,7 +246,7 @@ $gradeitem = grade_item::fetch([
     'itemnumber' => 0,
 ]);
 
-$PAGE->add_body_class($moduleinstance->type);
+$PAGE->add_body_class($moduleinstance->type . ($CFG->branch >= 500 ? ' bs-5' : ''));
 
 // Use Bootstrap icons instead of fontawesome icons to avoid issues fontawesome icons support in Moodle 4.1.
 $PAGE->requires->css(new moodle_url('/mod/interactivevideo/libraries/bootstrap-icons/bootstrap-icons.min.css'));
@@ -332,6 +332,7 @@ if ($rendernav) {
             '/backup/restorefile.php',
             ['contextid' => $modulecontext->id]
         ) : '',
+        "bs" => $CFG->branch >= 500 ? '-bs' : '',
     ];
     echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $datafortemplate);
 }
@@ -372,6 +373,7 @@ $datafortemplate = [
     "displayoptions" => $moduleinstance->displayoptions,
     "posterimage" => $moduleinstance->posterimage,
     "completed" => isset($completed) && $completed,
+    "bs" => $CFG->branch >= 500 ? '-bs' : '',
 ];
 echo $OUTPUT->render_from_template('mod_interactivevideo/player', $datafortemplate);
 

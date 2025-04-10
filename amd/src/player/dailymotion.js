@@ -146,7 +146,7 @@ class DailyMotion {
                 $('#start-screen #spinner').remove();
                 $('.video-block, #video-block').addClass('no-pointer bg-transparent');
                 // $('#start-screen').addClass('no-pointer');
-                $('#annotation-canvas').removeClass('d-none');
+                $('#annotation-canvas').removeClass('d-none w-0');
             }
 
             // Handle Dailymotion behavior. Video always start from the start time,
@@ -260,7 +260,7 @@ class DailyMotion {
             player.on(dailymotion.events.AD_START, function() {
                 $(".video-block, #video-block").addClass('d-none');
                 $("#start-screen").addClass('d-none');
-                $('#annotation-canvas').removeClass('d-none');
+                $('#annotation-canvas').removeClass('d-none w-0');
             });
 
             player.on(dailymotion.events.AD_END, function() {
