@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-04-11
+## Added
+- Support for Moodle 5.0 for main plugin and all interaction plugins.
+- Bulk-delete interactions from the editor page.
+- PDF Viewer: Ability to set specific pages to display in the viewer, and ability to resume from the last viewed page.
+- H5P Upload: Ability to set text direction for H5P content (LTR/RTL).
+## Fixed
+- When Moodle is installed in subdirectory, the stylesheets are not loaded correctly.
+
 ## [1.1.6] - 2025-04-03
 ### Added
 - Implemented `State Saving` for H5P contents. The state will be saved in the database and restored when the user reopens the content.
