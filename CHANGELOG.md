@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] - 2025-04-12
+## [1.2.1] - 2025-04-12
 ## Added
 - Backward support for Moodle 4.0 for the main plugin and all interaction plugins.
 
