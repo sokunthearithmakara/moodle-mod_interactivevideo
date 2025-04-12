@@ -27,8 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component    = 'ivplugin_skipsegment';
 $plugin->release      = '1.1';
 $plugin->version      = 2025041100;
-$plugin->requires     = 2022112800;
-$plugin->supported    = [401, 500];
+$plugin->requires     = 2021112800;
+$plugin->supported    = [400, 500];
 $plugin->maturity     = MATURITY_STABLE;
 $plugin->dependencies = [
     'interactivevideo' => 2025011305,

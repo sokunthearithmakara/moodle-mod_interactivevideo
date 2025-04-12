@@ -1788,14 +1788,12 @@ define([
                 }
             });
 
-            if ($("body").hasClass('mobiletheme')) {
-                $(`[data${bsAffix}-toggle="tooltip"]`).on('click', function() {
-                    const $this = $(this);
-                    setTimeout(function() {
-                        $this.tooltip('hide');
-                    }, 2000); // Hide after 3 seconds
-                });
-            }
+            $(`[data${bsAffix}-toggle="tooltip"]`).on('click', function() {
+                const $this = $(this);
+                setTimeout(function() {
+                    $this.tooltip('hide');
+                }, 2000); // Hide after 3 seconds
+            });
 
             window.addEventListener('beforeunload', function() {
                 player.pause();

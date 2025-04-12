@@ -215,7 +215,8 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         let columns = [
             {
                 data: "id",
-                visible: false
+                visible: false,
+                className: "exportable inv d-none",
             },
             {
                 data: "picture",
@@ -233,7 +234,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                     // Put _target=blank to open the user profile in a new tab (use regex)
                     data = data.replace(/<a /g, '<a target="_blank" ');
                     return `<div class="d-flex align-items-center">
-                    ${access.canedit == 1 ? `<input class="iv-mr-3" type="checkbox"
+                    ${access.canedit == 1 ? `<input class="iv-mr-3 bulk" type="checkbox"
                          data-record="${row.completionid}" ${row.timecreated > 0 ? '' : 'disabled'}
                          data-userid="${row.id}"/>` : ''}
                     <div class="text-truncate d-flex align-items-center justify-content-between flex-grow-1">${data}
@@ -389,7 +390,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             },
             select: {
                 style: 'multi',
-                selector: 'td:first-child input[type="checkbox"]',
+                selector: 'input[type="checkbox"].bulk',
             },
             stateSaveParams: function(settings, data) {
                 // We only want to save the state of the colvis and length menu
