@@ -2,12 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-04-12
+## Added
+- Backward support for Moodle 4.0 for the main plugin and all interaction plugins.
+
 ## [1.2.0] - 2025-04-11
 ## Added
 - Support for Moodle 5.0 for main plugin and all interaction plugins.
 - Bulk-delete interactions from the editor page.
 - PDF Viewer: Ability to set specific pages to display in the viewer, and ability to resume from the last viewed page.
-- H5P Upload: Ability to set text direction for H5P content (LTR/RTL).
+- H5P Upload: Ability to set text direction for H5P content (LTR/RTL). It is still up to the H5P content type to support RTL. The H5P Upload interaction plugin supports custom CSS file in the site settings. Administrators can add custom CSS to target RTL mode. For example: [dir=rtl] .h5p-content {margin-right: 1rem;}.
+
 ## Fixed
 - When Moodle is installed in subdirectory, the stylesheets are not loaded correctly.
 
