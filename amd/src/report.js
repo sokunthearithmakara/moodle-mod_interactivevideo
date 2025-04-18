@@ -730,6 +730,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             selectedRows.every(function() {
                 var row = this.node();
                 $(row).find("td:first-child input").prop("checked", true);
+                return true;
             });
 
             var deselectedRows = tabledata.rows({selected: false});

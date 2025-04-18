@@ -252,7 +252,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 // e.g. https://upenn.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=f4f968b2-eb20-4972-9ec1-ab7e01351489
                 if (videotypes.includes('panopto') || currenttype == 'panopto') {
                     // Extract id from the URL.
-                    let regex = /(?:https?:\/\/)?(?:www\.)?(?:[^\/]*panopto\.[^\/]+)\/Panopto\/.+\?id=([^/]+)/g;
+                    let regex = /(?:https?:\/\/)?(?:www\.)?(?:[^/]*panopto\.[^/]+)\/Panopto\/.+\?id=([^/]+)/g;
                     let match = regex.exec(url);
                     if (match) {
                         videowrapper.show();

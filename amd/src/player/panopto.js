@@ -84,7 +84,7 @@ class Panopto {
 
         // Documented at https://support.panopto.com/s/article/Learn-About-Panopto-Embed-API
         var EmbedApi;
-        const matches = url.match(/^[^\/]+:\/\/([^\/]*panopto\.[^\/]+)\/Panopto\/.+\?id=(.+)$/);
+        const matches = url.match(/^[^/]+:\/\/([^/]*panopto\.[^/]+)\/Panopto\/.+\?id=(.+)$/);
         const serverName = matches[1];
         const sessionId = matches[2];
 

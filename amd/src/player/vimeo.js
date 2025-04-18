@@ -91,16 +91,16 @@ class Vimeo {
             title: false,
             transparent: false,
             responsive: false,
-            start_time: start,
-            end_time: end,
+            "start_time": start,
+            "end_time": end,
             pip: false,
             fullscreen: false,
-            watch_full_video: false,
+            "watch_full_video": false,
             keyboard: false,
             dnt: true,
             chapters: showControls,
-            interactive_markers: showControls,
-            vimeo_logo: false,
+            "interactive_markers": showControls,
+            "vimeo_logo": false,
         };
 
         let ready = false;
