@@ -414,6 +414,11 @@ class Vimeo {
         player.setVolume(1);
     }
 
+    async isMuted() {
+        const volume = await player.getVolume();
+        return volume === 0;
+    }
+
     /**
      * Set quality of the video
      * @param {String} quality

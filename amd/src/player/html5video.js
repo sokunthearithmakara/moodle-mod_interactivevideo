@@ -451,6 +451,10 @@ class Html5Video {
         this.player.volume = 1;
     }
 
+    isMuted() {
+        return this.player.muted;
+    }
+
     /**
      * Returns the original video player instance.
      *

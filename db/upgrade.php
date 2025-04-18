@@ -191,5 +191,20 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025033001, 'interactivevideo');
     }
 
+    if ($oldversion < 2025041202) {
+
+        // Define field timeended to be added to interactivevideo_completion.
+        $table = new xmldb_table('interactivevideo_completion');
+        $field = new xmldb_field('timeended', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'timecompleted');
+
+        // Conditionally launch add field timeended.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025041202, 'interactivevideo');
+    }
+
     return true;
 }

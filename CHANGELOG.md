@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2025-04-18
+https://mod-interactive-video.canny.io/changelog/interactive-video-v122
+
 ## [1.2.1] - 2025-04-12
 ## Added
 - Backward support for Moodle 4.0 for the main plugin and all interaction plugins.

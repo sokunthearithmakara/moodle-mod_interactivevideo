@@ -304,6 +304,7 @@ class Rutube {
      */
     mute() {
         this.doCommand({type: 'player:mute', data: {}});
+        this.muted = true;
     }
     /**
      * Unmutes the Rutube player by setting the volume to 1.
@@ -311,6 +312,11 @@ class Rutube {
     unMute() {
         this.doCommand({type: 'player:unMute', data: {}});
         this.doCommand({type: 'player:setVolume', data: {volume: 1}});
+        this.muted = false;
+    }
+
+    isMuted() {
+        return this.muted;
     }
 
     /**

@@ -399,6 +399,12 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             $coursecontext = \context_course::instance($current->course);
             if ($settings) {
                 $mform->setDefault('completionpercentage', $settings->completionpercentage);
+                $extendedcompletion = json_decode($settings->extendedcompletion, true);
+                if ($extendedcompletion) {
+                    foreach ($extendedcompletion as $key => $value) {
+                        $mform->setDefault($key, $value);
+                    }
+                }
                 $mform->setDefault('displayasstartscreen', $settings->displayasstartscreen);
                 $endscreenarray = [
                     'format' => FORMAT_HTML,
@@ -470,9 +476,17 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $errors = [];
 
         // Make sure at least one automatic completion rule is enabled if completion is enabled.
-        if (!empty($data['completion']) && $data['completion'] == COMPLETION_TRACKING_AUTOMATIC) {
+        if (
+            !empty($data['completion']) && $data['completion'] == COMPLETION_TRACKING_AUTOMATIC
+            && !empty($data['completionunlocked'])
+        ) {
             $hascompletion = false;
             if (isset($data['completionpercentageenabled' . $suffix]) && $data['completionpercentage' . $suffix] > 0) {
+                $hascompletion = true;
+            }
+
+            // Watch till end.
+            if (isset($data['watchtillend']) && $data['watchtillend'] == 1) {
                 $hascompletion = true;
             }
 
@@ -681,6 +695,18 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 $defaultvalues['completionpercentage' . $suffix] = 0;
             }
 
+            // Watch till end completion.
+            if (isset($defaultvalues['extendedcompletion'])) {
+                $customcompletion = json_decode($defaultvalues['extendedcompletion'], true);
+                if (isset($customcompletion['watchtillend']) && $customcompletion['watchtillend'] == 1) {
+                    $defaultvalues['watchtillend' . $suffix] = 1;
+                } else {
+                    $defaultvalues['watchtillend' . $suffix] = 0;
+                }
+            } else {
+                $defaultvalues['watchtillend' . $suffix] = 0;
+            }
+
             // Handle subplugin.
             foreach ($this->subplugins as $plugin) {
                 if (!method_exists($plugin, 'data_preprocessing')) {
@@ -721,7 +747,17 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $mform->addGroup($group, $completionpercentagegroupel, '', ' ', false);
         $mform->disabledIf($completionpercentageel, $completionpercentageenabledel, 'notchecked');
 
-        $return = [$completionpercentagegroupel];
+        $group = [];
+        $group[] = &$mform->createElement(
+            'checkbox',
+            'watchtillend' . $suffix,
+            '',
+            get_string('completionwatchtillend', 'interactivevideo')
+        );
+        $mform->setType('watchtillend' . $suffix, PARAM_INT);
+        $mform->addGroup($group, 'completionwatchtillendgroup' . $suffix, '', ' ', false);
+
+        $return = [$completionpercentagegroupel, 'completionwatchtillendgroup' . $suffix];
         // Get other elements from plugins.
         foreach ($this->subplugins as $class) {
             if (!method_exists($class, 'customcompletion_definition')) {
@@ -751,6 +787,11 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         }
         // Default completion.
         if (!isset($data['completionpercentageenabled' . $suffix]) && $data['completionpercentage' . $suffix] > 0) {
+            $hascompletion = true;
+        }
+
+        // Watch till end completion.
+        if (isset($data['watchtillend' . $suffix]) && $data['watchtillend' . $suffix] == 1) {
             $hascompletion = true;
         }
 
@@ -786,6 +827,10 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 }
 
                 $customcompletion = [];
+                // Watch till end completion.
+                if (isset($data->{'watchtillend' . $suffix}) && $data->{'watchtillend' . $suffix} == 1) {
+                    $customcompletion['watchtillend'] = 1;
+                }
                 foreach ($this->subplugins as $class) {
                     if (!method_exists($class, 'data_postprocessing')) {
                         continue;

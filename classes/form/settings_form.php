@@ -170,6 +170,12 @@ class settings_form extends \core_form\dynamic_form {
             }
         }
 
+        $extendedcompletion = json_decode($defaultvalues['extendedcompletion'], true);
+        if (isset($extendedcompletion['watchtillend'])) {
+            $defaultvalues['watchtillend'] = $extendedcompletion['watchtillend'];
+        } else {
+            $defaultvalues['watchtillend'] = 0;
+        }
         $defaultvalues['showdescription'] = $defaultdisplayoptions['showdescription'];
 
         $this->set_data($defaultvalues);
@@ -222,7 +228,13 @@ class settings_form extends \core_form\dynamic_form {
         $data->completionpercentage = $fromform->completionpercentage;
         $data->displayoptions = $fromform->displayoptions;
         $data->id = $fromform->id;
-        $data->extendedcompletion = $fromform->extendedcompletion;
+        $extendedcompletion = '';
+        if ($fromform->watchtillend) {
+            $extendedcompletion = json_encode([
+                'watchtillend' => $fromform->watchtillend,
+            ]);
+        }
+        $data->extendedcompletion = $extendedcompletion;
 
         if ($fromform->id > 0) {
             $DB->update_record('interactivevideo_settings', $data);
@@ -364,6 +376,10 @@ class settings_form extends \core_form\dynamic_form {
             ['group' => 1],
             [0, 1]
         );
+
+        // Watch till end completion.
+        $mform->addElement('checkbox', 'watchtillend', get_string('completionwatchtillend', 'mod_interactivevideo'));
+        $mform->setType('watchtillend', PARAM_INT);
 
         $mform->addElement('float', 'completionpercentage', get_string('minimumcompletionpercentage', 'mod_interactivevideo'), [
             'size' => 5,

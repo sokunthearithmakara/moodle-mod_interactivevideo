@@ -64,7 +64,7 @@ export default class SkipSegment extends Base {
             bg-light px-2 py-1 iv-rounded-sm text-truncate"
             data-timestamp="${item.title}">${this.convertSecondsToHMS(item.title, this.totaltime < 3600, true)}</span>`);
         if (this.isSkipped(item.timestamp)) {
-            listItem.find('.skipend').after(`<span class="badge badge-warning iv-ml-2">
+            listItem.find('.skipend').after(`<span class="badge iv-badge-warning iv-ml-2">
                             ${M.util.get_string('skipped', 'ivplugin_skipsegment')}</span>`);
         }
         return listItem;

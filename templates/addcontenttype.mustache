@@ -42,27 +42,23 @@
                 {{^hideonchooser}}
                     <span class="cursor-pointer dropdown-item text-wrap px-4 py-3 border-bottom d-flex w-100 {{^description}}align-items-center{{/description}} {{^description}}align-items-start{{/description}}"
                         data-type="{{{name}}}">
-                        <i class="iv-mr-3 {{{icon}}} {{^hascompletion}}text-secondary{{/hascompletion}}"></i>
+                        <i class="iv-mr-4 {{{icon}}} {{^hascompletion}}text-secondary{{/hascompletion}}"></i>
                         <div class="w-100">
-                            <span class="iv-font-weight-bold contenttype-title">{{{title}}}</span>
-                            {{#author}}
-                            <small class="text-muted d-flex mt-1 mb-2 w-100 justify-content-between">
-                            <span class="d-flex">
-                            {{#str}}byauthor, interactivevideo, {{#authorlink}}<a class="text-muted iv-font-weight-bold iv-ml-1" href="{{{authorlink}}}" target="_blank">{{author}}</a>{{/authorlink}}
-                            {{^authorlink}}<b class="iv-ml-1">{{author}}</b>{{/authorlink}}{{/str}}
+                            <div class="d-flex w-100 justify-content-between">
+                            <span class="iv-font-weight-bold contenttype-title">{{{title}}}
+                            {{#pro}}<span class=" iv-ml-2 badge iv-badge-success">Pro</span>{{/pro}}
                             </span>
                             {{#tutorial}}
                             <span>
                             <a class="text-muted iv-font-weight-bold text-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}}" href="{{{tutorial}}}" target="_blank"><i class="bi bi-youtube tutorial" title="{{#str}}tutorial, interactivevideo{{/str}}"></i></a>
                             </span>
                             {{/tutorial}}
-                            </small>
-                            {{/author}}
+                            </div>
                             {{#description}}
                             <p class="iv-font-weight-light mb-0">{{{description}}}</p>
                             {{/description}}
+                            </div>
 
-                        </div>
                     </span>
                 {{/hideonchooser}}
                 {{/contenttype}}

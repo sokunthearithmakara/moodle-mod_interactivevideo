@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
  * Edit interactions module
  *
@@ -748,6 +747,9 @@ define(['jquery',
                         }
                     });
                 }
+                if ($('#annotation-list-bulk-edit').hasClass('active')) {
+                    $('#annotation-list-bulk-edit').trigger('click');
+                }
                 const action = e.originalEvent.detail.action;
                 if (action == 'import') {
                     annotations = e.originalEvent.detail.annotations;
@@ -804,6 +806,9 @@ define(['jquery',
                     renderAnnotationItems(annotations);
                     addNotification(M.util.get_string('interactiondeleted', 'mod_interactivevideo'), 'success');
                 }, 1000);
+                if ($($('#annotation-list-bulk-edit')).hasClass('active')) {
+                    $('#annotation-list-bulk-edit').trigger('click');
+                }
             });
 
             // Implement create annotation
@@ -2290,6 +2295,118 @@ define(['jquery',
                     annotations: this.annotations,
                     ids: ids,
                 });
+            });
+
+            $(document).on('click', '#annotation-list-bulk-copy', async function(e) {
+                e.preventDefault();
+                let copiedIds = $('#annotation-list').find('tr .form-check-input:checked')
+                    .map(function() {
+                        return $(this).val();
+                    }).get();
+                if (copiedIds.length == 0) {
+                    return;
+                }
+                let copiedAnnotations = annotations.filter(x => copiedIds.includes(x.id));
+                copiedAnnotations = copiedAnnotations.map(function(item) {
+                    item.wwwroot = M.cfg.wwwroot;
+                    return item;
+                });
+                copiedAnnotations = JSON.stringify(copiedAnnotations);
+                // Copy to storage.
+                window.localStorage.setItem('copiedAnnotations', copiedAnnotations);
+                $('#annotation-list-bulk-paste').removeAttr('disabled');
+                $('#annotation-list-bulk-paste').addClass('btn-primary');
+                $('#annotation-list-bulk-paste').find('i').removeClass('bi-clipboard').addClass('bi-clipboard-fill');
+                addNotification(M.util.get_string('annotationscopied', 'mod_interactivevideo'), 'success');
+            });
+
+            window.addEventListener('storage', function(e) {
+                // Activate paste button on other tabs.
+                e.stopImmediatePropagation();
+                if (e.key === 'copiedAnnotations') {
+                    // Activate paste button.
+                    $('#annotation-list-bulk-paste').removeAttr('disabled');
+                    $('#annotation-list-bulk-paste').addClass('btn-primary');
+                    $('#annotation-list-bulk-paste').find('i').removeClass('bi-clipboard').addClass('bi-clipboard-fill');
+                }
+            });
+
+            // Activate paste button on page load if there are copied annotations.
+            let copiedAnnotations = window.localStorage.getItem('copiedAnnotations');
+            if (copiedAnnotations !== null) {
+                // Don't activate if the same cm.
+                copiedAnnotations = JSON.parse(copiedAnnotations);
+                if (copiedAnnotations[0].cmid == coursemodule) {
+                    return;
+                }
+                // Activate paste button.
+                $('#annotation-list-bulk-paste').removeAttr('disabled');
+                $('#annotation-list-bulk-paste').addClass('btn-primary');
+                $('#annotation-list-bulk-paste').find('i').removeClass('bi-clipboard').addClass('bi-clipboard-fill');
+            }
+
+            // Paste annotations.
+            $(document).on('click', '#annotation-list-bulk-paste', async function(e) {
+                e.preventDefault();
+                let copiedAnnotations = window.localStorage.getItem('copiedAnnotations');
+                if (copiedAnnotations === null) {
+                    return;
+                }
+                copiedAnnotations = JSON.parse(copiedAnnotations);
+                // Make sure we don't copy the interaction with allowmultiple false;
+                copiedAnnotations = copiedAnnotations.filter(x => {
+                    let allowmultiple = JSON.parse(x.prop).allowmultiple;
+                    return allowmultiple || (!allowmultiple && !annotations.find(y => y.type == x.type));
+                });
+                if (copiedAnnotations.length == 0) {
+                    addNotification(M.util.get_string('annotationscopied', 'mod_interactivevideo'), 'danger');
+                    return;
+                }
+                const fromCourse = copiedAnnotations[0].courseid;
+                const fromCm = copiedAnnotations[0].cmid;
+                const toCourse = course;
+                // If it is from the same cm, we need to change the title.
+                if (fromCm == coursemodule) {
+                    copiedAnnotations = copiedAnnotations.filter(a => a.type != 'skipsegment').map(function(item) {
+                        if (item.timestamp >= 0) {
+                            item.timestamp = Number(item.timestamp) + 0.1;
+                            item.title = item.title + ' (' + M.util.get_string('copynoun', 'mod_interactivevideo') + ')';
+                        }
+                        return item;
+                    });
+                }
+
+                let interactions = await $.ajax({
+                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                    method: "POST",
+                    dataType: "text",
+                    data: {
+                        action: 'import_annotations',
+                        sesskey: M.cfg.sesskey,
+                        contextid: M.cfg.contextid,
+                        annotations: JSON.stringify(copiedAnnotations),
+                        tocourse: toCourse,
+                        fromcourse: fromCourse,
+                        tocm: interaction,
+                        fromcm: fromCm,
+                        module: coursemodule
+                    }
+                });
+                interactions = JSON.parse(interactions);
+                // Add the imported annotations to the current annotations.
+                annotations = annotations.concat(interactions);
+                dispatchEvent('annotationupdated', {
+                    annotations: annotations,
+                    action: 'import'
+                });
+
+                // Get interaction that allowmultiple false and init each one.
+                interactions.forEach(int => {
+                    if (!int.allowmultiple) {
+                        ctRenderer[int.type].init();
+                    }
+                });
+
             });
 
             // Bulk deleted

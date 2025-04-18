@@ -450,6 +450,11 @@ class DailyMotion {
         player.setMute(false);
         player.setVolume(1);
     }
+
+    async isMuted() {
+        let state = await player.getState();
+        return state.playerIsMuted;
+    }
     /**
      * Returns the original Dailymotion player instance.
      *

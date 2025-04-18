@@ -106,6 +106,7 @@ class backup_interactivevideo_activity_structure_step extends backup_activity_st
             $completion = new backup_nested_element('completion', ["id"], [
                 "timecreated",
                 "timecompleted",
+                "timeended",
                 "completionpercentage",
                 "userid",
                 "completeditems",

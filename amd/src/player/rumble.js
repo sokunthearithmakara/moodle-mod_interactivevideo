@@ -320,6 +320,7 @@ class Rumble {
      */
     mute() {
         player.mute();
+        this.muted = true;
     }
     /**
      * Unmutes the video player.
@@ -327,6 +328,11 @@ class Rumble {
     unMute() {
         player.unmute();
         player.setVolume(1);
+        this.muted = false;
+    }
+
+    isMuted() {
+        return this.muted;
     }
     /**
      * Returns the original Rumble player instance.

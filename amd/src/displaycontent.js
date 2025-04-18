@@ -314,16 +314,26 @@ const defaultDisplayContent = async function(annotation, player) {
                 <div id="sidebar-content" class="p-0"></div>
                 </div>`);
             // Initialize resizable.
+            const rtl = $('body').hasClass('dir-rtl');
             $('#annotation-sidebar').resizable({
-                handles: 'w',
+                handles: rtl ? 'e' : 'w',
                 minWidth: 475,
                 container: 'body',
                 start: function() {
-                    $(this).css('left', 'auto');
-                    $(this).find('.ui-resizable-handle.ui-resizable-w').css({
-                        'width': '100%',
-                        'left': '-50%'
-                    });
+                    if (rtl) {
+                        $(this).css('right', 'auto');
+                        $(this).find('.ui-resizable-handle.ui-resizable-e').css({
+                            'width': '100%',
+                            'right': '-50%',
+                        });
+                    } else {
+                        $(this).css('left', 'auto');
+                        $(this).find('.ui-resizable-handle.ui-resizable-w').css({
+                            'width': '100%',
+                            'left': '-50%',
+                        });
+                    }
+
                     $(this).addClass('no-pointer-event');
                 },
                 resize: function(event, ui) {
@@ -333,11 +343,19 @@ const defaultDisplayContent = async function(annotation, player) {
                     }
                 },
                 stop: function() {
-                    $(this).css('left', 'auto');
-                    $(this).find('.ui-resizable-handle.ui-resizable-w').css({
-                        'width': '7px',
-                        'left': '-3px'
-                    });
+                    if (rtl) {
+                        $(this).css('right', 'auto');
+                        $(this).find('.ui-resizable-handle.ui-resizable-e').css({
+                            'width': '7px',
+                            'right': '-3px'
+                        });
+                    } else {
+                        $(this).css('left', 'auto');
+                        $(this).find('.ui-resizable-handle.ui-resizable-w').css({
+                            'width': '7px',
+                            'left': '-3px'
+                        });
+                    }
                     $(this).removeClass('no-pointer-event');
                 }
             });

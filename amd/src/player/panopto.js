@@ -398,6 +398,10 @@ class Panopto {
         player.unmuteVideo();
         player.setVolume(1);
     }
+
+    isMuted() {
+        return player.isMuted();
+    }
     /**
      * Get the original player object
      */

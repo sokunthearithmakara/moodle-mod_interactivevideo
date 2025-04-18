@@ -325,6 +325,10 @@ class Wistia {
         player.unmute();
         player.volume(1);
     }
+
+    isMuted() {
+        return player.isMuted();
+    }
     /**
      * Returns the original Wistia player instance.
      *

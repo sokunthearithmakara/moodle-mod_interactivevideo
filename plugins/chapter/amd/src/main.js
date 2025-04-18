@@ -75,7 +75,7 @@ export default class Chapter extends Base {
             data-id="${chapter.id}" data-start="${chapter.start}" data-end="${chapter.end}">
             <div class="w-100 d-flex align-items-center justify-content-between p-2">
             <span class="flex-grow-1 text-truncate iv-font-weight-bold"><i class="bi bi-chevron-down iv-mr-2 toggle"></i>
-            <span class="chapter-title">${chapter.formattedtitle}</span></span><span class="badge iv-badge-primary badge-pill">
+            <span class="chapter-title">${chapter.formattedtitle}</span></span><span class="small iv-badge-primary iv-badge-pill">
             ${convertSecondsToHMS(chapter.start - this.start)}</span></div>
             <ul class="annolistinchapter w-100 p-0"></ul></li>`);
         });

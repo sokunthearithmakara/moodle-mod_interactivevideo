@@ -313,7 +313,9 @@ class Base {
         this.annotations = annotations;
         listItem.removeAttr('id').removeClass('d-none');
         listItem.attr('data-type', item.type);
-        listItem.addClass(item.type + (this.isSkipped(item.timestamp) ? ' skipped' : ''));
+        if (this.prop.allowmultiple) {
+            listItem.addClass(item.type + (this.isSkipped(item.timestamp) ? ' skipped' : ''));
+        }
         listItem.attr('data-timestamp', item.timestamp)
             .attr('data-id', item.id);
 
@@ -331,13 +333,15 @@ class Base {
         listItem.find('.type-icon i').addClass(this.prop.icon);
         listItem.find('.type-icon').attr('title', this.prop.title);
         // If out of range, make the title text grey
-        if (Number(item.timestamp) > this.end || Number(item.timestamp) < this.start || this.isSkipped(item.timestamp)) {
-            listItem.find('.title').addClass('text-secondary');
-            listItem.attr('data-xp', 0);
-            // Append a badge to the title
-            listItem.find('.title')
-                .append(`<span class="badge badge-warning iv-ml-2">
+        if (this.prop.allowmultiple) {
+            if (Number(item.timestamp) > this.end || Number(item.timestamp) < this.start || this.isSkipped(item.timestamp)) {
+                listItem.find('.title').addClass('text-secondary');
+                listItem.attr('data-xp', 0);
+                // Append a badge to the title
+                listItem.find('.title')
+                    .append(`<span class="badge iv-badge-warning iv-ml-2">
                             ${M.util.get_string('skipped', 'mod_interactivevideo')}</span>`);
+            }
         }
 
         listItem.find('[data-field]').attr('data-id', item.id);
@@ -346,6 +350,9 @@ class Base {
         listItem.find('[data-field="timestamp"]').val(this.convertSecondsToHMS(item.timestamp));
         if (!this.prop.allowmultiple) {
             listItem.find('.btn.copy').remove();
+            listItem.find('.title').addClass('text-dark no-pointer').removeClass('text-primary text-secondary cursor-pointer');
+            listItem.removeAttr('data-timestamp');
+            listItem.find('.timestamp').remove();
         }
         listItem.appendTo('#annotation-list');
         return listItem;
@@ -1007,6 +1014,9 @@ class Base {
         if (action == 'mark-done') {
             const completeTime = new Date();
             completionDetails.hasDetails = details.details ? true : false;
+            if (details.hasDetails) {
+                completionDetails.hasDetails = true;
+            }
             completionDetails.xp = details.xp || thisItem.xp;
             let windowAnno = window.ANNOS.find(x => x.id == id);
             completionDetails.duration = details.duration

@@ -369,6 +369,11 @@ class PeerTube {
     unMute() {
         player.setVolume(1);
     }
+
+    async isMuted() {
+        let volume = await player.getVolume();
+        return volume === 0;
+    }
     /**
      * Get the original player object
      */

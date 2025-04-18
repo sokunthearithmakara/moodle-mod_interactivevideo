@@ -212,6 +212,7 @@ define([
 
             let playerReady = false;
             let uprogress = null;
+            let timeended = null;
 
             if (localStorage.getItem('limitedwidth') == 'true' && displayoptions.hidemainvideocontrols == 0) {
                 $('body').addClass('limited-width');
@@ -312,6 +313,7 @@ define([
                     }
                     progress = JSON.parse(progress[0]);
                     uprogress = progress;
+                    timeended = progress.timeended;
                     contentTypes = JSON.parse(ct[0]);
                     completionid = progress.id;
                     let completiondetails = JSON.parse(progress.completiondetails || '[]');
@@ -936,6 +938,40 @@ define([
                 replaceProgressBars(100);
                 videoEnded = true;
                 viewedAnno = [];
+
+                // Update the timeended field in the database if it is not already set.
+                if (!timeended) {
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                        method: "POST",
+                        dataType: "text",
+                        data: {
+                            action: 'update_timeended',
+                            sesskey: M.cfg.sesskey,
+                            completionid: completionid,
+                            contextid: M.cfg.contextid,
+                            courseid: course,
+                            interactivevideo: interaction,
+                            userid: userid,
+                            updatestate: extendedcompletion && JSON.parse(extendedcompletion).watchtillend == 1 ? 1 : 0,
+                        },
+                        success: function(data) {
+                            try {
+                                data = JSON.parse(data);
+                            } catch {
+                                window.console.log(data);
+                                return;
+                            }
+                            if (data) {
+                                dispatchEvent('completionupdated', {
+                                    response: {
+                                        overallcomplete: data.overallcomplete,
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
             };
 
             /**
@@ -1664,7 +1700,7 @@ define([
                 onReady();
             });
 
-            $(document).on('iv:playerPaused', async function() {
+            $(document).on('iv:playerPaused', function() {
                 // Remove the tooltip.
                 $('.tooltip').remove();
                 dispatchEvent('videoPaused');
@@ -1838,6 +1874,9 @@ define([
 
             $(document).on('completionupdated', function(e) {
                 const annotation = e.originalEvent.detail.target;
+                if (!annotation) {
+                    return;
+                }
                 let windowAnnos = window.ANNOS;
                 let windowAnno = windowAnnos.find(x => x.id == annotation.id);
                 if (windowAnno) {

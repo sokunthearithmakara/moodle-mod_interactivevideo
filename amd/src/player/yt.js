@@ -440,6 +440,10 @@ class Yt {
         player.unMute();
         player.setVolume(100);
     }
+
+    isMuted() {
+        return player.isMuted();
+    }
     /**
      * Get the original player object
      */

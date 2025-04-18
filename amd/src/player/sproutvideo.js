@@ -351,6 +351,10 @@ class SproutVideo {
         player.setVolume(1.0);
     }
 
+    isMuted() {
+        return player.getVolume() === 0;
+    }
+
     /**
      * Set quality of the video
      * @param {String} quality

@@ -272,6 +272,28 @@ switch ($action) {
         $DB->set_field('interactivevideo_completion', 'lastviewed', $watchedpoint, ['id' => $id]);
         echo json_encode(['id' => $id, 'watchedpoint' => $watchedpoint]);
         break;
+    case 'update_timeended':
+        require_capability('mod/interactivevideo:view', $context);
+        $id = required_param('completionid', PARAM_INT);
+        $updatestate = required_param('updatestate', PARAM_INT);
+        $courseid = required_param('courseid', PARAM_INT);
+        $userid = required_param('userid', PARAM_INT);
+        $interactivevideo = required_param('interactivevideo', PARAM_INT);
+        $DB->set_field('interactivevideo_completion', 'timeended', time(), ['id' => $id]);
+        $overallcomplete = false;
+        if ($updatestate) {
+            $cm = get_coursemodule_from_instance('interactivevideo', $interactivevideo);
+            if ($cm->completion > 1) {
+                require_once($CFG->libdir . '/completionlib.php');
+                $course = new stdClass();
+                $course->id = $courseid;
+                $completion = new completion_info($course);
+                $completion->update_state($cm);
+                $overallcomplete = $completion->internal_get_state($cm, $userid, null);
+            }
+        }
+        echo json_encode(['id' => $id, 'timeended' => time(), 'overallcomplete' => $overallcomplete]);
+        break;
     case 'update_ivitems_cache':
         require_capability('mod/interactivevideo:edit', $context);
         $cmid = required_param('cmid', PARAM_INT);

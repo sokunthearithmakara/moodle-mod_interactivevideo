@@ -88,13 +88,22 @@ Example context (json):
                     </tbody>
                 </table>
                 <div id="annotation-list-bulk">
-                    <button class="btn btn-sm" id="annotation-list-bulk-edit">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
+                    <div>
+                        <button class="btn btn-sm border-0" id="annotation-list-bulk-edit">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-sm border-0" disabled id="annotation-list-bulk-paste">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
                     <div class="bulk-actions" style="display:none">
+                        <button class="btn btn-sm" id="annotation-list-bulk-copy">
+                            <i class="bi bi-copy"></i>
+                        </button>
                         <button class="btn btn-sm" id="annotation-list-bulk-delete">
                             <i class="bi bi-trash3-fill text-danger"></i>
                         </button>
+
                     </div>
                 </div>
             </div>

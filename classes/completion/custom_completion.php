@@ -135,6 +135,21 @@ class custom_completion extends activity_custom_completion {
                 return COMPLETION_COMPLETE;
             }
             return COMPLETION_INCOMPLETE;
+        } else if ($rule === 'watchtillend') {
+            $userid = $this->userid;
+            $cm = $this->cm;
+            $usercompletion = $DB->get_field(
+                'interactivevideo_completion',
+                'timeended',
+                ['userid' => $userid, 'cmid' => $cm->instance]
+            );
+            if (!$usercompletion) {
+                return COMPLETION_INCOMPLETE;
+            }
+            if ($usercompletion > 0) {
+                return COMPLETION_COMPLETE;
+            }
+            return COMPLETION_INCOMPLETE;
         } else {
             foreach ($this->subplugins as $class) {
                 if ($class::get_state($rule, $this->cm, $this->userid)) {
@@ -151,7 +166,7 @@ class custom_completion extends activity_custom_completion {
      * @return array
      */
     public static function get_defined_custom_rules(): array {
-        $rules = ['completionpercentage'];
+        $rules = ['completionpercentage', 'watchtillend'];
         $allsubplugins = explode(',', get_config('mod_interactivevideo', 'enablecontenttypes'));
         foreach ($allsubplugins as $subplugin) {
             $class = $subplugin . '\\ivcompletion';
@@ -171,6 +186,7 @@ class custom_completion extends activity_custom_completion {
         $completionpercentage = $this->cm->customdata['customcompletionrules']['completionpercentage'];
         $description = [
             'completionpercentage' => get_string('completiondetail:percentage', 'interactivevideo', $completionpercentage),
+            'watchtillend' => get_string('completiondetail:watchtillend', 'interactivevideo'),
         ];
         $extendedcompletion = $this->cm->customdata['extendedcompletion'];
         $extendedcompletion = json_decode($extendedcompletion, true);

@@ -59,7 +59,7 @@ if ($embed = optional_param('embed', 0, PARAM_INT) == 1) {
     $PAGE->add_body_class('embed-mode');
 }
 $PAGE->add_body_class($CFG->branch >= 500 ? ' bs-5' : '');
-$PAGE->set_url('/mod/interactivevideo/report.php', ['id' => $cm->id, 'group' => $group, 'embed' => $embed]);
+$PAGE->set_url('/mod/interactivevideo/report.php', ['id' => $cm->id, 'embed' => $embed]);
 $PAGE->set_title(get_string('reportfor', 'interactivevideo', format_string($moduleinstance->name)));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);

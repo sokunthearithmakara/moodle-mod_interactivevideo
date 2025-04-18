@@ -327,6 +327,14 @@ class SoundCloud {
     unMute() {
         this.player.setVolume(100);
     }
+
+    async isMuted() {
+        return new Promise((resolve) => {
+            this.player.getVolume(function(volume) {
+                resolve(volume === 0);
+            });
+        });
+    }
     /**
      * Get the original player object
      */

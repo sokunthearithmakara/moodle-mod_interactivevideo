@@ -363,6 +363,10 @@ class Kinescope {
         player.setVolume(1);
     }
 
+    isMuted() {
+        return player.isMuted();
+    }
+
     /**
      * Set quality of the video
      * @param {String} quality

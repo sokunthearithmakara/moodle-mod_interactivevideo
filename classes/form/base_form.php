@@ -210,7 +210,6 @@ class base_form extends \core_form\dynamic_form {
 
         $mform->addElement('hidden', 'timestamp', null);
         $mform->setType('timestamp', PARAM_FLOAT);
-        $mform->setDefault('timestamp', 0);
 
         if ($section) {
             $mform->addElement('header', 'general', get_string('general', 'form'));
