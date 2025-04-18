@@ -97,6 +97,7 @@ class PeerTube {
         if (videoInfo.code === 'video_requires_password' || videoInfo.code === 'incorrect_video_password') {
             // Show the password prompt.
             let string = videoInfo.code === 'video_requires_password' ? 'This video is password protected' : 'Incorrect password';
+            // eslint-disable-next-line no-alert
             const pwd = window.prompt(string, "");
             if (pwd === null) {
                 return false;
@@ -107,6 +108,7 @@ class PeerTube {
         }
 
         if (!videoInfo.duration) {
+            // eslint-disable-next-line no-alert
             alert('The video is not available');
             return false;
         }
