@@ -3,9 +3,8 @@ Ex. @container and clusterring. So, the workaround is to keep the code in the cu
 Interestingly, doing it this way, the code is compiled correctly. Use this file for styles that need processing, e.g. pix .
 Issue with doing it this way: Moodle is in subfolder ex. www.website.com/moodle */
 
-/* stylelint-disable csstree/validator */
-/* stylelint-disable declaration-no-important */
-/* stylelint-disable selector-combinator-space-before */
+/* stylelint-disable */
+
 :root {
     --iv-animate-duration: 1s;
     --iv-animate-delay: 1s;
