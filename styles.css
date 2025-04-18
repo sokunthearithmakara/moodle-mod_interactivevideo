@@ -3178,9 +3178,50 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     bottom: 0.75em;
 }
 
+@media (max-width: 768px) {
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+        width: calc(50% - 0.5rem);
+    }
+}
+
+:dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
+:dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card,
+:dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card {
+    flex-direction: column;
+}
+
 @media (max-width: 575.98px) {
     .path-course-view .modtype_interactivevideo .image-container {
         max-width: 100%;
+    }
+
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+        flex-direction: column;
+    }
+
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+        flex-direction: column;
+    }
+
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .card-only {
+        max-width: 100%;
+    }
+
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+        width: 100%;
+    }
+
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card,
+    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
+        flex-direction: column;
     }
 }
 
