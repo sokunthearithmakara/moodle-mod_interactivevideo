@@ -867,7 +867,7 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo .toast-wrapper,
 .path-course-view:has(.modtype_interactivevideo) .toast-wrapper {
-    z-index: 1055 !important;
+    z-index: 1056 !important;
 }
 
 .path-mod-interactivevideo #video-action {
