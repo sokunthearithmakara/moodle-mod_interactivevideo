@@ -38,6 +38,7 @@ const allowAutoplay = (node) => {
         // Place the video element after the node.
         node.after(video);
         // Try to play the video.
+        // eslint-disable-next-line promise/always-return
         video.play().then(() => {
             // Autoplay is allowed.
             video.remove();

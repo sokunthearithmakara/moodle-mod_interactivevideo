@@ -375,6 +375,7 @@ class Panopto {
      * @return {Number}
      */
     getState() {
+        // eslint-disable-next-line no-nested-ternary
         return player.getState() === 1 ? 'playing' : player.getState() === 2 ? 'paused' : 'stopped';
     }
     /**
