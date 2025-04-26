@@ -1058,7 +1058,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         }
         const modal = `<div class="modal fade" id="annotation-modal" role="dialog"
             aria-labelledby="annotation-modal"
-         aria-hidden="true" data-backdrop="static" data-keyboard="false">
+         aria-hidden="true" data${isBS5 ? '-bs' : ''}-backdrop="static" data${isBS5 ? '-bs' : ''}-keyboard="false">
          <div id="message" data-id="${theAnnotation.id}" data-placement="popup"
           class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable ${theAnnotation.type}" role="document">
             <div class="modal-content iv-rounded-lg">

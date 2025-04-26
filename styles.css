@@ -1,10 +1,5 @@
-/* There are some serious issues with Moodle\'s way in compiling all-rtl.css file in which some rules are ignored.
-Ex. @container and clusterring. So, the workaround is to keep the code in the custom.css and import it here.
-Interestingly, doing it this way, the code is compiled correctly. Use this file for styles that need processing, e.g. pix .
-Issue with doing it this way: Moodle is in subfolder ex. www.website.com/moodle */
-
-/* stylelint-disable */
-
+/* stylelint-disable csstree/validator */
+/* stylelint-disable declaration-no-important */
 :root {
     --iv-animate-duration: 1s;
     --iv-animate-delay: 1s;
@@ -1037,6 +1032,7 @@ html:has(.path-mod-interactivevideo) {
     display: flex;
     flex-direction: column;
     top: 0;
+    max-width: 100%;
 }
 
 .path-mod-interactivevideo.embed-mode #video-wrapper #message {
@@ -1491,6 +1487,10 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo #video-info {
     z-index: 4;
     background: linear-gradient(135deg, black, transparent);
+}
+
+:dir(rtl) .path-mod-interactivevideo #video-info {
+    background: linear-gradient(45deg, transparent, black);
 }
 
 .path-mod-interactivevideo #video-info #play {
@@ -1977,6 +1977,10 @@ html:has(.path-mod-interactivevideo) {
     width: calc(100% - 1rem);
 }
 
+.path-mod-interactivevideo.embed-mode #interactivevideo-container {
+    width: 100%;
+}
+
 .path-mod-interactivevideo:not(.embed-mode) #interactivevideo-container:has(#annotation-content:empty) {
     height: calc(var(--ivdvh) - 70px);
     align-content: center;
@@ -2009,6 +2013,16 @@ html:has(.path-mod-interactivevideo) {
     transition: width ease-in-out 300ms;
 }
 
+.path-mod-interactivevideo #lightprogress {
+    height: 3px;
+    opacity: 0.5;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+}
+
 :dir(ltr) .path-mod-interactivevideo.hassidebar.default-mode #page {
     margin-inline-end: 475px;
 }
@@ -2022,7 +2036,6 @@ html:has(.path-mod-interactivevideo) {
 }
 
 @media (max-width: 992px) {
-
     .path-mod-interactivevideo.hassidebar #interactivevideo-container,
     .path-mod-interactivevideo.hassidebar #wrapper.fullscreen #video-wrapper {
         width: 100%;
@@ -3056,14 +3069,6 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     padding-top: 0.25rem;
 }
 
-/* @container section (width     >     1200px) {
-    .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-large) {
-        width: calc(50% - 0.5rem);
-        display: inline-block;
-        vertical-align: top;
-    }
-} */
-
 @container section (width < 750px) {
 
     :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
@@ -3610,7 +3615,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     color: var(--ivwhite) !important;
 }
 
-.path-mod-interactivevideo #annotation-list-bulk #annotation-list-bulk-edit.active {
+.path-mod-interactivevideo #annotation-list-bulk .btn.active {
     background-color: var(--ivprimary) !important;
     color: var(--ivwhite) !important;
 }

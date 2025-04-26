@@ -105,14 +105,14 @@ class restore_interactivevideo_activity_structure_step extends restore_activity_
                 if ($exist) {
                     $data->contentid = $exist;
                 } else {
-                    if ($oldcourseid != $this->get_courseid() || !$this->task->is_samesite()) {
+                    if (($oldcourseid != $this->get_courseid() || !$this->task->is_samesite()) && isset($data->cbname)) {
                         $cbdata = new stdClass();
                         $cbdata->usercreated = $this->get_mappingid('user', $data->cbusercreated);
                         $cbdata->usermodified = $this->get_mappingid('user', $data->cbusermodified);
                         $cbdata->contextid = context_course::instance($this->get_courseid())->id;
                         $cbdata->instanceid = $data->cbinstanceid;
                         $cbdata->configdata = $data->cbconfigdata;
-                        $cbdata->contenttype = $data->cbcontenttype;
+                        $cbdata->contenttype = $data->cbcontenttype ?? 'contenttype_h5p';
                         $cbdata->timecreated = time();
                         $cbdata->timemodified = time();
                         $cbdata->name = $data->cbname;

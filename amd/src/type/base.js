@@ -801,19 +801,18 @@ class Base {
                 classes += 'no-completion ';
             }
             if (this.isEditMode()) {
-                $("#video-nav ul").append(`<li class="${classes}"  data-timestamp="${annotation.timestamp}"
+                $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
         data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
-        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
-        data${self.isBS5 ? '-bs' : ''}-trigger="hover" data${self.isBS5 ? '-bs' : ''}-placement="top"
-         data${self.isBS5 ? '-bs' : ''}-html="true" title='<div class="d-flex align-items-center">
-        <i class="${this.prop.icon} iv-mr-2"></i>
+        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-html="true"
+         title='<div class="d-flex align-items-center"><i class="${this.prop.icon} iv-mr-2"></i>
         <span>${annotation.formattedtitle}</span></div>'></div></li>`);
             } else {
-                $("#interactions-nav ul").append(`<li class="${classes}"  data-timestamp="${annotation.timestamp}"
+                $("#interactions-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
                     data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
                     <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
                      data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
-                      data${self.isBS5 ? '-bs' : ''}-trigger="hover" data-placement="top" data${self.isBS5 ? '-bs' : ''}-html="true"
+                      data${self.isBS5 ? '-bs' : ''}-trigger="hover" data${self.isBS5 ? '-bs' : ''}-placement="top"
+                       data${self.isBS5 ? '-bs' : ''}-html="true"
                       title='<div class="d-flex align-items-center">
                         <i class="${this.prop.icon} iv-mr-2"></i>
                         <span>${annotation.formattedtitle}</span></div>'></div></li>`);

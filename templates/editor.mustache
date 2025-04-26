@@ -78,7 +78,7 @@ Example context (json):
             </div>
             {{! content item list }}
             <div id="annotationwrapper" class="overflow-auto bg-white">
-                <table class="table table-sm w-100 table-hover small">
+                <table class="table table-sm w-100 table-hover small table-borderless">
                     <tbody id="annotation-list">
                         <tr>
                             <td>
@@ -89,18 +89,34 @@ Example context (json):
                 </table>
                 <div id="annotation-list-bulk">
                     <div>
-                        <button class="btn btn-sm border-0" id="annotation-list-bulk-edit">
+                        <button class="btn btn-sm border-0" disabled id="annotation-list-bulk-paste"
+                         title="{{#str}}paste, mod_interactivevideo{{/str}}">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                        <button class="btn btn-sm border-0" id="annotation-list-bulk-upload"
+                         title="{{#str}}upload, mod_interactivevideo{{/str}}">
+                            <i class="bi bi-upload"></i>
+                        </button>
+                        <button class="btn btn-sm border-0" id="annotation-list-bulk-edit"
+                         title="{{#str}}bulkedit, mod_interactivevideo{{/str}}">
                             <i class="bi bi-pencil-square"></i>
                         </button>
-                        <button class="btn btn-sm border-0" disabled id="annotation-list-bulk-paste">
-                            <i class="bi bi-clipboard"></i>
+                        <button class="btn btn-sm border-0 d-none" id="annotation-list-bulk-checkall"
+                            title="{{#str}}checkall, mod_interactivevideo{{/str}}">
+                            <i class="bi bi-check2-square"></i>
                         </button>
                     </div>
                     <div class="bulk-actions" style="display:none">
-                        <button class="btn btn-sm" id="annotation-list-bulk-copy">
+                        <button class="btn btn-sm" id="annotation-list-bulk-copy"
+                        title="{{#str}}copy, mod_interactivevideo{{/str}}">
                             <i class="bi bi-copy"></i>
                         </button>
-                        <button class="btn btn-sm" id="annotation-list-bulk-delete">
+                        <button class="btn btn-sm" id="annotation-list-bulk-download"
+                        title="{{#str}}download, mod_interactivevideo{{/str}}">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button class="btn btn-sm" id="annotation-list-bulk-delete"
+                            title="{{#str}}delete, mod_interactivevideo{{/str}}">
                             <i class="bi bi-trash3-fill text-danger"></i>
                         </button>
 

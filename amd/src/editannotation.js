@@ -26,7 +26,6 @@ define(['jquery',
     'core/event_dispatcher',
     './quickform',
     './libraries/jquery-ui',
-
 ], function($, addToast, Notification, {dispatchEvent}, quickform) {
     let ctRenderer = {};
     let player;
@@ -634,12 +633,14 @@ define(['jquery',
                     const currentAnnotation = annotations.find(x => (thisTime - player.frequency) <= x.timestamp
                         && (thisTime + player.frequency) >= x.timestamp);
                     if (currentAnnotation) {
-                        $('#annotation-list tr').removeClass('active');
-                        $(`tr[data-id="${currentAnnotation.id}"]`).addClass('active');
-                        $('#video-nav .annotation[data-id="' + currentAnnotation.id + '"] .item').tooltip('show');
-                        setTimeout(function() {
-                            $('#video-nav .annotation[data-id="' + currentAnnotation.id + '"] .item').tooltip('hide');
-                        }, 2000);
+                        $(`#annotation-list tr:not([data-id="${currentAnnotation.id}"])`).removeClass('active');
+                        if (!$(`tr[data-id="${currentAnnotation.id}"]`).hasClass('active')) {
+                            $(`tr[data-id="${currentAnnotation.id}"]`).addClass('active');
+                            $(`tr[data-id="${currentAnnotation.id}"]`).trigger('mouseenter');
+                            setTimeout(function() {
+                                $(`tr[data-id="${currentAnnotation.id}"]`).trigger('mouseleave');
+                            }, 2000);
+                        }
                     }
 
                     // If current time is within the skipsegment, seek to the end of the segment.
@@ -1117,16 +1118,24 @@ define(['jquery',
             });
 
             // Display tooltip on anntation indicator when annotation on the list is hovered.
-            $(document).on('mouseover', 'tr.annotation', function() {
+            $(document).on('mouseenter', 'tr.annotation', function() {
                 const id = $(this).data('id');
-                $(`#video-nav ul li[data-id="${id}"] .item`).trigger('mouseover');
+                if (isBS5) {
+                    $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('show');
+                } else {
+                    $(`#video-nav ul li[data-id="${id}"] .item`).trigger('mouseover');
+                }
             });
 
             // Remove tooltip when annotation on the list is not hovered.
-            $(document).on('mouseout', 'tr.annotation', function() {
+            $(document).on('mouseleave', 'tr.annotation', function() {
                 const id = $(this).data('id');
-                $(`#video-nav ul li[data-id="${id}"] .item`).trigger('mouseout');
-                $('.tooltip').remove();
+                if (isBS5) {
+                    $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('hide');
+                } else {
+                    $(`#video-nav ul li[data-id="${id}"] .item`).trigger('mouseout');
+                    $('.tooltip').remove();
+                }
             });
 
             // Highlight annotation on the list when annotation indicator is hovered.
@@ -2237,9 +2246,11 @@ define(['jquery',
                         $(this).removeClass('b-active');
                     });
                     $('body').removeClass('iv-bulk-edit');
+                    $('#annotation-list-bulk-checkall').addClass('d-none');
                     return;
                 }
                 $(this).addClass('active');
+                $('#annotation-list-bulk-checkall').removeClass('d-none');
                 $('body').addClass('iv-bulk-edit');
                 let li = $('#annotation-list').find('tr');
                 li.each(function() {
@@ -2251,6 +2262,22 @@ define(['jquery',
                         <input class="form-check-input" type="checkbox" data-type="${type}" id="annotation-${id}" value="${id}">
                         <label class="form-check-label" for="annotation-${id}"></label></div>`);
                 });
+            });
+
+            // Event lister for bulk check all.
+            $(document).on('click', '#annotation-list-bulk-checkall', function(e) {
+                e.preventDefault();
+                let check = !$(this).hasClass('active');
+
+                // Uncheck all checkboxes.
+                $('tr.annotation .form-check-input').each(function() {
+                    if ((!$(this).is(':checked') && check) || ($(this).is(':checked') && !check)) {
+                        $(this).trigger('click');
+                    }
+                });
+
+                $(this).toggleClass('active');
+
             });
 
             $(document).on('click', 'tr.annotation .form-check-input', function(e) {
@@ -2318,6 +2345,87 @@ define(['jquery',
                 $('#annotation-list-bulk-paste').addClass('btn-primary');
                 $('#annotation-list-bulk-paste').find('i').removeClass('bi-clipboard').addClass('bi-clipboard-fill');
                 addNotification(M.util.get_string('annotationscopied', 'mod_interactivevideo'), 'success');
+            });
+
+            $(document).on('click', '#annotation-list-bulk-download', async function(e) {
+                e.preventDefault();
+                $(this).attr('disabled', 'disabled');
+                $(this).find('i').addClass('fa-spin fa-circle-o-notch fa').removeClass('bi bi-download');
+                let downloadIds = $('#annotation-list').find('tr .form-check-input:checked')
+                    .map(function() {
+                        return $(this).val();
+                    }).get();
+
+                if (downloadIds.length == 0) {
+                    return;
+                }
+
+                let copiedAnnotations = annotations.filter(x => downloadIds.includes(x.id));
+                copiedAnnotations = copiedAnnotations.map(function(item) {
+                    item.wwwroot = M.cfg.wwwroot;
+                    return item;
+                });
+
+                const downloadTask = await $.ajax({
+                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                    method: "POST",
+                    dataType: "text",
+                    data: {
+                        action: 'download_annotations',
+                        sesskey: M.cfg.sesskey,
+                        contextid: M.cfg.contextid,
+                        courseid: course,
+                        annotations: JSON.stringify(copiedAnnotations).replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+                        cmid: coursemodule
+                    }
+                });
+
+                window.open(downloadTask, '_blank');
+
+                $(this).removeAttr('disabled');
+                $(this).find('i').removeClass('fa-spin fa-circle-o-notch fa').addClass('bi bi-download');
+            });
+
+            // Bulk upload.
+            let ModalForm;
+            $(document).on('click', '#annotation-list-bulk-upload', async function(e) {
+                e.preventDefault();
+                if (!ModalForm) {
+                    ModalForm = await import('core_form/modalform');
+                }
+
+                const data = {
+                    contextid: M.cfg.contextid,
+                    id: coursemodule,
+                    courseid: course,
+                    annotationid: interaction,
+                    prevent: annotations.filter(x => JSON.parse(x.prop).allowmultiple == false).map(x => x.type).join(','),
+                };
+
+                window.console.log(data);
+
+                let title = M.util.get_string('uploadannotations', 'mod_interactivevideo');
+                const form = new ModalForm({
+                    modalConfig: {
+                        title: title,
+                    },
+                    formClass: "mod_interactivevideo\\form\\bulk_upload_form",
+                    args: data,
+                });
+
+                form.show();
+
+                form.addEventListener(form.events.FORM_SUBMITTED, async(e) => {
+                    let imported = e.detail.new;
+                    // Check if the imported annotations are valid.
+                    imported = imported.filter(x => contentTypes.find(y => y.name === x.type));
+                    annotations = annotations.concat(imported);
+                    window.console.log(annotations);
+                    dispatchEvent('annotationupdated', {
+                        annotations: annotations,
+                        action: 'import'
+                    });
+                });
             });
 
             window.addEventListener('storage', function(e) {

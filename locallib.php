@@ -962,4 +962,112 @@ class interactivevideo_util {
         $cache->set($cmid, $items);
         return $items;
     }
+
+    /**
+     * Download annotations as zip file.
+     *
+     * @param string $annotations The annotations to download.
+     * @param int $cmid The course module ID.
+     * @param int $courseid The course ID.
+     * @param int $contextid The context ID.
+     * @return string The URL to download the annotations.
+     */
+    public static function download_annotations($annotations, $cmid, $courseid, $contextid) {
+        global $USER, $CFG;
+        $fs = get_file_storage();
+        // First create a json file with the annotations in draft area.
+        $usercontext = \context_user::instance($USER->id);
+        $coursecontextid = context_course::instance($courseid)->id;
+        $annotations = json_decode($annotations);
+        $annotations = array_map(function ($annotation) use ($contextid, $fs, $coursecontextid) {
+            $annotation = (object) $annotation;
+            $annotation->files = [];
+            $files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'content', $annotation->id, false, false);
+            foreach ($files as $file) {
+                if ($file->get_filename() == '.') {
+                    continue;
+                }
+                $annotation->files[] = [
+                    'filename' => $file->get_filename(),
+                    'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
+                    'itemid' => $file->get_itemid(),
+                    'file' => $file,
+                ];
+            }
+            if ($annotation->type == 'contentbank') {
+                $contentid = $annotation->contentid;
+                $contentbankfiles = $fs->get_area_files($coursecontextid, 'contentbank', 'public', $contentid);
+                foreach ($contentbankfiles as $file) {
+                    if ($file->get_filename() == '.') {
+                        continue;
+                    }
+                    $annotation->files[] = [
+                        'filename' => $file->get_filename(),
+                        'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
+                        'itemid' => $file->get_itemid(),
+                        'file' => $file,
+                    ];
+                }
+            }
+            return $annotation;
+        }, $annotations);
+
+        $files = array_map(function ($annotation) {
+            $array = $annotation->files;
+            $array = array_map(function ($file) {
+                return $file['file'];
+            }, $array);
+            return $array;
+        }, $annotations);
+
+        $files = array_merge(...$files);
+
+        // Get an unused draft item id.
+        $draftitemid = file_get_unused_draft_itemid();
+        $fileinfo = [
+            'contextid' => $usercontext->id,
+            'component' => 'user',
+            'filearea'  => 'draft',
+            'itemid'    => $draftitemid,
+            'filepath'  => '/',
+            'filename'  => 'annotations.json',
+        ];
+
+        $fs->delete_area_files($usercontext->id, 'user', 'draft', $draftitemid);
+        $fs->create_file_from_string($fileinfo, json_encode($annotations));
+        $jsonfile = $fs->get_file($usercontext->id, 'user', 'draft', $draftitemid, '/', 'annotations.json');
+
+        $zipper = new zip_packer();
+        $tempzip = tempnam($CFG->tempdir, $cmid) . '.ivz';
+
+        $archieved = [];
+        foreach ($files as $file) {
+            $name = $file->get_filename();
+            $name = '$$' . $file->get_itemid() . '$$' . $name;
+            $name = clean_param($name, PARAM_FILE);
+            $archieved[$name] = $file;
+        }
+        // Also add the json file to the zip.
+        $archieved['annotations.json'] = $jsonfile;
+        $zipper->archive_to_pathname($archieved, $tempzip);
+
+        $draftitemid = file_get_unused_draft_itemid();
+        $fileinfo = [
+            'contextid' => $usercontext->id,
+            'component' => 'user',
+            'filearea'  => 'draft',
+            'itemid'    => $draftitemid,
+            'filepath'  => '/',
+            'filename'  => $cmid . '.ivz',
+        ];
+
+        // Save the zip file in the user's draft area.
+        $fs->delete_area_files($usercontext->id, 'user', 'draft', $draftitemid);
+        $fs->create_file_from_pathname($fileinfo, $tempzip);
+
+        // Generate a download link to the stored draft file.
+        $url = moodle_url::make_draftfile_url($draftitemid, '/', $cmid . '.ivz');
+
+        return $url->out(false);
+    }
 }

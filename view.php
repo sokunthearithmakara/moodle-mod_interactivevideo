@@ -250,6 +250,10 @@ $PAGE->add_body_class($moduleinstance->type . ($CFG->branch >= 500 ? ' bs-5' : '
 
 // Use Bootstrap icons instead of fontawesome icons to avoid issues fontawesome icons support in Moodle 4.1.
 $PAGE->requires->css(new moodle_url('/mod/interactivevideo/libraries/bootstrap-icons/bootstrap-icons.min.css'));
+$PAGE->requires->js(
+    new moodle_url('/mod/interactivevideo/libraries/confetti/confetti.browser.min.js'),
+    true
+);
 
 echo $OUTPUT->header();
 if ($moduleinstance->source == 'url') {
@@ -390,7 +394,7 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $gradeitem ? $gradeitem->grademax : 0, // Grade item maximum grade, which is set in mod_form.
     $moduleinstance->type, // Interactive video type (e.g. vimeo, wistia, etc.).
     $moduleinstance->displayoptions['preventskipping'] && !has_capability('mod/interactivevideo:edit', $modulecontext)
-    ? true : false, // Prevent skipping, applicable to student only.
+        ? true : false, // Prevent skipping, applicable to student only.
     $moment, // Current time in seconds.
     $moduleinstance->displayoptions, // Display options array set in mod_form.
     $token ?? '', // Token for mobile app.

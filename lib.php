@@ -1669,8 +1669,8 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         $data['introformat'] = FORMAT_HTML;
         $data['completionpercentage'] =
             is_numeric($video->completionpercentage) ?
-            $video->completionpercentage :
-            (isset($defaultsettings->completionpercentage) ? $defaultsettings->completionpercentage : 0);
+            $video->completionpercentage : (isset($defaultsettings->completionpercentage)
+                ? $defaultsettings->completionpercentage : 0);
 
         $data['completionpercentage'] = $data['completionpercentage'] > 100 ? 100 : $data['completionpercentage'];
         $data['grade'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ?

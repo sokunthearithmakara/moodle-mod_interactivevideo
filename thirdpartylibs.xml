@@ -21,6 +21,13 @@
         <license>MIT</license>
         <licenseversion>?</licenseversion>
     </library>
+        <library>
+        <location>libraries/confetti</location>
+        <name>canvas-confetti</name>
+        <version>1.9.3</version>
+        <license>ISC License</license>
+        <licenseversion>?</licenseversion>
+    </library>
     <library>
         <location>amd/src/libraries/buttons.bootstrap4.js</location>
         <name>Datatables Bootstrap4 Button Style</name>

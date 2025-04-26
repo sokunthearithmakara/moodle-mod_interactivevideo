@@ -153,6 +153,33 @@ define([
         dispatchEvent('chapterrendered', {'annotations': releventAnnotations});
     };
 
+    const fireConfetti = () => {
+
+        var duration = 5 * 1000;
+        let confetti = window.confetti;
+        var animationEnd = Date.now() + duration;
+        var defaults = {startVelocity: 30, spread: 360, ticks: 60, zIndex: 1055, shapes: ['circle', 'square', 'star']};
+
+        const randomInRange = (min, max) => {
+            return Math.random() * (max - min) + min;
+        };
+
+        var interval = setInterval(function() {
+            var timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
+
+            var particleCount = 50 * (timeLeft / duration);
+            // Since particles fall down, start a bit higher than random
+            confetti({...defaults, particleCount, origin: {x: randomInRange(0.1, 0.3), y: Math.random() - 0.2}});
+            confetti({...defaults, particleCount, origin: {x: randomInRange(0.7, 0.9), y: Math.random() - 0.2}});
+        }, 250);
+    };
+
+    window.fireConfetti = fireConfetti;
+
     return {
         /**
          * Render annotation items on the video navigation and chapter list.
@@ -251,6 +278,7 @@ define([
                     $('#remainingtime').text(convertSecondsToHMS(totaltime - time));
                     $videoNav.find('#progress').css('width', percentage + '%');
                     $videoNav.find('#seekhead').css('left', percentage + '%');
+                    $('#lightprogressbar').css('width', percentage + '%');
                     resolve(true);
                 });
             };
@@ -963,10 +991,11 @@ define([
                                 return;
                             }
                             if (data) {
+                                timeended = true;
                                 dispatchEvent('completionupdated', {
-                                    response: {
+                                    response: JSON.stringify({
                                         overallcomplete: data.overallcomplete,
-                                    }
+                                    })
                                 });
                             }
                         }
@@ -1141,9 +1170,17 @@ define([
 
                         $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] .item').trigger('mouseover')
                             .addClass('active');
+                        if (isBS5) {
+                            $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] [data-bs-toggle=tooltip')
+                                .tooltip('show');
+                        }
                         setTimeout(function() {
                             $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] .item')
                                 .trigger('mouseout').removeClass('active');
+                            if (isBS5) {
+                                $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] [data-bs-toggle=tooltip')
+                                    .tooltip('hide');
+                            }
                         }, 2000);
 
                         if (lastrun && theAnnotation.id == lastrun) {
@@ -1167,7 +1204,6 @@ define([
                                 }
                                 viewedAnno.push(Number(theAnnotation.id));
                             }
-                            // Player.play();
                         }
                     }
                 };
@@ -1189,7 +1225,7 @@ define([
                 }
             };
 
-            // Implement the player
+            // Implement the player.
             require(['mod_interactivevideo/player/' + vtype], function(VideoPlayer) {
                 player = new VideoPlayer();
                 if (displayoptions.passwordprotected == 1 && player.support.password) {
@@ -1811,7 +1847,10 @@ define([
                     if (player.live) {
                         replaceProgressBars(100);
                     }
-                    if (autoplay && player.allowAutoplay) {
+                    // Get noautoplay from the URL.
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const noautoplay = urlParams.get('da');
+                    if (autoplay && player.allowAutoplay && noautoplay != '1') {
                         setTimeout(async() => {
                             // Make sure to unmute.
                             player.unMute();
@@ -1873,6 +1912,20 @@ define([
             });
 
             $(document).on('completionupdated', function(e) {
+                if (JSON.parse(e.originalEvent.detail.response).overallcomplete > 0) {
+                    if (isCompleted) {
+                        return;
+                    }
+                    isCompleted = true;
+                    fireConfetti();
+                    Toast.add(M.util.get_string('congratulationsyoucompletethisactivity', 'mod_interactivevideo'), {
+                        type: 'success',
+                    });
+                    $('#completiondropdown').html(`<i class="fs-25px bi bi-check-circle-fill text-success"></i>`);
+                } else {
+                    isCompleted = false;
+                    $('#completiondropdown').html(`<i class="fs-25px bi bi-check-circle text-white"></i>`);
+                }
                 const annotation = e.originalEvent.detail.target;
                 if (!annotation) {
                     return;

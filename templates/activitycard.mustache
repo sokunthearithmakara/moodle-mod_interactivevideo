@@ -33,7 +33,7 @@ Example context (json):
             <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}">
                 <img src="{{interactivevideo.posterimage}}" loading="lazy">
                 {{#cm.uservisible}}
-                <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}>
+                <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}>
                     <i class="fa fa-play"></i>
                 </a>
             {{/cm.uservisible}}
@@ -64,7 +64,7 @@ Example context (json):
         <div class="w-100 d-flex align-items-start">
             {{#showname}}
             {{#cm.uservisible}}
-            <a href="{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}"
+            <a href="{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}"
                class="clamp-2 text-dark h5 text-decoration-none mb-1">{{{formattedname}}}</a>
             {{#hascompletion}}
             {{#overallcomplete}}<i class="bi bi-check-circle-fill text-success iv-ml-2 fs-n"></i>{{/overallcomplete}}
@@ -124,7 +124,7 @@ Example context (json):
         <span class="badge iv-badge-primary new-badge">{{#str}}new,interactivevideo{{/str}}</span>
     {{/new}}
     {{#cm.uservisible}}
-    <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}><i class="fa fa-play"></i></a>
+    <a href="{{#launchinpopup}}javascript:void(){{/launchinpopup}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}{{/launchinpopup}}" class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay" {{#launchinpopup}} data-id="{{cm.id}}" data-contextid="{{cm.context.id}}" data-instance="{{cm.instance}}" data-course="{{cm.course}}" data-title="{{formattedname}}"{{/launchinpopup}}><i class="fa fa-play"></i></a>
 {{/cm.uservisible}}
 <span class="position-absolute badge duration">{{duration}}</span>
 {{#passwordprotected}}<span class="badge password" title="{{#str}}passwordrequired,interactivevideo{{/str}}"><i class="fa fa-key"></i></span>{{/passwordprotected}}
@@ -150,7 +150,7 @@ Example context (json):
 {{/cm.uservisible}}
 </div>
 <div class="info p-2 w-100 position-absolute small">
-    <a href="{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}"
+    <a href="{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}"
        class="title iv-font-weight-bold nolink no-pointer text-decoration-none text-white">{{{formattedname}}}</a>
     {{#hasanalytics}}
     <div class="analytics progress position-relative mt-2">
@@ -192,7 +192,7 @@ Example context (json):
 {{#showname}}
 <div class="description-container w-auto mt-0">
     {{#cm.uservisible}}
-    <a href="{{baseurl}}/mod/interactivevideo/view.php?i={{cm.instance}}"
+    <a href="{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}"
        class="clamp-2 text-dark h5 text-decoration-none mb-1">{{{formattedname}}}</a>
 {{/cm.uservisible}}
 {{^cm.uservisible}}

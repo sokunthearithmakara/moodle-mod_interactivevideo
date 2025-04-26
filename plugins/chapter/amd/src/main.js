@@ -132,12 +132,15 @@ export default class Chapter extends Base {
                 }
 
                 if (locked) {
+                    $('body').addClass('chapter-locked');
                     let lockstring = M.util.get_string(settings.lock, 'ivplugin_chapter');
                     self.addNotification(M.util.get_string('chapterlocked', 'ivplugin_chapter', lockstring), 'danger');
                     // Go to the next chapter.
                     self.player.pause();
                     self.player.seek(currentchapter.start - 0.3);
                     // Show the message.
+                } else {
+                    $('body').removeClass('chapter-locked');
                 }
 
                 $chapterlists.find('.chapter').removeClass('active-chapter');
@@ -328,7 +331,9 @@ export default class Chapter extends Base {
      * @param {object} annotation The annotation object
      */
     async runInteraction(annotation) {
-        if ($(document).find('#video-nav ul li[data-id=' + annotation.id + '] .item').hasClass('locked')) {
+        if ($('body').hasClass('chapter-locked')) {
+            await this.player.pause();
+            this.player.seek(annotation.timestamp - 0.3);
             return;
         }
         if (annotation.char1 != '1') {

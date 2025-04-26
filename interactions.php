@@ -124,6 +124,8 @@ $primary = new core\navigation\output\primary($PAGE);
 $renderer = $PAGE->get_renderer('core');
 $primarymenu = $primary->export_for_template($renderer);
 
+$bs = $CFG->branch >= 500 ? '-bs' : '';
+
 // Display page navigation.
 $datafortemplate = [
     "cmid" => $cm->id,
@@ -133,7 +135,7 @@ $datafortemplate = [
     "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
     "canedit" => has_capability('mod/interactivevideo:edit', $modulecontext),
     "completion" => ($attempted ? '<span class="mb-0 iv-border-left border-danger iv-pl-3"><button class="btn btn-sm"
-          type="button" data-toggle="popover" data-html="true" data-content=\'' .
+          type="button" data' . $bs . '-toggle="popover" data'.$bs. '-html="true" data' . $bs . '-content=\'' .
         get_string('interactionscannotbeedited', 'mod_interactivevideo') . '\'>
          <i class="bi bi-exclamation-circle-fill text-warning fs-25px"></i></button></span>' : ''),
     "manualcompletion" => 1,

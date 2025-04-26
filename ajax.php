@@ -342,9 +342,16 @@ switch ($action) {
                 $DB->delete_records('interactivevideo_log', ['userid' => $userid, 'annotationid' => $itemid]);
             }
             echo json_encode(['id' => $id, 'itemid' => $itemid]);
-
         } else {
             echo json_encode(['error' => 'Completion record not found']);
         }
+        break;
+    case 'download_annotations':
+        require_capability('mod/interactivevideo:edit', $context);
+        $annotations = required_param('annotations', PARAM_TEXT);
+        $cmid = required_param('cmid', PARAM_INT);
+        $courseid = required_param('courseid', PARAM_INT);
+        $link = interactivevideo_util::download_annotations($annotations, $cmid, $courseid, $contextid);
+        echo $link;
         break;
 }

@@ -253,7 +253,7 @@ const defaultDisplayContent = async function(annotation, player) {
     const handlePopupDisplay = (annotation, messageTitle) => {
         let modal = `<div class="modal fade ${$('body').hasClass('iframe') ? 'modal-fullscreen' : ''}"
              id="annotation-modal" role="dialog" aria-labelledby="annotation-modal"
-         aria-hidden="true" data-backdrop="static" data-keyboard="false">
+         aria-hidden="true" data${isBS5 ? '-bs' : ''}-backdrop="static" data${isBS5 ? '-bs' : ''}-keyboard="false" >
          <div id="message" data-id="${annotation.id}" data-placement="popup"
           class="modal-dialog modal-dialog-centered modal-dialog-scrollable ${annotation.type} active" role="document">
                 <div class="modal-content iv-rounded-lg">

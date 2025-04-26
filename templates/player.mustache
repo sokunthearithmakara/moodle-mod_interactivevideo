@@ -154,6 +154,13 @@ Example context (json):
 <div id="player" class="p-0"></div>
 {{/html5}}
 </div>
+{{#displayoptions.hidemainvideocontrols}}
+<div id="lightprogress">
+<div id="lightprogressbar"
+     class="bg-danger position-absolute h-100"
+     style="width: 0%"></div>
+</div>
+{{/displayoptions.hidemainvideocontrols}}
 </div>
 {{^displayoptions.hidemainvideocontrols}}
 <div class="mt-0 mt-md-2 bg-dark d-flex flex-column p-0 justify-content-center opacity-1" dir="ltr"
