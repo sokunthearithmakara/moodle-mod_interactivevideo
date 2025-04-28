@@ -616,11 +616,7 @@ define(['jquery',
                         return;
                     }
                     dispatchEvent('timeupdate', {'time': thisTime});
-                    $('#timeline-wrapper #currenttime').text(convertSecondsToHMS(thisTime, true));
                     let percentage = (thisTime - start) / (totaltime) * 100;
-                    $('#video-nav #progress').css('width', percentage + '%');
-                    $("#scrollbar, #scrollhead-top").css('left', percentage + '%');
-
                     // Scroll the timeline so that the current time is in the middle of the timeline.
                     const scrollBar = document.getElementById('scrollbar');
                     // Check if the scrollbar is in view.
@@ -727,6 +723,13 @@ define(['jquery',
                 $('#video-block').addClass('no-pointer bg-transparent');
                 $('#spinner').remove();
                 $('.loader').removeClass('loader');
+            });
+
+            $(document).on('timeupdate', function(e) {
+                const thisTime = e.detail.time;
+                $('#timeline-wrapper #currenttime').text(convertSecondsToHMS(thisTime, true));
+                let percentage = (thisTime - start) / (totaltime) * 100;
+                replaceProgressBars(percentage);
             });
 
             // Post annotation update (add, edit, clone).
@@ -1627,7 +1630,7 @@ define(['jquery',
             }
 
             // Seek bar functionalities
-            $('#vseek #bar, #video-timeline, #video-nav .annotation').on('mouseenter', function(e) {
+            $('#vseek #bar, #video-timeline, #video-nav .annotation, #video-nav').on('mouseenter', function(e) {
                 $('#cursorbar, #position-marker').remove();
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -1649,12 +1652,12 @@ define(['jquery',
                 $('#timeline-items').append($scrollbar);
             });
 
-            $('#vseek #bar, #video-timeline, #video-nav .annotation').on('mouseleave', function(e) {
+            $('#vseek #bar, #video-timeline, #video-nav .annotation, #video-nav').on('mouseleave', function(e) {
                 e.stopImmediatePropagation();
                 $('#vseek #position-marker, #cursorbar').remove();
             });
 
-            $('#vseek #bar, #video-timeline').on('mousemove', function(e) {
+            $('#vseek #bar, #video-timeline, #video-nav').on('mousemove', function(e) {
                 e.stopImmediatePropagation();
                 const parentOffset = $(this).offset();
                 const relX = e.pageX - parentOffset.left;

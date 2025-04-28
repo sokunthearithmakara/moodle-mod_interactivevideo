@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2025-04-28
+- Minor UI improvements
+- Installed interaction types can be downloaded directly from GitHub repos.
+- New interaction types: Poll and Form
+
 ## [1.2.3] - 2025-04-27
 https://mod-interactive-video.canny.io/changelog/interactive-video-123
 

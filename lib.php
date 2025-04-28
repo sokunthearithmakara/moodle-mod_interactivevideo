@@ -1897,7 +1897,7 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         $mform->hideIf('posterimagefile', 'usecustomposterimage', 'eq', 0);
 
         $htmlgroup = [];
-        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-secondary">');
+        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-bottom">');
         $mform->addGroup(
             $htmlgroup,
             'posterimagehr',
@@ -2079,7 +2079,7 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         $mform->setType('customdescription', PARAM_RAW);
 
         $htmlgroup = [];
-        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-secondary">');
+        $htmlgroup[] = $mform->createElement('html', '<hr class="w-100 m-0 border-bottom">');
         $mform->addGroup(
             $htmlgroup,
             'displayinlinehr',

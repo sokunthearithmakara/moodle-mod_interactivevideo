@@ -318,11 +318,14 @@ export default class Chapter extends Base {
             if (this.isSkipped(annotation.timestamp)) {
                 classes += 'skipped ';
             }
+            let container = self.isEditMode() ? '#timeline' : '#wrapper';
+            let placement = self.isEditMode() ? 'bottom' : 'top';
             $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
               data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
-        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
+        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-container="${container}"
         data${self.isBS5 ? '-bs' : ''}-trigger="hover" data${self.isBS5 ? '-bs' : ''}-html="true"
-        data${self.isBS5 ? '-bs' : ''}-title='<i class="${this.prop.icon} iv-mr-1"></i>${annotation.formattedtitle}'></div></li>`);
+        data${self.isBS5 ? '-bs' : ''}-placement="${placement}"
+        title='<i class="${this.prop.icon} iv-mr-1"></i>${annotation.formattedtitle}'></div></li>`);
         }
     }
 

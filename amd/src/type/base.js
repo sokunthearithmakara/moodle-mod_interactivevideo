@@ -804,6 +804,7 @@ class Base {
                 $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
         data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
         <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-html="true"
+         data${self.isBS5 ? '-bs' : ''}-placement="bottom"
          title='<div class="d-flex align-items-center"><i class="${this.prop.icon} iv-mr-2"></i>
         <span>${annotation.formattedtitle}</span></div>'></div></li>`);
             } else {
@@ -1031,11 +1032,18 @@ class Base {
         }
         if (action == 'mark-done') {
             completedItems.push(id.toString());
+            if (thisItem.earned > 0) { // In case of resubmission.
+                // Remove the earned XP from the total XP.
+                earnedXp -= Number(thisItem.earned);
+            }
             earnedXp += Number(completionDetails.xp);
         } else if (action == 'mark-undone') {
             completedItems = completedItems.filter(itemId => itemId != id);
             earnedXp -= Number(thisItem.earned);
         }
+
+        // Make sure the completed items are unique.
+        completedItems = [...new Set(completedItems)];
 
         let completed;
         if (Number(this.completionpercentage) > 0) { // Completion percentage is set.

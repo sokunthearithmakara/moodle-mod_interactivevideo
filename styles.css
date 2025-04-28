@@ -29,7 +29,7 @@
     --ivdvh: 100dvh;
 }
 
-:dir(rtl) {
+[dir="rtl"] {
     --ivdvh: 100vh;
 }
 
@@ -647,7 +647,7 @@ html:has(.path-mod-interactivevideo) {
     transform: rotate(90deg);
 }
 
-:dir(rtl) .path-mod-interactivevideo .rotate i {
+[dir="rtl"] .path-mod-interactivevideo .rotate i {
     transform: rotate(-90deg);
 }
 
@@ -922,6 +922,10 @@ html:has(.path-mod-interactivevideo) {
     display: flex;
     align-items: center;
     margin: 0;
+}
+
+#page-mod-interactivevideo-interactions #video-nav ul {
+    border-top: 1px dotted #ddd;
 }
 
 .path-mod-interactivevideo #video-nav #progress {
@@ -1376,7 +1380,7 @@ html:has(.path-mod-interactivevideo) {
     bottom: 1rem;
 }
 
-:dir(rtl) #page-mod-interactivevideo-report th.rotate > div {
+[dir="rtl"] #page-mod-interactivevideo-report th.rotate > div {
     transform: rotate3d(0, 0, 1, 90deg);
 }
 
@@ -1489,7 +1493,7 @@ html:has(.path-mod-interactivevideo) {
     background: linear-gradient(135deg, black, transparent);
 }
 
-:dir(rtl) .path-mod-interactivevideo #video-info {
+[dir="rtl"] .path-mod-interactivevideo #video-info {
     background: linear-gradient(45deg, transparent, black);
 }
 
@@ -2023,11 +2027,11 @@ html:has(.path-mod-interactivevideo) {
     pointer-events: none;
 }
 
-:dir(ltr) .path-mod-interactivevideo.hassidebar.default-mode #page {
+[dir="ltr"] .path-mod-interactivevideo.hassidebar.default-mode #page {
     margin-inline-end: 475px;
 }
 
-:dir(rtl) .path-mod-interactivevideo.hassidebar.default-mode #page {
+[dir="rtl"] .path-mod-interactivevideo.hassidebar.default-mode #page {
     margin-inline-start: 475px;
 }
 
@@ -2220,9 +2224,6 @@ html:has(.path-mod-interactivevideo) {
     background-color: var(--ivdanger);
     border-radius: 50%;
     top: -3px !important;
-}
-
-.path-mod-interactivevideo #video-nav #seekhead {
     height: 10px;
     width: 10px;
     z-index: 1;
@@ -2370,11 +2371,11 @@ html:has(.path-mod-interactivevideo) {
     width: 0;
 }
 
-:dir(rtl) #page-mod-interactivevideo-interactions #timeline-wrapper #scrollbar {
+[dir="rtl"] #page-mod-interactivevideo-interactions #timeline-wrapper #scrollbar {
     margin: 0;
 }
 
-:dir(ltr) #page-mod-interactivevideo-interactions #timeline-wrapper #scrollbar {
+[dir="ltr"] #page-mod-interactivevideo-interactions #timeline-wrapper #scrollbar {
     margin: 0;
 }
 
@@ -2402,6 +2403,7 @@ html:has(.path-mod-interactivevideo) {
     height: 100%;
     z-index: 1;
     position: absolute;
+    left: 0;
 }
 
 #page-mod-interactivevideo-interactions #timeline-wrapper #interaction-timeline {
@@ -2416,8 +2418,7 @@ html:has(.path-mod-interactivevideo) {
 
 #page-mod-interactivevideo-interactions #timeline-wrapper #video-nav {
     align-items: center;
-    height: 0;
-    border-top: 1px dotted #ddd;
+    height: 4px;
     background-color: transparent;
     z-index: 5;
 }
@@ -2451,7 +2452,7 @@ html:has(.path-mod-interactivevideo) {
     opacity: 0.8;
     cursor: pointer;
     background-color: var(--ivgray);
-    transition: all ease-in-out 300ms;
+    /* transition: all ease-in-out 300ms; */
 }
 
 #page-mod-interactivevideo-interactions #timeline-wrapper #vseek #scrollhead-top {
@@ -2486,7 +2487,7 @@ html:has(.path-mod-interactivevideo) {
     padding-inline-start: 3px;
 }
 
-:dir(rtl) #page-mod-interactivevideo-interactions #timeline-wrapper .minute-marker {
+[dir="rtl"] #page-mod-interactivevideo-interactions #timeline-wrapper .minute-marker {
     padding-inline-start: 0;
     border-right: 1px dotted #fff;
     border-left: none;
@@ -2995,26 +2996,26 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 
 @container section (max-width: 400px) {
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
         flex-direction: column;
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .image-container,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .description-container {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .image-container,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .description-container {
         margin-inline-end: 0;
         margin-inline-start: 0;
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.columnlayout {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.columnlayout {
         flex-direction: column;
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
         flex-direction: column;
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .image-container,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .description-container {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .image-container,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .description-container {
         margin-inline-end: 0;
         margin-inline-start: 0;
         margin-top: 0;
@@ -3071,47 +3072,47 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 
 @container section (width < 750px) {
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) {
         width: calc(50% - 0.5rem);
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
 @container section (width < 650px) {
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
         width: calc(50% - 0.5rem);
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
 @container section (max-width: 400px) {
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
         width: 100%;
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card,
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
@@ -3133,15 +3134,15 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 @container activity (max-width: 400px) {
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
         flex-direction: column;
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
         flex-direction: column;
     }
 
-    :dir(ltr) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .card-only {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .card-only {
         max-width: 100%;
     }
 }
@@ -3183,15 +3184,15 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 @media (max-width: 768px) {
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
         width: calc(50% - 0.5rem);
     }
 }
 
-:dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-:dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card,
-:dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card {
+[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
+[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card,
+[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card {
     flex-direction: column;
 }
 
@@ -3200,31 +3201,31 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
         max-width: 100%;
     }
 
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
         flex-direction: column;
     }
 
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
         flex-direction: column;
     }
 
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .card-only {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .card-only {
         max-width: 100%;
     }
 
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
         width: 100%;
     }
 
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card,
-    :dir(rtl) .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
