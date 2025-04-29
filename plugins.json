@@ -1,6 +1,18 @@
 {
     "subplugins": [
         {
+            "name": "form",
+            "title": "Form",
+            "component": "local_ivform",
+            "description": "Collect form responses from viewers",
+            "icon": "bi bi-bar-chart-line-fill",
+            "version": "2025042900",
+            "type": "paid",
+            "description_url": "",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/403225",
+            "git": "https://github.com/sokunthearithmakara/local_ivform/archive/refs/heads/master.zip"
+        },
+        {
             "name": "poll",
             "title": "Poll",
             "component": "local_ivpoll",
