@@ -102,8 +102,24 @@ export default class ContentBank extends Base {
      *                               otherwise returns the callback function.
      */
     postContentRender(annotation, callback) {
-        $(`#message[data-id='${annotation.id}']`).addClass('hascontentbank');
-        $(`#message[data-id='${annotation.id}']`).find('.modal-dialog').addClass('modal-xl');
+        const $message = $(`#message[data-id='${annotation.id}']`);
+        $message.addClass('hascontentbank');
+        $message.find('.modal-dialog').addClass('modal-xl');
+        if (annotation.completiontracking !== 'view') {
+            let $completiontoggle = $message.find('#completiontoggle');
+            $message.find('#title .info').remove();
+            $completiontoggle.before(`<i class="bi bi-info-circle-fill iv-mr-2 info" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+            data${self.isBS5 ? '-bs' : ''}-container="#message" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
+            title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}"></i>`);
+            if (!annotation.completed) {
+                setTimeout(function() {
+                    $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('show');
+                }, 1000);
+                setTimeout(function() {
+                    $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('hide');
+                }, 3000);
+            }
+        }
         if (annotation.hascompletion == 1
             && annotation.completiontracking != 'manual' && !annotation.completed) {
             return callback;
@@ -118,25 +134,9 @@ export default class ContentBank extends Base {
      */
     renderContainer(annotation) {
         super.renderContainer(annotation);
-        let self = this;
         let $message = $(`#message[data-id='${annotation.id}']`);
         $message.find('.modal-body').addClass('p-0');
-        if (annotation.completiontracking !== 'view') {
-            let $completiontoggle = $message.find('#completiontoggle');
-            $message.find('#title .info').remove();
-            $completiontoggle.before(`<i class="bi bi-info-circle-fill iv-mr-2 info" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
-            data${self.isBS5 ? '-bs' : ''}-container="#wrapper" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
-            title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}"></i>`);
-            if (annotation.completed) {
-                return;
-            }
-            setTimeout(function() {
-                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('show');
-            }, 1000);
-            setTimeout(function() {
-                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('hide');
-            }, 3000);
-        }
+
     }
 
     /**
@@ -233,7 +233,7 @@ export default class ContentBank extends Base {
                         }
 
                         window.H5PIntegration = document.querySelector(`#message[data-id='${annoid}'] iframe`)
-                        .contentWindow.H5PIntegration || {};
+                            .contentWindow.H5PIntegration || {};
                         window.H5PIntegration.saveFreq = 1;
                         let content = window.H5PIntegration.contents;
                         let id = Object.keys(content)[0];

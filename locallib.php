@@ -394,11 +394,16 @@ class interactivevideo_util {
     /**
      * Get all activity types.
      *
+     * @param bool $fromview from view.php
      * @return array
      */
-    public static function get_all_activitytypes() {
+    public static function get_all_activitytypes($fromview = false) {
         $subplugins = get_config('mod_interactivevideo', 'enablecontenttypes');
         $subplugins = explode(',', $subplugins);
+        // If fromview, make sure to include ivplugin_chapter.
+        if ($fromview && !in_array('ivplugin_chapter', $subplugins)) {
+            $subplugins[] = 'ivplugin_chapter';
+        }
         $subplugins = array_map(function ($subplugin) {
             return [
                 'name' => $subplugin,

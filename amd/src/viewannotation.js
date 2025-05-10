@@ -168,7 +168,7 @@ define([
             var timeLeft = animationEnd - Date.now();
 
             if (timeLeft <= 0) {
-                return clearInterval(interval);
+                clearInterval(interval);
             }
 
             var particleCount = 50 * (timeLeft / duration);
@@ -330,6 +330,7 @@ define([
                         sesskey: M.cfg.sesskey,
                         token: token,
                         cmid: cmid,
+                        fromview: 1,
                         contextid: M.cfg.contextid
                     }
                 });
@@ -902,7 +903,7 @@ define([
                     return;
                 }
                 $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
-                $('#playpause').attr('data-original-title', M.util.get_string('play', 'mod_interactivevideo'));
+                $('#playpause').attr('data-original-title', M.util.get_string('playtooltip', 'mod_interactivevideo'));
                 if (player.live) {
                     return;
                 }
@@ -987,7 +988,6 @@ define([
                             try {
                                 data = JSON.parse(data);
                             } catch {
-                                window.console.log(data);
                                 return;
                             }
                             if (data) {
@@ -1076,7 +1076,7 @@ define([
                 }
 
                 $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
-                $('#playpause').attr('data-original-title', M.util.get_string('pause', 'mod_interactivevideo'));
+                $('#playpause').attr('data-original-title', M.util.get_string('pausetooltip', 'mod_interactivevideo'));
 
                 if (player.live) {
                     return;
@@ -1674,10 +1674,10 @@ define([
                 $(this).toggleClass('active');
                 if ($(this).hasClass('active')) {
                     player.mute();
-                    $(this).attr('data-original-title', M.util.get_string('unmute', 'mod_interactivevideo'));
+                    $(this).attr('data-original-title', M.util.get_string('unmutetooltip', 'mod_interactivevideo'));
                 } else {
                     player.unMute();
-                    $(this).attr('data-original-title', M.util.get_string('mute', 'mod_interactivevideo'));
+                    $(this).attr('data-original-title', M.util.get_string('mutetooltip', 'mod_interactivevideo'));
                 }
                 $(this).find('i').toggleClass('bi-volume-mute bi-volume-up');
                 $(this).tooltip('show');
@@ -1991,6 +1991,46 @@ define([
                 $(this).addClass('active');
                 // Dispatch the interaction run event.
                 dispatchEvent('interactionrun', {'annotation': releventAnnotations.find(x => x.id == $(this).data('id'))});
+            });
+
+            // Implement keyboard shortcuts.
+            document.addEventListener('keydown', async function(e) {
+                // Ignore spacebar when focus is on an input, textarea, or button
+                const activeTag = document.activeElement.tagName.toLowerCase();
+                if (activeTag !== 'body') {
+                    return;
+                }
+
+                if ($('body').hasClass('disablekb')) {
+                    return;
+                }
+
+                if (e.code === 'Space') {
+                    e.preventDefault(); // Prevent page scroll.
+                    if (await player.isPaused()) {
+                        player.play();
+                    } else {
+                        player.pause();
+                    }
+                } else if (e.code === 'KeyC') {
+                    e.preventDefault();
+                    $('#chaptertoggle .btn').trigger('click');
+                } else if (e.code === 'KeyM') {
+                    e.preventDefault();
+                    $('#mute').trigger('click');
+                } else if (e.code === 'KeyF') {
+                    e.preventDefault();
+                    $('#fullscreen').trigger('click');
+                } else if (e.code === 'KeyR') {
+                    e.preventDefault();
+                    $('#end-screen #restart').trigger('click');
+                } else if (e.code === 'KeyS') {
+                    e.preventDefault();
+                    $('#controller #share').trigger('click');
+                } else if (e.code === 'KeyL') {
+                    e.preventDefault();
+                    $('#controller #expand').trigger('click');
+                }
             });
         }
     };

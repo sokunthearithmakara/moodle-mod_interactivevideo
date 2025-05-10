@@ -23,13 +23,13 @@
     {
     }
 }}
-<div class="modal fade" id="contentmodal" role="dialog" aria-labelledby="contentmodal" aria-hidden="true" tabindex="-1">
+<div class="modal fade" id="contentmodal-original" role="dialog" aria-labelledby="contentmodal" aria-hidden="true" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable" role="document">
         <div class="modal-content iv-rounded-lg">
             <div class="modal-header align-items-center flex-column">
             <div class="w-100 d-flex align-items-center justify-content-between">
                 <h5 class="modal-title">{{#str}}selectacontenttypetoadd, mod_interactivevideo{{/str}}</h5>
-                <button type="button" class="btn p-0 border-0" data{{bs}}-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn p-0 border-0 close" data{{bs}}-dismiss="modal" aria-label="Close">
                    <i class="bi bi-x-lg fa-fw fs-25px"></i>
                 </button>
                 </div>
@@ -37,11 +37,11 @@
                 <input type="text" class="form-control form-control-sm w-100 mt-3" id="contentsearch" placeholder="{{#str}}search, mod_interactivevideo{{/str}}">
                 </div>
             </div>
-            <div class="p-0" id="addcontentdropdown">
+            <div class="p-0 modal-body" id="addcontentdropdown">
                 {{#contenttype}}
                 {{^hideonchooser}}
                     <span class="cursor-pointer dropdown-item text-wrap px-4 py-3 border-bottom d-flex w-100 {{^description}}align-items-center{{/description}} {{^description}}align-items-start{{/description}}"
-                        data-type="{{{name}}}">
+                        data-type="{{{name}}}" tabindex="0" type="button">
                         <i class="iv-mr-4 {{{icon}}} {{^hascompletion}}text-secondary{{/hascompletion}}"></i>
                         <div class="w-100">
                             <div class="d-flex w-100 justify-content-between">

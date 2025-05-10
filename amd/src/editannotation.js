@@ -25,8 +25,10 @@ define(['jquery',
     'core/notification',
     'core/event_dispatcher',
     './quickform',
+    'core/modal_factory',
+    'core/modal_events',
     './libraries/jquery-ui',
-], function($, addToast, Notification, {dispatchEvent}, quickform) {
+], function($, addToast, Notification, {dispatchEvent}, quickform, ModalFactory, ModalEvents) {
     let ctRenderer = {};
     let player;
     let totaltime;
@@ -423,12 +425,15 @@ define(['jquery',
                 if (player.live) {
                     end = Number.MAX_SAFE_INTEGER;
                 }
-                player.pause();
+                if (player.type != 'yt') {
+                    player.pause();
+                }
                 const isPaused = await player.isPaused();
                 if (!isPaused) {
                     if (!player.live) {
                         await player.seek(start);
                     }
+                    player.pause();
                     onReady();
                     return;
                 }
@@ -691,6 +696,7 @@ define(['jquery',
                         'customStart': true,
                         'passwordprotected': displayoptions.passwordprotected == 1,
                         'showControls': false,
+                        'keyboard': true,
                     }
                 );
                 window.IVPLAYER = player;
@@ -726,6 +732,10 @@ define(['jquery',
             });
 
             $(document).on('timeupdate', function(e) {
+                if (!playerReady) {
+                    player.pause();
+                    return;
+                }
                 const thisTime = e.detail.time;
                 $('#timeline-wrapper #currenttime').text(convertSecondsToHMS(thisTime, true));
                 let percentage = (thisTime - start) / (totaltime) * 100;
@@ -1123,20 +1133,14 @@ define(['jquery',
             // Display tooltip on anntation indicator when annotation on the list is hovered.
             $(document).on('mouseenter', 'tr.annotation', function() {
                 const id = $(this).data('id');
-                if (isBS5) {
-                    $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('show');
-                } else {
-                    $(`#video-nav ul li[data-id="${id}"] .item`).trigger('mouseover');
-                }
+                $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('show');
             });
 
             // Remove tooltip when annotation on the list is not hovered.
             $(document).on('mouseleave', 'tr.annotation', function() {
                 const id = $(this).data('id');
-                if (isBS5) {
-                    $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('hide');
-                } else {
-                    $(`#video-nav ul li[data-id="${id}"] .item`).trigger('mouseout');
+                $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('hide');
+                if (!isBS5) {
                     $('.tooltip').remove();
                 }
             });
@@ -1630,13 +1634,14 @@ define(['jquery',
             }
 
             // Seek bar functionalities
-            $('#vseek #bar, #video-timeline, #video-nav .annotation, #video-nav').on('mouseenter', function(e) {
+            $('#vseek #bar, #video-timeline').on('mouseenter', function(e) {
                 $('#cursorbar, #position-marker').remove();
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 // First clone the #scrollbar and place it where the cursor is.
                 let $scrollbar = $('#scrollbar').clone();
                 $scrollbar.attr('id', 'cursorbar');
+                $scrollbar.addClass('no-pointer-events');
 
                 const parentOffset = $(this).offset();
                 const relX = e.pageX - parentOffset.left;
@@ -1652,12 +1657,14 @@ define(['jquery',
                 $('#timeline-items').append($scrollbar);
             });
 
-            $('#vseek #bar, #video-timeline, #video-nav .annotation, #video-nav').on('mouseleave', function(e) {
+            $('#vseek #bar, #video-timeline').on('mouseleave', function(e) {
                 e.stopImmediatePropagation();
                 $('#vseek #position-marker, #cursorbar').remove();
+                // Remove highlight.
+                $('tr.annotation.active').removeClass('active');
             });
 
-            $('#vseek #bar, #video-timeline, #video-nav').on('mousemove', function(e) {
+            $('#vseek #bar, #video-timeline').on('mousemove', function(e) {
                 e.stopImmediatePropagation();
                 const parentOffset = $(this).offset();
                 const relX = e.pageX - parentOffset.left;
@@ -1808,23 +1815,59 @@ define(['jquery',
 
             });
 
+
             // Launch content selection modal.
+            let contentTypeModal;
             $('#addcontent').on('click', async function(e) {
                 e.preventDefault();
                 if (!playerReady) {
                     return;
                 }
-                $('#contentmodal').modal('show');
-            });
+                if (contentTypeModal) {
+                    contentTypeModal.show();
+                    return;
+                }
+                contentTypeModal = await ModalFactory.create({
+                    title: '',
+                    body: '',
+                    backdrop: 'static',
+                    removeOnHide: true,
+                });
+                let root = contentTypeModal.getRoot();
+                let $body = $('#contentmodal-original .modal-content').html();
+                root.attr('id', 'contentmodal');
+                root.find('.modal-dialog .modal-content').html($body);
+                contentTypeModal.show();
 
-            $('#contentmodal').on('show.bs.modal', function() {
-                player.pause();
-                $('#addcontentdropdown').addClass('modal-body');
-            });
+                root.on(ModalEvents.hidden, function() {
+                    $('#addcontentdropdown .dropdown-item').removeClass('active');
+                });
 
-            $('#contentmodal').on('hide.bs.modal', function() {
-                $('#addcontentdropdown .dropdown-item').removeClass('active');
-                $('#addcontentdropdown').removeClass('modal-body');
+                root.on(ModalEvents.shown, function() {
+                    player.pause();
+                    // Apply jelly animation after DOM is ready
+                    setTimeout(() => {
+                        root.addClass('jelly-anim');
+                    }, 10);
+
+                    // Make the modal draggable.
+                    root.find('.modal-dialog').draggable({
+                        handle: ".modal-header"
+                    });
+
+                    setTimeout(() => {
+                        $('#contentsearch').focus();
+                    }, 1000);
+                });
+
+                root.on('click', '.modal-header .close', function() {
+                    contentTypeModal.hide();
+                });
+
+                root.on('click', '.dropdown-item', function() {
+                    root.removeClass('jelly-anim');
+                    contentTypeModal.hide();
+                });
             });
 
             // Inform user to save changes before close or unload the current page.
@@ -2241,6 +2284,7 @@ define(['jquery',
             // Event lister for bulk action.
             $(document).on('click', '#annotation-list-bulk-edit', async function(e) {
                 e.preventDefault();
+                document.body.focus();
                 if ($(this).hasClass('active')) {
                     // Remove all checkboxes.
                     $('#annotation-list').find('.form-check').remove();
@@ -2253,7 +2297,7 @@ define(['jquery',
                     return;
                 }
                 $(this).addClass('active');
-                $('#annotation-list-bulk-checkall').removeClass('d-none');
+                $('#annotation-list-bulk-checkall').removeClass('d-none active');
                 $('body').addClass('iv-bulk-edit');
                 let li = $('#annotation-list').find('tr');
                 li.each(function() {
@@ -2405,8 +2449,6 @@ define(['jquery',
                     prevent: annotations.filter(x => JSON.parse(x.prop).allowmultiple == false).map(x => x.type).join(','),
                 };
 
-                window.console.log(data);
-
                 let title = M.util.get_string('uploadannotations', 'mod_interactivevideo');
                 const form = new ModalForm({
                     modalConfig: {
@@ -2423,7 +2465,6 @@ define(['jquery',
                     // Check if the imported annotations are valid.
                     imported = imported.filter(x => contentTypes.find(y => y.name === x.type));
                     annotations = annotations.concat(imported);
-                    window.console.log(annotations);
                     dispatchEvent('annotationupdated', {
                         annotations: annotations,
                         action: 'import'
@@ -2534,6 +2575,93 @@ define(['jquery',
                     renderAnnotationItems(annotations);
                     addNotification(M.util.get_string('interactionsdeleted', 'mod_interactivevideo', ids.length), 'success');
                 }, 1000);
+            });
+
+            // Implement keyboard shortcuts.
+            // eslint-disable-next-line complexity
+            document.addEventListener('keydown', async function(e) {
+                // Ignore spacebar when focus is on an input, textarea, or button
+                const activeTag = document.activeElement.tagName.toLowerCase();
+                if (activeTag !== 'body') {
+                    return;
+                }
+
+                if ($('body').hasClass('disablekb')) {
+                    return;
+                }
+
+                if (e.code === 'Space') {
+                    e.preventDefault(); // Prevent page scroll.
+                    if (await player.isPaused()) {
+                        player.play();
+                    } else {
+                        player.pause();
+                    }
+                } else if (e.code === 'KeyA' && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    // Launch add content modal.
+                    $('#addcontent').trigger('click');
+                } else if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    // Fast forward.
+                    let time = await player.getCurrentTime();
+                    if (time >= end || time + 1 > end) {
+                        return;
+                    }
+                    player.seek(time + 1);
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    // Rewind 10 seconds.
+                    let time = await player.getCurrentTime();
+                    if (time <= start || time - 1 < start) {
+                        return;
+                    }
+                    player.seek(time - 1);
+                } else if (e.code === 'KeyI') {
+                    e.preventDefault();
+                    // Launch import content modal.
+                    $('#importcontent').trigger('click');
+                } else if (e.code === 'KeyX') {
+                    e.preventDefault();
+                    // Launch delete content modal.
+                    $('#annotation-list-bulk-delete').trigger('click');
+                } else if (e.code === 'KeyD') {
+                    e.preventDefault();
+                    // Launch download content modal.
+                    $('#annotation-list-bulk-download').trigger('click');
+                } else if (e.code === 'KeyC') {
+                    e.preventDefault();
+                    // Launch copy content modal.
+                    $('#annotation-list-bulk-copy').trigger('click');
+                } else if (e.code === 'KeyP') {
+                    e.preventDefault();
+                    // Launch paste content modal.
+                    $('#annotation-list-bulk-paste').trigger('click');
+                } else if (e.code === 'KeyE') {
+                    e.preventDefault();
+                    // Launch edit content modal.
+                    $('#annotation-list-bulk-edit').trigger('click');
+                } else if (e.code === 'KeyA' && (e.ctrlKey || e.metaKey) && $('#annotation-list-bulk-edit').hasClass('active')) {
+                    e.preventDefault();
+                    // Launch add content modal.
+                    $('#annotation-list-bulk-checkall').trigger('click');
+                } else if (e.code === 'KeyU') {
+                    e.preventDefault();
+                    // Launch upload content modal.
+                    $('#annotation-list-bulk-upload').trigger('click');
+                } else if (e.code === 'Equal') {
+                    e.preventDefault();
+                    // Launch download content modal.
+                    $('#zoomin').trigger('click');
+                } else if (e.code === 'Minus') {
+                    e.preventDefault();
+                    // Launch download content modal.
+                    $('#zoomout').trigger('click');
+                } else if (e.code === 'KeyS' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    // Save content.
+                    $('#savedraft').trigger('click');
+                }
             });
         }
     };

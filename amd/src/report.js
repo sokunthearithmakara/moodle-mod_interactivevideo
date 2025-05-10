@@ -34,6 +34,8 @@ import './libraries/dataTables.select';
 import './libraries/select.bootstrap4';
 import './libraries/select2';
 import quickform from './quickform';
+import ModalFactory from 'core/modal_factory';
+import ModalEvents from 'core/modal_events';
 
 /**
  * Initializes the report functionality for the interactive video module.
@@ -60,7 +62,6 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
 
     quickform();
 
-    require(['theme_boost/bootstrap/modal']);
     require(['theme_boost/bootstrap/tooltip']);
 
     const getContentTypes = $.ajax({
@@ -1042,7 +1043,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         });
     });
 
-    $(document).on('click', '[data-item] a', function() {
+    $(document).on('click', '[data-item] a', async function() {
         const convertSecondsToHMS = (seconds) => {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor(seconds % 3600 / 60);
@@ -1056,16 +1057,35 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         if (theAnnotation.timestamp > 0) {
             title += " @ " + convertSecondsToHMS(theAnnotation.timestamp);
         }
-        const modal = `<div class="modal fade" id="annotation-modal" role="dialog"
-            aria-labelledby="annotation-modal"
-         aria-hidden="true" data${isBS5 ? '-bs' : ''}-backdrop="static" data${isBS5 ? '-bs' : ''}-keyboard="false">
-         <div id="message" data-id="${theAnnotation.id}" data-placement="popup"
-          class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable ${theAnnotation.type}" role="document">
-            <div class="modal-content iv-rounded-lg">
+
+        $('#annotation-modal').remove();
+        let modal = await ModalFactory.create({
+            body: `<div class="modal-body loader"></div>`,
+            large: true,
+            show: false,
+            removeOnClose: true,
+            isVerticallyCentered: true,
+        });
+
+            let root = modal.getRoot();
+            root.attr('id', 'annotation-modal');
+            root.attr('data-id', theAnnotation.id);
+
+
+            if ($('body').hasClass('iframe')) {
+                root.addClass('modal-fullscreen');
+            }
+
+            root.find('.modal-dialog').attr('data-id', theAnnotation.id);
+            root.find('.modal-dialog').attr('data-placement', 'popup');
+            root.find('.modal-dialog').attr('id', 'message');
+            root.find('.modal-dialog').addClass('active ' + theAnnotation.type);
+            root.find('#message').html(`<div class="modal-content iv-rounded-lg">
                 <div class="modal-header d-flex align-items-center shadow-sm" id="title">
                     <h5 class="modal-title text-truncate mb-0">${title}</h5>
                     <div class="btns d-flex align-items-center">
-                        <button class="btn close-modal p-0 border-0" aria-label="Close" data${isBS5 ? '-bs' : ''}-dismiss="modal">
+                        <button id="close-${theAnnotation.id}" class="btn close-modal p-0 border-0"
+                         aria-label="Close" data${isBS5 ? '-bs' : ''}-dismiss="modal">
                         <i class="bi bi-x-lg fa-fw fs-25px"></i>
                         </button>
                     </div>
@@ -1074,26 +1094,51 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 <div class="loader w-100 mt-5"></div>
                 </div>
                 </div>
-            </div>
-            </div>`;
-        $('body').append(modal);
-        $('#annotation-modal').modal('show');
-        $('#annotation-modal').on('hide.bs.modal', function() {
-            $('#annotation-modal').remove();
-        });
+            </div>`);
 
-        $('#annotation-modal').on('shown.bs.modal', function() {
-            $('#annotation-modal .modal-body').fadeIn(300);
-            let matchingContentTypes = contentTypes.find(x => x.name === theAnnotation.type);
-            let amdmodule = matchingContentTypes.amdmodule;
-            require([amdmodule], function(Module) {
-                theAnnotation.completed = true;
-                new Module(player, itemsdata, cmid, courseid, null,
-                    completionpercentage, null, grademax, videotype, null,
-                    end - start, start, end, theAnnotation.prop, cm).displayReportView(theAnnotation, tabledatajson, DataTable);
+            root.find('#message').on('click', '#close-' + theAnnotation.id, function() {
+                root.attr('data-region', 'modal-container');
+                root.fadeOut(300, function() {
+                    modal.hide();
+                });
             });
-            $(this).find('.close-modal').focus();
-        });
+
+            root.off(ModalEvents.hidden).on(ModalEvents.hidden, function() {
+                $('#annotation-modal').modal('hide');
+                $('#annotation-modal').remove();
+            });
+
+            // If click outside the modal, add jelly animation.
+            root.off('click').on('click', function(e) {
+                if ($(e.target).closest('.modal-content').length === 0) {
+                    root.addClass('jelly-anim');
+                }
+            });
+
+            // When modal is shown, resolve the promise.
+            root.off(ModalEvents.shown).on(ModalEvents.shown, function() {
+                root.attr('data-region', 'popup'); // Must set to avoid dismissing the modal when clicking outside.
+                setTimeout(() => {
+                    root.addClass('jelly-anim');
+                }, 10);
+
+                $('#annotation-modal .modal-body').fadeIn(300);
+                let matchingContentTypes = contentTypes.find(x => x.name === theAnnotation.type);
+                let amdmodule = matchingContentTypes.amdmodule;
+                require([amdmodule], function(Module) {
+                    theAnnotation.completed = true;
+                    new Module(player, itemsdata, cmid, courseid, null,
+                        completionpercentage, null, grademax, videotype, null,
+                        end - start, start, end, theAnnotation.prop, cm).displayReportView(theAnnotation, tabledatajson, DataTable);
+                });
+                $(this).find('.close-modal').focus();
+            });
+
+            root.on('animationend', function() {
+                root.removeClass('jelly-anim');
+            });
+
+            modal.show();
     });
 
     // Delete single completion record.

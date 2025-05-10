@@ -129,7 +129,7 @@ class Yt {
                 autohide: 1,
                 rel: 0,
                 playsinline: 1,
-                disablekb: 1,
+                disablekb: opts.keyboard ? 0 : 1,
                 mute: 1,
             },
             events: {

@@ -513,12 +513,14 @@ html:has(.path-mod-interactivevideo) {
     opacity: 0;
 }
 
-.path-mod-interactivevideo .pulse {
+.path-mod-interactivevideo .pulse,
+.path-mod-interactivevideo .pulse-sm {
     overflow: visible;
     position: relative;
 }
 
-.path-mod-interactivevideo .pulse::before {
+.path-mod-interactivevideo .pulse::before,
+.path-mod-interactivevideo .pulse-sm::before {
     content: "";
     display: block;
     position: absolute;
@@ -533,6 +535,11 @@ html:has(.path-mod-interactivevideo) {
     -webkit-animation: pulse-animation 1s cubic-bezier(0.24, 0, 0.38, 1) infinite;
     animation: pulse-animation 1s cubic-bezier(0.24, 0, 0.38, 1) infinite;
     z-index: -1;
+}
+
+.path-mod-interactivevideo .pulse-sm::before {
+    -webkit-animation: pulse-animation-sm 0.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    animation: pulse-animation-sm 0.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
 @-webkit-keyframes pulse-animation {
@@ -575,57 +582,44 @@ html:has(.path-mod-interactivevideo) {
     }
 }
 
-.path-mod-interactivevideo .animate__animated {
-    -webkit-animation-duration: var(--iv-animate-duration);
-    animation-duration: var(--iv-animate-duration);
-    -webkit-animation-fill-mode: both;
-    animation-fill-mode: both;
-}
-
-.path-mod-interactivevideo .animate__animated.animate__infinite {
-    -webkit-animation-iteration-count: infinite;
-    animation-iteration-count: infinite;
-}
-
-@-webkit-keyframes pulse {
-    from {
-        -webkit-transform: scale3d(1, 1, 1);
-        transform: scale3d(1, 1, 1);
+@-webkit-keyframes pulse-animation-sm {
+    0% {
+        opacity: 1;
+        -webkit-transform: scale(1);
+        transform: scale(1);
     }
 
     50% {
-        -webkit-transform: scale3d(1.15, 1.15, 1.15);
-        transform: scale3d(1.15, 1.15, 1.15);
+        opacity: 0;
+        -webkit-transform: scale(1.5);
+        transform: scale(1.5);
     }
 
-    to {
-        -webkit-transform: scale3d(1, 1, 1);
-        transform: scale3d(1, 1, 1);
+    100% {
+        opacity: 0;
+        -webkit-transform: scale(1.5);
+        transform: scale(1.5);
     }
 }
 
-@keyframes pulse {
-    from {
-        -webkit-transform: scale3d(1, 1, 1);
-        transform: scale3d(1, 1, 1);
+@keyframes pulse-animation-sm {
+    0% {
+        opacity: 1;
+        -webkit-transform: scale(1);
+        transform: scale(1);
     }
 
     50% {
-        -webkit-transform: scale3d(1.15, 1.15, 1.15);
-        transform: scale3d(1.15, 1.15, 1.15);
+        opacity: 0;
+        -webkit-transform: scale(1.1);
+        transform: scale(1.1);
     }
 
-    to {
-        -webkit-transform: scale3d(1, 1, 1);
-        transform: scale3d(1, 1, 1);
+    100% {
+        opacity: 0;
+        -webkit-transform: scale(1.5);
+        transform: scale(1.5);
     }
-}
-
-.path-mod-interactivevideo .animate__pulse {
-    -webkit-animation-name: pulse;
-    animation-name: pulse;
-    -webkit-animation-timing-function: ease-in-out;
-    animation-timing-function: ease-in-out;
 }
 
 .path-mod-interactivevideo .no-pointer-events {
@@ -862,7 +856,7 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo .toast-wrapper,
 .path-course-view:has(.modtype_interactivevideo) .toast-wrapper {
-    z-index: 1056 !important;
+    z-index: 2056 !important;
 }
 
 .path-mod-interactivevideo #video-action {
@@ -1134,6 +1128,10 @@ html:has(.path-mod-interactivevideo) {
     min-height: 50dvh;
 }
 
+.path-mod-interactivevideo #message[data-placement="inline"] .modal-body {
+    min-height: unset;
+}
+
 .path-mod-interactivevideo .modalhasiframe .modal-body .no-overflow,
 .path-mod-interactivevideo #message.hasiframe .no-overflow {
     padding: 1rem;
@@ -1144,7 +1142,10 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo .modal-body .no-overflow {
     padding: 1rem;
-    min-height: 100%;
+}
+
+.path-mod-interactivevideo .modal-body .no-overflow:is(:empty) {
+    padding: 0;
 }
 
 .path-mod-interactivevideo .modalhasiframe .modal-body {
@@ -2040,6 +2041,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 @media (max-width: 992px) {
+
     .path-mod-interactivevideo.hassidebar #interactivevideo-container,
     .path-mod-interactivevideo.hassidebar #wrapper.fullscreen #video-wrapper {
         width: 100%;
@@ -3026,32 +3028,32 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     max-width: 300px;
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+.path-course-view .activity.modtype_interactivevideo:has(.card-medium),
+.path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
+.path-course-view .activity.modtype_interactivevideo:has(.card-small),
+.path-course-view .activity.modtype_interactivevideo:has(.card-largemedium),
+.path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
     display: inline-block;
     vertical-align: top;
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) {
+.path-course-view .activity.modtype_interactivevideo:has(.card-medium) {
     width: calc(50% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) {
+.path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) {
     width: calc(75% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) {
+.path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) {
     width: calc(66.67% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) {
+.path-course-view .activity.modtype_interactivevideo:has(.card-small) {
     width: calc(33.33% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+.path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
     width: calc(25% - 0.5rem);
 }
 
@@ -3072,47 +3074,47 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 
 @container section (width < 750px) {
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) {
         width: calc(50% - 0.5rem);
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
 @container section (width < 650px) {
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
         width: calc(50% - 0.5rem);
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
 @container section (max-width: 400px) {
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium),
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
         width: 100%;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card,
+    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
@@ -3184,15 +3186,16 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 @media (max-width: 768px) {
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
         width: calc(50% - 0.5rem);
     }
 }
 
-[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card,
-[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card {
+[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card,
+[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card {
     flex-direction: column;
 }
 
@@ -3213,19 +3216,19 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
         max-width: 100%;
     }
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium),
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
         width: 100%;
     }
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-medium) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-mediumlarge) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-small) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-largemedium) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card.card-tiny) .interactivevideo-card {
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card,
+    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
@@ -3372,7 +3375,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     z-index: 3;
 }
 
-.path-course-view .section .activity:has(.interactivevideo-card) .activity-item .activity-grid {
+.path-course-view .section .activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-item .activity-grid {
     grid-template-columns: min-content 1fr min-content min-content;
     grid-template-areas:
         "groupmode groupmode completion actions"
@@ -3404,7 +3407,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 .path-mod-interactivevideo tr .timestamp-info {
     left: 0;
     top: -30px;
-    background: var(--ivprimaryalt);
+    background-color: var(--ivprimaryalt)!important;
     width: 100%;
     padding: 0.1rem 0.5rem;
     height: 30px;
@@ -3686,4 +3689,21 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 
 .path-mod-interactivevideo .table > :not(caption) > * > * {
     background-color: transparent;
+}
+
+@keyframes jellyIn {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.modal.jelly-anim .modal-dialog {
+    animation: jellyIn 0.5s ease-in-out;
+    transform-origin: center;
 }

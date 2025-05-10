@@ -51,24 +51,6 @@ class form extends \mod_interactivevideo\form\base_form {
     }
 
     /**
-     * Pre-processes the form data
-     *
-     * @param mixed $data
-     * @return mixed
-     */
-    public function pre_processing_data($data) {
-        $data = parent::pre_processing_data($data);
-        if ($data->completiontracking == 'none') {
-            $data->xp = 0;
-            $data->hascompletion = 0;
-        } else {
-            $data->hascompletion = 1;
-        }
-
-        return $data;
-    }
-
-    /**
      * Process dynamic submission
      *
      * @return void

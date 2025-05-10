@@ -111,14 +111,17 @@ foreach ($customs as $custom) {
                     $newversion = $plugininfo['version'];
                     if ($newversion > $version) {
                         $updateavailable = true;
+                        $updatelink = $plugininfo['type'] && $plugininfo['type'] == 'paid' ?
+                            $plugininfo['download_url'] : $plugininfo['git'];
                     }
                 }
             }
+
             $interaction = '<span class="ivname">' . get_string('pluginname', $function)
                 . '<span class="badge alert-primary mx-1">' . get_string('external', 'mod_interactivevideo')
                 . '</span></span><small class="text-muted">' . $version . '</small>'
-                . ($updateavailable ? (isset($plugininfo['git'])
-                    ? '<a href="' . $plugininfo['git'] . '" class="badge badge-success mx-1" target="_blank">'
+                . ($updateavailable ? ($updatelink
+                    ? '<a href="' . $updatelink . '" class="badge badge-success mx-1" target="_blank">'
                     . get_string('updateavailable', 'mod_interactivevideo') . '</a>' : '<span class="badge iv-badge-warning mx-1">'
                     . get_string('updateavailable', 'mod_interactivevideo') . '</span>') : '');
         } else {

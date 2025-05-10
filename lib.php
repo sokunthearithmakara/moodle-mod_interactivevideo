@@ -787,7 +787,8 @@ function interactivevideo_displayinline(cm_info $cm) {
 
     if (isset($displayoptions->cardsize)) {
         $datafortemplate['usecustomdesc'] = isset($displayoptions->usecustomdescription) && $displayoptions->usecustomdescription;
-        $datafortemplate['customdesc'] = isset($displayoptions->customdescription) ? $displayoptions->customdescription : '';
+        $datafortemplate['customdesc'] = isset($displayoptions->customdescription)
+            ? $displayoptions->customdescription : '';
         $datafortemplate['showposterimageright'] = isset($displayoptions->showposterimageright)
             && $displayoptions->showposterimageright;
         $datafortemplate['showposterimage'] = isset($displayoptions->showposterimage) && $displayoptions->showposterimage;
@@ -806,7 +807,8 @@ function interactivevideo_displayinline(cm_info $cm) {
         }
         if ($datafortemplate['usecustomdesc']) {
             $datafortemplate['showdescription'] = true;
-            $datafortemplate['formattedintro'] = $datafortemplate['customdesc'];
+            $datafortemplate['formattedintro'] = '<span class="nolink">'
+                . format_text($datafortemplate['customdesc'], FORMAT_PLAIN) . '</span>';
             $datafortemplate['originalintro'] = $datafortemplate['customdesc'];
         }
     }

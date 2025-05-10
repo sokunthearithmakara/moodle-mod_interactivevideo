@@ -141,11 +141,11 @@ class DailyMotion {
 
             // If the browser blocks autoplay, we need to show the play button.
             if (!state.playerIsPlaybackAllowed && !ready) {
+                self.paused = false;
                 dispatchEvent('iv:playerReady', null, document.getElementById(node));
                 $('#start-screen #play').removeClass('d-none');
                 $('#start-screen #spinner').remove();
                 $('.video-block, #video-block').addClass('no-pointer bg-transparent');
-                // $('#start-screen').addClass('no-pointer');
                 $('#annotation-canvas').removeClass('d-none w-0');
             }
 
@@ -228,6 +228,7 @@ class DailyMotion {
             if (customStart) {
                 player.setMute(true);
                 player.play(); // Start the video to get the ad out of the way.
+                self.paused = false;
                 player.on(dailymotion.events.VIDEO_TIMECHANGE, function() {
                     $("#start-screen").removeClass('bg-transparent');
                     if (ready == true) { // When the video is replayed, it will fire VIDEO_START event again.

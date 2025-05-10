@@ -24,12 +24,12 @@ Example context (json):
             <button class="btn btn-sm py-0 px-2 btn-primary text-uppercase mx-2 border-0"
                     type="button"
                     id="addcontent">
-                <i class="bi bi-plus-lg mx-1"></i><span class="d-none d-md-inline">{{#str}}add,mod_interactivevideo{{/str}}</span>
+                <i class="bi bi-plus-lg iv-mr-2"></i><span class="d-none d-md-inline">{{#str}}add,mod_interactivevideo{{/str}}</span>
             </button>
             <button class="btn btn-sm py-0 px-2 btn-secondary text-uppercase mx-1 rotatez-360 border-0"
                     type="button"
                     id="importcontent">
-                <i class="bi bi-arrow-down mx-1"></i><span class="d-none d-md-inline">{{#str}}import,mod_interactivevideo{{/str}}</span>
+                <i class="bi bi-arrow-down iv-mr-2"></i><span class="d-none d-md-inline">{{#str}}import,mod_interactivevideo{{/str}}</span>
             </button>
         </div>
         <div class="col text-center d-flex align-items-center justify-content-center"
@@ -80,7 +80,7 @@ Example context (json):
             <button class="btn btn-sm py-0 px-2 btn-secondary text-uppercase mx-4 border-0"
                     disabled
                     id="savedraft">
-                <i class="bi bi-floppy mx-1"></i><span class="d-none d-md-inline">{{#str}}save,mod_interactivevideo{{/str}}</span>
+                <i class="bi bi-floppy iv-mr-2"></i><span class="d-none d-md-inline">{{#str}}save,mod_interactivevideo{{/str}}</span>
             </button>
             <div id="zoomlevel" class="d-flex align-items-center">
                 <button class="btn btn-sm p-0 text-white mx-2 border-0 bg-transparent"
@@ -101,6 +101,15 @@ Example context (json):
                     data{{bs}}-content='{{#str}}videonavhelp,mod_interactivevideo{{/str}}'
                     data{{bs}}-html="true">
                 <i class="bi bi-info-circle"></i>
+            </button>
+            <button class="border-0 btn btn-sm p-0 text-white mx-2 bg-transparent"
+                    data{{bs}}-toggle="popover"
+                    data{{bs}}-trigger="hover"
+                    data{{bs}}-placement="auto"
+                    data{{bs}}-boundary="viewport"
+                    data{{bs}}-content='{{#str}}keyboardshortcuts,mod_interactivevideo{{/str}}'
+                    data{{bs}}-html="true">
+                <i class="bi bi-keyboard"></i>
             </button>
         </div>
     </div>

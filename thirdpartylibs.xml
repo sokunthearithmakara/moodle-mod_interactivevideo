@@ -10,7 +10,7 @@
     <library>
         <location>libraries/bootstrap-icons</location>
         <name>Bootstrap Icons library</name>
-        <version>1.11.3</version>
+        <version>1.13.1</version>
         <license>MIT</license>
         <licenseversion>?</licenseversion>
     </library>

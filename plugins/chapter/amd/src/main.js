@@ -319,13 +319,19 @@ export default class Chapter extends Base {
                 classes += 'skipped ';
             }
             let container = self.isEditMode() ? '#timeline' : '#wrapper';
-            let placement = self.isEditMode() ? 'bottom' : 'top';
+            let placement = 'top';
+            let title = annotation.formattedtitle;
+            title = title.replace(/'/g, '&apos;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/&/g, '&amp;');
             $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
               data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
         <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-container="${container}"
         data${self.isBS5 ? '-bs' : ''}-trigger="hover" data${self.isBS5 ? '-bs' : ''}-html="true"
         data${self.isBS5 ? '-bs' : ''}-placement="${placement}"
-        title='<i class="${this.prop.icon} iv-mr-1"></i>${annotation.formattedtitle}'></div></li>`);
+        title='<i class="${this.prop.icon} iv-mr-1"></i>${title}'></div></li>`);
         }
     }
 

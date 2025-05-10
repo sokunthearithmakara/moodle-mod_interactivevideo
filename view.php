@@ -117,6 +117,10 @@ if (optional_param('mobileapp', 0, PARAM_INT)) {
 
 // Prepare strings for js files using string manager.
 $subplugins = explode(',', get_config('mod_interactivevideo', 'enablecontenttypes'));
+// Add chapter to the list of subplugins.
+if (!in_array('ivplugin_chapter', $subplugins)) {
+    $subplugins[] = 'ivplugin_chapter';
+}
 $stringman = get_string_manager();
 foreach ($subplugins as $subplugin) {
     $strings = $stringman->load_component_strings($subplugin, current_language());

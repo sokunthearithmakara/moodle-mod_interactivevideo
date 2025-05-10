@@ -37,7 +37,7 @@ require_login();
 
 switch ($action) {
     case 'get_all_contenttypes':
-        echo json_encode(interactivevideo_util::get_all_activitytypes());
+        echo json_encode(interactivevideo_util::get_all_activitytypes(optional_param('fromview', 0, PARAM_INT)));
         break;
     case 'format_text':
         $text = required_param('text', PARAM_RAW);

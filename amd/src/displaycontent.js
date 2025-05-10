@@ -24,7 +24,8 @@
 import $ from 'jquery';
 import Fragment from 'core/fragment';
 import {dispatchEvent} from 'core/event_dispatcher';
-
+import ModalFactory from 'core/modal_factory';
+import ModalEvents from 'core/modal_events';
 /**
  * Return main formatted content of the annotation
  * @param {Object} annotation - The annotation object
@@ -189,7 +190,7 @@ const defaultDisplayContent = async function(annotation, player) {
                             <div class="btns d-flex align-items-center">
                             ${completionbutton}
                             <button data-id="${annotation.id}"
-                             class="btn btn-flex mx-2 p-0 border-0 interaction-dismiss" id="close-${annotation.id}"
+                             class="btn btn-flex mx-2 p-0 border-0 interaction-dismiss bg-transparent" id="close-${annotation.id}"
                              aria-label="Close">
                             <i class="bi bi-x-lg fa-fw fs-25px"></i>
                             </button>
@@ -202,6 +203,8 @@ const defaultDisplayContent = async function(annotation, player) {
     let toast;
     $(document).off('click', `#close-${annotation.id}`).on('click', `#close-${annotation.id}`, async function(e) {
         e.preventDefault();
+        // Set active element to body.
+        document.body.focus();
         const anno = window.IVANNO ? window.IVANNO.find(anno => anno.id == annotation.id) : null;
         // Check if dimiss allowed.
         if (isPlayerMode && !isPreviewMode) {
@@ -236,7 +239,10 @@ const defaultDisplayContent = async function(annotation, player) {
             }
             return;
         }
-        $(this).closest("#annotation-modal").modal('hide');
+        // Trigger the close event.
+        $('#annotation-modal').fadeOut(300, function() {
+            $(this).trigger(ModalEvents.hidden);
+        });
         const targetMessage = $(this).closest("#message");
         targetMessage.removeClass('active');
         targetMessage.addClass('bottom-0');
@@ -251,55 +257,107 @@ const defaultDisplayContent = async function(annotation, player) {
     });
 
     const handlePopupDisplay = (annotation, messageTitle) => {
-        let modal = `<div class="modal fade ${$('body').hasClass('iframe') ? 'modal-fullscreen' : ''}"
-             id="annotation-modal" role="dialog" aria-labelledby="annotation-modal"
-         aria-hidden="true" data${isBS5 ? '-bs' : ''}-backdrop="static" data${isBS5 ? '-bs' : ''}-keyboard="false" >
-         <div id="message" data-id="${annotation.id}" data-placement="popup"
-          class="modal-dialog modal-dialog-centered modal-dialog-scrollable ${annotation.type} active" role="document">
-                <div class="modal-content iv-rounded-lg">
-                    <div class="modal-header d-flex align-items-center shadow-sm iv-pr-0 iv-pl-3" id="title">
-                        ${messageTitle}
-                    </div>
-                    <div class="modal-body" id="content"></div>
-                    </div>
-                </div>
-        </div>`;
-        $('#wrapper').append(modal);
-        $('#annotation-modal').modal('show');
+        $('#annotation-modal').remove();
+        return new Promise((resolve, reject) => {
+            ModalFactory.create({
+                body: `<div class="modal-body loader"></div>`,
+                large: true,
+                show: false,
+                removeOnClose: true,
+                isVerticallyCentered: true,
+            }).then((modal) => {
+                let root = modal.getRoot();
+                root.attr('id', 'annotation-modal');
+                root.attr('data-id', annotation.id);
+                // Disable keyboard dismiss.
+                root.attr({
+                    'data-bs-backdrop': 'static',
+                    'data-bs-keyboard': 'false',
+                });
 
-        $('#annotation-modal').on('hide.bs.modal', function() {
-            $('#annotation-modal').remove();
-        });
+                // eslint-disable-next-line promise/always-return
+                if ($('body').hasClass('iframe')) {
+                    root.addClass('modal-fullscreen');
+                }
 
-        $('#annotation-modal').on('shown.bs.modal', function() {
-            $('#annotation-modal .modal-body').fadeIn(300);
-            return Promise.resolve();
+                root.find('.modal-dialog').attr('data-id', annotation.id);
+                root.find('.modal-dialog').attr('data-placement', 'popup');
+                root.find('.modal-dialog').attr('id', 'message');
+                root.find('.modal-dialog').addClass('active ' + annotation.type);
+                root.find('#message').html(`<div class="modal-content iv-rounded-lg">
+                        <div class="modal-header d-flex align-items-center shadow-sm iv-pr-0 iv-pl-3" id="title">
+                            ${messageTitle}
+                        </div>
+                        <div class="modal-body" id="content">
+                        </div>
+                        </div>
+                    </div>`);
+
+                root.off(ModalEvents.hidden).on(ModalEvents.hidden, function() {
+                    root.attr('data-region', 'modal-container');
+                    modal.destroy();
+                });
+
+                // If click outside the modal, add jelly animation.
+                root.off('click').on('click', function(e) {
+                    if ($(e.target).closest('.modal-content').length === 0) {
+                        root.addClass('jelly-anim');
+                    }
+                });
+
+                // When modal is shown, resolve the promise.
+                root.off(ModalEvents.shown).on(ModalEvents.shown, function() {
+                    root.attr('data-region', 'popup'); // Must set to avoid dismissing the modal when clicking outside.
+                    setTimeout(() => {
+                        root.addClass('jelly-anim');
+                    }, 10);
+                    $('#annotation-modal .modal-body').fadeIn(300);
+                    // Dispatch 'shown.bs.modal' event.
+                    dispatchEvent('shown.bs.modal', {
+                        annotation: {
+                            id: annotation.id
+                        }
+                    }, document.querySelector('#annotation-modal'));
+                    resolve(true);
+                });
+
+                root.on('animationend', function() {
+                    root.removeClass('jelly-anim');
+                });
+
+                modal.show();
+
+            }).catch(reject);
         });
     };
 
     const handleInlineDisplay = (annotation, messageTitle) => {
-        $('#video-wrapper').append(`<div id="message" style="z-index:105;top:100%" data-placement="inline"
-         data-id="${annotation.id}" class="${annotation.type} active modal">
+        return new Promise((resolve) => {
+            $('#video-wrapper').append(`<div id="message" style="z-index:105;top:100%" data-placement="inline"
+         data-id="${annotation.id}" class="${annotation.type} active modal" tabindex="0">
         <div id="title" class="modal-header shadow-sm iv-pr-0 iv-pl-3 iv-rounded-0">
         ${messageTitle}</div><div class="modal-body" id="content">
         </div></div>`);
-        $(`#message[data-id='${annotation.id}']`).animate({
-            top: '0',
-        }, 300, 'linear', function() {
-            return Promise.resolve();
+            $(`#message[data-id='${annotation.id}']`).animate({
+                top: '0',
+            }, 300, 'linear', function() {
+                resolve();
+            });
         });
     };
 
     const handleBottomDisplay = (annotation, messageTitle, isDarkMode) => {
-        $('#annotation-content').empty();
-        $('#annotation-content').append(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
-                 iv-rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}">
+        return new Promise((resolve) => {
+            $('#annotation-content').empty();
+            $('#annotation-content').append(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
+                 iv-rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}" tabindex="0">
                  <div id='title' class='modal-header shadow-sm iv-pr-0 iv-pl-3'>${messageTitle}</div>
                 <div class="modal-body" id="content"></div></div>`);
-        $('html, body, #page.drawers, .modal-body').animate({
-            scrollTop: $("#annotation-content").offset().top
-        }, 1000, 'swing', function() {
-            return Promise.resolve();
+            $('html, body, #page.drawers, .modal-body').animate({
+                scrollTop: $("#annotation-content").offset().top
+            }, 1000, 'swing', function() {
+                resolve();
+            });
         });
     };
 
@@ -411,6 +469,9 @@ const defaultDisplayContent = async function(annotation, player) {
             data${isBS5 ? '-bs' : ''}-html="true" title="<i class='${prop.icon} iv-mr-2'></i>${annotation.formattedtitle}"
             data-id="${annotation.id}" data-timestamp="${annotation.timestamp}"></div>`);
 
+            // Set the tooltip.
+            $(`#sidebar-nav .sidebar-nav-item[data-id='${annotation.id}']`).tooltip();
+
             // Sort the navigation items.
             $('#annotation-sidebar #sidebar-nav .sidebar-nav-item').sort(function(a, b) {
                 return $(a).data('timestamp') - $(b).data('timestamp');
@@ -429,26 +490,33 @@ const defaultDisplayContent = async function(annotation, player) {
         $(`#annotation-sidebar #message:not([data-id='${annotation.id}'])`).removeClass('active');
         // Append the message to the sidebar.
         $('#annotation-sidebar #sidebar-content').append(`<div id="message" data-placement="side"
-                    data-id="${annotation.id}" class="${annotation.type} sticky active">
+                    data-id="${annotation.id}" class="${annotation.type} sticky active" tabindex="0">
                     <div id="title" class="modal-header shadow-sm iv-pr-0 iv-pl-3 border-bottom">${messageTitle}</div>
                     <div class="modal-body" id="content"></div>
                     </div>`);
+        return new Promise((resolve) => {
+            $('#annotation-sidebar #message').fadeIn(300, function() {
+                resolve();
+            });
+        });
     };
 
     switch (displayoptions) {
         case 'popup':
-            handlePopupDisplay(annotation, messageTitle);
+            await handlePopupDisplay(annotation, messageTitle);
             break;
         case 'inline':
-            handleInlineDisplay(annotation, messageTitle);
+            await handleInlineDisplay(annotation, messageTitle);
             break;
         case 'bottom':
-            handleBottomDisplay(annotation, messageTitle, isDarkMode);
+            await handleBottomDisplay(annotation, messageTitle, isDarkMode);
             break;
         case 'side':
-            handleSideDisplay(annotation, messageTitle, isDarkMode);
+            await handleSideDisplay(annotation, messageTitle, isDarkMode);
             break;
     }
+
+    return true;
 };
 
 export {renderContent, defaultDisplayContent, formatText};

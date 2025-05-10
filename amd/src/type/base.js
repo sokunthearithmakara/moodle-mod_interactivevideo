@@ -800,23 +800,29 @@ class Base {
             if (annotation.hascompletion == 0) {
                 classes += 'no-completion ';
             }
+            let title = annotation.formattedtitle;
+            title = title.replace(/'/g, '&apos;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/&/g, '&amp;');
             if (this.isEditMode()) {
                 $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
         data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
-        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-html="true"
-         data${self.isBS5 ? '-bs' : ''}-placement="bottom"
+        <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+         data${self.isBS5 ? '-bs' : ''}-html="true"
          title='<div class="d-flex align-items-center"><i class="${this.prop.icon} iv-mr-2"></i>
-        <span>${annotation.formattedtitle}</span></div>'></div></li>`);
+        <span>${title}</span></div>'></div></li>`);
             } else {
                 $("#interactions-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
                     data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
-                    <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+                    <a href="javascript:void()" class="item" tabindex="0" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
                      data${self.isBS5 ? '-bs' : ''}-container="#wrapper"
                       data${self.isBS5 ? '-bs' : ''}-trigger="hover" data${self.isBS5 ? '-bs' : ''}-placement="top"
                        data${self.isBS5 ? '-bs' : ''}-html="true"
                       title='<div class="d-flex align-items-center">
                         <i class="${this.prop.icon} iv-mr-2"></i>
-                        <span>${annotation.formattedtitle}</span></div>'></div></li>`);
+                        <span>${title}</span></div>'></a></li>`);
             }
         }
     }
@@ -826,7 +832,7 @@ class Base {
      * @param {Object} annotation The annotation object
      * @returns {Promise}
      */
-    renderViewer(annotation) {
+    async renderViewer(annotation) {
         return defaultDisplayContent(annotation, this.player, this.start, this.end);
     }
 
@@ -856,7 +862,7 @@ class Base {
             let $completiontoggle = $message.find('#completiontoggle');
             $message.find('#title .info').remove();
             $completiontoggle.before(`<i class="bi bi-info-circle-fill iv-mr-2 info" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
-            data${self.isBS5 ? '-bs' : ''}-container="#wrapper" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
+            data${self.isBS5 ? '-bs' : ''}-container="#message" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
             title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`);
             setTimeout(function() {
                 $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('show');
@@ -1246,14 +1252,15 @@ class Base {
         this.renderContainer(annotation);
         self.applyContent(annotation);
 
+        // Set focus on the #message element
+        document.querySelector(`#message[data-id='${annotation.id}']`).focus();
+
         if (annotation.hascompletion == 1 && annotation.completiontracking == 'manual') {
             this.enableManualCompletion(annotation);
         }
 
         if (annotation.displayoptions == 'popup') {
-            $('#annotation-modal').on('shown.bs.modal', function() {
-                self.setModalDraggable('#annotation-modal .modal-dialog');
-            });
+            self.setModalDraggable('#annotation-modal .modal-dialog');
         }
     }
 
