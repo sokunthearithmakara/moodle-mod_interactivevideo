@@ -3407,7 +3407,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 .path-mod-interactivevideo tr .timestamp-info {
     left: 0;
     top: -30px;
-    background-color: var(--ivprimaryalt)!important;
+    background-color: var(--ivprimaryalt) !important;
     width: 100%;
     padding: 0.1rem 0.5rem;
     height: 30px;
