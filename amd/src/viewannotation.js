@@ -2036,7 +2036,16 @@ define([
                     $('#chaptertoggle .btn').trigger('click');
                 } else if (e.code === 'KeyM') {
                     e.preventDefault();
-                    $('#mute').trigger('click');
+                    if ($('#mute').length > 0) {
+                        $('#mute').trigger('click');
+                    } else {
+                        const isMuted = await player.isMuted();
+                        if (isMuted) {
+                            player.unMute();
+                        } else {
+                            player.mute();
+                        }
+                    }
                 } else if (e.code === 'KeyF') {
                     e.preventDefault();
                     $('#fullscreen').trigger('click');
@@ -2046,9 +2055,14 @@ define([
                 } else if (e.code === 'KeyS') {
                     e.preventDefault();
                     $('#controller #share').trigger('click');
-                } else if (e.code === 'KeyL') {
+                } else if (e.code === 'KeyE') {
                     e.preventDefault();
-                    $('#controller #expand').trigger('click');
+                    if ($('#controller #expand').length > 0) {
+                        $('#controller #expand').trigger('click');
+                    } else {
+                        $('body').toggleClass('limited-width');
+                        localStorage.setItem('limitedwidth', $('body').hasClass('limited-width'));
+                    }
                 }
             });
         }
