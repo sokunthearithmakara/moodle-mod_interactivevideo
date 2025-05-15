@@ -129,6 +129,7 @@ class Wistia {
                             await video.time(start);
                         }
                         self.paused = false;
+                        dispatchEvent('iv:playerPlay');
                         dispatchEvent('iv:playerPlaying');
                     });
 

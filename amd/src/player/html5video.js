@@ -195,7 +195,7 @@ class Html5Video {
 
         player.addEventListener('play', function() {
             self.paused = false;
-            dispatchEvent('iv:playerPlaying');
+            dispatchEvent('iv:playerPlay');
         });
 
         player.addEventListener('timeupdate', function() {
@@ -230,6 +230,10 @@ class Html5Video {
 
         player.addEventListener('ratechange', function() {
             dispatchEvent('iv:playerRateChange', {rate: player.playbackRate});
+        });
+
+        player.addEventListener('waiting', function() {
+            dispatchEvent('iv:playerBuffering');
         });
 
         this.player = player;

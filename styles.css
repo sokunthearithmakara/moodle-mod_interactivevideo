@@ -1087,6 +1087,11 @@ html:has(.path-mod-interactivevideo) {
     top: 0;
 }
 
+.path-mod-interactivevideo #start-screen.square {
+    background-size: auto 80% !important;
+    background-color: var(--ivdarker) !important;
+}
+
 .path-mod-interactivevideo #start-screen .intro-content,
 .path-mod-interactivevideo #end-screen .end-content {
     padding: 1rem;
@@ -1899,7 +1904,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-course-view #playermodal.modal-fullscreen > .modal-dialog {
-    transition: all ease-in-out 300ms, he;
+    transition: all ease-in-out 300ms;
 }
 
 .path-course-view #playermodal.modal-fullscreen > .modal-dialog:not(:has(.show-control)) {
@@ -1909,7 +1914,7 @@ html:has(.path-mod-interactivevideo) {
     max-height: calc(var(--ivdvh) + 55px);
     height: calc(var(--ivdvh) + 55px);
     margin: 0;
-    transition: all ease-in-out 300ms;
+    transition: height ease-in-out 300ms;
 }
 
 .path-mod-interactivevideo #form-field-list .list-group-item {
@@ -1989,6 +1994,10 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo:not(.embed-mode) #interactivevideo-container:has(#annotation-content:empty) {
     height: calc(var(--ivdvh) - 70px);
     align-content: center;
+}
+
+.path-mod-interactivevideo.default-mode #interactivevideo-container:has(#annotation-content:empty) {
+    height: unset;
 }
 
 @media (max-width: 576px) {
@@ -3204,11 +3213,11 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
         max-width: 100%;
     }
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+    [dir="rtl"] body.path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
         flex-direction: column;
     }
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+    [dir="rtl"] body.path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
         flex-direction: column;
     }
 
@@ -3271,8 +3280,8 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     line-clamp: 7;
 }
 
-.path-course-view.editing .modtype_interactivevideo:has(.interactivevideo-card) .activity-instance {
-    display: none !important;
+.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.full-width-poster) .image-container {
+    max-width: 100%;
 }
 
 .path-course-view #playermodal .modal-header {
@@ -3335,7 +3344,11 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     transition: transform ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog .automatic-completion-conditions .badge {
+.path-course-view #playermodal:not(.modal-fullscreen) .toggle-controls {
+    display: none !important;
+}
+
+.path-course-view #playermodal > .modal-dialog .automatic-completion-conditions .badge {
     font-size: 100%;
 }
 
@@ -3343,6 +3356,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     overflow: hidden;
     top: 0;
     left: 0;
+    right: 0;
     bottom: 0;
 }
 
@@ -3365,6 +3379,20 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     height: 50px;
     background: rgba(255, 255, 255, 0.05);
     transition: all ease-in-out 300ms;
+}
+
+.path-course-view #playermodal.modal-resized > .modal-dialog .modal-body {
+    height: calc(var(--ivdvh) - 50px);
+    transition: all ease-in-out 300ms;
+}
+
+.path-course-view #playermodal.modal-resized > .modal-dialog .modal-body iframe {
+    position: relative !important;
+}
+
+.path-course-view #playermodal.modal-resized .modal-header {
+    margin-top: 0;
+    height: unset;
 }
 
 .path-mod-interactivevideo [data-action="toggle-manual-completion"] i {

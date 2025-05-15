@@ -200,6 +200,7 @@ class Panopto {
                             if (player.getCurrentTime() >= self.end || player.getCurrentTime() < self.start) {
                                 player.seekTo(self.start);
                             }
+                            dispatchEvent('iv:playerPlay');
                             dispatchEvent('iv:playerPlaying');
                             self.ended = false;
                             this.paused = false;

@@ -143,6 +143,7 @@ class SoundCloud {
                     return;
                 }
                 self.paused = false;
+                dispatchEvent('iv:playerPlay');
             });
 
             player.bind(window.SC.Widget.Events.PAUSE, function() {

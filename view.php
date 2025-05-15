@@ -165,7 +165,7 @@ if (has_capability('mod/interactivevideo:edit', $modulecontext)) {
 }
 
 // Toggle dark-mode.
-if ($moduleinstance->displayoptions['darkmode']) {
+if ($moduleinstance->displayoptions['darkmode'] && $moduleinstance->displayoptions['distractionfreemode'] != 0) {
     $PAGE->add_body_class('darkmode bg-dark');
 }
 
@@ -190,16 +190,19 @@ if ($getcompletion) {
             $completion = $OUTPUT->render_from_template('core_course/activity_info', $activitycompletiondata);
         }
     }
-    // Check if this activity is associated with other activities' availability.
+    $completed = $completiondetails->get_overall_completion();
+}
+
+// Check if this activity is associated with other activities' availability.
+if ($cm->completion != COMPLETION_TRACKING_NONE && (!isset($completed) || !$completed)) {
     $withavailability = !empty($CFG->enableavailability) && core_availability\info::completion_value_used($course, $cm->id);
     if ($withavailability == 1) {
         $PAGE->add_body_class('withavailability');
     }
-    $completed = $completiondetails->get_overall_completion();
 }
 
 // Toggle distraction-free mode.
-if ($moduleinstance->displayoptions['distractionfreemode']) {
+if ($moduleinstance->displayoptions['distractionfreemode'] == 1) {
     $PAGE->activityheader->disable(); // Disable activity header.
     $PAGE->set_pagelayout('embedded');
     $PAGE->add_body_class('distraction-free');
@@ -209,6 +212,7 @@ if ($moduleinstance->displayoptions['distractionfreemode']) {
         // Don't repeat the description in the header unless it is specifically requested.
         $PAGE->activityheader->set_attrs(['description' => '']);
     }
+    $moduleinstance->displayoptions['darkmode'] = 0;
 }
 
 $PAGE->set_url('/mod/interactivevideo/view.php', [
@@ -368,6 +372,11 @@ if (isset($moduleinstance->displayoptions['usecustomposterimage']) && $moduleins
     }
 }
 
+// Fallback poster image.
+if (empty($moduleinstance->posterimage) && optional_param('mobileapp', 0, PARAM_INT) == 1) { // Mobile app has no poster image.
+    $moduleinstance->posterimage = $OUTPUT->get_generated_image_for_id($cm->id);
+}
+
 // Display player.
 $datafortemplate = [
     "darkmode" => $moduleinstance->displayoptions['darkmode'] == '1',
@@ -382,6 +391,7 @@ $datafortemplate = [
     "posterimage" => $moduleinstance->posterimage,
     "completed" => isset($completed) && $completed,
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
+    'square' => $moduleinstance->displayoptions['squareposterimage'] ?? false,
 ];
 echo $OUTPUT->render_from_template('mod_interactivevideo/player', $datafortemplate);
 

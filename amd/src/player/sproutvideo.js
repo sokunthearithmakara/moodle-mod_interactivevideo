@@ -123,6 +123,7 @@ class SproutVideo {
                 }
                 self.paused = false;
                 self.ended = false;
+                dispatchEvent('iv:playerPlay');
                 dispatchEvent('iv:playerPlaying');
             });
 

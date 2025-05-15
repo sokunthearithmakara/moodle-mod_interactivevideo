@@ -167,6 +167,9 @@ class Spotify {
                             dispatchEvent('iv:playerPaused');
                             break;
                         case false:
+                            if (self.paused) {
+                                dispatchEvent('iv:playerPlay');
+                            }
                             self.paused = false;
                             dispatchEvent('iv:playerPlaying');
                             if (self.currentTime >= self.end - self.frequency) {
@@ -208,6 +211,7 @@ class Spotify {
      */
     play() {
         window.EmbedController.resume();
+        dispatchEvent('iv:playerPlay');
         this.paused = false;
     }
     /**

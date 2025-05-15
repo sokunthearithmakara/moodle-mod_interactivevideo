@@ -134,7 +134,7 @@ class Kinescope {
                         }
                         self.paused = false;
                         self.ended = false;
-                        dispatchEvent('iv:playerPlaying');
+                        dispatchEvent('iv:playerPlay');
                         const time = await player.getCurrentTime();
                         if (time >= end) {
                             self.ended = true;
@@ -190,6 +190,12 @@ class Kinescope {
                             return;
                         }
                         dispatchEvent('iv:playerSpeedChange', {rate: event.playbackRate});
+                    });
+                    pl.on(pl.Events.Waiting, async function(event) {
+                        if (!ready) {
+                            return;
+                        }
+                        dispatchEvent('iv:playerBuffering');
                     });
                 });
         };

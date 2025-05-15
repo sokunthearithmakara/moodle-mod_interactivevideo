@@ -156,6 +156,7 @@ class Rumble {
                                 self.ended = false;
                             }
                             self.ended = false;
+                            dispatchEvent('iv:playerPlay');
                             dispatchEvent('iv:playerPlaying');
                             if (!showControls && !$('body').hasClass('no-original-controls')) {
                                 $('body').addClass('no-original-controls');

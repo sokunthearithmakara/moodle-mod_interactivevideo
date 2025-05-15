@@ -27,6 +27,8 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
             const launchVideo = async($card, course, contextid, id) => {
                 // Save the current document title.
                 let title = document.title;
+                // Get current url.
+                let currentUrl = window.location.href;
                 // Get showcontrols from cache.
                 let showcontrols = localStorage.getItem('showcontrols') ? true : false;
                 let dataForTemplate = {
@@ -34,6 +36,14 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     showcontrols: showcontrols,
                     root: M.cfg.wwwroot,
                 };
+
+                // Get fullscreen from cache.
+                let resized = localStorage.getItem('resized') ? true : false;
+                if (resized) {
+                    dataForTemplate.fullscreen = false;
+                } else {
+                    dataForTemplate.fullscreen = true;
+                }
 
                 const modal = await Templates.render('mod_interactivevideo/playermodal', dataForTemplate);
 
@@ -143,7 +153,7 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                                 $('#playermodal .toggle-controls').fadeOut(300);
                             });
 
-                            iframeDoc.addEventListener('iv:playerPlaying', function() {
+                            iframeDoc.addEventListener('iv:playerPlay', function() {
                                 $('#playermodal .toggle-controls').fadeIn(300);
                             });
 
@@ -193,6 +203,9 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     } else {
                         document.title = $('li[data-id="' + id + '"] .activityname').text();
                     }
+
+                    // Focus on the iframe.
+                    document.getElementById('ivplayer').contentWindow.focus();
                 });
 
                 $('#playermodal').on('hide.bs.modal', async function() {
@@ -231,6 +244,17 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
 
                             if (completion) {
                                 const completiondata = JSON.parse(completion);
+                                // Check if the iframe document has withavailability class. If so, refresh the page.
+                                if (iframeDoc.body.classList.contains('withavailability') && completiondata.overallcompletion) {
+                                    // eslint-disable-next-line max-depth
+                                    if (currentUrl.indexOf('#module-') > -1) {
+                                        currentUrl = currentUrl.replace(/#module-\d+/, '#module-' + id);
+                                    } else {
+                                        currentUrl = currentUrl + '#module-' + id;
+                                    }
+                                    window.location.href = currentUrl;
+                                    return;
+                                }
                                 $card.find('[data-region=activity-information]')
                                     .html($(completiondata.completion).html());
                             }
@@ -307,10 +331,21 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     }
 
                 });
+
+                $(document).off('click', '#playermodal .resize').on('click', '#playermodal .resize', function(e) {
+                    e.preventDefault();
+                    $('#playermodal').toggleClass('modal-fullscreen iv-rounded-0 modal-resized');
+                    $('#playermodal .modal-dialog, #playermodal .modal-content').toggleClass('iv-rounded-0');
+                    $(this).find('i').toggleClass('fa-expand-alt fa-compress-alt');
+                    if ($('#playermodal').hasClass('modal-fullscreen')) {
+                        localStorage.removeItem('resized');
+                    } else {
+                        localStorage.setItem('resized', '1');
+                    }
+                });
             };
             // Launch the interactive video in modal
             $(document).on('click', '.launch-interactivevideo', async function(e) {
-
                 e.preventDefault();
                 const id = $(this).data('id');
                 const instance = $(this).data('instance');
@@ -351,6 +386,8 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                             $element[0].scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
                             setTimeout(function() {
                                 $element.removeClass('highlighted');
+                                // Remove the hash from the url.
+                                history.pushState(null, null, window.location.href.split('#module')[0]);
                             }, 3000);
                         }, 1000);
                     }

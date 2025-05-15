@@ -187,16 +187,17 @@ class DailyMotion {
                     }
                 });
 
+                player.off(dailymotion.events.VIDEO_PLAY);
                 player.on(dailymotion.events.VIDEO_PLAY, async function(e) {
-                    if (!ready) {
-                        return;
-                    }
+                    // If (!ready) {
+                    //     return;
+                    // }
                     if (self.ended || e.videoTime >= end) {
                         self.ended = false;
                         player.seek(start);
                     }
                     self.paused = false;
-                    dispatchEvent('iv:playerPlaying');
+                    dispatchEvent('iv:playerPlay');
                 });
 
                 player.on(dailymotion.events.VIDEO_PAUSE, async function() {
@@ -229,6 +230,9 @@ class DailyMotion {
                 player.setMute(true);
                 player.play(); // Start the video to get the ad out of the way.
                 self.paused = false;
+                player.on(dailymotion.events.VIDEO_PLAY, function() {
+                    dispatchEvent('iv:playerPlay');
+                });
                 player.on(dailymotion.events.VIDEO_TIMECHANGE, function() {
                     $("#start-screen").removeClass('bg-transparent');
                     if (ready == true) { // When the video is replayed, it will fire VIDEO_START event again.

@@ -139,6 +139,7 @@ class quicksettings_form extends \core_form\dynamic_form {
             'usecustomposterimage',
             'displayinline',
             'launchinpopup',
+            'posterimagesize',
             'cardsize',
             'cardonly',
             'showposterimageright',

@@ -97,12 +97,13 @@ function interactivevideo_display_options($moduleinstance) {
     $options['hideinteractions'] = $moduleinstance->hideinteractions ?? 0;
     $options['theme'] = $moduleinstance->theme ?? '';
     $options['distractionfreemode'] = $moduleinstance->distractionfreemode ?? 0;
-    $options['darkmode'] = $moduleinstance->distractionfreemode == 1 ? $moduleinstance->darkmode : 0;
-    $options['usefixedratio'] = $moduleinstance->distractionfreemode == 1 ? $moduleinstance->usefixedratio : 1;
+    $options['darkmode'] = $moduleinstance->darkmode ?? 1;
+    $options['usefixedratio'] = $moduleinstance->usefixedratio ?? 0;
     $options['pauseonblur'] = $moduleinstance->pauseonblur ?? 0;
     $options['usecustomposterimage'] = $moduleinstance->usecustomposterimage ?? 0;
     $options['displayinline'] = $moduleinstance->displayinline ?? 0;
     $options['cardsize'] = $moduleinstance->cardsize ?? 'large';
+    $options['posterimagesize'] = $moduleinstance->posterimagesize ?? 0;
     $options['cardonly'] = $moduleinstance->cardonly ?? 0;
     $options['showposterimageright'] = $moduleinstance->showposterimageright ?? 0;
     $options['usecustomdescription'] = $moduleinstance->usecustomdescription ?? 0;
@@ -777,6 +778,8 @@ function interactivevideo_displayinline(cm_info $cm) {
         'formattedintro' => format_module_intro('interactivevideo', $interactivevideo, $cm->id, false),
         'originalintro' => htmlentities($interactivevideo->intro ?? ''),
         'size' => isset($displayoptions->cardsize) ? $displayoptions->cardsize : 'large',
+        'posterimagesize' => isset($displayoptions->posterimagesize)
+            && $displayoptions->posterimagesize,
         'issmall' => isset($displayoptions->cardsize)
             && ($displayoptions->cardsize == 'small' || $displayoptions->cardsize == 'medium'
                 || $displayoptions->cardsize == 'mediumlarge'),
@@ -1909,8 +1912,6 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         );
         $mform->hideIf('posterimagehr', 'usecustomposterimage', 'eq', 0);
 
-        // Show play button on the course page.
-
         $mform->addElement(
             'advcheckbox',
             'displayinline',
@@ -1955,6 +1956,17 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         );
 
         $mform->hideIf('cardsize', 'displayinline', 'eq', 0);
+
+        // Poster image size.
+        $mform->addElement(
+            'advcheckbox',
+            'posterimagesize',
+            '',
+            get_string('fullavailablewidth', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('posterimagesize', 'displayinline', 'eq', 0);
 
         // Card only design for small card size.
         $mform->addElement(

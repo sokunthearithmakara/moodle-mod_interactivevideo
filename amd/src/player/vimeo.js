@@ -60,21 +60,19 @@ class Vimeo {
         this.aspectratio = 16 / 9;
         // Get poster image using oEmbed.
         var posterUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url);
-        if (opts.editform) { // If the video is being edited on the form, we need to get the poster image.
-            fetch(posterUrl)
-                .then(response => response.json())
-                .then(data => {
-                    var poster = data.thumbnail_url;
-                    // Change the dimensions of the poster image to 16:9.
-                    poster = poster.replace(/_\d+x\d+/, '_720x405');
-                    this.posterImage = poster;
-                    this.title = data.title;
-                    this.videoId = data.video_id;
-                    return poster;
-                }).catch(() => {
-                    return;
-                });
+        const oEmbed = await fetch(posterUrl);
+        if (!oEmbed.ok) {
+            dispatchEvent('iv:playerError', {error: 'Video not found'});
+            return;
         }
+        document.getElementById('video-wrapper').style.display = 'block';
+        const oEmbedData = await oEmbed.json();
+        this.posterImage = oEmbedData.thumbnail_url || '';
+        this.title = oEmbedData.title;
+        this.videoId = oEmbedData.video_id;
+        // Change the dimensions of the poster image to 16:9.
+        this.posterImage = this.posterImage.replace(/_\d+x\d+/, '_720x405');
+        this.aspectratio = oEmbedData.width / oEmbedData.height;
         let self = this;
         const option = {
             url: url,
@@ -101,6 +99,7 @@ class Vimeo {
             chapters: showControls,
             "interactive_markers": showControls,
             "vimeo_logo": false,
+            "initial_quality": '360p',
         };
 
         let ready = false;
@@ -119,7 +118,7 @@ class Vimeo {
                     self.end = end;
                     self.duration = self.end - self.start;
                     self.totaltime = Number((duration - 0.1).toFixed(2));
-                    this.aspectratio = await player.getVideoWidth() / await player.getVideoHeight();
+                    self.title = await player.getVideoTitle();
                     // Get track list.
                     // Unset the captions.
                     player.disableTextTrack();
@@ -144,6 +143,22 @@ class Vimeo {
                     dispatchEvent('iv:playerReady', null, document.getElementById(node));
                     // Unmute the video
                     player.setVolume(1);
+                } else {
+                    document.getElementById('video-wrapper').style.display = 'block';
+                    const startScreen = document.getElementById('start-screen');
+                    if (startScreen) {
+                        startScreen.classList.add('d-none');
+                    }
+
+                    const videoBlock = document.querySelector('.video-block');
+                    if (videoBlock) {
+                        videoBlock.classList.add('no-pointer', 'bg-transparent');
+                    }
+
+                    const annotationCanvas = document.getElementById('annotation-canvas');
+                    if (annotationCanvas) {
+                        annotationCanvas.classList.remove('d-none', 'w-0');
+                    }
                 }
             });
 
@@ -161,6 +176,16 @@ class Vimeo {
                 });
             }
 
+            player.off('play');
+            player.on('play', function() {
+                if (!ready) {
+                    return;
+                }
+                self.paused = false;
+                self.ended = false;
+                dispatchEvent('iv:playerPlay');
+            });
+
             player.on('pause', function(e) {
                 if (!ready) {
                     return;
@@ -174,7 +199,6 @@ class Vimeo {
                     dispatchEvent('iv:playerPaused');
                 }
             });
-
 
             player.on('timeupdate', async function(e) {
                 if (!ready) {
@@ -194,13 +218,6 @@ class Vimeo {
                 }
             });
 
-            // Player.on('seeked', function(e) {
-            //     if (!ready) {
-            //         return;
-            //     }
-            //     dispatchEvent('iv:playerSeek', {time: e.seconds});
-            // });
-
             player.on('playbackratechange', function(e) {
                 if (!ready) {
                     return;
@@ -208,19 +225,19 @@ class Vimeo {
                 dispatchEvent('iv:playerRateChange', {rate: e.playbackRate});
             });
 
-            player.on('bufferstart', function() {
-                if (!ready) {
-                    return;
-                }
-                dispatchEvent('iv:playerPaused');
-            });
+            // Player.on('bufferstart', function() {
+            //     if (!ready) {
+            //         return;
+            //     }
+            //     dispatchEvent('iv:playerPaused');
+            // });
 
-            player.on('bufferend', function() {
-                if (!ready) {
-                    return;
-                }
-                dispatchEvent('iv:playerPlaying');
-            });
+            // player.on('bufferend', function() {
+            //     if (!ready) {
+            //         return;
+            //     }
+            //     dispatchEvent('iv:playerPlay');
+            // });
 
             player.on('ended', function() {
                 if (!ready) {
@@ -242,6 +259,9 @@ class Vimeo {
                 if (e.name === 'NotAllowedError') {
                     return;
                 }
+                if (e.method === 'appendVideoMetadata') {
+                    return;
+                }
                 dispatchEvent('iv:playerError', {error: e.message});
                 if (!showControls) {
                     const $videoblock = document.querySelector('.video-block');
@@ -253,11 +273,16 @@ class Vimeo {
         };
 
         if (!VimeoPlayer) {
-            require(['https://player.vimeo.com/api/player.js'], function(Player) {
-                VimeoPlayer = Player;
-                player = new Player(node, option);
-                vimeoEvents(player);
-            });
+            try {
+                require(['https://player.vimeo.com/api/player.js'], function(Player) {
+                    VimeoPlayer = Player;
+                    player = new Player(node, option);
+                    vimeoEvents(player);
+                });
+            } catch (e) {
+                dispatchEvent('iv:playerError', {error: e.message});
+                return;
+            }
         } else {
             player = new VimeoPlayer(node, option);
             vimeoEvents(player);
@@ -379,8 +404,6 @@ class Vimeo {
     destroy() {
         if (player) {
             player.destroy();
-        } else {
-            window.console.error('Player is not initialized.');
         }
     }
     /**

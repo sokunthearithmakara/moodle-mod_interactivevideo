@@ -236,6 +236,7 @@ class Yt {
                                     player.seekTo(self.start);
                                 }
                             }
+                            dispatchEvent('iv:playerPlay');
                             dispatchEvent('iv:playerPlaying');
                             if (!self.live && player.getCurrentTime() >= self.end) {
                                 self.ended = true;

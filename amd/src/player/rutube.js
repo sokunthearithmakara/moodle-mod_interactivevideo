@@ -118,6 +118,7 @@ class Rutube {
                     case 'player:changeState':
                         if (message.data.state === 'playing') {
                             let currentTime = self.currentTime;
+                            dispatchEvent('iv:playerPlay');
                             if (currentTime < self.start) {
                                 self.seek(self.start);
                                 self.ended = false;

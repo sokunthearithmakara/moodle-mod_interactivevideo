@@ -84,7 +84,8 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     $(`[name="name"]`).val(player.title);
                 }
 
-                const duration = player.totaltime;
+                const duration = player.totaltime || player.duration || 0;
+
                 totaltime = duration;
                 totaltimeinput.val(totaltime);
                 if (Number(endinput.val()) > 0 && Number(endinput.val()) > totaltime) {

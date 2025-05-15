@@ -18,7 +18,7 @@ Example context (json):
 {
 }
 }}
-<div class="modal fade p-0 modal-fullscreen iv-rounded-0"
+<div class="modal fade p-0 {{#fullscreen}}modal-fullscreen iv-rounded-0{{/fullscreen}}{{^fullscreen}}modal-resized{{/fullscreen}}"
      id="playermodal"
      data-backdrop="static"
      data-keyboard="false"
@@ -26,8 +26,8 @@ Example context (json):
      tabindex="-1"
      aria-labelledby="playermodalLabel"
      aria-hidden="true">
-    <div class="iv-rounded-0 modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl position-relative">
-        <div class="modal-content {{#showcontrols}}show-control{{/showcontrols}} iv-rounded-0 border-0">
+    <div class="{{#fullscreen}}iv-rounded-0{{/fullscreen}} modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl position-relative">
+        <div class="modal-content {{#showcontrols}}show-control{{/showcontrols}} {{#fullscreen}}iv-rounded-0{{/fullscreen}} border-0">
             <div class="modal-header border-0 text-white align-items-center py-0 h-0 position-absolute w-100 z-index-1 iv-rounded-0">
                 <div class="modal-background w-100 position-absolute"></div>
                 <span class="modal-title flex-grow-0 position-relative z-index-1 d-flex align-items-center overflow-hidden"
@@ -46,9 +46,11 @@ Example context (json):
                 <div class="iv-ml-auto modal-action d-flex align-items-center position-relative z-index-1">
                     <div class="d-none d-sm-block small" data-region="activity-completion"></div>
                     <span class="btn iv-ml-2 border-0 h5 mb-0 lock-bar"
-                          title="{{#str}}lock,mod_interactivevideo{{/str}}"
-                          data-href="{{root}}/mod/interactivevideo/view.php?id={{id}}">
+                          title="{{#str}}lock,mod_interactivevideo{{/str}}">
                         <i class="fa fa-unlock text-white m-0 fa-xl" aria-hidden="true"></i></span>
+                    <span class="btn border-0 h5 mb-0 resize"
+                          title="{{#str}}toggleview,mod_interactivevideo{{/str}}">
+                        <i class="fa fa-{{^fullscreen}}expand{{/fullscreen}}-alt fa-{{#fullscreen}}compress{{/fullscreen}}-alt text-white m-0 fa-xl" aria-hidden="true"></i></span>
                     <span class="btn border-0 h5 mb-0 open-external-link"
                           title="{{#str}}openinnewtab,mod_interactivevideo{{/str}}"
                           data-href="{{root}}/mod/interactivevideo/view.php?id={{id}}">

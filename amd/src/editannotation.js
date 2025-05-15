@@ -591,12 +591,6 @@ define(['jquery',
              * Excute when video plays (i.e. start or resume)
              */
             const onPlaying = async() => {
-                $('#message, #end-screen').not('.sticky').remove();
-                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill').removeClass('rotate-360');
-                if (player.audio && !visualized) {
-                    player.visualizer();
-                    visualized = true;
-                }
                 if (player.live) {
                     return;
                 }
@@ -672,6 +666,15 @@ define(['jquery',
                 }
             };
 
+            const onplay = async() => {
+                $('#message, #end-screen').not('.sticky').remove();
+                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill').removeClass('rotate-360');
+                if (player.audio && !visualized) {
+                    player.visualizer();
+                    visualized = true;
+                }
+            };
+
             /**
              * Excute when video is paused.
              */
@@ -685,7 +688,7 @@ define(['jquery',
                 if (displayoptions.passwordprotected == 1) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
                     $('#video-block').addClass('no-pointer bg-transparent');
-                    $('#annotation-canvas').removeClass('d-none');
+                    $('#annotation-canvas').removeClass('d-none w-0');
                 }
                 player = new VideoPlayer();
                 player.load(
@@ -714,6 +717,10 @@ define(['jquery',
                 onPlaying();
             });
 
+            $(document).on('iv:playerPlay', function() {
+                onplay();
+            });
+
             $(document).on('iv:playerEnded', function() {
                 onEnded();
             });
@@ -723,12 +730,19 @@ define(['jquery',
             });
 
             $(document).on('iv:playerError', function() {
-                addNotification(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), 'danger');
-                $('#annotation-canvas').removeClass('d-none');
+                $('#annotation-canvas').removeClass('d-none w-0');
                 $('#start-screen').addClass('d-none');
                 $('#video-block').addClass('no-pointer bg-transparent');
                 $('#spinner').remove();
                 $('.loader').removeClass('loader');
+                if ($('#player').is(':empty')) {
+                    $('#player').html(`<div class="alert alert-danger d-flex text-center h-100 rounded-0
+                         align-items-center justify-content-center">
+                        <img src="${M.cfg.wwwroot}/mod/interactivevideo/pix/404-error.png" alt="Error" class="w-25">
+                        </div>`);
+                } else {
+                    addNotification(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), 'danger');
+                }
             });
 
             $(document).on('timeupdate', function(e) {

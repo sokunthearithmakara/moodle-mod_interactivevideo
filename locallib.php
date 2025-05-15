@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use core_availability\info;
 /**
  * Utility functions for interactivevideo module
  *
@@ -832,7 +833,7 @@ class interactivevideo_util {
      * @return array The completion information.
      */
     public static function get_cm_completion($cmid, $userid, $courseid, $contextid) {
-        global $OUTPUT, $CFG, $PAGE, $USER;
+        global $OUTPUT, $CFG, $PAGE, $USER, $DB;
         if (!$userid || $userid == 0) {
             $userid = $USER->id;
         }
@@ -842,12 +843,24 @@ class interactivevideo_util {
         $completion = '';
         $cminfo = get_fast_modinfo($courseid);
         $cm = $cminfo->get_cm($cmid);
+
+        if (!$cm) {
+            return [];
+        }
+
+        if ($cm->completion == COMPLETION_TRACKING_NONE) {
+            return [
+                'overallcompletion' => 0,
+                'completion' => '',
+            ];
+        }
+
         $completiondetails = \core_completion\cm_completion_details::get_instance($cm, $userid);
         $response = [
             'overallcompletion' => $completiondetails->get_overall_completion() == COMPLETION_COMPLETE ? 1 : 0,
         ];
 
-        // If moodle version is 4.4 or below, use new completion information.
+        // If moodle version is 4.4 or below, use a different completion information.
         if ($CFG->branch < 404) {
             $completion = $OUTPUT->activity_information($cm, $completiondetails, []);
             $response['completion'] = $completion;

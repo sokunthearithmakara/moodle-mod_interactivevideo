@@ -139,7 +139,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
 
         $mform->addElement('html', '<div id="warning" class="alert alert-warning d-none"><p>'
             . get_string('completiondisablewarning', 'mod_interactivevideo')
-            . '</p><input type="submit" class="btn btn-primary" name="unlockcompletion" id="id_unlockcompletion" value="'
+            . '</p><input type="submit" class="btn btn-primary" name="unlockcompletion" id="id_unlockcompletion-1" value="'
             . get_string('unlockcompletion', 'completion') . '"></div>');
 
         // Add source selection field.
@@ -660,6 +660,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'displayinline',
                 'launchinpopup',
                 'cardsize',
+                'posterimagesize',
                 'cardonly',
                 'showposterimageright',
                 'usecustomdescription',

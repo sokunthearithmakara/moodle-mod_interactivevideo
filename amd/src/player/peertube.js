@@ -197,6 +197,9 @@ class PeerTube {
             if (status === 'paused') {
                 self.paused = true;
                 dispatchEvent('iv:playerPaused');
+            } else if (status === 'playing') {
+                self.paused = false;
+                dispatchEvent('iv:playerPlay');
             }
         });
 

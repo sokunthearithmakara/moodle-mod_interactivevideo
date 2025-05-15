@@ -158,7 +158,7 @@ define([
         var duration = 5 * 1000;
         let confetti = window.confetti;
         var animationEnd = Date.now() + duration;
-        var defaults = {startVelocity: 30, spread: 360, ticks: 60, zIndex: 1055, shapes: ['circle', 'square', 'star']};
+        var defaults = {startVelocity: 30, spread: 360, ticks: 60, zIndex: 1055};
 
         const randomInRange = (min, max) => {
             return Math.random() * (max - min) + min;
@@ -168,13 +168,14 @@ define([
             var timeLeft = animationEnd - Date.now();
 
             if (timeLeft <= 0) {
-                clearInterval(interval);
+                return clearInterval(interval);
             }
 
             var particleCount = 50 * (timeLeft / duration);
             // Since particles fall down, start a bit higher than random
             confetti({...defaults, particleCount, origin: {x: randomInRange(0.1, 0.3), y: Math.random() - 0.2}});
             confetti({...defaults, particleCount, origin: {x: randomInRange(0.7, 0.9), y: Math.random() - 0.2}});
+            return true;
         }, 250);
     };
 
@@ -710,7 +711,9 @@ define([
                 ({start, end} = await updateTime(duration));
                 totaltime = end - start;
 
-                $('#duration').text(convertSecondsToHMS(totaltime));
+                if (!player.live) {
+                    $('#duration').text(convertSecondsToHMS(totaltime));
+                }
 
                 // Recalculate the ratio of the video
                 let ratio = 16 / 9;
@@ -761,19 +764,6 @@ define([
                     return;
                 }
                 vwrapper.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
-
-                if (player.live) {
-                    // Remove the slash.
-                    $('#currenttime').next().remove();
-                    $('#currenttime').remove();
-                    $('#duration').text(M.util.get_string('live', 'mod_interactivevideo'));
-                    $('#remainingtime').text(M.util.get_string('live', 'mod_interactivevideo'));
-                    $('#taskinfo').addClass('no-pointer-events');
-                    end = Number.MAX_SAFE_INTEGER;
-                    // Progress 100%.
-                    replaceProgressBars(100);
-                    return;
-                }
             };
 
             /**
@@ -837,6 +827,15 @@ define([
                 await getAnnotations();
 
                 if (player.live) {
+                    // Remove the slash.
+                    $('#currenttime').next().remove();
+                    $('#currenttime').remove();
+                    $('#duration').text(M.util.get_string('live', 'mod_interactivevideo'));
+                    $('#remainingtime').text(M.util.get_string('live', 'mod_interactivevideo'));
+                    $('#taskinfo').addClass('no-pointer-events');
+                    end = Number.MAX_SAFE_INTEGER;
+                    // Progress 100%.
+                    replaceProgressBars(100);
                     return;
                 }
 
@@ -1065,42 +1064,11 @@ define([
                 if (!playerReady) {
                     return;
                 }
-                // Initialize the player visualizer for html5 audio.
-                if (player.audio && !visualized) {
-                    player.visualizer();
-                    visualized = true;
-                }
-                // Force fullscreen for mobile themes and mobile devices.
-                if ($('body').hasClass('mobiletheme') && !$('#wrapper').hasClass('fullscreen')) {
-                    $("#fullscreen").trigger('click');
-                }
-
-                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
-                $('#playpause').attr('data-original-title', M.util.get_string('pausetooltip', 'mod_interactivevideo'));
 
                 if (player.live) {
                     return;
                 }
 
-                if ($('#message.active').length > 0) {
-                    $('#message.active').each(function() {
-                        const mid = $(this).data('id');
-                        if (mid) {
-                            $(this).removeClass('active');
-                            dispatchEvent('interactionclose', {'annotation': {'id': mid}});
-                        }
-                    });
-                }
-
-                $('#annotation-modal').modal('hide');
-                $('#message').not('[data-placement=bottom]').not('.sticky').remove();
-
-                if (!videoEnded) {
-                    $('#end-screen, #start-screen').fadeOut(300);
-                    $('#restart').addClass('d-none');
-                } else {
-                    viewedAnno = [];
-                }
                 if (!firstPlay) {
                     $('#autoplay-error').tooltip('hide');
                     $('#autoplay-error').remove();
@@ -1225,6 +1193,46 @@ define([
                 }
             };
 
+            const onPlay = async() => {
+                if (!playerReady) {
+                    return;
+                }
+                $('body').removeClass('disablekb');
+                // Initialize the player visualizer for html5 audio.
+                if (player.audio && !visualized) {
+                    player.visualizer();
+                    visualized = true;
+                }
+                // Force fullscreen for mobile themes and mobile devices.
+                if ($('body').hasClass('mobiletheme') && !$('#wrapper').hasClass('fullscreen')) {
+                    $("#fullscreen").trigger('click');
+                }
+
+                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
+                $('#playpause').attr('data-original-title', M.util.get_string('pausetooltip', 'mod_interactivevideo'));
+
+                if ($('#message.active').length > 0) {
+                    $('#message.active').each(function() {
+                        const mid = $(this).data('id');
+                        if (mid) {
+                            $(this).removeClass('active');
+                            dispatchEvent('interactionclose', {'annotation': {'id': mid}});
+                        }
+                    });
+                }
+
+                $('#annotation-modal').modal('hide');
+                $('#message').not('[data-placement=bottom]').not('.sticky').remove();
+
+                if (!videoEnded) {
+                    $('#end-screen, #start-screen').fadeOut(300);
+                    $('#restart').addClass('d-none');
+                } else {
+                    viewedAnno = [];
+                }
+
+            };
+
             // Implement the player.
             require(['mod_interactivevideo/player/' + vtype], function(VideoPlayer) {
                 player = new VideoPlayer();
@@ -1232,7 +1240,7 @@ define([
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
                     $('#start-screen').addClass('d-none');
                     $('.video-block').addClass('no-pointer bg-transparent');
-                    $('#annotation-canvas').removeClass('d-none');
+                    $('#annotation-canvas').removeClass('d-none w-0');
                 }
                 player.load(url,
                     start,
@@ -1745,6 +1753,10 @@ define([
 
             $(document).on('iv:playerPlaying', function() {
                 onPlaying();
+            });
+
+            $(document).on('iv:playerPlay', function() {
+                onPlay();
                 $loader.fadeOut(300);
             });
 
@@ -1783,13 +1795,20 @@ define([
             });
 
             $(document).on('iv:playerError', function() {
-                Toast.add(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), {
-                    type: 'danger'
-                });
-                $('#annotation-canvas').removeClass('d-none');
+                $('#annotation-canvas').removeClass('d-none w-0');
                 $('#start-screen').addClass('d-none');
                 $('.video-block').addClass('no-pointer bg-transparent');
                 $('#spinner').remove();
+                if ($('#player').is(':empty')) {
+                    $('#player').html(`<div class="alert alert-danger d-flex text-center h-100 rounded-0
+                         align-items-center justify-content-center">
+                        <img src="${M.cfg.wwwroot}/mod/interactivevideo/pix/404-error.png" alt="Error" class="w-25">
+                        </div>`);
+                } else {
+                    Toast.add(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), {
+                        type: 'danger'
+                    });
+                }
             });
 
             $(document).on('iv:playerRateChange', function(e) {
