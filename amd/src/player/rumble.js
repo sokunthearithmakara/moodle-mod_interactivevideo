@@ -361,6 +361,15 @@ class Rumble {
     getQualities() {
         return null;
     }
+
+    /**
+     * Sets the caption track for the video player.
+     * @param {string} track - The caption track to set.
+     */
+    setCaption(track) {
+        // Rumble does not support captions.
+        return track;
+    }
 }
 
 export default Rumble;

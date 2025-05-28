@@ -705,7 +705,7 @@ define(['jquery',
                 window.IVPLAYER = player;
             });
 
-            $(document).on('iv:playerReady', function() {
+            $(document).one('iv:playerReady', function() {
                 onReady();
             });
 

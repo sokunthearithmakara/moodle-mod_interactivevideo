@@ -1,8 +1,15 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [1.3.1] - 2025-05-15
+## [1.3.2] - 2025-05-28
+## Fixed
+- Active interaction on the drawer did not show.
+- Content bank item popup was not correctly dismissed.
+- Minor UI fixes
 
+## Updated
+- Add `setCaption` method to all player types.
+- UI and performance/memory improvement.
 
 ## [1.3.0] - 2025-05-10
 https://mod-interactive-video.canny.io/changelog/interactive-video-130

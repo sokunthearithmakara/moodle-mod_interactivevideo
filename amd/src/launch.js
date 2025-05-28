@@ -25,6 +25,7 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
     return {
         init: async function() {
             const launchVideo = async($card, course, contextid, id) => {
+                $('#playermodal').off();
                 // Save the current document title.
                 let title = document.title;
                 // Get current url.
@@ -32,8 +33,8 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                 // Get showcontrols from cache.
                 let showcontrols = localStorage.getItem('showcontrols') ? true : false;
                 let dataForTemplate = {
-                    id: id,
-                    showcontrols: showcontrols,
+                    id,
+                    showcontrols,
                     root: M.cfg.wwwroot,
                 };
 
@@ -173,6 +174,10 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                                         .data('current', percentage);
                                     $card.find('.analytics-percentage').text(Math.round(percentage));
                                 }
+                                if (!player) {
+                                    // Remove modal.
+                                    $('#playermodal').remove();
+                                }
                             });
                         } else {
                             requestAnimationFrame(checkIframeDoc);
@@ -299,6 +304,15 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
 
                     if (iframeDoc) {
                         $(iframeDoc).off();
+                        iframeAnnos = null;
+                        details = null;
+                        player = null;
+
+                        if ($card.find('.analytics.progress .progress-bar').length == 0) {
+                            // Remove the iframe.
+                            $('#playermodal').remove();
+                            iframeDoc = null;
+                        }
                     }
                 });
 
@@ -336,7 +350,7 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     e.preventDefault();
                     $('#playermodal').toggleClass('modal-fullscreen iv-rounded-0 modal-resized');
                     $('#playermodal .modal-dialog, #playermodal .modal-content').toggleClass('iv-rounded-0');
-                    $(this).find('i').toggleClass('fa-expand-alt fa-compress-alt');
+                    $(this).find('i').toggleClass('fa-expand fa-compress');
                     if ($('#playermodal').hasClass('modal-fullscreen')) {
                         localStorage.removeItem('resized');
                     } else {
@@ -344,6 +358,7 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     }
                 });
             };
+
             // Launch the interactive video in modal
             $(document).on('click', '.launch-interactivevideo', async function(e) {
                 e.preventDefault();

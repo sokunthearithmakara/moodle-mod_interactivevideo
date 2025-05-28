@@ -67,6 +67,9 @@ class Vimeo {
         }
         document.getElementById('video-wrapper').style.display = 'block';
         const oEmbedData = await oEmbed.json();
+        if (oEmbedData.domain_status_code === 403) {
+            dispatchEvent('iv:playerError', {error: 'Video not found'});
+        }
         this.posterImage = oEmbedData.thumbnail_url || '';
         this.title = oEmbedData.title;
         this.videoId = oEmbedData.video_id;

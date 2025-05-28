@@ -188,9 +188,7 @@ export default class ContentBank extends Base {
         $(document).off('click', '#passfail').on('click', '#passfail', function(e) {
             e.preventDefault();
             let time = $(this).data('timestamp');
-            self.dispatchEvent('interactionclose', {
-                annotation: annotation,
-            });
+            $message.find('.interaction-dismiss').trigger('click');
             self.player.seek(time);
             self.player.play();
             $(this).remove();
@@ -314,9 +312,8 @@ export default class ContentBank extends Base {
                                                 onPassFail(false, condition.timeonfailed);
                                             } else if (condition.gotoonfailed == 1 && condition.forceonfailed == 1) {
                                                 setTimeout(function() {
-                                                    self.dispatchEvent('interactionclose', {
-                                                        annotation: annotation,
-                                                    });
+                                                    // Close the annotation.
+                                                    $message.find('.interaction-dismiss').trigger('click');
                                                     self.player.seek(condition.timeonfailed);
                                                     self.player.play();
                                                 }, 1000);
@@ -334,9 +331,7 @@ export default class ContentBank extends Base {
                                                 onPassFail(true, condition.timeonpassing);
                                             } else if (condition.gotoonpassing == 1 && condition.forceonpassing == 1) {
                                                 setTimeout(function() {
-                                                    self.dispatchEvent('interactionclose', {
-                                                        annotation: annotation,
-                                                    });
+                                                    $message.find('.interaction-dismiss').trigger('click');
                                                     self.player.seek(condition.timeonpassing);
                                                     self.player.play();
                                                 }, 1000);

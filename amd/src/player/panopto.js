@@ -419,7 +419,7 @@ class Panopto {
         if (player.hasCaptions() === false) {
             return;
         }
-        if (!track) {
+        if (!track || track === '') {
             player.disableCaptions();
             return;
         }

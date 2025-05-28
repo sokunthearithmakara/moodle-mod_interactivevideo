@@ -578,6 +578,7 @@ define([
 
                 // Remove the previous message but keep the one below the video.
                 $('#annotation-modal').modal('hide');
+
                 $('#message').not('[data-placement=bottom]').not('.sticky').not(`[data-id=${annotation.id}]`).remove();
                 $('#end-screen, #start-screen').fadeOut(300);
 
@@ -1740,7 +1741,7 @@ define([
                 localStorage.setItem(`caption-${userid}`, lang);
             });
 
-            $(document).on('iv:playerReady', function() {
+            $(document).one('iv:playerReady', function() {
                 onReady();
             });
 
@@ -1771,7 +1772,7 @@ define([
                 onSeek(e.detail.time);
             });
 
-            $(document).on('iv:playerLoaded', function(e) {
+            $(document).one('iv:playerLoaded', function(e) {
                 onLoaded(e.detail);
                 const captions = e.detail.tracks;
                 if (!captions || captions.length == 0) {

@@ -495,7 +495,7 @@ const defaultDisplayContent = async function(annotation, player) {
                     <div class="modal-body" id="content"></div>
                     </div>`);
         return new Promise((resolve) => {
-            $('#annotation-sidebar #message').fadeIn(300, function() {
+            $('#annotation-sidebar #message.active').fadeIn(300, function() {
                 resolve();
             });
         });

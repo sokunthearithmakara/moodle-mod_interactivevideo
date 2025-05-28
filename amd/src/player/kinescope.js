@@ -113,7 +113,7 @@ class Kinescope {
 
                         // Scrap the video url to get the video title and poster image in the head.
                         if (opts.editform) {
-                            const response = await fetch('https://kinescope.io/embed/' + videoId);
+                            const response = await fetch(url);
                             const data = await response.text();
                             let parser = new DOMParser();
                             let doc = parser.parseFromString(data, 'text/html');
@@ -401,7 +401,7 @@ class Kinescope {
      *  @param {String} language
      */
     async setCaption(language) {
-        if (language === 'off') {
+        if (language === 'off' || language === '') {
             await player.disableTextTrack();
         } else {
             await player.enableTextTrack(language);

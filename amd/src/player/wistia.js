@@ -364,6 +364,14 @@ class Wistia {
             currentQuality: player.videoQuality() == 'auto' ? 0 : player.videoQuality(),
         };
     }
+
+    /**
+     * Sets the caption track for the video player.
+     * @param {string} track - The caption track to set.
+     */
+    setCaption(track) {
+        return track;
+    }
 }
 
 export default Wistia;

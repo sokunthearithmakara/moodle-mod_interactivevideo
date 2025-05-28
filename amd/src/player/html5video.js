@@ -538,6 +538,15 @@ class Html5Video {
         }
         return [];
     }
+
+        /**
+         * Sets the caption track for the video player.
+         * @param {string} track - The caption track to set.
+         */
+        setCaption(track) {
+            // No caption.
+            return track;
+        }
 }
 
 export default Html5Video;

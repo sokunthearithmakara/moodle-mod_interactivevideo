@@ -389,6 +389,7 @@ class SproutVideo {
      */
     setCaption() {
         // Not supported
+        return false;
     }
 
     /**
