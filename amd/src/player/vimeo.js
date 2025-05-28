@@ -67,7 +67,7 @@ class Vimeo {
         }
         document.getElementById('video-wrapper').style.display = 'block';
         const oEmbedData = await oEmbed.json();
-        if (oEmbedData.domain_status_code === 403) {
+        if (oEmbedData.domain_status_code === 403 || oEmbedData.error) {
             dispatchEvent('iv:playerError', {error: 'Video not found'});
         }
         this.posterImage = oEmbedData.thumbnail_url || '';
@@ -227,20 +227,6 @@ class Vimeo {
                 }
                 dispatchEvent('iv:playerRateChange', {rate: e.playbackRate});
             });
-
-            // Player.on('bufferstart', function() {
-            //     if (!ready) {
-            //         return;
-            //     }
-            //     dispatchEvent('iv:playerPaused');
-            // });
-
-            // player.on('bufferend', function() {
-            //     if (!ready) {
-            //         return;
-            //     }
-            //     dispatchEvent('iv:playerPlay');
-            // });
 
             player.on('ended', function() {
                 if (!ready) {
