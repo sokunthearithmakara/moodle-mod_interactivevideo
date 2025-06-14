@@ -3297,12 +3297,12 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     max-width: 100%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) {
     width: 100% !important;
     max-width: 100% !important;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card {
     flex-direction: column;
     margin-inline-start: auto;
     margin-inline-end: auto;
@@ -3310,33 +3310,33 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     max-width: unset;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card .image-container {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card .image-container {
     max-width: 100%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card.card-medium .image-container {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-medium .image-container {
     max-width: 50%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card.card-mediumlarge .image-container {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-mediumlarge .image-container {
     max-width: 66.67%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card.card-largemedium .image-container {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-largemedium .image-container {
     max-width: 75%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card.card-small .image-container {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-small .image-container {
     max-width: 33.33%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card.card-tiny .image-container {
+.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-tiny .image-container {
     max-width: 25%;
 }
 
 @media (max-width: 575.98px) {
-    .path-course-view .modtype_interactivevideo:has(.interactivevideo-card.iv-aligncenter) .interactivevideo-card .image-container {
-        max-width: 100%!important;
+    .path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card .image-container {
+        max-width: 100% !important;
     }
 }
 
