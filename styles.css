@@ -2092,6 +2092,10 @@ html:has(.path-mod-interactivevideo) {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
 }
 
+.path-mod-interactivevideo.embed-mode:not(.showcontrols) .iv-sidebar {
+    max-height: calc(var(--ivdvh) - 55px);
+}
+
 .path-mod-interactivevideo.hassidebar .iv-sidebar {
     right: 0;
     transition: right ease-in-out 0.3s;

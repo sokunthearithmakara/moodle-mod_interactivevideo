@@ -59,8 +59,6 @@ class backup_interactivevideo_course_settings extends backup_activity_structure_
         // Set the source for the defaults.
         $default->set_source_table('interactivevideo_defaults', ['courseid' => backup::VAR_COURSEID]);
 
-        $this
-
         return $this->prepare_activity_structure($interactivevideosetting);
     }
 }

@@ -118,8 +118,10 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                                 showcontrols = $('#playermodal .modal-content').hasClass('show-control');
                                 if (showcontrols) {
                                     localStorage.setItem('showcontrols', '1');
+                                    iframeDoc.querySelector('body').classList.add('showcontrols');
                                 } else {
                                     localStorage.removeItem('showcontrols');
+                                    iframeDoc.querySelector('body').classList.remove('showcontrols');
                                 }
                             });
 
