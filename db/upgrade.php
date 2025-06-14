@@ -206,5 +206,106 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025041202, 'interactivevideo');
     }
 
+    if ($oldversion < 2025052803) {
+
+        // Define field intg4 to be added to interactivevideo_log.
+        $table = new xmldb_table('interactivevideo_log');
+        $field = new xmldb_field('intg4', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'intg3');
+
+        // Conditionally launch add field intg4.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('intg5', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'intg4');
+
+        // Conditionally launch add field intg5.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('intg6', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'intg5');
+
+        // Conditionally launch add field intg5.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('char4', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'char3');
+
+        // Conditionally launch add field char4.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('char5', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'char4');
+
+        // Conditionally launch add field char4.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('char6', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'char5');
+
+        // Conditionally launch add field char4.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field defaults to be added to interactivevideo_settings.
+        $table = new xmldb_table('interactivevideo_settings');
+        $field = new xmldb_field('defaults', XMLDB_TYPE_TEXT, null, null, null, null, null, 'completion');
+
+        // Conditionally launch add field defaults.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025052803, 'interactivevideo');
+    }
+
+    if ($oldversion < 2025052805) {
+
+        // Define table interactivevideo_defaults to be created.
+        $table = new xmldb_table('interactivevideo_defaults');
+
+        // Adding fields to table interactivevideo_defaults.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timestamp', XMLDB_TYPE_NUMBER, '20, 2', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('content', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('xp', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('displayoptions', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, 'popup');
+        $table->add_field('type', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, 'richtext');
+        $table->add_field('hascompletion', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('completiontracking', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, 'manual');
+        $table->add_field('advanced', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('intg1', XMLDB_TYPE_INTEGER, '20', null, null, null, '0');
+        $table->add_field('intg2', XMLDB_TYPE_INTEGER, '20', null, null, null, '0');
+        $table->add_field('intg3', XMLDB_TYPE_INTEGER, '20', null, null, null, '0');
+        $table->add_field('char1', XMLDB_TYPE_CHAR, '255', null, null, null, 'null');
+        $table->add_field('char2', XMLDB_TYPE_CHAR, '255', null, null, null, 'null');
+        $table->add_field('char3', XMLDB_TYPE_CHAR, '255', null, null, null, 'null');
+        $table->add_field('text1', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('text2', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('text3', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('requiremintime', XMLDB_TYPE_INTEGER, '20', null, null, null, null);
+
+        // Adding keys to table interactivevideo_defaults.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('courseid', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+
+        // Conditionally launch create table for interactivevideo_defaults.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025052805, 'interactivevideo');
+    }
+
     return true;
 }

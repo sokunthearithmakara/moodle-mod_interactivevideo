@@ -221,6 +221,16 @@ class restore_interactivevideo_activity_structure_step extends restore_activity_
         $text = preg_replace_callback($search, function ($matches) {
             return '@@COURSEID#' . $this->get_mappingid('course', $matches[1]);
         }, $text);
+        // User id.
+        $search = '/@@UID#([0-9]+)/';
+        $text = preg_replace_callback($search, function ($matches) {
+            return '@@UID#' . $this->get_mappingid('user', $matches[1]);
+        }, $text);
+        // Log id.
+        $search = '/@@LOGID#([0-9]+)/';
+        $text = preg_replace_callback($search, function ($matches) {
+            return '@@LOGID#' . $this->get_mappingid('logdata', $matches[1]);
+        }, $text);
 
         return $text;
     }

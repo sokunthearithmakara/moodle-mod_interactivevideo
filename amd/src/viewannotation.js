@@ -206,13 +206,14 @@ define([
          * @param {string} extendedcompletion - The extended completion requirements.
          * @param {boolean} isPreviewMode - The preview mode flag.
          * @param {boolean} isCompleted - The completed flag.
+         * @param {boolean} iseditor - The editor flag.
          * @return {void}
          */
         init: function(
             url, cmid, interaction, course, userid, start = 0, end,
             completionpercentage, gradeiteminstance, grademax, vtype,
             preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null, isPreviewMode = false,
-            isCompleted = false) {
+            isCompleted = false, iseditor = false) {
 
             quickform({
                 contextid: M.cfg.contextid,
@@ -537,6 +538,7 @@ define([
                                     end, contentType, cmid, token, displayoptions, completionid, extendedcompletion, {
                                     isPreviewMode,
                                     isCompleted,
+                                    iseditor
                                 });
                                 try {
                                     ctRenderer[contentType.name].init();
@@ -2023,6 +2025,10 @@ define([
 
                 if ($('body').hasClass('disablekb')) {
                     return;
+                }
+
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                    return; // Ignore if any modifier keys are pressed.
                 }
 
                 if (e.code === 'Space') {

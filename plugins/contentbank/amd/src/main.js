@@ -379,7 +379,9 @@ export default class ContentBank extends Base {
 
             // If annotation is incomplete, we want to save the state when the interaction is closed.
             if (!annotation.completed && firstview && saveState == 1) {
-                $(document).on('interactionclose interactionrefresh', async function(e) {
+                let namespace = annotation.id;
+                let eventName = `interactionclose.${namespace} interactionrefresh.${namespace}`; // Use a unique namespace for the event.
+                $(document).off(eventName).on(eventName, async function(e) {
                     if (e.detail.annotation.id == annotation.id) {
                         try {
                             let content = window.H5PIntegration.contents;

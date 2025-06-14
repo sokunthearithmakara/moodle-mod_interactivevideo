@@ -2447,6 +2447,41 @@ define(['jquery',
                 $(this).find('i').removeClass('fa-spin fa-circle-o-notch fa').addClass('bi bi-download');
             });
 
+            // Bulk set as defaults.
+            $(document).on('click', '#annotation-list-bulk-setdefault', async function(e) {
+                e.preventDefault();
+                let selectedIds = $('#annotation-list').find('tr .form-check-input:checked')
+                    .map(function() {
+                        return $(this).val();
+                    }).get();
+                if (selectedIds.length == 0) {
+                    return;
+                }
+                let selectedAnnotations = annotations.filter(x => selectedIds.includes(x.id));
+                // Make sure the annotations are unique based on type.
+                selectedAnnotations = selectedAnnotations.filter((item, index, self) =>
+                    index === self.findIndex((t) => (
+                        t.type === item.type
+                    ))
+                );
+
+                await $.ajax({
+                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                    method: "POST",
+                    dataType: "text",
+                    data: {
+                        action: 'set_defaults',
+                        sesskey: M.cfg.sesskey,
+                        contextid: M.cfg.contextid,
+                        courseid: course,
+                        defaults: JSON.stringify(selectedAnnotations),
+                    }
+                });
+                // Trigger the -edit button to reset the view.
+                $('#annotation-list-bulk-edit').trigger('click');
+                addNotification(M.util.get_string('annotationssavedasdefaults', 'mod_interactivevideo'), 'success');
+            });
+
             // Bulk upload.
             let ModalForm;
             $(document).on('click', '#annotation-list-bulk-upload', async function(e) {

@@ -59,15 +59,14 @@ class base_form extends \core_form\dynamic_form {
      * @return \stdClass
      */
     public function set_data_default() {
+        global $DB;
         $data = new \stdClass();
         $data->id = $this->optional_param('id', 0, PARAM_INT);
         $data->contextid = $this->optional_param('contextid', null, PARAM_INT);
-        $data->timestamp = $this->optional_param('timestamp', 1, PARAM_FLOAT);
         $data->timestampassist = $this->optional_param('timestampassist', '00:00:00', PARAM_TEXT);
         $data->courseid = $this->optional_param('courseid', null, PARAM_INT);
         $data->cmid = $this->optional_param('cmid', null, PARAM_INT);
         $data->annotationid = $this->optional_param('annotationid', null, PARAM_INT);
-        $data->title = $this->optional_param('title', get_string('defaulttitle', 'mod_interactivevideo'), PARAM_TEXT);
         $data->contentform = $this->optional_param('content', '', PARAM_RAW);
         $data->iframeurl = $this->optional_param('iframeurl', '', PARAM_TEXT);
         $data->displayoptions = $this->optional_param('displayoptions', 'popup', PARAM_TEXT);
@@ -92,8 +91,36 @@ class base_form extends \core_form\dynamic_form {
             $data->requiremintimeview = $this->optional_param('requiremintime', 0, PARAM_INT);
             $data->requiremintime = 0;
         }
-        // Advanced settings: is a single field that contains all the advanced settings.
         $advancedsettings = json_decode($this->optional_param('advanced', null, PARAM_RAW));
+        // Getting the course defaults if it is a new item.
+        if ($data->id == 0) {
+            $courseid = $data->courseid;
+            $type = $data->type;
+            $defaults = $DB->get_record('interactivevideo_defaults', [
+                'courseid' => $courseid,
+                'type' => $type,
+            ], '*', IGNORE_MISSING);
+
+            if ($defaults) {
+                // Change $data to match the defaults (key => value).
+                foreach ($defaults as $key => $value) {
+                    $data->{$key} = $value;
+                }
+            }
+            $data->id = 0; // Reset id to 0 for new item.
+            $advancedsettings = json_decode($defaults->advanced ?? '{}');
+            // Remove the advanced field from the data, it will be processed later.
+            if ($defaults->completiontracking == 'view') {
+                $data->requiremintimeview = $defaults->requiremintime;
+                $data->requiremintime = 0;
+            }
+            unset($data->advanced);
+        }
+
+        $data->timestamp = $this->optional_param('timestamp', 1, PARAM_FLOAT);
+        $data->title = $this->optional_param('title', get_string('defaulttitle', 'mod_interactivevideo'), PARAM_TEXT);
+
+        // Advanced settings: is a single field that contains all the advanced settings.
         if (is_object($advancedsettings)) {
             foreach ($advancedsettings as $key => $value) {
                 $data->{$key} = $value;
@@ -456,7 +483,7 @@ class base_form extends \core_form\dynamic_form {
                 'dismissibleandskippable',
                 '',
                 '<span class="text-muted small w-100 d-block">'
-                 . get_string('dismissibleandskippable', 'mod_interactivevideo') . '</span>'
+                    . get_string('dismissibleandskippable', 'mod_interactivevideo') . '</span>'
             );
             $mform->addGroup($elementarray, '', get_string('dismissible', 'mod_interactivevideo'));
             $mform->setDefault('advdismissible', 1);

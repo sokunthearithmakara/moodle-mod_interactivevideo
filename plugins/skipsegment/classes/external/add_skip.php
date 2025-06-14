@@ -65,10 +65,19 @@ class add_skip extends external_api {
         require_capability('mod/interactivevideo:edit', $context);
 
         $data = json_decode($skipdata, true);
+        $courseid = $data['courseid'];
+        $defaults = $DB->get_record(
+            'interactivevideo_defaults',
+            ['courseid' => $courseid, 'type' => 'skipsegment'],
+            'advanced',
+            IGNORE_MISSING
+        );
+        if ($defaults) {
+            $data['advanced'] = $defaults->advanced;
+        }
         $data['timecreated'] = time();
         $data['timemodified'] = time();
-        $id = $DB->insert_record('interactivevideo_items', (object)$data);
-        $data = $DB->get_record('interactivevideo_items', ['id' => $id]);
+        $data['id'] = $DB->insert_record('interactivevideo_items', (object)$data);
         return [
             'data' => json_encode($data),
         ];

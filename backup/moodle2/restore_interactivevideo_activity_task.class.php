@@ -17,6 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/restore_interactivevideo_stepslib.php');
+require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/restore_itneractivevideo_course_settings.php');
 
 /**
  * Testore task that provides all the settings and steps to perform one complete restore of the activity
@@ -39,6 +40,10 @@ class restore_interactivevideo_activity_task extends restore_activity_task {
      */
     protected function define_my_steps() {
         $this->add_step(new restore_interactivevideo_activity_structure_step('interactivevideo_structure', 'interactivevideo.xml'));
+        $this->add_step(new restore_interactivevideo_course_settings(
+            'interactivevideosettings_structure',
+            'interactivevideo_settings.xml'
+        ));
     }
 
     /**

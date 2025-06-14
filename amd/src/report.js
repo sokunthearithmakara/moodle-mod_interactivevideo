@@ -64,17 +64,6 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
 
     require(['theme_boost/bootstrap/tooltip']);
 
-    const getContentTypes = $.ajax({
-        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-        method: "POST",
-        dataType: "text",
-        data: {
-            action: 'get_all_contenttypes',
-            sesskey: M.cfg.sesskey,
-            contextid: M.cfg.contextid,
-        }
-    });
-
     const getReportData = $.ajax({
         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
         method: 'POST',
@@ -96,11 +85,31 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
     initonreport = [...new Set(initonreport.map(x => x.type))];
 
     let contentTypes;
+    let relContentTypeAmd = {};
     let tabledata;
 
-    $.when(getContentTypes, getReportData).done(async(ct, data) => {
-        contentTypes = JSON.parse(ct[0]);
-        data = data[0];
+    $.when(getReportData).done(async(data) => {
+        contentTypes = itemsdata.map(x => JSON.parse(x.prop));
+        // Unique content types based on name.
+        contentTypes = contentTypes.filter((value, index, self) =>
+            index === self.findIndex((t) => (
+                t.name === value.name && t.type === value.type
+            ))
+        );
+        // Require[] all AMD modules that are used in the report.
+        const loadPromises = contentTypes.map(contentType => {
+            return new Promise((resolve) => {
+                require([contentType.amdmodule], (Module) => {
+                    relContentTypeAmd[contentType.name] = new Module(player, itemsdata, cmid, courseid, null,
+                        completionpercentage, null, grademax, videotype, null,
+                        end - start, start, end, contentType, cm);
+                    resolve();
+                });
+            });
+        });
+
+        await Promise.all(loadPromises);
+
         const renderFilterBox = (element) => {
             let input = '';
             switch (element.type) {
@@ -676,11 +685,25 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                             details.reportView = details.reportView.replace(/data-placement/g, 'data-bs-placement');
                             details.reportView = details.reportView.replace(/data-html/g, 'data-bs-html');
                         }
-                        let res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"
-                                 data-id="${itemid}" data-userid="${row.id}" data-type="${ctype}">${details.reportView}</span>`;
-                        if (access.canedit == 1) {
-                            res += `<i class="bi bi-trash3 fs-unset text-danger cursor-pointer position-absolute delete-cell"
+                        let module = relContentTypeAmd[ctype];
+                        let reportView = details.reportView;
+                        let res = '';
+                        if (module) {
+                            let theAnnotation = itemsdata.find(x => x.id == itemid);
+                            res = module.renderReportView(theAnnotation, details, {
+                                access: access,
+                                itemid: itemid,
+                                ctype: ctype,
+                                row: row,
+                                data: data,
+                            });
+                        } else {
+                            res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"
+                                 data-id="${itemid}" data-userid="${row.id}" data-type="${ctype}">${reportView}</span>`;
+                            if (access.canedit == 1) {
+                                res += `<i class="bi bi-trash3 fs-unset text-danger cursor-pointer position-absolute delete-cell"
                                   title="${M.util.get_string('delete', 'mod_interactivevideo')}"></i>`;
+                            }
                         }
                         return res;
                     } else {
@@ -966,42 +989,35 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             let title = $this.closest('table').find('th').eq(cellIndex).text();
 
             const deleteCompletionData = async() => {
-                let type = $this.data('type');
-                let matchingContentTypes = contentTypes.find(x => x.name === type);
-                let amdmodule = matchingContentTypes.amdmodule;
                 let theAnnotation = itemsdata.find(x => x.id == itemid);
-                require([amdmodule], function(Module) {
-                    const module = new Module(player, itemsdata, cmid, courseid, null,
-                        completionpercentage, null, grademax, videotype, null,
-                        end - start, start, end, theAnnotation.prop, cm);
-                    if (module.deleteCompletionData(recordid, itemid, userid)) {
-                        let targetdata = tabledata.row($this.closest('tr')).data();
-                        targetdata.completeditems = JSON.stringify(
-                            JSON.parse(targetdata.completeditems).filter(x => x.id != itemid));
-                        let completiondetails = JSON.parse(targetdata.completiondetails);
-                        completiondetails = completiondetails.map(x => {
-                            x = JSON.parse(x);
-                            if (x.id == itemid) {
-                                x.hasDetails = true;
-                                x.deleted = true;
-                                x.reportView = '<i class="bi bi-trash3 text-danger"></i>';
-                            }
-                            return JSON.stringify(x);
-                        });
-                        targetdata.completiondetails = JSON.stringify(completiondetails);
-                        tabledata.row($this.closest('tr')).data(targetdata).draw();
-                        addToast(M.util.get_string('completedeletedforthisitem', 'mod_interactivevideo', {
-                            item: title,
-                            user: userfullname
-                        }), {
-                            type: 'success'
-                        });
-                    } else {
-                        addToast(M.util.get_string('completionreseterror', 'mod_interactivevideo'), {
-                            type: 'error'
-                        });
-                    }
-                });
+                const module = relContentTypeAmd[theAnnotation.type];
+                if (module.deleteCompletionData(recordid, itemid, userid)) {
+                    let targetdata = tabledata.row($this.closest('tr')).data();
+                    targetdata.completeditems = JSON.stringify(
+                        JSON.parse(targetdata.completeditems).filter(x => x.id != itemid));
+                    let completiondetails = JSON.parse(targetdata.completiondetails);
+                    completiondetails = completiondetails.map(x => {
+                        x = JSON.parse(x);
+                        if (x.id == itemid) {
+                            x.hasDetails = true;
+                            x.deleted = true;
+                            x.reportView = '<i class="bi bi-trash3 text-danger"></i>';
+                        }
+                        return JSON.stringify(x);
+                    });
+                    targetdata.completiondetails = JSON.stringify(completiondetails);
+                    tabledata.row($this.closest('tr')).data(targetdata).draw();
+                    addToast(M.util.get_string('completedeletedforthisitem', 'mod_interactivevideo', {
+                        item: title,
+                        user: userfullname
+                    }), {
+                        type: 'success'
+                    });
+                } else {
+                    addToast(M.util.get_string('completionreseterror', 'mod_interactivevideo'), {
+                        type: 'error'
+                    });
+                }
             };
 
             try {
@@ -1033,6 +1049,11 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         });
 
         initonreport.forEach((type) => {
+            let module = relContentTypeAmd[type];
+            if (module) {
+                module.init();
+                return;
+            }
             let matchingContentTypes = contentTypes.find(x => x.name === type);
             let amdmodule = matchingContentTypes.amdmodule;
             require([amdmodule], function(Module) {
@@ -1067,20 +1088,20 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
             isVerticallyCentered: true,
         });
 
-            let root = modal.getRoot();
-            root.attr('id', 'annotation-modal');
-            root.attr('data-id', theAnnotation.id);
+        let root = modal.getRoot();
+        root.attr('id', 'annotation-modal');
+        root.attr('data-id', theAnnotation.id);
 
 
-            if ($('body').hasClass('iframe')) {
-                root.addClass('modal-fullscreen');
-            }
+        if ($('body').hasClass('iframe')) {
+            root.addClass('modal-fullscreen');
+        }
 
-            root.find('.modal-dialog').attr('data-id', theAnnotation.id);
-            root.find('.modal-dialog').attr('data-placement', 'popup');
-            root.find('.modal-dialog').attr('id', 'message');
-            root.find('.modal-dialog').addClass('active ' + theAnnotation.type);
-            root.find('#message').html(`<div class="modal-content iv-rounded-lg">
+        root.find('.modal-dialog').attr('data-id', theAnnotation.id);
+        root.find('.modal-dialog').attr('data-placement', 'popup');
+        root.find('.modal-dialog').attr('id', 'message');
+        root.find('.modal-dialog').addClass('active ' + theAnnotation.type);
+        root.find('#message').html(`<div class="modal-content iv-rounded-lg">
                 <div class="modal-header d-flex align-items-center shadow-sm" id="title">
                     <h5 class="modal-title text-truncate mb-0">${title}</h5>
                     <div class="btns d-flex align-items-center">
@@ -1096,33 +1117,37 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 </div>
             </div>`);
 
-            root.find('#message').on('click', '#close-' + theAnnotation.id, function() {
-                root.attr('data-region', 'modal-container');
-                root.fadeOut(300, function() {
-                    modal.hide();
-                });
+        root.find('#message').on('click', '#close-' + theAnnotation.id, function() {
+            root.attr('data-region', 'modal-container');
+            root.fadeOut(300, function() {
+                modal.hide();
             });
+        });
 
-            root.off(ModalEvents.hidden).on(ModalEvents.hidden, function() {
-                $('#annotation-modal').modal('hide');
-                $('#annotation-modal').remove();
-            });
+        root.off(ModalEvents.hidden).on(ModalEvents.hidden, function() {
+            $('#annotation-modal').modal('hide');
+            $('#annotation-modal').remove();
+        });
 
-            // If click outside the modal, add jelly animation.
-            root.off('click').on('click', function(e) {
-                if ($(e.target).closest('.modal-content').length === 0) {
-                    root.addClass('jelly-anim');
-                }
-            });
+        // If click outside the modal, add jelly animation.
+        root.off('click').on('click', function(e) {
+            if ($(e.target).closest('.modal-content').length === 0) {
+                root.addClass('jelly-anim');
+            }
+        });
 
-            // When modal is shown, resolve the promise.
-            root.off(ModalEvents.shown).on(ModalEvents.shown, function() {
-                root.attr('data-region', 'popup'); // Must set to avoid dismissing the modal when clicking outside.
-                setTimeout(() => {
-                    root.addClass('jelly-anim');
-                }, 10);
+        // When modal is shown, resolve the promise.
+        root.off(ModalEvents.shown).on(ModalEvents.shown, function() {
+            root.attr('data-region', 'popup'); // Must set to avoid dismissing the modal when clicking outside.
+            setTimeout(() => {
+                root.addClass('jelly-anim');
+            }, 10);
 
-                $('#annotation-modal .modal-body').fadeIn(300);
+            $('#annotation-modal .modal-body').fadeIn(300);
+            let module = relContentTypeAmd[theAnnotation.type];
+            if (module) {
+                module.displayReportView(theAnnotation, tabledatajson, DataTable);
+            } else {
                 let matchingContentTypes = contentTypes.find(x => x.name === theAnnotation.type);
                 let amdmodule = matchingContentTypes.amdmodule;
                 require([amdmodule], function(Module) {
@@ -1131,14 +1156,16 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                         completionpercentage, null, grademax, videotype, null,
                         end - start, start, end, theAnnotation.prop, cm).displayReportView(theAnnotation, tabledatajson, DataTable);
                 });
-                $(this).find('.close-modal').focus();
-            });
+            }
+            $(this).find('.close-modal').focus();
+            root.find('.modal-body').removeClass('loader');
+        });
 
-            root.on('animationend', function() {
-                root.removeClass('jelly-anim');
-            });
+        root.on('animationend', function() {
+            root.removeClass('jelly-anim');
+        });
 
-            modal.show();
+        modal.show();
     });
 
     // Delete single completion record.
@@ -1276,10 +1303,15 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         let id = $(this).closest('td').data('item');
         let userid = $(this).closest('tr').attr('id');
         let type = $(this).closest('td').data('type');
+        let theAnnotation = itemsdata.find(x => x.id == id);
+        let module = relContentTypeAmd[type];
+        if (module) {
+            module.getCompletionData(theAnnotation, userid);
+            return;
+        }
         let matchingContentTypes = contentTypes.find(x => x.name === type);
         let amdmodule = matchingContentTypes.amdmodule;
         // Get column header with the item id.
-        let theAnnotation = itemsdata.find(x => x.id == id);
         require([amdmodule], function(Module) {
             new Module(player, itemsdata, cmid, courseid, null,
                 completionpercentage, null, grademax, videotype, null,

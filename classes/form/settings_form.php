@@ -132,6 +132,7 @@ class settings_form extends \core_form\dynamic_form {
             'usecustomposterimage',
             'displayinline',
             'launchinpopup',
+            'aligncenter',
             'cardsize',
             'cardonly',
             'showposterimageright',

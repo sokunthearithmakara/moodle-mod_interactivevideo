@@ -354,4 +354,11 @@ switch ($action) {
         $link = interactivevideo_util::download_annotations($annotations, $cmid, $courseid, $contextid);
         echo $link;
         break;
+    case 'set_defaults':
+        require_capability('mod/interactivevideo:edit', $context);
+        $defaults = required_param('defaults', PARAM_TEXT);
+        $defaults = json_decode($defaults, true);
+        $saved = interactivevideo_util::save_defaults($defaults, $contextid);
+        echo json_encode($saved);
+        break;
 }

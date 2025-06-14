@@ -299,6 +299,7 @@ $asettings->add(new admin_setting_configmulticheckbox(
     [
         'displayinline' => get_string('displayinline', 'mod_interactivevideo'),
         'launchinpopup' => get_string('launchinpopup', 'mod_interactivevideo'),
+        'aligncenter' => get_string('centeroncoursepage', 'mod_interactivevideo'),
         'posterimagesize' => get_string('fullavailablewidth', 'mod_interactivevideo'),
         'cardonly' => get_string('usecardonlydesign', 'mod_interactivevideo'),
         'columnlayout' => get_string('usecolumnlayout', 'mod_interactivevideo'),

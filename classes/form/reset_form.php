@@ -78,6 +78,7 @@ class reset_form extends \core_form\dynamic_form {
             'theme',
             'displayinline',
             'launchinpopup',
+            'aligncenter',
             'cardsize',
             'cardonly',
             'columnlayout',

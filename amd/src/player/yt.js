@@ -328,9 +328,11 @@ class Yt {
      * @return {Void}
      */
     pause() {
+        if (!player) {
+            return;
+        }
         player.pauseVideo();
         this.paused = true;
-        return true;
     }
     /**
      * Stop the video

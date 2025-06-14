@@ -17,7 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/backup_interactivevideo_stepslib.php');
-
+require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/backup_interactivevideo_course_settings.php');
 /**
  * Provides the steps to perform one complete backup of the Interactivevideo instance
  *
@@ -37,7 +37,18 @@ class backup_interactivevideo_activity_task extends backup_activity_task {
      * Defines a backup step to store the instance data in the interactivevideo.xml file
      */
     protected function define_my_steps() {
+        global $DB;
         $this->add_step(new backup_interactivevideo_activity_structure_step('interactivevideo_structure', 'interactivevideo.xml'));
+
+        $backupid = $this->get_backupid();
+        $type = $DB->get_field('backup_controllers', 'type', ['backupid' => $backupid]);
+        if ($type === 'course') {
+            // If this is a course backup, we need to add the course settings step.
+            $this->add_step(new backup_interactivevideo_course_settings(
+                'interactivevideosettings_structure',
+                'interactivevideo_settings.xml'
+            ));
+        }
     }
 
     /**
@@ -52,11 +63,11 @@ class backup_interactivevideo_activity_task extends backup_activity_task {
         $base = preg_quote($CFG->wwwroot, "/");
 
         // Link to the list of interactivevideos.
-        $search = "/(".$base."\/mod\/interactivevideo\/index.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/interactivevideo\/index.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@INTERACTIVEVIDEOINDEX*$2@$', $content);
 
         // Link to interactivevideo view by moduleid.
-        $search = "/(".$base."\/mod\/interactivevideo\/view.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/interactivevideo\/view.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@INTERACTIVEVIDEOVIEWBYID*$2@$', $content);
 
         return $content;

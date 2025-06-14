@@ -511,21 +511,42 @@ class Base {
         $('#addcontentdropdown a').removeClass('active');
         form.show();
 
-        form.addEventListener(form.events.LOADED, (e) => {
-            setTimeout(() => {
-                $('body').addClass('modal-open');
-            }, 500);
+        const onEditFormLoaded = (e) => {
+            // Wait for the form to be loaded.
             try {
-                self.onEditFormLoaded(form, e);
+                (function waitForForm() {
+                    const formElement = form.modal.modal.find('form');
+                    if (formElement.length) {
+                        self.onEditFormLoaded(form, e);
+                    } else {
+                        requestAnimationFrame(waitForForm);
+                    }
+                })();
             } catch (error) {
                 // Do nothing.
             }
             self.validateTimestampFieldValue('timestampassist', 'timestamp');
+        };
+
+        form.addEventListener(form.events.LOADED, (e) => {
+            setTimeout(() => {
+                $('body').addClass('modal-open');
+            }, 500);
+            onEditFormLoaded(e);
 
             // Make form draggable.
             form.modal.modal.draggable({
                 handle: ".modal-header"
             });
+        });
+
+        // We must reinitialize js after the form has validation errors.
+        form.addEventListener(form.events.SERVER_VALIDATION_ERROR, (e) => {
+            onEditFormLoaded(e);
+        });
+
+        form.addEventListener(form.events.CLIENT_VALIDATION_ERROR, (e) => {
+            onEditFormLoaded(e);
         });
 
         form.addEventListener(form.events.FORM_SUBMITTED, (e) => {
@@ -623,18 +644,38 @@ class Base {
 
         form.show();
 
-        form.addEventListener(form.events.LOADED, (e) => {
+        const onEditFormLoaded = (e) => {
+            // Wait for the form to be loaded.
             try {
-                this.onEditFormLoaded(form, e);
+                (function waitForForm() {
+                    const formElement = form.modal.modal.find('form');
+                    if (formElement.length) {
+                        self.onEditFormLoaded(form, e);
+                    } else {
+                        requestAnimationFrame(waitForForm);
+                    }
+                })();
             } catch (error) {
                 // Do nothing.
             }
-            this.validateTimestampFieldValue('timestampassist', 'timestamp');
+            self.validateTimestampFieldValue('timestampassist', 'timestamp');
+        };
 
+        form.addEventListener(form.events.LOADED, (e) => {
+            onEditFormLoaded(e);
             // Make form draggable.
             form.modal.modal.draggable({
                 handle: ".modal-header"
             });
+        });
+
+        // We must reinitialize js after the form has validation errors.
+        form.addEventListener(form.events.SERVER_VALIDATION_ERROR, (e) => {
+            onEditFormLoaded(e);
+        });
+
+        form.addEventListener(form.events.CLIENT_VALIDATION_ERROR, (e) => {
+            onEditFormLoaded(e);
         });
 
         form.addEventListener(form.events.FORM_SUBMITTED, (e) => {
@@ -802,10 +843,10 @@ class Base {
             }
             let title = annotation.formattedtitle;
             title = title.replace(/'/g, '&apos;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/&/g, '&amp;');
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/&/g, '&amp;');
             if (this.isEditMode()) {
                 $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
         data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
@@ -1471,6 +1512,17 @@ class Base {
                 }
             });
         });
+    }
+
+    renderReportView(annotation, details, data) {
+        let res = '';
+        res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"` +
+            ` data-id="${data.itemid}" data-userid="${data.row.id}" data-type="${data.ctype}">${details.reportView}</span>`;
+        if (data.access.canedit == 1) {
+            res += `<i class="bi bi-trash3 fs-unset text-danger cursor-pointer position-absolute delete-cell" `
+                + `title="${M.util.get_string('delete', 'mod_interactivevideo')}"></i>`;
+        }
+        return res;
     }
 }
 

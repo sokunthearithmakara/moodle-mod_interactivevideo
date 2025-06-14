@@ -3,3 +3,8 @@
     right: 1rem;
     bottom: 1rem;
 }
+
+.path-mod-interactivevideo #contentbank-preview:not(:empty) {
+    background: #fff;
+    padding: 0.5rem;
+}

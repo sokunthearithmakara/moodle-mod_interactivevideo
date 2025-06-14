@@ -73,17 +73,19 @@ class Html5Video {
         // Determine video type based on file extension.
         if (url.indexOf('.m3u8') !== -1) {
             let Hls = await import('mod_interactivevideo/player/hls');
+            window.Hls = Hls; // Make Hls globally available.
             // Handle HLS stream.
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {
                 var hls = new Hls();
-                hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
-                    this.support.quality = true;
-                    this.hlsdata = data;
-                });
-
+                this.hls = hls;
                 hls.loadSource(url);
                 // Bind them together.
                 hls.attachMedia(player);
+                this.support.quality = true;
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+                    this.hlsdata = data;
+                });
 
                 // Handle quality change.
                 hls.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
@@ -95,8 +97,6 @@ class Html5Video {
                         dispatchEvent('iv:playerError', {error: data});
                     }
                 });
-
-                this.hls = hls;
             } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
                 // Some browsers (like Safari) support HLS natively.
                 player.src = url;
@@ -182,10 +182,77 @@ class Html5Video {
             self.totaltime = totaltime;
             self.duration = self.end - self.start;
             player.pause();
-            dispatchEvent('iv:playerLoaded', {
-                tracks: null
-            });
-            dispatchEvent('iv:playerReady', null, document.getElementById(node));
+
+            if (self.dash) {
+                self.dash.on(window.dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+                    // Turn off the tracks.
+                    self.dash.setTextTrack(null);
+                    let tracks = self.dash.getTracksFor("text");
+                    if (tracks && tracks.length > 0) {
+                        tracks = tracks.map(track => {
+                            const locale = track.lang.split('-')[0];
+                            const country = track.lang.split('-')[1];
+                            let displayNames;
+                            try {
+                                displayNames = new Intl.DisplayNames([`${M.cfg.language}`], {type: 'language'});
+                            } catch (e) {
+                                displayNames = new Intl.DisplayNames(['en'], {type: 'language'});
+                            }
+                            let label;
+                            if (country == 'auto') {
+                                label = displayNames.of(locale) + ' (Auto)';
+                            } else {
+                                label = displayNames.of(track.lang) ?? track.lang.toUpperCase();
+                            }
+                            return {
+                                label,
+                                code: track.lang,
+                            };
+                        });
+                        self.captions = tracks;
+                    }
+                    dispatchEvent('iv:playerLoaded', {
+                        tracks: self.captions || null
+                    });
+                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                });
+            } else if (self.hls) {
+                // Turn off the tracks.
+                self.hls.subtitleTrack = -1;
+                let tracks = self.hls.subtitleTracks;
+                if (tracks && tracks.length > 0) {
+                    tracks = tracks.map(track => {
+                        const locale = track.lang.split('-')[0];
+                        const country = track.lang.split('-')[1];
+                        let displayNames;
+                        try {
+                            displayNames = new Intl.DisplayNames([`${M.cfg.language}`], {type: 'language'});
+                        } catch (e) {
+                            displayNames = new Intl.DisplayNames(['en'], {type: 'language'});
+                        }
+                        let label;
+                        if (country == 'auto') {
+                            label = displayNames.of(locale) + ' (Auto)';
+                        } else {
+                            label = displayNames.of(track.lang) ?? track.lang.toUpperCase();
+                        }
+                        return {
+                            label,
+                            code: track.lang,
+                        };
+                    });
+                    self.captions = tracks;
+                }
+                dispatchEvent('iv:playerLoaded', {
+                    tracks: self.captions || null
+                });
+                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+            } else { // Standard video source.
+                dispatchEvent('iv:playerLoaded', {
+                    tracks: null
+                });
+                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+            }
         });
 
         player.addEventListener('pause', function() {
@@ -539,14 +606,43 @@ class Html5Video {
         return [];
     }
 
-        /**
-         * Sets the caption track for the video player.
-         * @param {string} track - The caption track to set.
-         */
-        setCaption(track) {
-            // No caption.
-            return track;
+    /**
+     * Sets the caption track for the video player.
+     * @param {string} track - The caption track to set.
+     */
+    setCaption(track) {
+        if (this.dash) {
+            if (track === 'off' || track == '') {
+                this.dash.setTextTrack(null);
+            } else {
+                const tracks = this.dash.getTracksFor('text');
+                if (tracks && tracks.length > 0) {
+                    const selectedTrack = tracks.find(t => t.lang === track);
+                    if (selectedTrack) {
+                        this.dash.setTextTrack(selectedTrack.id);
+                    } else {
+                        window.console.warn('Caption track not found:', track);
+                    }
+                }
+            }
         }
+        if (this.hls) {
+            if (track === 'off' || track == '') {
+                this.hls.subtitleTrack = -1; // Disable subtitles.
+            } else {
+                const tracks = this.hls.subtitleTracks;
+                if (tracks && tracks.length > 0) {
+                    const selectedTrack = tracks.find(t => t.lang === track);
+                    if (selectedTrack) {
+                        this.hls.subtitleTrack = selectedTrack.id;
+                    } else {
+                        window.console.warn('Caption track not found:', track);
+                    }
+                }
+            }
+        }
+        return track;
+    }
 }
 
 export default Html5Video;

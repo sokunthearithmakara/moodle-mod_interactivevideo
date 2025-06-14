@@ -109,6 +109,7 @@ function interactivevideo_display_options($moduleinstance) {
     $options['usecustomdescription'] = $moduleinstance->usecustomdescription ?? 0;
     $options['customdescription'] = $moduleinstance->customdescription ?? '';
     $options['launchinpopup'] = $moduleinstance->launchinpopup ?? 0;
+    $options['aligncenter'] = $moduleinstance->aligncenter ?? 0;
     $options['showprogressbar'] = $moduleinstance->showprogressbar ?? 0;
     $options['showcompletionrequirements'] = $moduleinstance->showcompletionrequirements ?? 0;
     $options['showposterimage'] = $moduleinstance->showposterimage ?? 0;
@@ -786,6 +787,7 @@ function interactivevideo_displayinline(cm_info $cm) {
         'columnlayout' => isset($displayoptions->columnlayout) ? $displayoptions->columnlayout : '1',
         'afterlink' => $afterlink,
         'posterimagesquare' => isset($displayoptions->squareposterimage) && $displayoptions->squareposterimage,
+        'aligncenter' => isset($displayoptions->aligncenter) && $displayoptions->aligncenter,
     ];
 
     if (isset($displayoptions->cardsize)) {
@@ -1929,6 +1931,16 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             ['group' => 1],
             [0, 1]
         );
+
+        $mform->addElement(
+            'advcheckbox',
+            'aligncenter',
+            '',
+            get_string('centeroncoursepage', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('aligncenter', 'displayinline', 'eq', 0);
 
         // Card sizes.
         if ($CFG->branch >= 403) {

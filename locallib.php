@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-use core_availability\info;
 /**
  * Utility functions for interactivevideo module
  *
@@ -356,11 +355,9 @@ class interactivevideo_util {
         // Render the photo of the user.
         foreach ($records as $record) {
             $userpic = new user_picture($record);
-            $userpic->size = 24;
             $userpic->link = false;
             $userpic->includefullname = true;
             $record->pictureonly = $OUTPUT->render($userpic);
-            $userpic->size = 35;
             $userpic->courseid = $courseid;
             $userpic->link = true;
             $userpic->popup = true;
@@ -1087,5 +1084,47 @@ class interactivevideo_util {
         $url = moodle_url::make_draftfile_url($draftitemid, '/', $cmid . '.ivz');
 
         return $url->out(false);
+    }
+
+    /**
+     * Save defaults for interactive video.
+     *
+     * @param array $defaults The defaults to save.
+     * @return stdClass The record of the saved defaults.
+     */
+    public static function save_defaults($defaults) {
+        global $DB;
+        $saved = [];
+        // Validate the defaults array.
+        if (!is_array($defaults) || empty($defaults)) {
+            throw new \moodle_exception('invaliddefaults', 'mod_interactivevideo');
+        }
+        foreach ($defaults as $default) {
+            $default = (object) $default;
+            $default->timecreated = time();
+            $default->timemodified = time();
+            // Check if the default already exists using type and courseid.
+            $existingrecord = $DB->get_record(
+                'interactivevideo_defaults',
+                [
+                    'type' => $default->type,
+                    'courseid' => $default->courseid,
+                ],
+                'id',
+                IGNORE_MISSING
+            );
+            if ($existingrecord) {
+                // Update the existing record.
+                $default->id = $existingrecord->id;
+                $DB->update_record('interactivevideo_defaults', $default);
+            } else {
+                // Insert a new record.
+                $default->id = $DB->insert_record('interactivevideo_defaults', $default);
+            }
+
+            $saved[] = $default;
+        }
+        // Return the last saved default.
+        return $saved;
     }
 }

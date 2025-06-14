@@ -415,5 +415,6 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $moduleinstance->extendedcompletion, // Extended completion settings.
     $preview && has_capability('mod/interactivevideo:edit', $modulecontext) ? true : false, // Preview mode.
     $datafortemplate['completed'] ?? false, // Completed status.
+    has_capability('mod/interactivevideo:edit', $modulecontext) ? true : false, // Is editor.
 ]);
 echo $OUTPUT->footer();
