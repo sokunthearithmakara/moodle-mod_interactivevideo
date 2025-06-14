@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.4.0] - 2025-06-15
+https://mod-interactive-video.canny.io/changelog/interactive-video-140
+
 ## [1.3.2] - 2025-05-28
 ## Fixed
 - Active interaction on the drawer did not show.
