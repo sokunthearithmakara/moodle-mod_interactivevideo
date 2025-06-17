@@ -2,7 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 ## [1.4.0+] - 2025-06-18
+## Fixed
 - Minor UI fixes
+- Issue when duplicate an interactive video activity
 
 ## [1.4.0] - 2025-06-15
 https://mod-interactive-video.canny.io/changelog/interactive-video-140
