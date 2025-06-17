@@ -39,7 +39,15 @@ class restore_interactivevideo_activity_task extends restore_activity_task {
      * Define (add) particular steps this activity can have
      */
     protected function define_my_steps() {
+        global $DB;
         $this->add_step(new restore_interactivevideo_activity_structure_step('interactivevideo_structure', 'interactivevideo.xml'));
+        $restoreid = $this->get_restoreid();
+        // Get the type from the controller.
+        $type = $DB->get_field('backup_controllers', 'type', ['backupid' => $restoreid]);
+        if ($type !== 'course') {
+            // If the type is not course, we don't need to restore the settings.
+            return;
+        }
         $this->add_step(new restore_interactivevideo_course_settings(
             'interactivevideosettings_structure',
             'interactivevideo_settings.xml'
