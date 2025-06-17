@@ -189,6 +189,8 @@ class Base {
          * @type {boolean}
          */
         this.isBS5 = $('body').hasClass('bs-5');
+
+        this.rtl = $('body').hasClass('dir-rtl');
     }
 
     /**

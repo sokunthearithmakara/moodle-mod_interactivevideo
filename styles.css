@@ -2046,12 +2046,8 @@ html:has(.path-mod-interactivevideo) {
     pointer-events: none;
 }
 
-[dir="ltr"] .path-mod-interactivevideo.hassidebar.default-mode #page {
+.path-mod-interactivevideo.hassidebar.default-mode #page {
     margin-inline-end: 475px;
-}
-
-[dir="rtl"] .path-mod-interactivevideo.hassidebar.default-mode #page {
-    margin-inline-start: 475px;
 }
 
 .path-mod-interactivevideo.hassidebar.default-mode #interactivevideo-container {

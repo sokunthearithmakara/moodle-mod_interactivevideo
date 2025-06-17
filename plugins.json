@@ -1,6 +1,18 @@
 {
     "subplugins": [
         {
+            "name": "reaction",
+            "title": "Reaction",
+            "component": "local_ivreaction",
+            "description": "Allow viewers to react to the video with emojis and comments.",
+            "icon": "bi bi-chat-left-heart",
+            "version": "2025061717",
+            "type": "paid",
+            "description_url": "",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/422448",
+            "git": "https://github.com/sokunthearithmakara/local_ivreaction/archive/refs/heads/master.zip"
+        },
+        {
             "name": "form",
             "title": "Form",
             "component": "local_ivform",
@@ -11,6 +23,18 @@
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/403225",
             "git": "https://github.com/sokunthearithmakara/local_ivform/archive/refs/heads/master.zip"
+        },
+        {
+            "name": "courseactivity",
+            "title": "Course Activity",
+            "component": "local_ivcourseactivity",
+            "description": "Provide links to existing course activities and track completion.",
+            "icon": "bi bi-plugin",
+            "version": "2025041103",
+            "type": "paid",
+            "description_url": "",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/407501",
+            "git": "https://github.com/sokunthearithmakara/local_ivcourseactivity/archive/refs/heads/master.zip"
         },
         {
             "name": "poll",
@@ -90,7 +114,7 @@
             "component": "local_ivh5pupload",
             "description": "Upload an H5P package in .html or .h5p format.",
             "icon": "bi bi-file-zip",
-            "version": "2025041100",
+            "version": "2025051100",
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivh5pupload",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371285",

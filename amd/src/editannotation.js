@@ -190,6 +190,11 @@ define(['jquery',
                     return;
                 }
                 annotations.sort(function(a, b) {
+                    // First sort by timestamp, then by type.
+                    if (Number(a.timestamp) === Number(b.timestamp)) {
+                        return String(a.type).localeCompare(String(b.type));
+                    }
+                    // Sort by timestamp.
                     return Number(a.timestamp) - Number(b.timestamp);
                 });
 

@@ -103,6 +103,12 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
 
                         player = document.getElementById('ivplayer').contentWindow.IVPLAYER;
 
+                        if (showcontrols) {
+                            iframeDoc.querySelector('body').classList.add('showcontrols');
+                        } else {
+                            iframeDoc.querySelector('body').classList.remove('showcontrols');
+                        }
+
                         if (iframeDoc.getElementById('player')) {
                             $('#playermodal .modal-header').removeClass('show');
                             $('#playermodal .toggle-controls').removeClass('d-none');
@@ -355,8 +361,15 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     $(this).find('i').toggleClass('fa-expand fa-compress');
                     if ($('#playermodal').hasClass('modal-fullscreen')) {
                         localStorage.removeItem('resized');
+                        let showcontrols = localStorage.getItem('showcontrols') ? true : false;
+                        if (showcontrols) {
+                            iframeDoc.querySelector('body').classList.add('showcontrols');
+                        } else {
+                            iframeDoc.querySelector('body').classList.remove('showcontrols');
+                        }
                     } else {
                         localStorage.setItem('resized', '1');
+                        iframeDoc.querySelector('body').classList.add('showcontrols');
                     }
                 });
             };

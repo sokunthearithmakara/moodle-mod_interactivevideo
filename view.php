@@ -101,7 +101,7 @@ if ($iframe) {
 }
 
 if ($embed) {
-    $PAGE->add_body_class('embed-mode bg-dark');
+    $PAGE->add_body_class('embed-mode bg-dark showcontrols');
     $moduleinstance->displayoptions['distractionfreemode'] = 1;
     $getcompletion = false;
 }

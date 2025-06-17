@@ -353,7 +353,16 @@ define([
                     }
                     annotations = filterAnnotations(annotations, contentTypes, start, end);
                     annotations = processAnnotations(annotations, contentTypes, progress, start, end, completiondetails);
-                    annotations.sort((a, b) => a.timestamp - b.timestamp);
+                    // Sort by type first, then by timestamp
+                    annotations.sort((a, b) => {
+                        if (a.type < b.type) {
+                            return -1;
+                        }
+                        if (a.type > b.type) {
+                            return 1;
+                        }
+                        return a.timestamp - b.timestamp;
+                    });
 
                     releventAnnotations = getRelevantAnnotations(annotations, start, end, contentTypes);
                     window.ANNOS = releventAnnotations;
