@@ -225,7 +225,8 @@ function interactivevideo_add_instance($moduleinstance, $mform = null, $batch = 
     }
 
     // Save poster image file from draft area.
-    $draftitemid = isset($moduleinstance->posterimagefile) && $moduleinstance->usecustomposterimage == 1 ? $moduleinstance->posterimagefile : null;
+    $draftitemid = isset($moduleinstance->posterimagefile)
+        && $moduleinstance->usecustomposterimage == 1 ? $moduleinstance->posterimagefile : null;
     if ($draftitemid) {
         file_save_draft_area_files(
             $draftitemid,
