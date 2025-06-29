@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.4.1] - 2025-06-29
+https://mod-interactive-video.canny.io/changelog/interactive-video-141
+
 ## [1.4.0+] - 2025-06-18
 ## Fixed
 - Minor UI fixes

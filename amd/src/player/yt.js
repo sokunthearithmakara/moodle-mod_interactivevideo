@@ -435,6 +435,7 @@ class Yt {
      */
     mute() {
         player.mute();
+        dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmute the video
@@ -442,6 +443,7 @@ class Yt {
     unMute() {
         player.unMute();
         player.setVolume(100);
+        dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     isMuted() {

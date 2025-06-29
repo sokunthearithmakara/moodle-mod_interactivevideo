@@ -321,12 +321,14 @@ class SoundCloud {
      */
     mute() {
         this.player.setVolume(0);
+        dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmute the video
      */
     unMute() {
         this.player.setVolume(100);
+        dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     async isMuted() {

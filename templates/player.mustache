@@ -67,7 +67,7 @@ Example context (json):
                 </div>
             {{/displayoptions.disablechapternavigation}}
             {{^displayoptions.useoriginalvideocontrols}}
-            <div class="w-100 position-absolute video-block d-flex align-items-center justify-content-center bottom-0"></div>
+            <div class="video-block"></div>
         {{/displayoptions.useoriginalvideocontrols}}
         {{#displayasstartscreen}}
         <div id="start-screen"
@@ -101,7 +101,7 @@ Example context (json):
 <div id="start-screen" class="w-100 position-absolute h-100 bottom-0 {{#square}}square{{/square}}" {{#posterimage}}style="background: url({{{posterimage}}}) center center / cover no-repeat;"{{/posterimage}}>
     <div class="intro-content d-flex align-items-center justify-content-center position-absolute w-100"></div>
     <div id="video-info"
-         class="p-1 p-sm-3 text-white w-100 h-100 position-absolute align-items-start flex-column justify-content-between d-none d-flex">
+         class="p-1 p-sm-3 text-white w-100 h-100 position-absolute align-items-start flex-column justify-content-between d-flex">
         <div class="justify-content-between w-100 h-100 d-flex flex-column">
             <div class="metadata d-block d-md-none"></div>
             <span class="h1 text-white iv-font-weight-bold line-height-100 m-1 m-sm-2 p-sm-2 p-1">{{{title}}}</span>

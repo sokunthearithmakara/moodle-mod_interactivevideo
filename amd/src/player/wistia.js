@@ -154,6 +154,10 @@ class Wistia {
                     video.on("playbackratechange", (e) => {
                         dispatchEvent('iv:playerRateChange', {rate: e});
                     });
+
+                    video.on("volumechange", (e) => {
+                        dispatchEvent('iv:playerVolumeChange', {volume: e});
+                    });
                 };
 
                 video.mute();

@@ -53,6 +53,8 @@
     right: 0;
     text-shadow: 1px 2px 3px gray;
     line-height: 1rem;
+    z-index: 1000;
+    background: rgba(255,255,255,0.75);
 }
 
 .path-mod-interactivevideo #skipsegment i {

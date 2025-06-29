@@ -392,6 +392,7 @@ class Panopto {
      */
     mute() {
         player.muteVideo();
+        dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmute the video
@@ -399,6 +400,7 @@ class Panopto {
     unMute() {
         player.unmuteVideo();
         player.setVolume(1);
+        dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     isMuted() {

@@ -225,7 +225,7 @@ function interactivevideo_add_instance($moduleinstance, $mform = null, $batch = 
     }
 
     // Save poster image file from draft area.
-    $draftitemid = isset($moduleinstance->posterimagefile) ? $moduleinstance->posterimagefile : null;
+    $draftitemid = isset($moduleinstance->posterimagefile) && $moduleinstance->usecustomposterimage == 1 ? $moduleinstance->posterimagefile : null;
     if ($draftitemid) {
         file_save_draft_area_files(
             $draftitemid,
@@ -1761,7 +1761,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
                 'format' => $endscreenarray['format'],
                 'itemid' => $draftitemid,
             ];
-            if ($data['usecustomposterimage']) {
+            if ($data['usecustomposterimage'] == 1) {
                 $draftitemid = file_get_submitted_draft_itemid('posterimagefile');
                 file_prepare_draft_area(
                     $draftitemid,
@@ -1896,7 +1896,6 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             null,
             [
                 'subdirs' => 0,
-                'maxfiles' => 1,
                 'maxbytes' => 500 * 1024,
                 'accepted_types' => ['web_image'],
             ]

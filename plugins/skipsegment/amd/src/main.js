@@ -35,16 +35,57 @@ export default class SkipSegment extends Base {
     init() {
         if (!this.isEditMode()) {
             let self = this;
-            const skipsegment = this.annotations.filter((annotation) => annotation.type == 'skipsegment');
-            $(document).on('timeupdate', async function(e) {
+            const skipsegments = this.annotations.filter((annotation) => annotation.type == 'skipsegment');
+
+            if (skipsegments.length === 0) {
+                return;
+            }
+
+            $(document).on('timeupdate.skipsegment', async function(e) {
                 const t = e.originalEvent.detail.time;
-                for (let annotation of skipsegment) {
-                    if (annotation.timestamp < t && annotation.title > t) {
-                        await self.player.seek(Number(annotation.title));
-                        await self.runInteraction(annotation);
-                        break;
+
+                let annotation = skipsegments.find((annotation) => {
+                    return annotation.timestamp < t && annotation.title > t;
+                });
+
+                if (annotation === undefined) {
+                    // Remove #skipsegment if no annotation is found.
+                    if ($('#skipsegment').length > 0) {
+                        $('#skipsegment').remove();
                     }
+                    return;
                 }
+
+                // If the skip segment is already displayed, do not run the interaction again.
+                if ($('#wrapper #skipsegment').length > 0) {
+                    return;
+                }
+
+                let forced = true;
+                if ((!self.options.isCompleted && annotation.intg1 == 2) ||
+                    (self.options.isCompleted && annotation.intg2 == 2)) {
+                    forced = false;
+                }
+
+                if (forced) {
+                    await self.player.seek(Number(annotation.title));
+                    await self.runInteraction(annotation);
+                } else {
+                    await self.runInteraction(annotation);
+                }
+            });
+
+            $(document).off('click', '.btn#skipsegment').on('click', '.btn#skipsegment', async function(e) {
+                e.preventDefault();
+                let timestamp = $(this).data('timestamp');
+                if (!self.isBetweenStartAndEnd(timestamp)) {
+                    return;
+                }
+                // Remove the skip segment button.
+                $('#skipsegment').remove();
+                // Seek the video player to the specified timestamp.
+                await self.player.seek(Number(timestamp));
+                self.player.play();
             });
         }
     }
@@ -88,6 +129,8 @@ export default class SkipSegment extends Base {
             courseid: self.course,
             cmid: coursemodule,
             annotationid: self.interaction,
+            intg1: 1,
+            intg2: 1,
             hascompletion: self.prop.hascompletion ? 1 : 0,
             advanced: JSON.stringify({
                 "visiblebeforecompleted": "1",
@@ -188,11 +231,12 @@ export default class SkipSegment extends Base {
           data${self.isBS5 ? '-bs' : ''}-title='<i class="${this.prop.icon}"></i>'></li>`);
         }
         if (this.isEditMode()) {
+            let background = annotation.intg1 == 2 || annotation.intg2 == 2 ? 'rgba(161, 161, 161, 0.5)' : 'rgba(0,0,0,0.75)';
             $("#video-timeline-wrapper").append(`<div class="position-absolute skipsegment cursor-pointer"
                  data-timestamp="${annotation.timestamp}" data-id="${annotation.id}"
-                 style="height: 100%; left: ${percentage}%; width: ${length}%;background: rgba(0,0,0,0.75);">
+                 style="height: 100%; left: ${percentage}%; width: ${length}%;background: ${background};">
                  <div class="position-absolute w-100 text-center px-1 delete-skipsegment">
-                 <i class="bi bi-trash3 text-muted fs-unset"></i></div></div>`);
+                 <i class="bi bi-trash3 text-white fs-unset"></i></div></div>`);
         }
     }
     /**
@@ -206,22 +250,43 @@ export default class SkipSegment extends Base {
      * @returns {Promise<void>} A promise that resolves when the interaction is complete.
      */
     async runInteraction(annotation) {
-        let self = this;
-        $('.video-block').append(`<div id="skipsegment" class="text-white position-absolute p-3 hide">
-         <i class="${this.prop.icon}"></i></div>`);
-        $('#skipsegment').fadeIn(300);
-        await this.player.seek(Number(annotation.title) + 0.1);
-        this.player.pause();
-        if (annotation.title >= this.end) {
-            self.dispatchEvent('iv:playerEnded', {});
-        }
         if (this.isEditMode()) {
             return;
         }
-        setTimeout(() => {
-            $('#skipsegment').remove();
+        let self = this;
+        let forced = true;
+        if ((!self.options.isCompleted && annotation.intg1 == 2) ||
+            (self.options.isCompleted && annotation.intg2 == 2)) {
+            forced = false;
+        }
+        if (forced) {
+            $('#wrapper').append(`<div id="skipsegment"
+                    class="text-white position-absolute p-3 hide bg-transparent">
+                    <i class="${this.prop.icon}"></i>
+                 </div>`);
+            $('#skipsegment').fadeIn(300);
+            await this.player.seek(Number(annotation.title) + 0.1);
+            this.player.pause();
+            if (annotation.title >= this.end) {
+                self.dispatchEvent('iv:playerEnded', {});
+            }
+            if (this.isEditMode()) {
+                return;
+            }
+            setTimeout(() => {
+                $('#skipsegment').remove();
+                self.player.play();
+            }, 300);
+        } else {
+            // Show a button to notify the user that the segment is skipped.
+            $('#wrapper').append(`<div id="skipsegment" class="d-flex align-items-center cursor-pointer
+                 position-absolute btn btn-lg btn-rounded pulse-sm hide shadow" data-timestamp="${annotation.title}"
+                 style="bottom: 2rem;right: 1rem; text-shadow: none;">
+                    ${M.util.get_string('skip', 'mod_interactivevideo')}
+                    <i class="bi bi-chevron-bar-right iv-ml-1 fs-unset"></i>
+                </div>`);
+            $('#skipsegment').fadeIn(300);
             self.player.play();
-        }, 300);
-
+        }
     }
 }

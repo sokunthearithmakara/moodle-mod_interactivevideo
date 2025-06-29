@@ -288,6 +288,7 @@ export default class ContentBank extends Base {
                                         if (annotation.char1 == '1') { // Partial points.
                                             details.xp = (result.score.scaled * annotation.xp).toFixed(2);
                                         }
+                                        details.percent = details.xp / annotation.xp;
                                         details.duration = windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime);
                                         details.timecompleted = completeTime.getTime();
                                         const completiontime = completeTime.toLocaleString();
@@ -393,7 +394,7 @@ export default class ContentBank extends Base {
                                 char1: annotation.type,
                             }, self.userid, true);
                         } catch (e) {
-                            window.console.log('Error: ', e);
+                            //
                         }
                     }
                 });

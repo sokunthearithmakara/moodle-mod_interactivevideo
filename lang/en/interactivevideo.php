@@ -41,6 +41,7 @@ $string['appearancesettings'] = 'Appearance settings';
 $string['areyousureyouwanttoresetthecompletiondata'] = 'Are you sure you want to reset this user\'s progress? This action will delete all current attempts and associated files.';
 $string['atleastonecompletionrule'] = 'At least one completion rule must be set.';
 $string['audio'] = 'Audio';
+$string['auto'] = 'Auto';
 $string['autoplay'] = 'Autoplay';
 $string['autoplay_help'] = 'This will not work if the browser does not support or blocks autoplay.';
 $string['autoplayblocked'] = 'Autoplay is blocked by your browser or its extension(s). You might experience some difficulties. Allow autoplay on this site for a seamless experience.';

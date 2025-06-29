@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_interactivevideo';
-$plugin->release = '1.4.0+';
-$plugin->version = 2025052808;
+$plugin->release = '1.4.1';
+$plugin->version = 2025062800;
 $plugin->requires = 2021112800;
 $plugin->supported = [400, 500];
 $plugin->maturity = MATURITY_STABLE;

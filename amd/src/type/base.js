@@ -1067,6 +1067,7 @@ class Base {
                 completionDetails.hasDetails = true;
             }
             completionDetails.xp = details.xp || thisItem.xp;
+            completionDetails.percent = details.percent || 1;
             let windowAnno = window.ANNOS.find(x => x.id == id);
             completionDetails.duration = details.duration
                 || (windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime));

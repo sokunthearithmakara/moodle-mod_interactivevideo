@@ -322,6 +322,7 @@ class Rumble {
     mute() {
         player.mute();
         this.muted = true;
+        dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmutes the video player.
@@ -330,6 +331,7 @@ class Rumble {
         player.unmute();
         player.setVolume(1);
         this.muted = false;
+        dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     isMuted() {

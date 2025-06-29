@@ -303,6 +303,11 @@ class Html5Video {
             dispatchEvent('iv:playerBuffering');
         });
 
+        // Volume change event.
+        player.addEventListener('volumechange', function() {
+            dispatchEvent('iv:playerVolumeChange', {volume: player.volume});
+        });
+
         this.player = player;
     }
 

@@ -144,6 +144,10 @@ class SproutVideo {
                 self.ended = true;
                 dispatchEvent('iv:playerEnded');
             });
+
+            player.bind('volume', function(e) {
+                dispatchEvent('iv:playerVolumeChange', {volume: e.data});
+            });
         };
 
         // Get video info using oEmbed: https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/ac91d7b31a1ee6c125.

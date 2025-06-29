@@ -228,6 +228,10 @@ class PeerTube {
             }
         });
 
+        player.addEventListener('volumeChange', function(e) {
+            dispatchEvent('iv:playerVolumeChange', {volume: e});
+        });
+
         return true;
     }
 

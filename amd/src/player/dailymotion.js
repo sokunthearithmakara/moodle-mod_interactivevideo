@@ -447,6 +447,7 @@ class DailyMotion {
      */
     mute() {
         player.setMute(true);
+        dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmutes the Dailymotion player.
@@ -454,6 +455,7 @@ class DailyMotion {
     unMute() {
         player.setMute(false);
         player.setVolume(1);
+        dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     async isMuted() {

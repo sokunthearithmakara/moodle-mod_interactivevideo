@@ -37,7 +37,7 @@ class Rutube {
         this.frequency = 0.25;
         this.support = {
             playbackrate: false,
-            quality: false,
+            quality: true,
             password: false,
         };
     }
@@ -51,7 +51,7 @@ class Rutube {
      * @param {object} opts - The options for the player.
      */
     async load(url, start, end, opts = {}) {
-        const showControls = opts.showControls || false;
+        this.showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
@@ -106,7 +106,7 @@ class Rutube {
 
             player = document.getElementById('player');
             self.player = player;
-
+            self.currentQuality = 'auto';
             window.addEventListener('message', function(event) {
                 var message = '';
                 try {
@@ -115,6 +115,12 @@ class Rutube {
                     return;
                 }
                 switch (message.type) {
+                    case 'player:qualityList':
+                        self.qualities = message.data.list;
+                        break;
+                    case 'player:currentQuality':
+                        self.currentQuality = message.data.quality.isAutoQuality ? 'auto' : message.data.quality.quality;
+                        break;
                     case 'player:changeState':
                         if (message.data.state === 'playing') {
                             let currentTime = self.currentTime;
@@ -135,7 +141,7 @@ class Rutube {
                             self.paused = false;
                             self.ended = false;
                             dispatchEvent('iv:playerPlaying');
-                        } else if (message.data.state === 'paused') {
+                        } else if (message.data.state === 'paused' || message.data.state === 'pause') {
                             self.paused = true;
                             dispatchEvent('iv:playerPaused');
                         } else if (message.data.state === 'ended' || message.data.state === 'stopped') {
@@ -184,10 +190,14 @@ class Rutube {
     }
     /**
      * Plays the video using the Rutube player instance.
-     * If the player is not initialized, logs an error to the console.
+     *
      */
     play() {
         this.doCommand({type: 'player:play', data: {}});
+        if (!this.showControls && !this.controlHidden) {
+            this.doCommand({type: 'player:hideControls', data: {}});
+            this.controlHidden = true;
+        }
         this.paused = false;
     }
     /**
@@ -306,6 +316,7 @@ class Rutube {
     mute() {
         this.doCommand({type: 'player:mute', data: {}});
         this.muted = true;
+        dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmutes the Rutube player by setting the volume to 1.
@@ -314,6 +325,7 @@ class Rutube {
         this.doCommand({type: 'player:unMute', data: {}});
         this.doCommand({type: 'player:setVolume', data: {volume: 1}});
         this.muted = false;
+        dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     isMuted() {
@@ -325,13 +337,17 @@ class Rutube {
      * @param {String} quality
      */
     async setQuality(quality) {
-        return false;
+        return this.doCommand({type: 'player:changeQuality', data: {quality}});
     }
     /**
      * Get the available qualities of the video (NOT IMPLEMENTED)
      */
     async getQualities() {
-        return [];
+        return {
+            qualities: ['auto', ...this.qualities],
+            qualitiesLabel: [M.util.get_string('auto', 'mod_interactivevideo'), ...this.qualities],
+            currentQuality: this.currentQuality,
+        };
     }
 
     /**

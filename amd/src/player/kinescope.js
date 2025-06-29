@@ -197,6 +197,12 @@ class Kinescope {
                         }
                         dispatchEvent('iv:playerBuffering');
                     });
+                    pl.on(pl.Events.VolumeChange, async function(event) {
+                        if (!ready) {
+                            return;
+                        }
+                        dispatchEvent('iv:playerVolumeChange', {volume: event.data.muted ? 0 : 1});
+                    });
                 });
         };
 

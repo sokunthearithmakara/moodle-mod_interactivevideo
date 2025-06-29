@@ -80,9 +80,9 @@ define([
         const xp = completableAnno.map(x => Number(x.xp)).reduce((a, b) => a + b, 0);
 
         const completedAnnos = completableAnno
-            .filter(x => x.completed);
+            .filter(x => x.completed == true);
 
-        const xpEarned = completedAnnos.map(x => Number(x.earned)).reduce((a, b) => a + b, 0);
+        const xpEarned = completableAnno.map(x => Number(x.earned)).reduce((a, b) => a + b, 0) || 0;
 
         $(".metadata").empty();
         if (actualAnnotationCounts > 0) {
@@ -377,7 +377,7 @@ define([
                     await renderAnnotationItems(releventAnnotations, start, end - start);
                     $("#play").removeClass('d-none');
                     $("#spinner").remove();
-                    $("#video-info").toggleClass('d-none d-flex');
+                    $("#video-info").removeClass('d-none');
                     return new Promise((resolve) => {
                         resolve();
                     });
@@ -426,7 +426,14 @@ define([
                         annotation.xp = Number(annotation.xp);
                         const completionitem = completiondetails.find(x => JSON.parse(x).id == annotation.id);
                         if (completionitem) {
-                            annotation.earned = Number(JSON.parse(completionitem).xp);
+                            let thisitem = JSON.parse(completionitem);
+                            annotation.earned = Number(thisitem.xp); // Earned from previous attempt.
+                            if (thisitem.percent) { // IV1.4.1 introduce percent to handle when teacher updates XP afterward.
+                                annotation.earned = annotation.xp * thisitem.percent;
+                            }
+                            if (annotation.earned > annotation.xp) { // What if the teacher decreases the XP afterward?
+                                annotation.earned = annotation.xp;
+                            }
                         } else {
                             annotation.earned = 0;
                         }
@@ -1096,7 +1103,7 @@ define([
                             player.play();
                         }
                     }
-                    player.unMute();
+                    // Player.unMute(); // In conflict with ivaudiotrack
                 }
 
                 const intervalFunction = async function() {

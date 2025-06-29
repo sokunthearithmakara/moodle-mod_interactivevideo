@@ -159,6 +159,16 @@
     margin-inline-start: auto !important;
 }
 
+.iv-px-5 {
+    padding-inline-start: 2rem !important;
+    padding-inline-end: 2rem !important;
+}
+
+.iv-mx-5 {
+    margin-inline-start: 2rem !important;
+    margin-inline-end: 2rem !important;
+}
+
 .iv-font-weight-bold {
     font-weight: bold !important;
 }
@@ -547,8 +557,10 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo .pulse-sm::before {
-    -webkit-animation: pulse-animation-sm 0.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
-    animation: pulse-animation-sm 0.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    -webkit-transition: opacity 0.5s, -webkit-transform 0.5s;
+    transition: opacity 0.5s, transform 0.5s, -webkit-transform 0.5s;
+    -webkit-animation: pulse-animation-sm 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    animation: pulse-animation-sm 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
 @-webkit-keyframes pulse-animation {
@@ -600,14 +612,14 @@ html:has(.path-mod-interactivevideo) {
 
     50% {
         opacity: 0;
-        -webkit-transform: scale(1.5);
-        transform: scale(1.5);
+        -webkit-transform: scale(1.1);
+        transform: scale(1.1);
     }
 
     100% {
         opacity: 0;
-        -webkit-transform: scale(1.5);
-        transform: scale(1.5);
+        -webkit-transform: scale(1.75);
+        transform: scale(1.75);
     }
 }
 
@@ -626,8 +638,8 @@ html:has(.path-mod-interactivevideo) {
 
     100% {
         opacity: 0;
-        -webkit-transform: scale(1.5);
-        transform: scale(1.5);
+        -webkit-transform: scale(1.75);
+        transform: scale(1.75);
     }
 }
 
@@ -757,10 +769,15 @@ html:has(.path-mod-interactivevideo) {
     top: 0;
     z-index: 3;
     cursor: pointer;
-    background: #fff;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    left: 0;
+    display: flex;
+    background: transparent;
 }
 
-.path-mod-interactivevideo.darkmode #video-wrapper .video-block {
+#page-mod-interactivevideo-interactions #video-wrapper {
     background: var(--ivdark);
 }
 
@@ -1723,6 +1740,8 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo.no-original-controls video::-webkit-media-controls-panel,
 .path-mod-interactivevideo.no-original-controls .w-bottom-bar,
 .path-mod-interactivevideo.no-original-controls .player-Rumble-cls > div > div:not(#pac),
+.path-mod-interactivevideo.no-original-controls .player-Rumble-cls [rel="noopener"],
+.path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls [rel="noopener"],
 .path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls > div > div:not(#pac) {
     display: none !important;
 }
@@ -3463,6 +3482,10 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
         "afterlink afterlink afterlink afterlink"
         "availability availability availability availability"
         "visibility visibility visibility visibility";
+}
+
+.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .activity-instance.d-flex {
+    display: none !important;
 }
 
 .path-mod-interactivevideo.spotify #player,

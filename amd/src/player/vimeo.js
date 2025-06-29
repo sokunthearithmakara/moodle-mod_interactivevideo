@@ -108,6 +108,10 @@ class Vimeo {
         let ready = false;
         const vimeoEvents = (player) => {
             player.on('loaded', async function() {
+                const iframe = document.querySelector(`#${node} iframe`);
+                if (iframe) {
+                    iframe.setAttribute('referrerpolicy', 'strict-origin');
+                }
                 let duration = 0;
                 try {
                     // Without password protection, we can get the duration.
@@ -258,6 +262,10 @@ class Vimeo {
                         $videoblock.classList.remove('no-pointer');
                     }
                 }
+            });
+
+            player.on('volumechange', function(e) {
+                dispatchEvent('iv:playerVolumeChange', {volume: e.volume});
             });
         };
 

@@ -26,6 +26,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['endtime'] = 'End time';
+$string['force'] = 'Force';
+$string['force_desc'] = 'If enabled, the user will be forced to skip the segment and cannot watch it. If disabled, the user can choose to skip or watch the segment.';
 $string['invalidtimestampformat'] = 'Invalid timestamp format.';
 $string['pluginname'] = 'Skipped Segment';
 $string['privacy:metadata'] = 'The Skipped Segment plugin doesn\'t store any personal data.';
@@ -34,4 +36,3 @@ $string['skipsegmentcontent'] = 'Skipped segment';
 $string['skipsegmentdescription'] = 'Skip a segment of the video.';
 $string['tutorialurl'] = 'https://youtu.be/tRiW09XazJk';
 $string['untiltimemustbegreaterthantimestamp'] = 'End time must be greater than the start time.';
-

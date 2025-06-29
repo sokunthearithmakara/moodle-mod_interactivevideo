@@ -30,6 +30,12 @@ class form extends \mod_interactivevideo\form\base_form {
      */
     public function set_data_for_dynamic_submission(): void {
         $data = $this->set_data_default();
+        if ($data->intg1 != 2 || empty($data->intg1)) {
+            $data->intg1 = 1;
+        }
+        if ($data->intg2 != 2 || empty($data->intg2)) {
+            $data->intg2 = 1;
+        }
         $decimal = $data->title - (int)$data->title;
         $data->titleassist = gmdate("H:i:s", (int)$data->title) .
             ($decimal ? '.' . str_pad((string)round($decimal * 100), 2, '0', STR_PAD_LEFT) : '');
@@ -66,6 +72,35 @@ class form extends \mod_interactivevideo\form\base_form {
         $this->advanced_form_fields([
             'hascompletion' => false,
         ]);
+        // Open the form.
+        $mform->setExpanded('advanced', true);
+        $elements = [];
+        $elements[] = $mform->createElement(
+            'advcheckbox',
+            'intg1',
+            '',
+            get_string('beforecompletion', 'mod_interactivevideo'),
+            ['group' => 1],
+            [2, 1]
+        );
+        $elements[] = $mform->createElement(
+            'advcheckbox',
+            'intg2',
+            '',
+            get_string('aftercompletion', 'mod_interactivevideo'),
+            ['group' => 1],
+            [2, 1]
+        );
+        $elements[] = $mform->createElement(
+                'static',
+                'force',
+                '',
+                '<span class="text-muted small w-100 d-block">'
+                    . get_string('force_desc', 'ivplugin_skipsegment') . '</span>'
+            );
+        $mform->addGroup($elements, '', get_string('force', 'ivplugin_skipsegment'));
+        $mform->setDefault('intg1', 1);
+        $mform->setDefault('intg2', 1);
         $this->close_form();
     }
 

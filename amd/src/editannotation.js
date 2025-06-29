@@ -1873,10 +1873,6 @@ define(['jquery',
                     root.find('.modal-dialog').draggable({
                         handle: ".modal-header"
                     });
-
-                    setTimeout(() => {
-                        $('#contentsearch').focus();
-                    }, 1000);
                 });
 
                 root.on('click', '.modal-header .close', function() {
