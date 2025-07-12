@@ -112,7 +112,7 @@ if ($preview && has_capability('mod/interactivevideo:edit', $modulecontext)) {
 
 if (optional_param('mobileapp', 0, PARAM_INT)) {
     $PAGE->set_pagelayout('embedded');
-    $PAGE->add_body_class('mobiletheme');
+    $PAGE->add_body_class('mobiletheme mobileapp');
 }
 
 // Prepare strings for js files using string manager.

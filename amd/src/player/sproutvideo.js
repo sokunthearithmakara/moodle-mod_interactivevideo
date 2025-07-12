@@ -24,7 +24,7 @@ import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
-let player;
+let player = {};
 
 class SproutVideo {
     /**
@@ -40,6 +40,83 @@ class SproutVideo {
         };
         this.frequency = 0.1;
     }
+    async getInfo(url, node) {
+        this.node = node;
+        let regex = /(?:https?:\/\/)?(?:[^.]+\.)*(?:sproutvideo\.com\/(?:videos|embed)|vids\.io\/videos)\/(.+)/;
+        let match = regex.exec(url);
+        let videoId = match[1];
+        if (!url.includes('embed')) {
+            videoId = videoId.split('/')[0];
+        }
+        this.videoId = videoId;
+        let self = this;
+        const getData = async() => {
+            try {
+                const data = await $.ajax({
+                    url: `https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/${videoId}`,
+                    type: 'GET',
+                    dataType: 'json',
+                });
+                return data;
+            } catch {
+                return {error: true};
+            }
+        };
+
+        let data = await getData();
+        let iframeurl = '';
+        if (data.error) {
+            iframeurl = `https://videos.sproutvideo.com/embed/${videoId}`;
+            self.title = 'Private Video';
+            self.aspectratio = 16 / 9;
+            if (!url.includes('embed')) {
+                return null;
+            }
+        } else {
+            self.title = data.title;
+            self.aspectratio = data.width / data.height;
+            self.posterImage = data.thumbnail_url;
+            // Get iframe url from data.html
+            let iframe = $(data.html);
+            iframeurl = iframe.attr('src');
+        }
+
+        iframeurl += '?fullscreenButton=false&volume=0';
+
+        $(`#${node}`).replaceWith(`<iframe id="${node}" class='sproutvideo-player'
+                 src='${iframeurl}' frameborder='0' referrerpolicy="no-referrer-when-downgrade"
+                  allow="autoplay; fullscreen; picture-in-picture; encrypted-media;"></iframe>`);
+
+        return new Promise((resolve) => {
+            const executeFunction = (player) => {
+                player.bind('ready', function() {
+                    resolve({
+                        duration: player.getDuration(),
+                        title: player.getVideoTitle(),
+                        posterImage: self.posterImage,
+                    });
+                });
+            };
+
+            // Create a player instance.
+            if (!window.SV) {
+                var tag = document.createElement('script');
+                tag.src = 'https://c.sproutvideo.com/player_api.js';
+                tag.async = true;
+                tag.as = "script";
+                tag.rel = "preload";
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                tag.onload = function() {
+                    player[node] = new window.SV.Player({videoId: videoId.split('/')[0]});
+                    executeFunction(player[node]);
+                };
+            } else {
+                player[node] = new window.SV.Player({videoId: videoId.split('/')[0]});
+                executeFunction(player[node]);
+            }
+        });
+    }
     /**
      * Load a Sprout Video player instance.
      * Documented at https://sproutvideo.com/help/articles/27-javascript_player_api
@@ -52,6 +129,7 @@ class SproutVideo {
     async load(url, start, end, opts = {}) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.node = node;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked');
@@ -210,12 +288,12 @@ class SproutVideo {
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
             tag.onload = function() {
-                player = new window.SV.Player({videoId: videoId.split('/')[0]});
-                executeFunction(player);
+                player[node] = new window.SV.Player({videoId: videoId.split('/')[0]});
+                executeFunction(player[node]);
             };
         } else {
-            player = new window.SV.Player({videoId: videoId.split('/')[0]});
-            executeFunction(player);
+            player[node] = new window.SV.Player({videoId: videoId.split('/')[0]});
+            executeFunction(player[node]);
         }
 
     }
@@ -224,7 +302,10 @@ class SproutVideo {
      * If the player is not initialized, logs an error to the console.
      */
     play() {
-        player.play();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].play();
         this.paused = false;
     }
     /**
@@ -233,7 +314,10 @@ class SproutVideo {
      * This method calls the `pause` function on the `player` object to pause the video playback.
      */
     pause() {
-        player.pause();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].pause();
         this.paused = true;
     }
     /**
@@ -242,8 +326,11 @@ class SproutVideo {
      * @param {number} starttime - The time in seconds to which the video should be set before pausing.
      */
     stop(starttime) {
-        player.seek(starttime);
-        player.pause();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].seek(starttime);
+        player[this.node].pause();
     }
     /**
      * Seeks the video to a specified time.
@@ -252,11 +339,14 @@ class SproutVideo {
      * @returns {Promise<number>} A promise that resolves to the time in seconds to which the video was seeked.
      */
     seek(time) {
+        if (!player[this.node]) {
+            return time;
+        }
         if (time < 0) {
             time = 0;
         }
         this.ended = false;
-        player.seek(time);
+        player[this.node].seek(time);
         dispatchEvent('iv:playerSeek', {time: time});
         return true;
     }
@@ -266,7 +356,10 @@ class SproutVideo {
      * @returns {Promise<number>} A promise that resolves to the current time in seconds.
      */
     async getCurrentTime() {
-        return player.getCurrentTime();
+        if (!player[this.node]) {
+            return 0;
+        }
+        return player[this.node].getCurrentTime();
     }
     /**
      * Asynchronously retrieves the duration of the video.
@@ -274,7 +367,10 @@ class SproutVideo {
      * @returns {Promise<number>} A promise that resolves to the duration of the video in seconds.
      */
     async getDuration() {
-        const duration = await player.getDuration();
+        if (!player[this.node]) {
+            return 0;
+        }
+        const duration = await player[this.node].getDuration();
         return duration;
     }
     /**
@@ -283,6 +379,9 @@ class SproutVideo {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player is paused.
      */
     isPaused() {
+        if (!player[this.node]) {
+            return true;
+        }
         return this.paused;
     }
     /**
@@ -291,6 +390,9 @@ class SproutVideo {
      * @returns {Promise<boolean>} A promise that resolves to `true` if the player is playing, otherwise `false`.
      */
     isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         return !this.paused;
     }
     /**
@@ -301,6 +403,9 @@ class SproutVideo {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player has ended.
      */
     isEnded() {
+        if (!player[this.node]) {
+            return false;
+        }
         return this.ended;
     }
     /**
@@ -311,6 +416,9 @@ class SproutVideo {
      * @returns {Promise<number>} The aspect ratio of the video.
      */
     ratio() {
+        if (!player[this.node]) {
+            return 16 / 9;
+        }
         return this.aspectratio;
     }
     /**
@@ -318,12 +426,14 @@ class SproutVideo {
      * If the player is not initialized, logs an error message to the console.
      */
     destroy() {
-        if (player) {
-            $('#player').attr('src', '');
-            player.unbind();
+        if (player[this.node]) {
+            $(`#${this.node}`).remove();
+            player[this.node].unbind();
         } else {
             window.console.error('Player is not initialized.');
         }
+        player[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -331,6 +441,9 @@ class SproutVideo {
      * @returns {Promise<string>} A promise that resolves to a string indicating the player's state, either 'paused' or 'playing'.
      */
     getState() {
+        if (!player[this.node]) {
+            return 'paused';
+        }
         const paused = this.paused;
         return paused ? 'paused' : 'playing';
     }
@@ -341,23 +454,35 @@ class SproutVideo {
      *                        This should be a value supported by the Sprout Video player.
      */
     setRate(rate) {
-        player.setPlaybackRate(rate);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setPlaybackRate(rate);
     }
     /**
      * Mutes the Sprout Video player by setting the volume to 0.
      */
     mute() {
-        player.setVolume(0.0);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setVolume(0.0);
     }
     /**
      * Unmutes the Sprout Video player by setting the volume to 1.
      */
     unMute() {
-        player.setVolume(1.0);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setVolume(1.0);
     }
 
     isMuted() {
-        return player.getVolume() === 0;
+        if (!player[this.node]) {
+            return false;
+        }
+        return player[this.node].getVolume() === 0;
     }
 
     /**
@@ -365,13 +490,19 @@ class SproutVideo {
      * @param {String} quality
      */
     setQuality(quality) {
-        player.setQualityLevel(quality);
+        if (!player[this.node]) {
+            return quality;
+        }
+        player[this.node].setQualityLevel(quality);
         return quality;
     }
     /**
      * Get the available qualities of the video
      */
     async getQualities() {
+        if (!player[this.node]) {
+            return null;
+        }
         let qualities = this.qualities;
         let keys = qualities.map(x => x.height);
         // Add auto quality to the top of the list
@@ -379,7 +510,7 @@ class SproutVideo {
         let values = qualities.map(x => x.label);
         // Add auto quality to the top of the list
         values.unshift('Auto');
-        let current = player.getQualityLevel();
+        let current = player[this.node].getQualityLevel();
         return {
             qualities: keys,
             qualitiesLabel: values,
@@ -392,6 +523,9 @@ class SproutVideo {
      *
      */
     setCaption() {
+        if (!player[this.node]) {
+            return null;
+        }
         // Not supported
         return false;
     }
@@ -402,7 +536,7 @@ class SproutVideo {
      * @returns {Object} The Sprout Video player instance.
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
 }
 

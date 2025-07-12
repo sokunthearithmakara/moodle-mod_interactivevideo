@@ -25,7 +25,7 @@ import $ from 'jquery';
 import {dispatchEvent} from 'core/event_dispatcher';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
-var player;
+var player = {};
 
 class Rumble {
     /**
@@ -40,6 +40,73 @@ class Rumble {
             quality: false,
             password: false,
         };
+    }
+    async getInfo(url, node) {
+        this.node = node;
+        let self = this;
+        return new Promise((resolve) => {
+            let oEmbed = 'https://rumble.com/api/Media/oembed.json?url=' + encodeURIComponent(url);
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                type: 'POST',
+                data: {
+                    action: 'get_from_url',
+                    contextid: M.cfg.contextid,
+                    url: oEmbed, // The URL to get the oEmbed data from.
+                    sesskey: M.cfg.sesskey,
+                },
+            }).done(function(data) {
+                // Reset api.
+                let firstAPIrun = false;
+                self.title = data.title;
+                self.posterImage = data.thumbnail_url;
+                self.duration = Number(data.duration).toFixed(2);
+                let html = $(data.html);
+                let embedurl = html.attr('src');
+                // Regex to get the video id from the embed url https://rumble.com/embed/{id}/
+                let videoId = embedurl.match(/embed\/([a-zA-Z0-9]+)/)[1];
+                videoId = videoId.split('/')[0]; // This includes the video id and pub id
+                self.videoId = videoId;
+                // Load the Rumble player library.
+                var tag = document.createElement('script');
+                tag.src = 'https://rumble.com/embedJS/' + videoId;
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                tag.onload = async() => {
+                    // Get the id from the videoId (pubId.videoId || videoId).
+                    let id = videoId.split('.')[1] ? videoId.split('.')[1] : videoId;
+                    window.Rumble("play", {
+                        video: id,
+                        div: node,
+                        rel: 0,
+                        autoplay: 2,
+                        ui: {
+                            logo: {
+                                hidden: true
+                            },
+                            "fullscreen": {
+                                hidden: true
+                            },
+                            "autoplay": {
+                                hidden: true
+                            },
+                        },
+                        api: function(api) {
+                            // Not sure if rumble has a ready event, so we use this to make sure we only dispatch the event once.
+                            player[node] = api;
+                            if (!firstAPIrun) {
+                                firstAPIrun = true;
+                                resolve({
+                                    duration: self.duration,
+                                    title: self.title,
+                                    posterImage: self.posterImage,
+                                });
+                            }
+                        }
+                    });
+                };
+            });
+        });
     }
     /**
      * Load a new Rumble player instance.
@@ -119,13 +186,13 @@ class Rumble {
                     },
                     api: function(api) {
                         // Not sure if rumble has a ready event, so we use this to make sure we only dispatch the event once.
-                        player = api;
-                        player.mute();
+                        player[node] = api;
+                        player[node].mute();
                         if (!showControls) {
                             $('body').addClass('no-original-controls');
                         }
                         if (!firstAPIrun) {
-                            player.setCurrentTime(start);
+                            player[node].setCurrentTime(start);
                             ready = true;
                             firstAPIrun = true;
                             dispatchEvent('iv:playerReady', null, document.getElementById(node));
@@ -135,11 +202,11 @@ class Rumble {
                                 return;
                             }
 
-                            if (player.getCurrentTime() < start) {
-                                player.setCurrentTime(start);
+                            if (player[node].getCurrentTime() < start) {
+                                player[node].setCurrentTime(start);
                             }
-                            if (player.getCurrentTime() >= end + self.frequency) {
-                                player.setCurrentTime(end - self.frequency);
+                            if (player[node].getCurrentTime() >= end + self.frequency) {
+                                player[node].setCurrentTime(end - self.frequency);
                             }
                         });
                         api.on('play', function() {
@@ -147,12 +214,12 @@ class Rumble {
                                 return;
                             }
                             self.paused = false;
-                            if (player.getCurrentTime() < start) {
-                                player.setCurrentTime(start);
+                            if (player[node].getCurrentTime() < start) {
+                                player[node].setCurrentTime(start);
                             }
-                            if (self.ended && player.getCurrentTime() >= end) {
-                                player.setCurrentTime(start);
-                                player.play();
+                            if (self.ended && player[node].getCurrentTime() >= end) {
+                                player[node].setCurrentTime(start);
+                                player[node].play();
                                 self.ended = false;
                             }
                             self.ended = false;
@@ -170,7 +237,7 @@ class Rumble {
                                 return;
                             }
                             self.paused = true;
-                            if (player.getCurrentTime() >= end) {
+                            if (player[node].getCurrentTime() >= end) {
                                 self.ended = true;
                                 dispatchEvent('iv:playerEnded');
                                 return;
@@ -198,7 +265,10 @@ class Rumble {
      * This method triggers the play action on the Rumble player instance.
      */
     play() {
-        player.play();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].play();
         this.paused = false;
     }
     /**
@@ -208,7 +278,10 @@ class Rumble {
      * effectively pausing the video playback.
      */
     pause() {
-        player.pause();
+        if (!player[this.node]) {
+            return false;
+        }
+        player[this.node].pause();
         this.paused = true;
         return true;
     }
@@ -218,8 +291,11 @@ class Rumble {
      * @param {number} starttime - The time (in seconds) to set the video playback to after pausing.
      */
     stop(starttime) {
-        player.pause();
-        player.setCurrentTime(starttime);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].pause();
+        player[this.node].setCurrentTime(starttime);
     }
     /**
      * Seeks the video player to a specified time.
@@ -228,13 +304,16 @@ class Rumble {
      * @returns {Promise} A promise that resolves when the video player has seeked to the specified time.
      */
     seek(time) {
+        if (!player[this.node]) {
+            return time;
+        }
         time = parseFloat(time);
         return new Promise((resolve) => {
             if (time < 0) {
                 time = 0;
             }
             this.ended = false;
-            player.setCurrentTime(time);
+            player[this.node].setCurrentTime(time);
             dispatchEvent('iv:playerSeek', {time: time});
             resolve(time);
         });
@@ -245,7 +324,10 @@ class Rumble {
      * @returns {number} The current time of the video in seconds.
      */
     getCurrentTime() {
-        return player.getCurrentTime();
+        if (!player[this.node]) {
+            return 0;
+        }
+        return player[this.node].getCurrentTime();
     }
     /**
      * Retrieves the duration of the video.
@@ -253,7 +335,10 @@ class Rumble {
      * @returns {number} The duration of the video in seconds.
      */
     getDuration() {
-        return player.getDuration();
+        if (!player[this.node]) {
+            return 0;
+        }
+        return player[this.node].getDuration();
     }
     /**
      * Checks if the video player is currently paused.
@@ -261,7 +346,10 @@ class Rumble {
      * @returns {boolean} True if the player is paused, false otherwise.
      */
     isPaused() {
-        return this.paused && player.getPaused();
+        if (!player[this.node]) {
+            return true;
+        }
+        return this.paused && player[this.node].getPaused();
     }
     /**
      * Checks if the video player is currently playing.
@@ -269,6 +357,9 @@ class Rumble {
      * @returns {boolean} True if the player is in the 'playing' state, otherwise false.
      */
     isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         return !this.paused;
     }
     /**
@@ -277,7 +368,10 @@ class Rumble {
      * @returns {boolean} True if the video has ended, otherwise false.
      */
     isEnded() {
-        return this.ended || player.getCurrentTime() >= this.end;
+        if (this.ended === 'unknown') {
+            return false;
+        }
+        return this.ended || player[this.node].getCurrentTime() >= this.end;
     }
     /**
      * Calculates the aspect ratio for the video player.
@@ -287,6 +381,9 @@ class Rumble {
      * @returns {number} The aspect ratio of the video player.
      */
     async ratio() {
+        if (!player[this.node]) {
+            return 16 / 9;
+        }
         return this.aspectratio;
     }
 
@@ -299,6 +396,8 @@ class Rumble {
         } catch (e) {
             window.console.error(e);
         }
+        player[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Retrieves the current state of the player.
@@ -320,7 +419,7 @@ class Rumble {
      * Mutes the Rumble player.
      */
     mute() {
-        player.mute();
+        player[this.node].mute();
         this.muted = true;
         dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
@@ -328,8 +427,8 @@ class Rumble {
      * Unmutes the video player.
      */
     unMute() {
-        player.unmute();
-        player.setVolume(1);
+        player[this.node].unmute();
+        player[this.node].setVolume(1);
         this.muted = false;
         dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
@@ -343,7 +442,7 @@ class Rumble {
      * @returns {Object} The Rumble player instance.
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
     /**
      * Sets the video quality for the player and dispatches a quality change event.

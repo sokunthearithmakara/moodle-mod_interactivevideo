@@ -26,7 +26,7 @@ import $ from 'jquery';
 import {getString} from 'core/str';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
-var player;
+var player = {};
 class Panopto {
     /**
      * Constructor of the Panopto player.
@@ -51,6 +51,82 @@ class Panopto {
             quality: false,
         };
     }
+
+    async getInfo(url, node) {
+        this.node = node;
+        var EmbedApi;
+        const matches = url.match(/^[^/]+:\/\/([^/]*panopto\.[^/]+)\/Panopto\/.+\?id=(.+)$/);
+        const serverName = matches[1];
+        const sessionId = matches[2];
+        return new Promise((resolve) => {
+            const launchSetup = function() {
+                player[node].unmuteVideo();
+                player[node].setVolume(1);
+                let totaltime = Number(player[node].getDuration().toFixed(2));
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                    type: 'POST',
+                    dataType: 'text/plain',
+                    data: {
+                        action: 'get_from_url',
+                        contextid: M.cfg.contextid,
+                        url: url,
+                        sesskey: M.cfg.sesskey,
+                    },
+                    complete: function(res) {
+                        // Get title and poster image from the video.
+                        let parser = new DOMParser();
+                        let doc = parser.parseFromString(res.responseText, 'text/html');
+                        let page = $(doc);
+                        let title = page.find('meta[property="og:title"]').attr('content');
+                        let poster = page.find('meta[property="og:image"]').attr('content');
+                        resolve({
+                            duration: totaltime,
+                            title: title,
+                            posterImage: poster,
+                        });
+                    }
+                });
+            };
+            var options = {
+                sessionId,
+                serverName,
+                width: 1080,
+                height: 720,
+                videoParams: {
+                    interactivity: 'none',
+                    showtitle: false,
+                    autohide: true,
+                    offerviewer: false,
+                    autoplay: true,
+                    showbrand: false,
+                },
+                events: {
+                    onReady: function() { // When video is ready to play.
+                        player[node].muteVideo();
+                        player[node].pauseVideo();
+                        launchSetup();
+                    },
+                }
+            };
+
+            if (!window.EmbedApi) {
+                var tag = document.createElement('script');
+                tag.src = "https://developers.panopto.com/scripts/embedapi.min.js";
+                tag.type = 'text/javascript';
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+                window.onPanoptoEmbedApiReady = function() {
+                    EmbedApi = window.EmbedApi;
+                    player[node] = new EmbedApi(node, options);
+                };
+            } else {
+                player[node] = new window.EmbedApi(node, options);
+            }
+        });
+    }
+
     /**
      * Creates an instance of the Panopto player.
      *
@@ -59,10 +135,12 @@ class Panopto {
      * @param {number} start - The start time of the video in seconds.
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
+     * @param {boolean} reloaded
      */
-    async load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}, reloaded = false) {
         let showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.node = node;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked', {
@@ -93,9 +171,9 @@ class Panopto {
         self.aspectratio = 16 / 9;
         let autoplayBlocked = false;
         const launchSetup = function() {
-            player.unmuteVideo();
-            player.setVolume(1);
-            let totaltime = Number(player.getDuration().toFixed(2)) - self.frequency;
+            player[node].unmuteVideo();
+            player[node].setVolume(1);
+            let totaltime = Number(player[node].getDuration().toFixed(2)) - self.frequency;
             end = !end ? totaltime : Math.min(end, totaltime);
             end = Number(end.toFixed(2));
             self.end = end;
@@ -134,8 +212,8 @@ class Panopto {
                     }
                 });
             } else {
-                let tracks = player.getCaptionTracks();
-                player.disableCaptions();
+                let tracks = player[node].getCaptionTracks();
+                player[node].disableCaptions();
                 if (tracks && tracks.length > 0) {
                     tracks = tracks.map((track, i) => {
                         return {
@@ -143,7 +221,7 @@ class Panopto {
                             code: 'code-' + i,
                         };
                     });
-                    dispatchEvent('iv:playerLoaded', {tracks});
+                    dispatchEvent('iv:playerLoaded', {tracks, reloaded: reloaded});
                 }
                 if (!ready) {
                     ready = true;
@@ -176,19 +254,19 @@ class Panopto {
                 onReady: function() { // When video is ready to play.
                     // Do nothing.
                     if (!ready) {
-                        player.muteVideo();
-                        player.pauseVideo();
+                        player[node].muteVideo();
+                        player[node].pauseVideo();
                         launchSetup();
                     }
                 },
                 onIframeReady: async function() { // Iframe is ready, but the video isn't ready yet. (e.g. blocked by the browser)
-                    player.muteVideo();
-                    player.loadVideo();
-                    player.pauseVideo(); // If the autoplay is blocked by the browser, we'll get the error event. See onError.
+                    player[node].muteVideo();
+                    player[node].loadVideo();
+                    player[node].pauseVideo(); // If the autoplay is blocked by the browser, we'll get the error event. See onError.
                 },
                 onStateChange: function(state) {
                     if (ready === false) {
-                        player.pauseVideo();
+                        player[node].pauseVideo();
                         return;
                     }
                     switch (state) {
@@ -197,8 +275,8 @@ class Panopto {
                             dispatchEvent('iv:playerEnded');
                             break;
                         case PlayerState.Playing:
-                            if (player.getCurrentTime() >= self.end || player.getCurrentTime() < self.start) {
-                                player.seekTo(self.start);
+                            if (player[node].getCurrentTime() >= self.end || player[node].getCurrentTime() < self.start) {
+                                player[node].seekTo(self.start);
                             }
                             dispatchEvent('iv:playerPlay');
                             dispatchEvent('iv:playerPlaying');
@@ -207,7 +285,7 @@ class Panopto {
                             break;
                         case PlayerState.Paused:
                             this.paused = true;
-                            if (!self.ended && player.getCurrentTime() >= self.end - self.frequency) {
+                            if (!self.ended && player[node].getCurrentTime() >= self.end - self.frequency) {
                                 dispatchEvent('iv:playerEnded');
                                 self.ended = true;
                                 return;
@@ -243,7 +321,7 @@ class Panopto {
                         return;
                     } else if (error === 'playWithSoundNotAllowed') {
                         if (!ready) {
-                            player.muteVideo();
+                            player[node].muteVideo();
                         }
                         return;
                     }
@@ -266,10 +344,10 @@ class Panopto {
 
             window.onPanoptoEmbedApiReady = function() {
                 EmbedApi = window.EmbedApi;
-                player = new EmbedApi(node, options);
+                player[node] = new EmbedApi(node, options);
             };
         } else {
-            player = new window.EmbedApi(node, options);
+            player[node] = new window.EmbedApi(node, options);
         }
     }
 
@@ -278,7 +356,10 @@ class Panopto {
      * @return {Void}
      */
     play() {
-        player.playVideo();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].playVideo();
         this.paused = false;
     }
     /**
@@ -286,7 +367,10 @@ class Panopto {
      * @return {Void}
      */
     pause() {
-        player.pauseVideo();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].pauseVideo();
         this.paused = true;
     }
     /**
@@ -295,8 +379,11 @@ class Panopto {
      * @return {Void}
      */
     stop(starttime) {
-        player.seekTo(starttime);
-        player.pauseVideo();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].seekTo(starttime);
+        player[this.node].pauseVideo();
     }
     /**
      * Seek the video to a specific time
@@ -304,9 +391,12 @@ class Panopto {
      * @return {Promise<Boolean>}
      */
     async seek(time) {
+        if (!player[this.node]) {
+            return time;
+        }
         this.ended = false;
         return new Promise((resolve) => {
-            player.seekTo(time, true);
+            player[this.node].seekTo(time, true);
             dispatchEvent('iv:playerSeek', {time: time});
             resolve(true);
         });
@@ -316,44 +406,59 @@ class Panopto {
      * @return {Number}
      */
     getCurrentTime() {
-        return player.getCurrentTime();
+        if (!player[this.node]) {
+            return 0;
+        }
+        return player[this.node].getCurrentTime();
     }
     /**
      * Get the duration of the video
      * @return {Number}
      */
     getDuration() {
-        return player.getDuration();
+        if (!player[this.node]) {
+            return 0;
+        }
+        return player[this.node].getDuration();
     }
     /**
      * Check if the video is paused
      * @return {Boolean}
      */
     isPaused() {
+        if (!player[this.node]) {
+            return true;
+        }
         if (this.paused) {
             return true;
         }
-        return player.getState() == PlayerState.Paused;
+        return player[this.node].getState() == PlayerState.Paused;
     }
     /**
      * Check if the video is playing
      * @return {Boolean}
      */
     isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.paused) {
             return false;
         }
-        return player.getState() == PlayerState.Playing;
+        return player[this.node].getState() == PlayerState.Playing;
     }
     /**
      * Check if the video is ended
      * @return {Boolean}
      */
     isEnded() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.ended) {
             return true;
         }
-        return player.getState() == PlayerState.Ended || player.getCurrentTime() >= this.end;
+        return player[this.node].getState() == PlayerState.Ended || player[this.node].getCurrentTime() >= this.end;
     }
     /**
      * Get the aspect ratio of the video
@@ -368,7 +473,8 @@ class Panopto {
      */
     destroy() {
         player = null;
-        $(`#player`).remove();
+        $(`#${this.node}`).remove();
+        player[this.node] = null;
         dispatchEvent('iv:playerDestroyed');
     }
     /**
@@ -376,41 +482,56 @@ class Panopto {
      * @return {Number}
      */
     getState() {
+        if (!player[this.node]) {
+            return 'paused';
+        }
         // eslint-disable-next-line no-nested-ternary
-        return player.getState() === 1 ? 'playing' : player.getState() === 2 ? 'paused' : 'stopped';
+        return player[this.node].getState() === 1 ? 'playing' : player[this.node].getState() === 2 ? 'paused' : 'stopped';
     }
     /**
      * Set playback rate of the video
      * @param {Number} rate
      */
     setRate(rate) {
-        player.setPlaybackRate(rate);
+        if (!player[this.node]) {
+            return rate;
+        }
+        player[this.node].setPlaybackRate(rate);
         return rate;
     }
     /**
      * Mute the video
      */
     mute() {
-        player.muteVideo();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].muteVideo();
         dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmute the video
      */
     unMute() {
-        player.unmuteVideo();
-        player.setVolume(1);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].unmuteVideo();
+        player[this.node].setVolume(1);
         dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     isMuted() {
-        return player.isMuted();
+        if (!player[this.node]) {
+            return false;
+        }
+        return player[this.node].isMuted();
     }
     /**
      * Get the original player object
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
 
     /**
@@ -418,16 +539,18 @@ class Panopto {
      * @param {string} track language code
      */
     setCaption(track) {
-        if (player.hasCaptions() === false) {
+        if (!player[this.node]) {
+            return;
+        }
+        if (player[this.node].hasCaptions() === false) {
             return;
         }
         if (!track || track === '') {
-            player.disableCaptions();
+            player[this.node].disableCaptions();
             return;
         }
         track = track.replace('code-', '');
-
-        player.enableCaptions(track);
+        player[this.node].enableCaptions(track);
     }
 }
 

@@ -24,6 +24,7 @@ Example context (json):
     <div class="row justify-content-center mx-0">
         <div class="col-12 px-0">
             <div id="wrapper" class="position-relative mx-auto">
+
                 <div id="video-wrapper"
                      class="d-flex align-items-center justify-content-center {{^darkmode}}border{{/darkmode}}">
                     {{! start of toolbar}}
@@ -98,7 +99,7 @@ Example context (json):
     </div>
 {{/displayasstartscreen}}
 {{^displayasstartscreen}}
-<div id="start-screen" class="w-100 position-absolute h-100 bottom-0 {{#square}}square{{/square}}" {{#posterimage}}style="background: url({{{posterimage}}}) center center / cover no-repeat;"{{/posterimage}}>
+<div id="start-screen" class="w-100 position-absolute h-100 bottom-0 {{#square}}square{{/square}}" {{#posterimage}}style="background: url({{{posterimage}}}) center center / cover no-repeat;"{{/posterimage}} data-poster="{{{posterimage}}}">
     <div class="intro-content d-flex align-items-center justify-content-center position-absolute w-100"></div>
     <div id="video-info"
          class="p-1 p-sm-3 text-white w-100 h-100 position-absolute align-items-start flex-column justify-content-between d-flex">

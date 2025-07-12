@@ -137,6 +137,10 @@ $items = array_filter($items, function ($item) use ($moduleinstance, $skip, $con
         return false;
     }
 
+    if ($item->hascompletion == 0 && $item->completiontracking == 'none') {
+        return false;
+    }
+
     // Remove items that are not within the time limit.
     if (($item->timestamp < $moduleinstance->starttime || $item->timestamp > $moduleinstance->endtime) && $item->timestamp >= 0) {
         return false;
@@ -170,7 +174,7 @@ $datafortemplate = [
     "contextid" => $context->id,
     "courseid" => $course->id,
     "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
-    "completion" => '<h4 class="mb-0 iv-border-left border-danger iv-pl-3">'
+    "completion" => '<h4 class="mb-0 iv-border-left border-danger iv-pl-3 clamp-1">'
         . format_string($moduleinstance->name) . '</h4>',
     "manualcompletion" => 1,
     "settingurl" => has_capability('mod/interactivevideo:edit', $context)
@@ -278,6 +282,8 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/report', "init", [
     $course->id,
     $moduleinstance->starttime,
     $moduleinstance->endtime,
+    $moduleinstance->posterimage,
+    format_string($moduleinstance->name),
     [
         'canedit' => has_capability('mod/interactivevideo:editreport', $context),
         'canview' => has_capability('mod/interactivevideo:viewreport', $context),

@@ -169,6 +169,30 @@
     margin-inline-end: 2rem !important;
 }
 
+.iv-mb-n1 {
+    margin-bottom: -0.25rem !important;
+}
+
+.iv-mb-n2 {
+    margin-bottom: -0.5rem !important;
+}
+
+.iv-mb-n3 {
+    margin-bottom: -1rem !important;
+}
+
+.iv-mt-n1 {
+    margin-top: -0.25rem !important;
+}
+
+.iv-mt-n2 {
+    margin-top: -0.5rem !important;
+}
+
+.iv-mt-n3 {
+    margin-top: -1rem !important;
+}
+
 .iv-font-weight-bold {
     font-weight: bold !important;
 }
@@ -285,6 +309,26 @@
 .path-mod-interactivevideo .h5,
 .path-mod-interactivevideo .h6 {
     color: unset;
+}
+
+.path-mod-interactivevideo .clamp-1,
+.path-mod-interactivevideo .clamp-2,
+.path-mod-interactivevideo .clamp-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.path-mod-interactivevideo .clamp-3 {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+.path-mod-interactivevideo .clamp-1 {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
 }
 
 .path-mod-interactivevideo .col {
@@ -1243,7 +1287,7 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo #wrapper.fullscreen .video-block {
     position: absolute;
     top: 0;
-    width: 100%;
+    width: 100% !important;
     height: calc(var(--ivdvh) - 55px);
     padding: 0;
     border-radius: 0;
@@ -1744,6 +1788,10 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls [rel="noopener"],
 .path-mod-interactivevideo.no-original-controls .rumblePlayer-Rumble-cls > div > div:not(#pac) {
     display: none !important;
+}
+
+.path-mod-interactivevideo.no-original-controls.rumble .video-block {
+    pointer-events: none;
 }
 
 #page-mod-interactivevideo-view.mobiletheme #message {
@@ -3787,7 +3835,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 .path-mod-interactivevideo #annotation-canvas.w-0 {
-    width: 0;
+    width: 10px;
 }
 
 .path-mod-interactivevideo .table > :not(caption) > * > * {
@@ -3834,6 +3882,6 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 #playermodal .modal-header .btn,
-.path-mod-interactivevideo.darkmode [data-action="toggle-manual-completion"]:not([data-toggletype="manual:undo"]) {
+.path-mod-interactivevideo.darkmode .navbar [data-action="toggle-manual-completion"]:not([data-toggletype="manual:undo"]) {
     color: #fff;
 }

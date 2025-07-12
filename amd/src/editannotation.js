@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -38,6 +39,10 @@ define(['jquery',
     const isBS5 = $('body').hasClass('bs-5');
     const bsAffix = isBS5 ? '-bs' : '';
     let $loader = $('#background-loading');
+    let $progressbar = $('#video-nav #progress');
+    let $scrollbar = $('#scrollbar');
+    let $scrollhead = $('#scrollhead-top');
+    let $videonav = $('#video-nav');
     /**
      * Replace the progress bar on the video navigation.
      * @param {Number} percentage - Percentage to replace the progress bar.
@@ -46,8 +51,9 @@ define(['jquery',
     const replaceProgressBars = (percentage) => {
         percentage = percentage < 0 ? 0 : percentage;
         percentage = percentage > 100 ? 100 : percentage;
-        $('#video-nav #progress').css('width', percentage + '%');
-        $('#scrollbar, #scrollhead-top').css('left', percentage + '%');
+        $progressbar.css('width', percentage + '%');
+        $scrollbar.css('left', percentage + '%');
+        $scrollhead.css('left', percentage + '%');
     };
     /**
      * Render the annotations on the video navigation.
@@ -58,11 +64,11 @@ define(['jquery',
      * */
     const renderVideoNav = async function(annos, start, totaltime) {
         if (annos.length == 0) {
-            $("#video-nav ul").empty();
+            $videonav.find('ul').empty();
             return;
         }
 
-        $("#video-nav ul").empty();
+        $videonav.find('ul').empty();
         $("#video-timeline-wrapper .skipsegment").remove();
         annos.forEach(async(x) => {
             const render = ctRenderer[x.type];
@@ -94,6 +100,16 @@ define(['jquery',
          */
         init: function(url, coursemodule, interaction, course, start, end, coursecontextid,
             type = 'yt', displayoptions, userid, posterimage, extendedcompletion) {
+
+            let $videonav = $('#video-nav');
+            let $videotimeline = $('#video-timeline');
+            let $annotationlist = $('#annotation-list');
+            let $annotationcanvas = $('#annotation-canvas');
+            let $timelinewrapper = $('#timeline-wrapper');
+            let $videowrapper = $('#video-wrapper');
+            let $playpause = $('#playpause');
+            let $timelineitemswrapper = $('#timeline-items-wrapper');
+            let $addcontent = $('#addcontent');
 
             quickform();
 
@@ -175,17 +191,17 @@ define(['jquery',
              */
             const renderAnnotationItems = (annotations) => {
                 $('#annotationwrapper .loader').remove();
-                $('#annotation-list').empty().removeClass("d-flex align-items-center justify-content-center");
+                $annotationlist.empty().removeClass("d-flex align-items-center justify-content-center");
                 if (player.live) {
-                    $('#timeline-wrapper').addClass('no-pointer-events');
-                    $('#annotation-list').html(
+                    $timelinewrapper.addClass('no-pointer-events');
+                    $annotationlist.html(
                         `${M.util.get_string('interactionsnotsupportedonlivevideo', 'mod_interactivevideo')}`)
                         .addClass("d-flex align-items-center justify-content-center");
                     return;
                 }
                 renderVideoNav(annotations, start, totaltime);
                 if (annotations.length == 0) {
-                    $('#annotation-list').html(`${M.util.get_string('clickaddtoaddinteraction', 'mod_interactivevideo')}`)
+                    $annotationlist.html(`${M.util.get_string('clickaddtoaddinteraction', 'mod_interactivevideo')}`)
                         .addClass("d-flex align-items-center justify-content-center");
                     return;
                 }
@@ -444,7 +460,7 @@ define(['jquery',
                 }
                 player.unMute();
                 if (player.audio) {
-                    $('#annotation-canvas').addClass('bg-black');
+                    $annotationcanvas.addClass('bg-black');
                 }
                 if (displayoptions.passwordprotected == 1) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
@@ -454,7 +470,8 @@ define(['jquery',
                 if (player.type != 'vimeo'
                     && player.type != 'html5video'
                     && player.type != 'panopto'
-                    && player.type != "peertube") { // Vimeo/HTML5 does not pause/play on click.
+                    && player.type != "peertube"
+                    && player.type != "rutube") { // Vimeo/HTML5 does not pause/play on click.
                     $('#video-block').addClass('no-pointer');
                 }
 
@@ -480,22 +497,23 @@ define(['jquery',
                 if (!displayoptions.usefixedratio || displayoptions.usefixedratio == 0) {
                     ratio = player.aspectratio;
                 }
-                $("#video-wrapper").css('padding-bottom', (1 / ratio) * 100 + '%');
+                $videowrapper.css('padding-bottom', (1 / ratio) * 100 + '%');
 
                 playerReady = true;
-                $('#annotation-canvas').removeClass('d-none w-0');
+                $annotationcanvas.removeClass('d-none w-0');
 
                 // Handle timeline block.
-                $("#timeline-wrapper #video-timeline").css({
+                $videotimeline.css({
                     'background-image': 'url(' + posterimage + ')',
                     'background-size': 'contain',
                     'background-repeat': 'no-repeat',
                 });
-                $("#timeline-wrapper #duration").text(convertSecondsToHMS(end, true));
-                $("#timeline-wrapper #currenttime").text(convertSecondsToHMS(start, true));
+                $timelinewrapper.find('#duration').text(convertSecondsToHMS(end, true));
+                $timelinewrapper.find('#currenttime').text(convertSecondsToHMS(start, true));
+
                 // Render minute markers.
                 const minutes = Math.floor(totaltime / 60);
-                $('#timeline-items-wrapper').css('width', (minutes * 300) + 'px'); // 300px per minute as default.
+                $timelineitemswrapper.css('width', (minutes * 300) + 'px'); // 300px per minute as default.
                 const relWidth = $('#timeline-items').width();
                 $('#minute-markers, #minute-markers-bg, #vseek').css('width', relWidth + 'px');
                 let startPercentage = 0;
@@ -533,7 +551,8 @@ define(['jquery',
                     // Do nothing.
                 }
 
-                $('#scrollbar, #scrollhead-top').css('left', 0);
+                $scrollbar.css('left', 0);
+                $scrollhead.css('left', 0);
 
                 getAnnotations();
             };
@@ -543,26 +562,27 @@ define(['jquery',
              */
             const onEnded = () => {
                 player.pause();
-                $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill').toggleClass('rotate-360');
+                $playpause.find('i').removeClass('bi-pause-fill').addClass('bi-play-fill').toggleClass('rotate-360');
                 // Cover the video with a message on a white background div.
-                $('#video-wrapper').append(`<div id="end-screen" class="border position-absolute w-100 h-100 bg-white d-flex
+                $videowrapper.append(`<div id="end-screen" class="border position-absolute w-100 h-100 bg-white d-flex
                      justify-content-center align-items-center" style="top: 0; left: 0;">
                      <button class="btn btn-danger border-0 iv-rounded-circle" style="font-size: 1.5rem;" id="restart">
                     <i class="bi bi-arrow-repeat" style="font-size: x-large;"></i></button></div>`);
-                $('#video-nav #progress').css('width', '100%');
-                $('#scrollbar, #scrollhead-top').css('left', '100%');
+                $progressbar.css('width', '100%');
+                $scrollbar.css('left', '100%');
+                $scrollhead.css('left', '100%');
                 // Focus on the restart button.
                 $('#message #restart').focus();
 
                 // If the current time matches the timestamp of an annotation, highlight the annotation.
                 const currentAnnotation = annotations.find((annotation) => annotation.timestamp == end);
                 if (currentAnnotation) {
-                    $('#annotation-list tr').removeClass('active');
-                    $(`tr[data-id="${currentAnnotation.id}"]`).addClass('active');
+                    $annotationlist.find('tr').removeClass('active');
+                    $annotationlist.find('tr[data-id="' + currentAnnotation.id + '"]').addClass('active');
                     // Show tooltip for two seconds.
-                    $('#video-nav .annotation[data-id="' + currentAnnotation.id + '"] .item').tooltip('show');
+                    $videonav.find('.annotation[data-id="' + currentAnnotation.id + '"] .item').tooltip('show');
                     setTimeout(function() {
-                        $('#video-nav .annotation[data-id="' + currentAnnotation.id + '"] .item').tooltip('hide');
+                        $videonav.find('.annotation[data-id="' + currentAnnotation.id + '"] .item').tooltip('hide');
                     }, 2000);
                 }
             };
@@ -585,8 +605,9 @@ define(['jquery',
                     $('#end-screen').remove();
                 }
                 const percentage = (t - start) / (totaltime) * 100;
-                $('#scrollbar, #scrollhead-top').css('left', percentage + '%');
-                $('#timeline-wrapper #currenttime').text(convertSecondsToHMS(t, true));
+                $scrollbar.css('left', percentage + '%');
+                $scrollhead.css('left', percentage + '%');
+                $timelinewrapper.find('#currenttime').text(convertSecondsToHMS(t, true));
                 dispatchEvent('timeupdate', {'time': t});
             };
 
@@ -633,12 +654,13 @@ define(['jquery',
                     const currentAnnotation = annotations.find(x => (thisTime - player.frequency) <= x.timestamp
                         && (thisTime + player.frequency) >= x.timestamp);
                     if (currentAnnotation) {
-                        $(`#annotation-list tr:not([data-id="${currentAnnotation.id}"])`).removeClass('active');
-                        if (!$(`tr[data-id="${currentAnnotation.id}"]`).hasClass('active')) {
-                            $(`tr[data-id="${currentAnnotation.id}"]`).addClass('active');
-                            $(`tr[data-id="${currentAnnotation.id}"]`).trigger('mouseenter');
+                        $annotationlist.find(`tr:not([data-id="${currentAnnotation.id}"])`).removeClass('active');
+                        if (!$annotationlist.find(`tr[data-id="${currentAnnotation.id}"]`).hasClass('active')) {
+                            $annotationlist.find(`tr[data-id="${currentAnnotation.id}"]`)
+                            .addClass('active')
+                            .trigger('mouseenter');
                             setTimeout(function() {
-                                $(`tr[data-id="${currentAnnotation.id}"]`).trigger('mouseleave');
+                                $annotationlist.find(`tr[data-id="${currentAnnotation.id}"]`).trigger('mouseleave');
                             }, 2000);
                         }
                     }
@@ -673,7 +695,7 @@ define(['jquery',
 
             const onplay = async() => {
                 $('#message, #end-screen').not('.sticky').remove();
-                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill').removeClass('rotate-360');
+                $playpause.find('i').removeClass('bi-play-fill').addClass('bi-pause-fill').removeClass('rotate-360');
                 if (player.audio && !visualized) {
                     player.visualizer();
                     visualized = true;
@@ -685,7 +707,7 @@ define(['jquery',
              */
             const onPause = () => {
                 cancelAnimationFrame(onPlayingInterval);
-                $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill').toggleClass('rotate-360');
+                $playpause.find('i').removeClass('bi-pause-fill').addClass('bi-play-fill').toggleClass('rotate-360');
             };
 
             // Implement the player
@@ -693,7 +715,7 @@ define(['jquery',
                 if (displayoptions.passwordprotected == 1) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
                     $('#video-block').addClass('no-pointer bg-transparent');
-                    $('#annotation-canvas').removeClass('d-none w-0');
+                    $annotationcanvas.removeClass('d-none w-0');
                 }
                 player = new VideoPlayer();
                 player.load(
@@ -735,7 +757,7 @@ define(['jquery',
             });
 
             $(document).on('iv:playerError', function() {
-                $('#annotation-canvas').removeClass('d-none w-0');
+                $annotationcanvas.removeClass('d-none w-0');
                 $('#start-screen').addClass('d-none');
                 $('#video-block').addClass('no-pointer bg-transparent');
                 $('#spinner').remove();
@@ -756,30 +778,24 @@ define(['jquery',
                     return;
                 }
                 const thisTime = e.detail.time;
-                $('#timeline-wrapper #currenttime').text(convertSecondsToHMS(thisTime, true));
+                $timelinewrapper.find('#currenttime').text(convertSecondsToHMS(thisTime, true));
                 let percentage = (thisTime - start) / (totaltime) * 100;
                 replaceProgressBars(percentage);
             });
 
             // Post annotation update (add, edit, clone).
-            let cacheCleared = false;
             $(document).on('annotationupdated', function(e) {
-                if (!cacheCleared) {
-                    $.ajax({
-                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                        method: "POST",
-                        dataType: "text",
-                        data: {
-                            action: 'update_ivitems_cache',
-                            sesskey: M.cfg.sesskey,
-                            contextid: M.cfg.contextid,
-                            cmid: interaction,
-                        },
-                        success: function() {
-                            cacheCleared = true;
-                        }
-                    });
-                }
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                    method: "POST",
+                    dataType: "text",
+                    data: {
+                        action: 'update_ivitems_cache',
+                        sesskey: M.cfg.sesskey,
+                        contextid: M.cfg.contextid,
+                        cmid: interaction,
+                    },
+                });
                 if ($('#annotation-list-bulk-edit').hasClass('active')) {
                     $('#annotation-list-bulk-edit').trigger('click');
                 }
@@ -810,28 +826,29 @@ define(['jquery',
                 renderAnnotationItems(annotations);
                 if (action == 'add' || action == 'clone') {
                     addNotification(M.util.get_string('interactionadded', 'mod_interactivevideo'), 'success');
-                    $(`tr[data-id="${updated.id}"]`).addClass('active');
+                    $annotationlist.find(`tr[data-id="${updated.id}"]`).addClass('active');
                 } else if (action == 'edit') {
                     addNotification(M.util.get_string('interactionupdated', 'mod_interactivevideo'), 'success');
-                    $(`tr[data-id="${updated.id}"]`).addClass('active');
+                    $annotationlist.find(`tr[data-id="${updated.id}"]`).addClass('active');
                     setTimeout(function() {
-                        $(`tr[data-id="${updated.id}"]`).removeClass('active');
+                        $annotationlist.find(`tr[data-id="${updated.id}"]`).removeClass('active');
                     }, 1500);
                 }
 
                 // If draft exists, activate the save button.
                 if (annotations.find(x => x.status == 'draft')) {
-                    $('#timeline-wrapper #savedraft').removeAttr('disabled').addClass('pulse');
+                    $timelinewrapper.find('#savedraft').removeAttr('disabled').addClass('pulse');
                 } else {
-                    $('#timeline-wrapper #savedraft').attr('disabled', 'disabled').removeClass('pulse');
+                    $timelinewrapper.find('#savedraft').attr('disabled', 'disabled').removeClass('pulse');
                 }
+
             });
 
             // Re-render annotation list and timeline after an annotation is deleted.
             $(document).on('annotationdeleted', function(e) {
                 const annotation = e.originalEvent.detail.annotation;
                 activeid = null;
-                $(`tr[data-id="${annotation.id}"]`).addClass('deleted');
+                $annotationlist.find(`tr[data-id="${annotation.id}"]`).addClass('deleted');
                 setTimeout(function() {
                     annotations = annotations.filter(function(item) {
                         return item.id != annotation.id;
@@ -938,8 +955,6 @@ define(['jquery',
                         }
                     );
                 }
-
-
             });
 
             // Implement view annotation.
@@ -984,7 +999,7 @@ define(['jquery',
                     await player.seek(currentTime);
                 }
                 player.pause();
-                $("#addcontent").trigger('click');
+                $addcontent.trigger('click');
             });
 
             // Right click on the scrollbar to add a new interaction.
@@ -995,7 +1010,7 @@ define(['jquery',
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 currentTime = await player.getCurrentTime();
-                $("#addcontent").trigger('click');
+                $addcontent.trigger('click');
             });
 
             // Click the play/pause button on the timeline region to pause/play video.
@@ -1023,7 +1038,7 @@ define(['jquery',
                     return;
                 }
                 e.preventDefault();
-                $('#playpause').trigger('click');
+                $playpause.trigger('click');
             });
 
             // Right click on the annotation indicator to edit the annotation.
@@ -1032,7 +1047,7 @@ define(['jquery',
                 e.stopImmediatePropagation();
                 const id = $(this).data('id');
                 // Trigger click on the edit button.
-                $(`tr.annotation[data-id="${id}"] .edit`).trigger('click');
+                $annotationlist.find(`tr.annotation[data-id="${id}"] .edit`).trigger('click');
             });
 
             // Quick edit.
@@ -1152,13 +1167,13 @@ define(['jquery',
             // Display tooltip on anntation indicator when annotation on the list is hovered.
             $(document).on('mouseenter', 'tr.annotation', function() {
                 const id = $(this).data('id');
-                $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('show');
+                $videonav.find(`ul li[data-id="${id}"] .item`).tooltip('show');
             });
 
             // Remove tooltip when annotation on the list is not hovered.
             $(document).on('mouseleave', 'tr.annotation', function() {
                 const id = $(this).data('id');
-                $(`#video-nav ul li[data-id="${id}"] .item`).tooltip('hide');
+                $videonav.find(`ul li[data-id="${id}"] .item`).tooltip('hide');
                 if (!isBS5) {
                     $('.tooltip').remove();
                 }
@@ -1167,13 +1182,13 @@ define(['jquery',
             // Highlight annotation on the list when annotation indicator is hovered.
             $(document).on('mouseover', '#video-nav ul li', function() {
                 const id = $(this).data('id');
-                $(`tr.annotation[data-id="${id}"]`).addClass('active');
+                $annotationlist.find(`tr.annotation[data-id="${id}"]`).addClass('active');
             });
 
             // Remove highlight when annotation indicator is not hovered.
             $(document).on('mouseout', '#video-nav ul li', function() {
                 const id = $(this).data('id');
-                $(`tr.annotation[data-id="${id}"]`).removeClass('active');
+                $annotationlist.find(`tr.annotation[data-id="${id}"]`).removeClass('active');
             });
 
             // Validate timestamp when the timestamp field is changed.
@@ -1194,14 +1209,16 @@ define(['jquery',
                 }
             });
 
+            let $vseekbar = $('#vseek #bar');
+
             const appendTimestampMarker = (seconds, rounded) => {
                 const formattedTime = convertSecondsToHMS(seconds, true, rounded);
-                $('#vseek #bar').append(`<div id="position-marker">
+                $vseekbar.append(`<div id="position-marker">
                     <div id="position" class="py-0 px-1" style="top:-25px;">${formattedTime}</div></div>`);
             };
 
             $(document).on('annotationitemsrendered', function() {
-                $(`#timeline-wrapper [data${bsAffix}-toggle="tooltip"]`).tooltip({
+                $timelinewrapper.find(`[data${bsAffix}-toggle="tooltip"]`).tooltip({
                     'boundary': 'window',
                     'container': '#timeline',
                 });
@@ -1736,9 +1753,9 @@ define(['jquery',
 
             // Implement timeline zoom out.
             $('#zoomout').on('click', function() {
-                const currentLevel = $('#timeline-items-wrapper').css('width'); // In px.
+                const currentLevel = $timelineitemswrapper.css('width'); // In px.
                 const newLevel = parseInt(currentLevel) - 300;
-                $('#timeline-items-wrapper').css('width', newLevel + 'px');
+                $timelineitemswrapper.css('width', newLevel + 'px');
                 const relWidth = $('#timeline-items').width();
                 $('#minute-markers, #minute-markers-bg, #vseek').css('width', relWidth + 'px');
                 let timelineElement = document.getElementById('timeline');
@@ -1750,9 +1767,9 @@ define(['jquery',
 
             // Implement timeline zoom in.
             $('#zoomin').on('click', function() {
-                const currentLevel = $('#timeline-items-wrapper').css('width'); // In px.
+                const currentLevel = $timelineitemswrapper.css('width'); // In px.
                 const newLevel = parseInt(currentLevel) + 300;
-                $('#timeline-items-wrapper').css('width', newLevel + 'px');
+                $timelineitemswrapper.css('width', newLevel + 'px');
                 const relWidth = $('#timeline-items').width();
                 $('#minute-markers, #minute-markers-bg, #vseek').css('width', relWidth + 'px');
                 $('#zoomout').removeAttr('disabled');
@@ -1837,7 +1854,7 @@ define(['jquery',
 
             // Launch content selection modal.
             let contentTypeModal;
-            $('#addcontent').on('click', async function(e) {
+            $addcontent.on('click', async function(e) {
                 e.preventDefault();
                 if (!playerReady) {
                     return;
@@ -1850,7 +1867,7 @@ define(['jquery',
                     title: '',
                     body: '',
                     backdrop: 'static',
-                    removeOnHide: true,
+                    removeOnHide: false,
                 });
                 let root = contentTypeModal.getRoot();
                 let $body = $('#contentmodal-original .modal-content').html();
@@ -1936,9 +1953,13 @@ define(['jquery',
 
             // Observe timeline-wrapper width change.
             let timelineWrapper = document.getElementById('timeline-wrapper');
+            let resizeTimeout;
             let resizeObserver = new ResizeObserver(() => {
-                const relWidth = $('#timeline-items').width();
-                $('#minute-markers, #minute-markers-bg, #vseek').css('width', relWidth + 'px');
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    const relWidth = $('#timeline-items').width();
+                    $('#minute-markers, #minute-markers-bg, #vseek').css('width', relWidth + 'px');
+                }, 100);
             });
 
             resizeObserver.observe(timelineWrapper);
@@ -2628,7 +2649,7 @@ define(['jquery',
             });
 
             // Implement keyboard shortcuts.
-            // eslint-disable-next-line complexity
+
             document.addEventListener('keydown', async function(e) {
                 // Ignore spacebar when focus is on an input, textarea, or button
                 const activeTag = document.activeElement.tagName.toLowerCase();
@@ -2650,7 +2671,7 @@ define(['jquery',
                 } else if (e.code === 'KeyA' && !e.ctrlKey && !e.metaKey) {
                     e.preventDefault();
                     // Launch add content modal.
-                    $('#addcontent').trigger('click');
+                    $addcontent.trigger('click');
                 } else if (e.code === 'ArrowRight') {
                     e.preventDefault();
                     // Fast forward.

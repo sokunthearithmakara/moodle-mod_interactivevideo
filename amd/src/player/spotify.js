@@ -38,6 +38,92 @@ class Spotify {
         // Remove the mute button since Spotify does not support mute.
         $('#controller #mute').remove();
     }
+
+    async getInfo(url, node) {
+        this.node = node;
+        let regex = /(?:https?:\/\/)?(?:open\.spotify\.com)\/(episode|track)\/([^/]+)/;
+        let match = regex.exec(url);
+        let videoId = match[2];
+        let type = match[1];
+        videoId = videoId.split("?")[0];
+        this.videoId = videoId;
+        let self = this;
+
+        const getData = function() {
+            return $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                type: 'POST',
+                dataType: 'text',
+                data: {
+                    action: 'get_from_url',
+                    contextid: M.cfg.contextid,
+                    url: 'https://open.spotify.com/oembed?url=' + encodeURIComponent(url),
+                    sesskey: M.cfg.sesskey,
+                }
+            });
+        };
+
+        const data = await getData();
+        try {
+            var json = JSON.parse(data);
+            self.title = json.title;
+            self.posterImage = json.thumbnail_url;
+        } catch (e) {
+            self.title = '';
+            self.posterImage = '';
+        }
+
+        return new Promise((resolve) => {
+            const callback = (EmbedController) => {
+                window.EmbedController = EmbedController;
+                EmbedController.on('ready', () => {
+                    $('#video-wrapper iframe').attr('id', node);
+                    EmbedController.seek(self.start);
+                    EmbedController.play();
+                });
+                let resolved = false;
+                EmbedController.addListener('playback_update', async e => {
+                    self.currentTime = e.data.position / 1000;
+                    if (e.data.duration === 0) {
+                        return;
+                    }
+                    if (resolved) {
+                        return;
+                    }
+                    EmbedController.pause();
+                    resolved = true;
+                    resolve({
+                        duration: e.data.duration / 1000,
+                        title: self.title,
+                        posterImage: self.posterImage,
+                    });
+                });
+            };
+
+            // Load the IFrame Player API code asynchronously.
+            const element = document.getElementById(node);
+            const options = {
+                uri: 'spotify:' + type + ':' + videoId,
+            };
+            if (!window.EmbedController) {
+                var tag = document.createElement('script');
+                tag.src = "https://open.spotify.com/embed/iframe-api/v1";
+                tag.async = true;
+                tag.type = 'text/javascript';
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                // Replace the 'player' element with an <iframe> and Spotify player
+                window.onSpotifyIframeApiReady = (IFrameAPI) => {
+                    IFrameAPI = window.IFrameAPI || IFrameAPI;
+                    window.IFrameAPI = IFrameAPI;
+                    IFrameAPI.createController(element, options, callback);
+                };
+            } else {
+                window.IFrameAPI.createController(element, options, callback);
+            }
+        });
+    }
+
     /**
      * Creates an instance of the Spotify player.
      *

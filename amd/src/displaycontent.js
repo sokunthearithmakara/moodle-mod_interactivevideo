@@ -103,7 +103,6 @@ const defaultDisplayContent = async function(annotation, player) {
     const isPlayerMode = $('body').attr('id') == 'page-mod-interactivevideo-view';
     const isPreviewMode = annotation.previewMode;
     const advanced = JSON.parse(annotation.advanced);
-
     const isDarkMode = $('body').hasClass('darkmode');
 
     // Play pop sound
@@ -366,14 +365,16 @@ const defaultDisplayContent = async function(annotation, player) {
         // Make sure all sidebar are hidden.
         $('#wrapper .iv-sidebar').addClass('hide');
         // Create sidebar if it does not exist.
+        let $sidebar;
         if ($('#wrapper #annotation-sidebar').length == 0) {
             $('#wrapper').append(`<div id="annotation-sidebar" class="iv-sidebar p-0 hide">
                 <div id="sidebar-nav" class="d-flex w-100"></div>
                 <div id="sidebar-content" class="p-0"></div>
                 </div>`);
+            $sidebar = $('#annotation-sidebar');
             // Initialize resizable.
             const rtl = $('body').hasClass('dir-rtl');
-            $('#annotation-sidebar').resizable({
+            $sidebar.resizable({
                 handles: rtl ? 'e' : 'w',
                 minWidth: 475,
                 container: 'body',
@@ -443,6 +444,7 @@ const defaultDisplayContent = async function(annotation, player) {
 
             });
         }
+        $sidebar = $('#annotation-sidebar');
         // Add annotation toggle button if it does not exist.
         if (isPlayerMode || isPreviewMode) {
             if ($('#wrapper #toolbar #annotation-toggle').length == 0) {
@@ -452,7 +454,7 @@ const defaultDisplayContent = async function(annotation, player) {
             }
         }
         // Show the sidebar.
-        $('#annotation-sidebar').removeClass('hide');
+        $sidebar.removeClass('hide');
         // Replace the navigation item if it exists.
         if ($(`#sidebar-nav .sidebar-nav-item[data-id='${annotation.id}']`).length == 0) {
             // Add a navigation item.
@@ -464,7 +466,7 @@ const defaultDisplayContent = async function(annotation, player) {
                 clss += ' no-completion';
             }
 
-            $('#annotation-sidebar #sidebar-nav').append(`<div class="sidebar-nav-item active w-100 ${clss}"
+            $sidebar.find('#sidebar-nav').append(`<div class="sidebar-nav-item active w-100 ${clss}"
                  data${isBS5 ? '-bs' : ''}-toggle="tooltip"
             data${isBS5 ? '-bs' : ''}-html="true" title="<i class='${prop.icon} iv-mr-2'></i>${annotation.formattedtitle}"
             data-id="${annotation.id}" data-timestamp="${annotation.timestamp}"></div>`);
@@ -473,29 +475,29 @@ const defaultDisplayContent = async function(annotation, player) {
             $(`#sidebar-nav .sidebar-nav-item[data-id='${annotation.id}']`).tooltip();
 
             // Sort the navigation items.
-            $('#annotation-sidebar #sidebar-nav .sidebar-nav-item').sort(function(a, b) {
+            $sidebar.find('#sidebar-nav .sidebar-nav-item').sort(function(a, b) {
                 return $(a).data('timestamp') - $(b).data('timestamp');
             }).appendTo('#annotation-sidebar #sidebar-nav');
         }
         // Hide other messages on the sidebar.
-        $('#annotation-sidebar #message').fadeOut(300);
-        $('#annotation-sidebar #sidebar-nav .sidebar-nav-item:not([data-id="' + annotation.id + '"])').removeClass('active');
-        if ($('#annotation-sidebar #message.active').length > 0) {
+        $sidebar.find('#message').fadeOut(300);
+        $sidebar.find('#sidebar-nav .sidebar-nav-item:not([data-id="' + annotation.id + '"])').removeClass('active');
+        if ($sidebar.find('#message.active').length > 0) {
             dispatchEvent('interactionclose', {
                 annotation: {
                     id: $(`#annotation-sidebar #message.active`).data('id')
                 }
             });
         }
-        $(`#annotation-sidebar #message:not([data-id='${annotation.id}'])`).removeClass('active');
+        $sidebar.find(`#message:not([data-id='${annotation.id}'])`).removeClass('active');
         // Append the message to the sidebar.
-        $('#annotation-sidebar #sidebar-content').append(`<div id="message" data-placement="side"
+        $sidebar.find('#sidebar-content').append(`<div id="message" data-placement="side"
                     data-id="${annotation.id}" class="${annotation.type} sticky active" tabindex="0">
                     <div id="title" class="modal-header shadow-sm iv-pr-0 iv-pl-3 border-bottom">${messageTitle}</div>
                     <div class="modal-body" id="content"></div>
                     </div>`);
         return new Promise((resolve) => {
-            $('#annotation-sidebar #message.active').fadeIn(300, function() {
+            $sidebar.find('#message.active').fadeIn(300, function() {
                 resolve();
             });
         });

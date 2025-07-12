@@ -23,7 +23,7 @@
 import {dispatchEvent} from 'core/event_dispatcher';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
-let player;
+let player = {};
 
 class Vimeo {
     /**
@@ -39,6 +39,55 @@ class Vimeo {
             password: true,
         };
     }
+    async getInfo(url, node) {
+        this.node = node;
+        return new Promise((resolve) => {
+            let VimeoPlayer;
+            const option = {
+                url: url,
+                width: 1080,
+                height: 720,
+            };
+            const vimeoEvents = (player) => {
+                player.on('loaded', async function() {
+                    let title = await player.getVideoTitle();
+                    let duration = await player.getDuration();
+                    // Get poster image using oEmbed.
+                    var posterUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url);
+                    const oEmbed = await fetch(posterUrl);
+                    if (!oEmbed.ok) {
+                        resolve(null);
+                    }
+                    const oEmbedData = await oEmbed.json();
+                    if (oEmbedData.domain_status_code === 403 || oEmbedData.error) {
+                        resolve(null);
+                    }
+                    let posterImage = oEmbedData.thumbnail_url || '';
+                    resolve({
+                        duration,
+                        title,
+                        posterImage: posterImage.replace(/_\d+x\d+/, '_720x405'),
+                    });
+                });
+            };
+
+            if (!VimeoPlayer) {
+                try {
+                    require(['https://player.vimeo.com/api/player.js'], function(Player) {
+                        VimeoPlayer = Player;
+                        player[node] = new Player(node, option);
+                        vimeoEvents(player[node]);
+                    });
+                } catch (e) {
+                    dispatchEvent('iv:playerError', {error: e.message});
+                    return;
+                }
+            } else {
+                player[node] = new VimeoPlayer(node, option);
+                vimeoEvents(player[node]);
+            }
+        });
+    }
     /**
      * Load player instance.
      *
@@ -46,10 +95,12 @@ class Vimeo {
      * @param {number} start - The start time of the video in seconds.
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
+     * @param {boolean} reloaded
      */
-    async load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}, reloaded = false) {
         let showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.node = node;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked');
@@ -143,6 +194,7 @@ class Vimeo {
                         dispatchEvent('iv:playerLoaded', {
                             tracks: tracks,
                             qualities: self.getQualities(),
+                            reloaded: reloaded,
                         });
                     }
 
@@ -273,16 +325,16 @@ class Vimeo {
             try {
                 require(['https://player.vimeo.com/api/player.js'], function(Player) {
                     VimeoPlayer = Player;
-                    player = new Player(node, option);
-                    vimeoEvents(player);
+                    player[node] = new Player(node, option);
+                    vimeoEvents(player[node]);
                 });
             } catch (e) {
                 dispatchEvent('iv:playerError', {error: e.message});
                 return;
             }
         } else {
-            player = new VimeoPlayer(node, option);
-            vimeoEvents(player);
+            player[node] = new VimeoPlayer(node, option);
+            vimeoEvents(player[node]);
         }
     }
     /**
@@ -290,7 +342,10 @@ class Vimeo {
      * If the player is not initialized, logs an error to the console.
      */
     play() {
-        player.play();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].play();
         this.paused = false;
     }
     /**
@@ -299,7 +354,10 @@ class Vimeo {
      * This method calls the `pause` function on the `player` object to pause the video playback.
      */
     async pause() {
-        await player.pause();
+        if (!player[this.node]) {
+            return false;
+        }
+        await player[this.node].pause();
         this.paused = true;
         return true;
     }
@@ -309,8 +367,11 @@ class Vimeo {
      * @param {number} starttime - The time in seconds to which the video should be set before pausing.
      */
     stop(starttime) {
-        player.setCurrentTime(starttime);
-        player.pause();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setCurrentTime(starttime);
+        player[this.node].pause();
     }
     /**
      * Seeks the video to a specified time.
@@ -319,11 +380,14 @@ class Vimeo {
      * @returns {Promise<number>} A promise that resolves to the time in seconds to which the video was seeked.
      */
     async seek(time) {
+        if (!player[this.node]) {
+            return time;
+        }
         if (time < 0) {
             time = 0;
         }
         this.ended = false;
-        await player.setCurrentTime(time);
+        await player[this.node].setCurrentTime(time);
         dispatchEvent('iv:playerSeek', {time: time});
         return time;
     }
@@ -333,7 +397,10 @@ class Vimeo {
      * @returns {Promise<number>} A promise that resolves to the current time in seconds.
      */
     async getCurrentTime() {
-        return player.getCurrentTime();
+        if (!player[this.node]) {
+            return 0;
+        }
+        return player[this.node].getCurrentTime();
     }
     /**
      * Asynchronously retrieves the duration of the video.
@@ -341,7 +408,10 @@ class Vimeo {
      * @returns {Promise<number>} A promise that resolves to the duration of the video in seconds.
      */
     async getDuration() {
-        const duration = await player.getDuration();
+        if (!player[this.node]) {
+            return 0;
+        }
+        const duration = await player[this.node].getDuration();
         return duration;
     }
     /**
@@ -350,10 +420,13 @@ class Vimeo {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player is paused.
      */
     async isPaused() {
+        if (!player[this.node]) {
+            return true;
+        }
         if (this.paused) {
             return true;
         }
-        const paused = await player.getPaused();
+        const paused = await player[this.node].getPaused();
         return paused;
     }
     /**
@@ -362,10 +435,13 @@ class Vimeo {
      * @returns {Promise<boolean>} A promise that resolves to `true` if the player is playing, otherwise `false`.
      */
     async isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.paused) {
             return false;
         }
-        const paused = await player.getPaused();
+        const paused = await player[this.node].getPaused();
         return !paused;
     }
     /**
@@ -376,10 +452,13 @@ class Vimeo {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player has ended.
      */
     async isEnded() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.ended) {
             return true;
         }
-        const ended = await player.getEnded();
+        const ended = await player[this.node].getEnded();
         return ended;
     }
     /**
@@ -390,8 +469,12 @@ class Vimeo {
      * @returns {Promise<number>} The aspect ratio of the video.
      */
     async ratio() {
-        const width = await player.getVideoWidth();
-        const height = await player.getVideoHeight();
+        if (!player[this.node]) {
+            return 16 / 9;
+        }
+        const width = await player[this.node].getVideoWidth();
+        const height = await player[this.node].getVideoHeight();
+
         return width / height;
     }
     /**
@@ -399,9 +482,11 @@ class Vimeo {
      * If the player is not initialized, logs an error message to the console.
      */
     destroy() {
-        if (player) {
-            player.destroy();
+        if (player[this.node]) {
+            player[this.node].destroy();
         }
+        player[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -409,7 +494,10 @@ class Vimeo {
      * @returns {Promise<string>} A promise that resolves to a string indicating the player's state, either 'paused' or 'playing'.
      */
     async getState() {
-        const paused = await player.getPaused();
+        if (!player[this.node]) {
+            return 'paused';
+        }
+        const paused = await player[this.node].getPaused();
         return paused ? 'paused' : 'playing';
     }
     /**
@@ -419,23 +507,35 @@ class Vimeo {
      *                        This should be a value supported by the Vimeo player.
      */
     setRate(rate) {
-        player.setPlaybackRate(rate);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setPlaybackRate(rate);
     }
     /**
      * Mutes the Vimeo player by setting the volume to 0.
      */
     mute() {
-        player.setVolume(0);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setVolume(0);
     }
     /**
      * Unmutes the Vimeo player by setting the volume to 1.
      */
     unMute() {
-        player.setVolume(1);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setVolume(1);
     }
 
     async isMuted() {
-        const volume = await player.getVolume();
+        if (!player[this.node]) {
+            return false;
+        }
+        const volume = await player[this.node].getVolume();
         return volume === 0;
     }
 
@@ -444,14 +544,20 @@ class Vimeo {
      * @param {String} quality
      */
     setQuality(quality) {
-        player.setQuality(quality);
+        if (!player[this.node]) {
+            return quality;
+        }
+        player[this.node].setQuality(quality);
         return quality;
     }
     /**
      * Get the available qualities of the video
      */
     async getQualities() {
-        let qualities = await player.getQualities();
+        if (!player[this.node]) {
+            return null;
+        }
+        let qualities = await player[this.node].getQualities();
         let keys = qualities.map(x => x.id);
         let values = qualities.map(x => x.label);
         let current = qualities.find(x => x.active).id;
@@ -468,11 +574,15 @@ class Vimeo {
      * @param {string} track language code
      */
     setCaption(track) {
-        if (track != '') {
-            player.enableTextTrack(track);
-        } else {
-            player.disableTextTrack();
+        if (!player[this.node]) {
+            return null;
         }
+        if (track != '') {
+            player[this.node].enableTextTrack(track);
+        } else {
+            player[this.node].disableTextTrack();
+        }
+        return track;
     }
 
     /**
@@ -481,7 +591,7 @@ class Vimeo {
      * @returns {Object} The Vimeo player instance.
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
 }
 

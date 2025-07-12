@@ -867,6 +867,7 @@ function interactivevideo_displayinline(cm_info $cm) {
     $datafortemplate['completion'] = $completion;
 
     // Get interactive_items. Must include skipsegments for filtering later.
+    $contenttypes = get_config('mod_interactivevideo', 'enablecontenttypes');
     $enabledcontenttypes = explode(',', get_config('mod_interactivevideo', 'enablecontenttypes'));
     $includeanalytics = in_array('local_ivanalytics', $enabledcontenttypes);
     $cache = \cache::make('mod_interactivevideo', 'iv_items_by_cmid');
@@ -877,6 +878,26 @@ function interactivevideo_displayinline(cm_info $cm) {
             ['annotationid' => $cm->instance]
         );
         $cache->set($cm->instance, $items);
+    }
+
+    // What if $enabedcontenttypes changes?
+    $items = array_filter($items, function ($item) use ($contenttypes) {
+        return strpos($contenttypes, $item->type) !== false;
+    });
+
+    // Has video track?
+    $hastracks = false;
+    $hasalternative = false;
+    $videotrack = array_filter($items, function ($item) {
+        return $item->type == 'videotrack';
+    });
+
+    $videotrack = reset($videotrack);
+
+    if ($videotrack && $videotrack->char1 == 'series') {
+        $hastracks = true;
+    } else if ($videotrack && $videotrack->char1 == 'alternative') {
+        $hasalternative = true;
     }
 
     $relevantitems = array_filter($items, function ($item) use ($interactivevideo) {
@@ -1014,6 +1035,9 @@ function interactivevideo_displayinline(cm_info $cm) {
             }
         }
     }
+
+    $datafortemplate['hastracks'] = $hastracks;
+    $datafortemplate['hasalternative'] = $hasalternative;
 
     return $OUTPUT->render_from_template('mod_interactivevideo/activitycard', $datafortemplate);
 }

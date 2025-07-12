@@ -25,7 +25,7 @@ import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
-let player;
+let player = {};
 
 class Kinescope {
     /**
@@ -41,6 +41,73 @@ class Kinescope {
         };
         this.frequency = 0.3;
     }
+
+    async getInfo(url, node) {
+        this.node = node;
+        // Sample video: https://kinescope.io/{token}
+        let regex = /kinescope\.io\/(.*)/;
+        let match = regex.exec(url);
+        let videoId = match[1];
+        this.videoId = videoId;
+        let self = this;
+        return new Promise((resolve) => {
+            const playerEvents = function(playerFactory) {
+                window.playerFactory
+                    .create(node, {
+                        url: 'https://kinescope.io/' + videoId,
+                        behaviour: {
+                            playsInline: true,
+                            keyboard: false,
+                            localStorage: false,
+                            preload: true,
+                        },
+                        ui: {
+                            controls: true,
+                        }
+                    })
+                    .then(function(pl) {
+                        pl.off();
+                        pl.on(pl.Events.Ready, async function(event) {
+                            player[node] = event.target;
+                            let totaltime = Number(event.data.duration.toFixed(2));
+                            // Scrap the video url to get the video title and poster image in the head.
+                            const response = await fetch(url);
+                            const data = await response.text();
+                            let parser = new DOMParser();
+                            let doc = parser.parseFromString(data, 'text/html');
+                            let page = $(doc);
+                            let title = page.find('meta[property="og:title"]').attr('content');
+                            let poster = page.find('meta[property="og:image"]').attr('content');
+                            self.title = title;
+                            self.posterImage = poster;
+                            resolve({
+                                duration: totaltime,
+                                title: title,
+                                posterImage: poster,
+                            });
+                        });
+                    });
+            };
+
+            // Create a player instance.
+            if (!window.playerFactory) {
+                var tag = document.createElement('script');
+                tag.src = 'https://player.kinescope.io/latest/iframe.player.js';
+                tag.async = true;
+                tag.as = "script";
+                tag.rel = "preload";
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                window.onKinescopeIframeAPIReady = async function(playerFactory) {
+                    window.playerFactory = playerFactory;
+                    playerEvents(playerFactory);
+                };
+            } else {
+                $(`#${node}`).replaceWith(`<iframe id="${node}" class="kinescope-player"></iframe>`);
+                playerEvents(window.playerFactory);
+            }
+        });
+    }
     /**
      * Load a Sprout Video player instance.
      * Documented at https://kinescope.notion.site/Kinescope-Player-Docs-4e1ecb05be98469da3367ddb71edd9d8
@@ -49,8 +116,9 @@ class Kinescope {
      * @param {number} start - The start time of the video in seconds.
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
+     * @param {boolean} reloaded
      */
-    async load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}, reloaded = false) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
@@ -69,7 +137,7 @@ class Kinescope {
         self.aspectratio = 16 / 9;
         const playerEvents = function(playerFactory) {
             playerFactory
-                .create('player', {
+                .create(node, {
                     url: 'https://kinescope.io/' + videoId,
                     behaviour: {
                         playsInline: true,
@@ -83,7 +151,7 @@ class Kinescope {
                 })
                 .then(function(pl) {
                     pl.on(pl.Events.Ready, async function(event) {
-                        player = event.target;
+                        player[node] = event.target;
                         let totaltime = Number(event.data.duration.toFixed(2)) - self.frequency;
                         end = !end ? totaltime : Math.min(end, totaltime);
                         end = Number(end.toFixed(2));
@@ -94,7 +162,7 @@ class Kinescope {
                         self.texttracks = event.data.textTracks;
                         self.qualities = event.data.qualities;
                         // Handle text tracks.
-                        player.disableTextTrack();
+                        player[node].disableTextTrack();
                         let tracks = [];
                         if (self.texttracks.length > 0) {
                             self.texttracks.forEach((track) => {
@@ -109,6 +177,7 @@ class Kinescope {
                         dispatchEvent('iv:playerLoaded', {
                             tracks: tracks,
                             qualities: self.getQualities(),
+                            reloaded: reloaded,
                         });
 
                         // Scrap the video url to get the video title and poster image in the head.
@@ -123,8 +192,8 @@ class Kinescope {
                             self.title = title;
                             self.posterImage = poster;
                         }
-                        await player.seekTo(start);
-                        await player.pause();
+                        await player[node].seekTo(start);
+                        await player[node].pause();
                         ready = true;
                         dispatchEvent('iv:playerReady', null, document.getElementById(node));
                     });
@@ -135,7 +204,7 @@ class Kinescope {
                         self.paused = false;
                         self.ended = false;
                         dispatchEvent('iv:playerPlay');
-                        const time = await player.getCurrentTime();
+                        const time = await player[node].getCurrentTime();
                         if (time >= end) {
                             self.ended = true;
                             self.paused = true;
@@ -161,18 +230,18 @@ class Kinescope {
                         if (!ready) {
                             return;
                         }
-                        let currentTime = await player.getCurrentTime();
+                        let currentTime = await player[node].getCurrentTime();
                         if (currentTime < start) {
-                            await player.seekTo(start);
+                            await player[node].seekTo(start);
                             self.ended = false;
                         }
                         if (currentTime > end + self.frequency) {
-                            await player.seekTo(end - self.frequency);
+                            await player[node].seekTo(end - self.frequency);
                             return;
                         }
                         if (currentTime >= end) {
                             self.ended = true;
-                            await player.seekTo(end);
+                            await player[node].seekTo(end);
                             dispatchEvent('iv:playerEnded');
                         } else if (!self.paused) {
                             self.paused = false;
@@ -221,7 +290,8 @@ class Kinescope {
             };
         } else {
             // Create an iframe.
-            $('#video-wrapper').html('<iframe id="player"></iframe>');
+            let $parent = $(`#${node}`).parent();
+            $parent.html(`<iframe id="${node}"></iframe>`);
             playerEvents(window.playerFactory);
         }
     }
@@ -230,7 +300,10 @@ class Kinescope {
      * If the player is not initialized, logs an error to the console.
      */
     async play() {
-        await player.play();
+        if (!player[this.node]) {
+            return;
+        }
+        await player[this.node].play();
         this.paused = false;
     }
     /**
@@ -239,7 +312,10 @@ class Kinescope {
      * This method calls the `pause` function on the `player` object to pause the video playback.
      */
     async pause() {
-        await player.pause();
+        if (!player[this.node]) {
+            return;
+        }
+        await player[this.node].pause();
         this.paused = true;
     }
     /**
@@ -248,8 +324,11 @@ class Kinescope {
      * @param {number} starttime - The time in seconds to which the video should be set before pausing.
      */
     stop(starttime) {
-        player.seekTo(starttime);
-        player.pause();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].seekTo(starttime);
+        player[this.node].pause();
     }
     /**
      * Seeks the video to a specified time.
@@ -258,11 +337,14 @@ class Kinescope {
      * @returns {Promise<number>} A promise that resolves to the time in seconds to which the video was seeked.
      */
     seek(time) {
+        if (!player[this.node]) {
+            return time;
+        }
         if (time < 0) {
             time = 0;
         }
         this.ended = false;
-        player.seekTo(parseFloat(time));
+        player[this.node].seekTo(parseFloat(time));
         dispatchEvent('iv:playerSeek', {time: time});
         return time;
     }
@@ -272,7 +354,10 @@ class Kinescope {
      * @returns {Promise<number>} A promise that resolves to the current time in seconds.
      */
     async getCurrentTime() {
-        return await player.getCurrentTime();
+        if (!player[this.node]) {
+            return 0;
+        }
+        return await player[this.node].getCurrentTime();
     }
     /**
      * Asynchronously retrieves the duration of the video.
@@ -280,7 +365,10 @@ class Kinescope {
      * @returns {Promise<number>} A promise that resolves to the duration of the video in seconds.
      */
     async getDuration() {
-        const duration = await player.getDuration();
+        if (!player[this.node]) {
+            return 0;
+        }
+        const duration = await player[this.node].getDuration();
         return duration;
     }
     /**
@@ -289,10 +377,13 @@ class Kinescope {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player is paused.
      */
     async isPaused() {
+        if (!player[this.node]) {
+            return true;
+        }
         if (this.paused) {
             return true;
         }
-        let paused = await player.isPaused();
+        let paused = await player[this.node].isPaused();
         return paused;
     }
     /**
@@ -301,10 +392,13 @@ class Kinescope {
      * @returns {Promise<boolean>} A promise that resolves to `true` if the player is playing, otherwise `false`.
      */
     async isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.paused) {
             return false;
         }
-        let paused = await player.isPaused();
+        let paused = await player[this.node].isPaused();
         return !paused;
     }
     /**
@@ -315,10 +409,13 @@ class Kinescope {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player has ended.
      */
     async isEnded() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.ended) {
             return true;
         }
-        let ended = await player.isEnded();
+        let ended = await player[this.node].isEnded();
         return ended;
     }
     /**
@@ -329,6 +426,9 @@ class Kinescope {
      * @returns {Promise<number>} The aspect ratio of the video.
      */
     async ratio() {
+        if (!player[this.node]) {
+            return 16 / 9;
+        }
         return this.aspectratio;
     }
     /**
@@ -336,12 +436,14 @@ class Kinescope {
      * If the player is not initialized, logs an error message to the console.
      */
     async destroy() {
-        if (player) {
-            player.off();
-            await player.destroy();
+        if (player[this.node]) {
+            player[this.node].off();
+            player[this.node].destroy();
         } else {
             $(`#${this.node}`).remove();
         }
+        player[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -349,7 +451,10 @@ class Kinescope {
      * @returns {Promise<string>} A promise that resolves to a string indicating the player's state, either 'paused' or 'playing'.
      */
     async getState() {
-        const paused = await player.isPaused();
+        if (!player[this.node]) {
+            return 'paused';
+        }
+        const paused = await player[this.node].isPaused();
         return paused ? 'paused' : 'playing';
     }
     /**
@@ -359,24 +464,36 @@ class Kinescope {
      *                        This should be a value supported by the Sprout Video player.
      */
     setRate(rate) {
-        player.setPlaybackRate(rate);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setPlaybackRate(rate);
     }
     /**
      * Mutes the Sprout Video player by setting the volume to 0.
      */
     mute() {
-        player.mute();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].mute();
     }
     /**
      * Unmutes the Sprout Video player by setting the volume to 1.
      */
     unMute() {
-        player.unmute();
-        player.setVolume(1);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].unmute();
+        player[this.node].setVolume(1);
     }
 
     isMuted() {
-        return player.isMuted();
+        if (!player[this.node]) {
+            return false;
+        }
+        return player[this.node].isMuted();
     }
 
     /**
@@ -384,17 +501,23 @@ class Kinescope {
      * @param {String} quality
      */
     async setQuality(quality) {
-        await player.setVideoQuality(quality);
+        if (!player[this.node]) {
+            return quality;
+        }
+        await player[this.node].setVideoQuality(quality);
         return quality;
     }
     /**
      * Get the available qualities of the video
      */
     async getQualities() {
-        let qualities = await player.getVideoQualityList();
+        if (!player[this.node]) {
+            return null;
+        }
+        let qualities = await player[this.node].getVideoQualityList();
         let keys = qualities;
         let values = qualities.map(x => x == 'auto' ? 'Auto' : x);
-        let current = await player.getCurrentVideoQuality();
+        let current = await player[this.node].getCurrentVideoQuality();
         return {
             qualities: keys,
             qualitiesLabel: values,
@@ -407,10 +530,13 @@ class Kinescope {
      *  @param {String} language
      */
     async setCaption(language) {
+        if (!player[this.node]) {
+            return null;
+        }
         if (language === 'off' || language === '') {
-            await player.disableTextTrack();
+            await player[this.node].disableTextTrack();
         } else {
-            await player.enableTextTrack(language);
+            await player[this.node].enableTextTrack(language);
         }
         return language;
     }
@@ -421,7 +547,7 @@ class Kinescope {
      * @returns {Object} The Sprout Video player instance.
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
 }
 

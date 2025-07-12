@@ -149,12 +149,16 @@ export default class ContentBank extends Base {
         if (!modalbody) {
             return;
         }
+        let resizeTimeout;
         const resizeObserver = new ResizeObserver(() => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
             const iframe = modalbody.querySelector('iframe.h5p-player');
             if (iframe) {
                 const height = iframe.scrollHeight;
                 modalbody.style.height = `${height + 2000}px`;
             }
+            }, 100);
         });
 
         resizeObserver.observe(modalbody);

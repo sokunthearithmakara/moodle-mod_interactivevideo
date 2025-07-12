@@ -25,7 +25,8 @@ import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import {PeerTubePlayer} from 'mod_interactivevideo/libraries/peertube';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
-let player;
+
+let player = {};
 
 class PeerTube {
     /**
@@ -55,15 +56,68 @@ class PeerTube {
         };
     }
 
+    async getInfo(url, node) {
+        this.node = node;
+        let self = this;
+        // Get the id and domain of the video.
+        // Sample Url: https://video.hardlimit.com/w/hFwjKHQa3ixivePeqGc4KR
+        const regex = /https:\/\/([^/]+)\/w\/([^/]+)/;
+        const match = url.match(regex);
+        const domain = match[1];
+        const id = match[2];
+        let videoId = id.split('?')[0];
+
+        // Get the video info
+        let password = url.split('?password=')[1];
+        const myHeaders = new Headers();
+        if (password && password !== '') {
+            myHeaders.append("x-peertube-video-password", password);
+        }
+        let videoInfo = await fetch(`https://${domain}/api/v1/videos/${videoId}`, {
+            method: 'GET',
+            headers: myHeaders,
+        });
+        videoInfo = await videoInfo.json();
+        self.duration = Number(videoInfo.duration.toFixed(2));
+        self.title = videoInfo.name;
+        self.videoId = videoInfo.uuid;
+        self.posterImage = 'https://' + domain + videoInfo.thumbnailPath;
+
+        let iframeURL = `https://${domain}${videoInfo.embedPath}?api=1&autoplay=0`;
+        iframeURL += `&warningTitle=0&controls=1&peertubeLink=0&p2p=0&muted=0&controlBar=1&title=0`;
+        if (password && password !== '') { // If the video is password protected. We need to pass the password to the embed API.
+            iframeURL += `&waitPasswordFromEmbedAPI=1`;
+        }
+        $(`#${node}`)
+            .replaceWith(`<iframe id="${node}" src="${iframeURL}" width="100%" height="100%" allow="autoplay"
+             frameborder="0" allowfullscreen="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>`);
+        // Create the video element.
+        player[node] = new PeerTubePlayer(document.getElementById(node));
+        player[node].setVideoPassword(password); // Set the password for the video.
+        await player[node].ready; // Wait for the player to be ready.
+
+        player[node].addEventListener('playbackStatusUpdate', (status) => {
+            self.currentTime = status.position;
+        });
+        return new Promise((resolve) => {
+            resolve({
+                duration: self.duration,
+                title: self.title,
+                posterImage: self.posterImage,
+            });
+        });
+    }
+
     /**
      * Load the video
      * @param {string} url
      * @param {number} start
      * @param {number} end
      * @param {object} opts
+     * @param {boolean} reloaded
      * @return {Promise<Boolean>}
      */
-    async load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}, reloaded = false) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.start = start;
@@ -143,13 +197,13 @@ class PeerTube {
             .replaceWith(`<iframe id="${node}" src="${iframeURL}" width="100%" height="100%" allow="autoplay"
              frameborder="0" allowfullscreen="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>`);
         // Create the video element.
-        player = new PeerTubePlayer(document.getElementById(node));
-        player.setVideoPassword(password); // Set the password for the video.
-        await player.ready; // Wait for the player to be ready.
-        player.pause();
-        player.setVolume(0);
-        player.seek(start);
-        let captions = await player.getCaptions();
+        player[node] = new PeerTubePlayer(document.getElementById(node));
+        player[node].setVideoPassword(password); // Set the password for the video.
+        await player[node].ready; // Wait for the player to be ready.
+        player[node].pause();
+        player[node].setVolume(0);
+        player[node].seek(start);
+        let captions = await player[node].getCaptions();
         if (captions.length > 0) {
             captions = captions.map((caption) => {
                 return {
@@ -160,6 +214,7 @@ class PeerTube {
         }
         dispatchEvent('iv:playerLoaded', {
             tracks: captions, qualities: self.getQualities(),
+            reloaded: reloaded,
         });
 
         let listener = (status) => {
@@ -189,9 +244,9 @@ class PeerTube {
             }
         };
 
-        player.addEventListener('playbackStatusChange', (status) => {
+        player[node].addEventListener('playbackStatusChange', (status) => {
             if (!ready) {
-                player.setVolume(0);
+                player[node].setVolume(0);
                 return;
             }
             if (status === 'paused') {
@@ -203,12 +258,12 @@ class PeerTube {
             }
         });
 
-        player.addEventListener('playbackStatusUpdate', (status) => {
+        player[node].addEventListener('playbackStatusUpdate', (status) => {
             if (self.ended) {
                 return;
             }
             if (!ready) {
-                player.setVolume(0);
+                player[node].setVolume(0);
                 // Peertube player remembers the last position of the video.
                 // We need to make sure the video is at the start before dispatching the ready event.
                 const goToStart = setInterval(() => {
@@ -216,11 +271,11 @@ class PeerTube {
                         || status.position >= self.end
                         || status.position <= self.start) {
                         clearInterval(goToStart);
-                        player.seek(self.start);
-                        player.pause();
+                        player[node].seek(self.start);
+                        player[node].pause();
                         ready = true;
                         dispatchEvent('iv:playerReady', null, document.getElementById(node));
-                        player.setVolume(1);
+                        player[node].setVolume(1);
                     }
                 }, 100);
             } else {
@@ -228,7 +283,7 @@ class PeerTube {
             }
         });
 
-        player.addEventListener('volumeChange', function(e) {
+        player[node].addEventListener('volumeChange', function(e) {
             dispatchEvent('iv:playerVolumeChange', {volume: e});
         });
 
@@ -236,7 +291,10 @@ class PeerTube {
     }
 
     async getQualities() {
-        let qualities = await player.getResolutions();
+        if (!player[this.node]) {
+            return null;
+        }
+        let qualities = await player[this.node].getResolutions();
         if (qualities.length === 0) {
             return false;
         }
@@ -256,7 +314,10 @@ class PeerTube {
      * @param {string} quality - The desired quality level for the video player.
      */
     async setQuality(quality) {
-        await player.setResolution(quality);
+        if (!player[this.node]) {
+            return quality;
+        }
+        await player[this.node].setResolution(quality);
         return quality;
     }
 
@@ -265,7 +326,10 @@ class PeerTube {
      * @return {Void}
      */
     play() {
-        player.play();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].play();
         this.paused = false;
     }
     /**
@@ -273,7 +337,10 @@ class PeerTube {
      * @return {Void}
      */
     pause() {
-        player.pause();
+        if (!player[this.node]) {
+            return false;
+        }
+        player[this.node].pause();
         this.paused = true;
         return true;
     }
@@ -283,8 +350,11 @@ class PeerTube {
      * @return {Void}
      */
     stop(starttime) {
-        player.seek(starttime);
-        player.pause();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].seek(starttime);
+        player[this.node].pause();
     }
     /**
      * Seek the video to a specific time
@@ -292,8 +362,11 @@ class PeerTube {
      * @return {Promise<Boolean>}
      */
     async seek(time) {
+        if (!player[this.node]) {
+            return time;
+        }
         this.ended = false;
-        await player.seek(time);
+        await player[this.node].seek(time);
         dispatchEvent('iv:playerSeek', {time: time});
         return true;
     }
@@ -302,6 +375,9 @@ class PeerTube {
      * @return {Number}
      */
     getCurrentTime() {
+        if (!player[this.node]) {
+            return 0;
+        }
         return this.currentTime;
     }
     /**
@@ -309,6 +385,9 @@ class PeerTube {
      * @return {Number}
      */
     async getDuration() {
+        if (!player[this.node]) {
+            return 0;
+        }
         return this.totaltime;
     }
     /**
@@ -316,6 +395,9 @@ class PeerTube {
      * @return {Boolean}
      */
     async isPaused() {
+        if (!player[this.node]) {
+            return true;
+        }
         return this.paused;
     }
     /**
@@ -323,6 +405,9 @@ class PeerTube {
      * @return {Boolean}
      */
     async isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         return !this.paused;
     }
     /**
@@ -330,6 +415,9 @@ class PeerTube {
      * @return {Boolean}
      */
     isEnded() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.ended) {
             return true;
         }
@@ -340,6 +428,9 @@ class PeerTube {
      * @return {Number}
      */
     ratio() {
+        if (!player[this.node]) {
+            return 16 / 9;
+        }
         return this.aspectratio;
     }
     /**
@@ -348,7 +439,8 @@ class PeerTube {
      */
     destroy() {
         $(`#${this.node}`).remove(); // Remove the iframe.
-        player.removeEventListener();
+        player[this.node].removeEventListener();
+        player[this.node] = null;
         dispatchEvent('iv:playerDestroyed');
     }
     /**
@@ -356,6 +448,9 @@ class PeerTube {
      * @return {Number}
      */
     getState() {
+        if (!player[this.node]) {
+            return 'paused';
+        }
         return this.isPaused() ? 'paused' : 'playing';
     }
     /**
@@ -363,31 +458,43 @@ class PeerTube {
      * @param {Number} rate
      */
     async setRate(rate) {
-        await player.setPlaybackRate(rate);
+        if (!player[this.node]) {
+            return rate;
+        }
+        await player[this.node].setPlaybackRate(rate);
         return rate;
     }
     /**
      * Mute the video
      */
     mute() {
-        player.setVolume(0);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setVolume(0);
     }
     /**
      * Unmute the video
      */
     unMute() {
-        player.setVolume(1);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setVolume(1);
     }
 
     async isMuted() {
-        let volume = await player.getVolume();
+        if (!player[this.node]) {
+            return true;
+        }
+        let volume = await player[this.node].getVolume();
         return volume === 0;
     }
     /**
      * Get the original player object
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
 
     /**
@@ -395,7 +502,10 @@ class PeerTube {
      * @param {string} track language code
      */
     async setCaption(track) {
-        await player.setCaption(track);
+        if (!player[this.node]) {
+            return;
+        }
+        await player[this.node].setCaption(track);
     }
 }
 

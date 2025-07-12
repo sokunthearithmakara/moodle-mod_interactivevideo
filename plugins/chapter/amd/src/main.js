@@ -80,7 +80,10 @@ export default class Chapter extends Base {
             <ul class="annolistinchapter w-100 p-0"></ul></li>`);
         });
 
-        $(document).on('timeupdate', async(e) => {
+        $(document).off('timeupdate.chapter').on('timeupdate.chapter', async function(e) {
+            if (!self.main) { // Record main video progress only.
+                return;
+            }
             const currenttime = e.originalEvent.detail.time;
             const currentchapter = chapters.find((chapter) => currenttime >= chapter.start && currenttime < chapter.end);
             if (!currentchapter) {
@@ -340,6 +343,9 @@ export default class Chapter extends Base {
      * @param {object} annotation The annotation object
      */
     async runInteraction(annotation) {
+        if (!this.main) {
+            return;
+        }
         if ($('body').hasClass('chapter-locked')) {
             await this.player.pause();
             this.player.seek(annotation.timestamp - 0.3);

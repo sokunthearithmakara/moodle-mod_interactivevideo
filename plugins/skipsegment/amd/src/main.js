@@ -253,7 +253,11 @@ export default class SkipSegment extends Base {
         if (this.isEditMode()) {
             return;
         }
+
         let self = this;
+        if (!self.main) {
+            return;
+        }
         let forced = true;
         if ((!self.options.isCompleted && annotation.intg1 == 2) ||
             (self.options.isCompleted && annotation.intg2 == 2)) {

@@ -25,7 +25,7 @@ import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
-let player;
+let player = {};
 
 class Rutube {
     /**
@@ -41,6 +41,66 @@ class Rutube {
             password: false,
         };
     }
+    async getInfo(url, node) {
+        this.node = node;
+        let self = this;
+        let regex = /(?:https?:\/\/)?(?:www\.)?(?:rutube\.ru\/video\/(?:private\/)?)(.+)/;
+        let match = regex.exec(url);
+        let videoId = match[1];
+        // Get the value of the private key url parameter.
+        let privateKey = '';
+        let keys = url.split('/?p=');
+        if (keys.length > 1) {
+            privateKey = keys[1];
+            privateKey = privateKey.split('&')[0];
+        }
+        videoId = videoId.split("?")[0];
+        return new Promise((resolve) => {
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                type: 'POST',
+                data: {
+                    action: 'get_from_url',
+                    contextid: M.cfg.contextid,
+                    url: `https://rutube.ru/api/play/options/${videoId}${privateKey != '' ? `?p=${privateKey}` : ''}`,
+                    sesskey: M.cfg.sesskey,
+                },
+            }).done(function(data) {
+                if (data.html === undefined) {
+                    dispatchEvent('iv:playerError', {error: data});
+                }
+                self.posterImage = data.thumbnail_url;
+                self.totaltime = data.duration / 1000;
+                self.title = data.title;
+                let iframeurl = `https://rutube.ru/play/embed/${videoId}${privateKey != '' ? `?p=${privateKey}` : ''}`;
+                $(`#${node}`).replaceWith(`<iframe id="${node}" src="${iframeurl}" frameBorder="0" allow="clipboard-write; autoplay"
+                 webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>`);
+
+                player[node] = document.getElementById(node);
+                self.player = player[node];
+                window.addEventListener('message', function(event) {
+                    var message = '';
+                    try {
+                        message = JSON.parse(event.data);
+                    } catch (e) {
+                        return;
+                    }
+                    switch (message.type) {
+                        case 'player:ready':
+                            resolve({
+                                duration: self.totaltime,
+                                title: self.title,
+                                posterImage: self.posterImage,
+                            });
+                            break;
+                        case 'player:currentTime':
+                            self.currentTime = message.data.time;
+                            break;
+                    };
+                });
+            });
+        });
+    }
     /**
      * Load a Rutube player instance.
      * Documented at https://rutube.ru/info/embed
@@ -53,6 +113,7 @@ class Rutube {
     async load(url, start, end, opts = {}) {
         this.showControls = opts.showControls || false;
         const node = opts.node || 'player';
+        this.node = node;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked');
@@ -73,9 +134,7 @@ class Rutube {
         }
         videoId = videoId.split("?")[0];
         this.videoId = videoId;
-        let ready = false;
         let self = this;
-        let started = false;
         $.ajax({
             url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
             type: 'POST',
@@ -104,8 +163,8 @@ class Rutube {
             $(`#${node}`).replaceWith(`<iframe id="player" src="${iframeurl}" frameBorder="0" allow="clipboard-write; autoplay"
                  webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>`);
 
-            player = document.getElementById('player');
-            self.player = player;
+            player[node] = document.getElementById('player');
+            self.player = player[node];
             self.currentQuality = 'auto';
             window.addEventListener('message', function(event) {
                 var message = '';
@@ -186,7 +245,10 @@ class Rutube {
         });
     }
     doCommand(commandJSON) {
-        return player.contentWindow.postMessage(JSON.stringify(commandJSON), '*');
+        if (!player[this.node]) {
+            return null;
+        }
+        return player[this.node].contentWindow.postMessage(JSON.stringify(commandJSON), '*');
     }
     /**
      * Plays the video using the Rutube player instance.
@@ -225,6 +287,9 @@ class Rutube {
      * @returns {Promise<number>} A promise that resolves to the time in seconds to which the video was seeked.
      */
     seek(time) {
+        if (!time || isNaN(time)) {
+            return;
+        }
         if (time < 0) {
             time = 0;
         }
@@ -239,6 +304,9 @@ class Rutube {
      * @returns {Promise<number>} A promise that resolves to the current time in seconds.
      */
     getCurrentTime() {
+        if (!player[this.node]) {
+            return 0;
+        }
         return this.currentTime;
     }
     /**
@@ -247,6 +315,9 @@ class Rutube {
      * @returns {Promise<number>} A promise that resolves to the duration of the video in seconds.
      */
     getDuration() {
+        if (!player[this.node]) {
+            return 0;
+        }
         let duration = this.totaltime;
         return duration;
     }
@@ -256,6 +327,9 @@ class Rutube {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player is paused.
      */
     isPaused() {
+        if (!player[this.node]) {
+            return true;
+        }
         return this.paused;
     }
     /**
@@ -264,6 +338,9 @@ class Rutube {
      * @returns {Promise<boolean>} A promise that resolves to `true` if the player is playing, otherwise `false`.
      */
     isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         return !this.paused;
     }
     /**
@@ -273,6 +350,9 @@ class Rutube {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player has ended.
      */
     isEnded() {
+        if (!player[this.node]) {
+            return false;
+        }
         return this.ended || this.currentTime >= this.end;
     }
     /**
@@ -283,6 +363,9 @@ class Rutube {
      * @returns {Promise<number>} The aspect ratio of the video.
      */
     ratio() {
+        if (!player[this.node]) {
+            return 16 / 9;
+        }
         return this.aspectratio;
     }
     /**
@@ -291,6 +374,8 @@ class Rutube {
      */
     destroy() {
         $(this.player).remove();
+        player[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -298,7 +383,10 @@ class Rutube {
      * @returns {Promise<string>} A promise that resolves to a string indicating the player's state, either 'paused' or 'playing'.
      */
     async getState() {
-        const paused = await player.isPaused();
+        if (!player[this.node]) {
+            return 'paused';
+        }
+        const paused = await player[this.node].isPaused();
         return paused ? 'paused' : 'playing';
     }
     /**
@@ -308,7 +396,10 @@ class Rutube {
      *                        This should be a value supported by the Rutube player.
      */
     setRate(rate) {
-        player.setPlaybackRate(rate);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setPlaybackRate(rate);
     }
     /**
      * Mutes the Rutube player by setting the volume to 0.
@@ -329,6 +420,9 @@ class Rutube {
     }
 
     isMuted() {
+        if (!player[this.node]) {
+            return false;
+        }
         return this.muted;
     }
 
@@ -343,6 +437,9 @@ class Rutube {
      * Get the available qualities of the video (NOT IMPLEMENTED)
      */
     async getQualities() {
+        if (!player[this.node]) {
+            return null;
+            }
         return {
             qualities: ['auto', ...this.qualities],
             qualitiesLabel: [M.util.get_string('auto', 'mod_interactivevideo'), ...this.qualities],
@@ -364,7 +461,7 @@ class Rutube {
      * @returns {Object} The Rutube player instance.
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
 }
 

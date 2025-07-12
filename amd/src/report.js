@@ -51,9 +51,12 @@ import ModalEvents from 'core/modal_events';
  * @param {number} courseid - The course ID.
  * @param {number} start - The start time.
  * @param {number} end - The end time.
+ * @param {string} posterimage - The poster image.
+ * @param {string} name - The name of the activity.
  * @param {Object} access - The access object.
  */
-const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, videotype, cm, courseid, start, end, access) => {
+const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, videotype, cm, courseid, start, end,
+    posterimage, name, access) => {
     window.JSZip = JSZip;
     let DataTable = $.fn.dataTable;
     let player;
@@ -102,7 +105,11 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                 require([contentType.amdmodule], (Module) => {
                     relContentTypeAmd[contentType.name] = new Module(player, itemsdata, cmid, courseid, null,
                         completionpercentage, null, grademax, videotype, null,
-                        end - start, start, end, contentType, cm);
+                        end - start, start, end, contentType, cm, null, {}, null, null, {
+                        url: videourl,
+                        posterimage,
+                        name,
+                    });
                     resolve();
                 });
             });

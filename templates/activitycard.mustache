@@ -20,7 +20,7 @@ Example context (json):
 }}
 <div class="{{#formativ}}formativ{{/formativ}}">
     <div id="interactivevideo-{{cm.instance}}"
-         class="interactivevideo-card{{^columnlayout}} columnlayout{{/columnlayout}}{{#showposterimageright}} poster-right{{/showposterimageright}}{{#showdescription}}{{#formattedintro}} hasdescription{{/formattedintro}}{{/showdescription}} card-{{size}}{{^cm.uservisible}} iv-invisible no-pointer{{/cm.uservisible}} {{#posterimagesize}}full-width-poster{{/posterimagesize}} {{#aligncenter}}iv-aligncenter{{/aligncenter}}"
+         class="interactivevideo-card{{^columnlayout}} columnlayout{{/columnlayout}}{{#showposterimageright}} poster-right{{/showposterimageright}}{{#showdescription}}{{#formattedintro}} hasdescription{{/formattedintro}}{{/showdescription}} card-{{size}}{{^cm.uservisible}} iv-invisible no-pointer{{/cm.uservisible}} {{#posterimagesize}}full-width-poster{{/posterimagesize}} {{#aligncenter}}iv-aligncenter{{/aligncenter}} {{#hastracks}}hastracks{{/hastracks}}{{#hasalternative}}hasalternative{{/hasalternative}}"
          data-id="{{cm.id}}"
          data-title="{{formattedname}}"
          data-contextid="{{cm.context.id}}"

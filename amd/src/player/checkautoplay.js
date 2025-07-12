@@ -36,7 +36,12 @@ const allowAutoplay = (node) => {
         video.setAttribute('autoplay', true);
         video.setAttribute('playsinline', true);
         // Place the video element after the node.
-        node.after(video);
+        try {
+            node.after(video);
+        } catch (e) {
+            resolve(false);
+            return;
+        }
         // Try to play the video.
         // eslint-disable-next-line promise/always-return
         video.play().then(() => {

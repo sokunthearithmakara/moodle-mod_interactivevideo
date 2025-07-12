@@ -191,6 +191,29 @@ class Base {
         this.isBS5 = $('body').hasClass('bs-5');
 
         this.rtl = $('body').hasClass('dir-rtl');
+
+        /**
+         * Is the main video or sub video in multiple track situation.
+         * @type {boolean}
+         */
+        this.main = true;
+    }
+
+    /**
+     * Set the player instance
+     * @param {Object} player The player instance
+     * @param {number} start The start time of the video
+     * @param {number} end The end time of the video
+     * @param {string} vtype The video type
+     * @returns {void}
+     */
+    setPlayer(player, start, end, vtype) {
+        this.start = start;
+        this.end = end;
+        this.totaltime = end - start;
+        this.vtype = vtype;
+        this.player = player;
+        this.main = !player.subvideo;
     }
 
     /**

@@ -38,7 +38,8 @@ define([
         releventAnnotations, // Array of annotations that are not skipped.
         completionid, // Id of the completion record.
         player, // Video player instance.
-        lastrun; // Last run annotation.
+        lastrun, // Last run annotation.
+        subvideo; // For multiple videos.
 
     const $videoNav = $('#video-nav');
     const $interactionNav = $('#interactions-nav');
@@ -60,9 +61,22 @@ define([
         return string;
     };
 
+    let $meta = $('.metadata');
+    let $annochapter = $('.annolistinchapter');
+    let $wrapper = $('#wrapper');
     const renderAnnotationItems = async(annos, start, totaltime) => {
-        releventAnnotations = annos;
-        window.IVANNO = annos;
+        $meta.empty();
+        $interactionNav.find('ul').empty();
+        $videoNav.find('ul').empty();
+        $annochapter.empty();
+        if (displayoptions.preventseeking == 1) {
+            $videoNav.addClass('no-pointer-events');
+        }
+
+        if (annos.length > 0) {
+            releventAnnotations = annos;
+            window.IVANNO = annos;
+        }
         let actualduration = totaltime;
 
         const skipsegments = annos.filter(x => x.type == 'skipsegment');
@@ -74,7 +88,7 @@ define([
             });
         }
 
-        const completableAnno = releventAnnotations.filter(x => x.hascompletion == 1);
+        const completableAnno = annos.filter(x => x.hascompletion == 1);
         const actualAnnotationCounts = completableAnno.length;
 
         const xp = completableAnno.map(x => Number(x.xp)).reduce((a, b) => a + b, 0);
@@ -84,25 +98,17 @@ define([
 
         const xpEarned = completableAnno.map(x => Number(x.earned)).reduce((a, b) => a + b, 0) || 0;
 
-        $(".metadata").empty();
         if (actualAnnotationCounts > 0) {
-            $(".metadata").append(`<span class="d-inline-block iv-mr-3">
+            $meta.append(`<span class="d-inline-block iv-mr-3">
             <i class="bi bi-stopwatch iv-mr-2"></i>${formatTime(Math.ceil(actualduration))}</span>
             <span class="d-inline-block iv-mr-3">
         <i class="bi bi-bullseye iv-mr-2"></i>${completedAnnos.length} / ${actualAnnotationCounts}</span>
         <span class="d-inline-block"><i class="bi bi-star iv-mr-2"></i>${xpEarned} / ${xp}</span>`);
         }
 
-        $("#interactions-nav ul").empty();
-        $("#video-nav ul").empty();
-
-        if (displayoptions.preventseeking == 1) {
-            $videoNav.addClass('no-pointer-events');
-        }
-
         if (displayoptions.hidemainvideocontrols == 1 || displayoptions.hideinteractions == 1) {
             if (displayoptions.hidemainvideocontrols == 1) {
-                $('#wrapper').addClass('no-videonav');
+                $wrapper.addClass('no-videonav');
             }
             dispatchEvent('annotationitemsrendered', {
                 'annotations': annos,
@@ -126,8 +132,7 @@ define([
         });
 
         // Handle the chapter list.
-        $('.annolistinchapter').empty();
-        const chapteritems = releventAnnotations.filter(x => x.type != 'skipsegment'
+        const chapteritems = annos.filter(x => x.type != 'skipsegment'
             && x.hascompletion == 1);
         chapteritems.sort((a, b) => a.timestamp - b.timestamp);
         chapteritems.forEach((x) => {
@@ -150,11 +155,15 @@ define([
                 });
             }
         });
-        dispatchEvent('chapterrendered', {'annotations': releventAnnotations});
+        if (annos.length == 0) {
+            $('#chaptertoggle').hide();
+        } else {
+            $('#chaptertoggle').show();
+        }
+        dispatchEvent('chapterrendered', {'annotations': annos});
     };
 
     const fireConfetti = () => {
-
         var duration = 5 * 1000;
         let confetti = window.confetti;
         var animationEnd = Date.now() + duration;
@@ -215,6 +224,19 @@ define([
             preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null, isPreviewMode = false,
             isCompleted = false, iseditor = false) {
 
+            let $remainingtime = $('#remainingtime');
+            let $currenttime = $('#currenttime');
+            let $lightprogressbar = $('#lightprogressbar');
+            let $duration = $('#duration');
+            let $taskinfo = $('#taskinfo');
+            let $seek = $('#seek');
+            let $startscreen = $('#start-screen');
+            let $endscreen = $('#end-screen');
+            let $controller = $('#controller');
+            let $videowrapper = $('#video-wrapper');
+            let $wrapper = $('#wrapper');
+            let $annotationcanvas = $('#annotation-canvas');
+
             quickform({
                 contextid: M.cfg.contextid,
                 courseid: course,
@@ -245,7 +267,7 @@ define([
 
             if (localStorage.getItem('limitedwidth') == 'true' && displayoptions.hidemainvideocontrols == 0) {
                 $('body').addClass('limited-width');
-                $('#controller #expand i').removeClass('bi-file').addClass('bi-square');
+                $controller.find('#expand i').removeClass('bi-file').addClass('bi-square');
             }
 
             if (vtype == 'spotify') { // Spotify player.
@@ -276,11 +298,12 @@ define([
                 return new Promise((resolve) => {
                     percentage = percentage > 100 ? 100 : percentage;
                     let time = percentage / 100 * totaltime;
-                    $('#currenttime').text(convertSecondsToHMS(time));
-                    $('#remainingtime').text(convertSecondsToHMS(totaltime - time));
+                    $currenttime.text(convertSecondsToHMS(time));
+                    $remainingtime.text(
+                        player.live ? M.util.get_string('live', 'mod_interactivevideo') : convertSecondsToHMS(totaltime - time));
                     $videoNav.find('#progress').css('width', percentage + '%');
                     $videoNav.find('#seekhead').css('left', percentage + '%');
-                    $('#lightprogressbar').css('width', percentage + '%');
+                    $lightprogressbar.css('width', percentage + '%');
                     resolve(true);
                 });
             };
@@ -340,7 +363,7 @@ define([
                 $.when(annnoitems, userprogress, getContentTypes).done(async function(annos, progress, ct) {
                     annotations = JSON.parse(annos[0]);
                     if (player.live) { // Live video does not have end time.
-                        annotations = [];
+                        annotations = annotations.filter(x => x.timestamp < 0);
                     }
                     progress = JSON.parse(progress[0]);
                     uprogress = progress;
@@ -536,6 +559,7 @@ define([
                     player, interaction, course, userid, completionpercentage, gradeiteminstance,
                     grademax, vtype, preventskip, totaltime, start, end, cmid, token, completionid) {
                     const chapterContentType = contentTypes.find(x => x.name == 'chapter');
+                    // We only want the relevant content types.
                     contentTypes = contentTypes.filter(x => releventAnnotations.map(y => y.type).includes(x.name));
                     if (contentTypes.length == 0) {
                         $('#chaptertoggle, #chapter-container-left, #chapter-container-right').remove();
@@ -554,7 +578,8 @@ define([
                                     end, contentType, cmid, token, displayoptions, completionid, extendedcompletion, {
                                     isPreviewMode,
                                     isCompleted,
-                                    iseditor
+                                    iseditor,
+                                    url
                                 });
                                 try {
                                     ctRenderer[contentType.name].init();
@@ -575,6 +600,9 @@ define([
              * @returns {void}
              */
             const runInteraction = async(annotation, force = false) => {
+                if (subvideo) {
+                    return;
+                }
                 // First making sure the player is paused.
                 player.pause();
                 let isPaused = await player.isPaused();
@@ -598,7 +626,8 @@ define([
                 $('#annotation-modal').modal('hide');
 
                 $('#message').not('[data-placement=bottom]').not('.sticky').not(`[data-id=${annotation.id}]`).remove();
-                $('#end-screen, #start-screen').fadeOut(300);
+                $startscreen.fadeOut(300);
+                $endscreen.fadeOut(300);
 
                 if (preventskip) {
                     const theAnnotations = releventAnnotations
@@ -700,13 +729,39 @@ define([
             let loaded = false;
             let lookbacktime = 0;
 
-            const onLoaded = async() => {
+            const onLoaded = async(reloaded = false, e = null) => {
+                let $changecaption = $('#changecaption');
+                if (e) {
+                    const captions = e.detail.tracks;
+                    if (captions && captions.length > 0) {
+                        $changecaption.removeClass('d-none');
+                        $changecaption.find('.dropdown-menu')
+                            .html(`<a class="dropdown-item changecaption px-3" data-lang="" href="#">
+                     <i class="bi fa-fw bi-check"></i>${M.util.get_string('off', 'mod_interactivevideo')}</a>`);
+                        let menu = '';
+                        captions.forEach((caption, i) => {
+                            menu += `<a class="dropdown-item changecaption text-white px-3"
+                         data-lang="${caption.code}" href="#"><i class="bi fa-fw"></i>${caption.label}</a>`;
+                            if (i == captions.length - 1) {
+                                $changecaption.find('.dropdown-menu')
+                                    .append(menu);
+                                const lang = localStorage.getItem(`caption-${userid}`);
+                                if (lang && lang.length) {
+                                    $changecaption.find(`[data-lang="${lang}"]`).trigger('click');
+                                }
+                            }
+                        });
+                    } else {
+                        $changecaption.addClass('d-none');
+                    }
+                }
+
                 if (loaded) {
                     return;
                 }
                 if (displayoptions.passwordprotected == 1 && player.support.password) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
-                    $('#start-screen').removeClass('d-none');
+                    $startscreen.removeClass('d-none');
                     $('.video-block').removeClass('no-pointer bg-transparent');
                 }
                 loaded = true;
@@ -715,23 +770,25 @@ define([
                 lookbacktime = Math.max(0.5, player.frequency); // How far back to look for annotations.
                 // Check if the player supports playback rate and quality adjustments.
                 if (player.support.playbackrate == false) {
-                    $('#changerate').remove();
+                    $('#changerate').addClass('d-none');
                 } else {
                     $('#changerate').removeClass('d-none');
                 }
 
                 if (player.support.quality == false) {
-                    $('#changequality').remove();
+                    $('#changequality').addClass('d-none');
                 } else {
                     $('#changequality').removeClass('d-none');
                 }
 
                 const duration = player.totaltime;
-                ({start, end} = await updateTime(duration));
+                if (!reloaded) {
+                    ({start, end} = await updateTime(duration));
+                }
                 totaltime = end - start;
 
                 if (!player.live) {
-                    $('#duration').text(convertSecondsToHMS(totaltime));
+                    $duration.text(convertSecondsToHMS(totaltime));
                 }
 
                 // Recalculate the ratio of the video
@@ -739,7 +796,7 @@ define([
                 if (!displayoptions.usefixedratio || displayoptions.usefixedratio == 0) {
                     ratio = player.aspectratio;
                 }
-                $("#video-wrapper").css('padding-bottom', (1 / ratio) * 100 + '%');
+                $videowrapper.css('padding-bottom', (1 / ratio) * 100 + '%');
                 let gap = '125px';
                 if ($("body").hasClass('embed-mode')) {
                     if (displayoptions.hidemainvideocontrols == 1) {
@@ -760,29 +817,38 @@ define([
                     });
                 }
 
-                $('#wrapper').attr('data-ratio', ratio);
-                $('#wrapper').attr('data-gap', gap);
+                $wrapper.attr('data-ratio', ratio);
+                $wrapper.attr('data-gap', gap);
 
-                $('#start-screen #start').focus();
+                $startscreen.find('#start').focus();
 
                 // Resize observer
-                let vwrapper = document.querySelector('#video-wrapper');
-                const resizeObserver = new ResizeObserver(() => {
-                    // If vwrapper is larger than 1050px, show #expand; otherwise, hide it.
-                    if (vwrapper.clientWidth > 1050) {
-                        $('#controller #expand').removeClass('d-none');
-                    } else {
-                        $('#controller #expand').addClass('d-none');
+                if (!reloaded) {
+                    let vwrapper = document.querySelector('#video-wrapper');
+                    // Optimize: Only update DOM if state changes, and debounce resize events.
+                    let lastExpandVisible = null;
+                    let resizeTimeout;
+                    const updateExpandVisibility = () => {
+                        const shouldShow = vwrapper.clientWidth > 1050;
+                        if (shouldShow !== lastExpandVisible) {
+                            $controller.find('#expand').toggleClass('d-none', !shouldShow);
+                            lastExpandVisible = shouldShow;
+                        }
+                    };
+                    const resizeObserver = new ResizeObserver(() => {
+                        clearTimeout(resizeTimeout);
+                        resizeTimeout = setTimeout(updateExpandVisibility, 100);
+                    });
+                    resizeObserver.observe(vwrapper);
+                    // Initial check
+                    updateExpandVisibility();
+
+                    // Scroll into view #video-wrapper
+                    if ($('body').hasClass('embed-mode')) {
+                        return;
                     }
-                });
-
-                resizeObserver.observe(vwrapper);
-
-                // Scroll into view #video-wrapper
-                if ($('body').hasClass('embed-mode')) {
-                    return;
+                    vwrapper.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
                 }
-                vwrapper.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
             };
 
             /**
@@ -800,9 +866,11 @@ define([
              *
              * @async
              * @function onReady
+             * @param {boolean} reloaded Whether the video is being reloaded.
+             * @param {boolean} main Whether the video is the default video.
              * @returns {Promise<void>} A promise that resolves when the player is fully initialized and ready.
              */
-            const onReady = async() => {
+            const onReady = async(reloaded = false, main = false) => {
                 if ((window.braveEthereum || window.braveSolana) && !player.allowAutoplay) {
                     player.destroy();
                     Toast.add(M.util.get_string('braveautoplay', 'mod_interactivevideo'), {
@@ -818,92 +886,109 @@ define([
                     return;
                 }
 
-                player.pause();
-                const isPaused = await player.isPaused();
-                if (!isPaused) {
-                    if (!player.live) {
-                        await player.seek(start);
+                if (!reloaded) {
+                    player.pause();
+                    const isPaused = await player.isPaused();
+                    if (!isPaused) {
+                        if (!player.live) {
+                            await player.seek(start);
+                        }
+                        onReady();
+                        return;
                     }
-                    onReady();
-                    return;
                 }
 
                 if (!loaded) {
-                    await onLoaded();
+                    await onLoaded(reloaded);
                 }
 
                 if (player.audio) {
-                    $('#annotation-canvas').addClass('bg-black');
+                    $annotationcanvas.addClass('bg-black');
                 }
 
                 // Explanation: YT shows annoying related videos if the player is large enough when the script is loading.
                 // So we're tricking it by hiding the canvas which also hides the #player first
                 // and only shows it when player is ready.
-                $("#annotation-canvas").removeClass('w-0');
+                $("#annotation-canvas").removeClass('w-0 d-none');
                 $(".video-block").css('background', 'transparent');
-                $("#annotation-canvas").removeClass('d-none');
+                if (displayoptions.useoriginalvideocontrols == 0) {
+                    $(".video-block").removeClass('no-pointer');
+                }
 
-                await getAnnotations();
+                if (!reloaded) {
+                    await getAnnotations();
+                } else {
+                    if (main) {
+                        await renderAnnotationItems(releventAnnotations, start, end - start);
+                    } else {
+                        await renderAnnotationItems([], start, end - start);
+                    }
+                }
 
                 if (player.live) {
                     // Remove the slash.
-                    $('#currenttime').next().remove();
-                    $('#currenttime').remove();
-                    $('#duration').text(M.util.get_string('live', 'mod_interactivevideo'));
-                    $('#remainingtime').text(M.util.get_string('live', 'mod_interactivevideo'));
-                    $('#taskinfo').addClass('no-pointer-events');
+                    $currenttime.next().removeClass('d-md-inline');
+                    $currenttime.removeClass('d-md-inline');
+                    $duration.text(M.util.get_string('live', 'mod_interactivevideo'));
+                    $remainingtime.text(M.util.get_string('live', 'mod_interactivevideo'));
+                    $taskinfo.addClass('no-pointer-events');
                     end = Number.MAX_SAFE_INTEGER;
                     // Progress 100%.
                     replaceProgressBars(100);
                     return;
+                } else {
+                    $currenttime.next().addClass('d-md-inline');
+                    $currenttime.addClass('d-md-inline');
                 }
 
-                $('#seekhead').draggable({
-                    'containment': '#video-nav',
-                    'axis': 'x',
-                    'cursor': 'col-resize',
-                    'start': async function(event, ui) {
-                        const isPaused = await player.isPaused();
-                        if (!isPaused) {
-                            player.pause();
+                if (!reloaded) {
+                    $('#seekhead').draggable({
+                        'containment': '#video-nav',
+                        'axis': 'x',
+                        'cursor': 'col-resize',
+                        'start': async function(event, ui) {
+                            const isPaused = await player.isPaused();
+                            if (!isPaused) {
+                                player.pause();
+                            }
+                            $(this).addClass('active');
+                            $taskinfo.addClass('no-pointer-events');
+                            $('#message').not('[data-placement=bottom]').not('.sticky').remove();
+                            $endscreen.fadeOut(300);
+                            $seek.append('<div id="position"><div id="timelabel"></div></div>');
+                            let $position = $('#position');
+                            const relX = ui.position.left;
+                            $position.css('left', (relX) + 'px');
+                            const percentage = relX / $(this).width();
+                            const time = percentage * totaltime;
+                            const formattedTime = convertSecondsToHMS(time);
+                            $position.find('#timelabel').text(formattedTime);
+                        },
+                        'drag': async function(event, ui) {
+                            let timestamp = ((ui.position.left) / $videoNav.width()) * totaltime + start;
+                            let percentage = ui.position.left / $videoNav.width();
+                            await replaceProgressBars(percentage * 100);
+                            $seek.find('#position').css('left', ui.position.left + 'px');
+                            $seek.find('#position #timelabel').text(convertSecondsToHMS(timestamp - start));
+                            await player.seek(timestamp);
+                        },
+                        'stop': async function() {
+                            // Reset the launched annotation.
+                            lastrun = null;
+                            viewedAnno = [];
+                            setTimeout(function() {
+                                $taskinfo.removeClass('no-pointer-events');
+                            }, 200);
+                            setTimeout(function() {
+                                $('#seekhead').removeClass('active');
+                                $seek.find('#position').remove();
+                            }, 1000);
+                            player.play();
                         }
-                        $(this).addClass('active');
-                        $('#taskinfo').addClass('no-pointer-events');
-                        $('#message').not('[data-placement=bottom]').not('.sticky').remove();
-                        $("#end-screen").fadeOut(300);
-                        $("#seek").append('<div id="position"><div id="timelabel"></div></div>');
-                        let $position = $('#position');
-                        const relX = ui.position.left;
-                        $position.css('left', (relX) + 'px');
-                        const percentage = relX / $(this).width();
-                        const time = percentage * totaltime;
-                        const formattedTime = convertSecondsToHMS(time);
-                        $position.find('#timelabel').text(formattedTime);
-                    },
-                    'drag': async function(event, ui) {
-                        let timestamp = ((ui.position.left) / $('#video-nav').width()) * totaltime + start;
-                        let percentage = ui.position.left / $('#video-nav').width();
-                        await replaceProgressBars(percentage * 100);
-                        $('#seek #position').css('left', ui.position.left + 'px');
-                        $('#seek #position #timelabel').text(convertSecondsToHMS(timestamp - start));
-                        await player.seek(timestamp);
-                    },
-                    'stop': async function() {
-                        // Reset the launched annotation.
-                        lastrun = null;
-                        viewedAnno = [];
-                        setTimeout(function() {
-                            $('#taskinfo').removeClass('no-pointer-events');
-                        }, 200);
-                        setTimeout(function() {
-                            $('#seekhead').removeClass('active');
-                            $('#seek #position').remove();
-                        }, 1000);
-                        player.play();
-                    }
-                });
+                    });
 
-                dispatchEvent('timeupdate', {'time': start}); // Dispatch the timeupdate event with the start time.
+                    dispatchEvent('timeupdate', {'time': start}); // Dispatch the timeupdate event with the start time.
+                }
             };
 
             /**
@@ -916,7 +1001,7 @@ define([
              * - Sets the tooltip of the play/pause button to 'play'.
              */
             let lastSaved;
-            const onPaused = async() => {
+            const onPaused = async(savepoint = false) => {
                 if (!playerReady) {
                     return;
                 }
@@ -927,25 +1012,28 @@ define([
                 }
                 cancelAnimationFrame(playingInterval);
                 // Save watched progress to database.
-                let t = await player.getCurrentTime();
-                let watchedpoint = Math.round(t);
-                // Make sure the watchedpoint is not the same as the last saved point or so close to it.
-                if ((Math.abs(watchedpoint - lastSaved) < 5 && watchedpoint != Math.round(end)) || watchedpoint < start + 5) {
-                    return;
-                }
-                lastSaved = watchedpoint;
-                $.ajax({
-                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                    method: "POST",
-                    dataType: "text",
-                    data: {
-                        action: 'update_watchedpoint',
-                        sesskey: M.cfg.sesskey,
-                        completionid: completionid,
-                        watchedpoint: watchedpoint,
-                        contextid: M.cfg.contextid
+                if (savepoint || $('body').hasClass('embed-mode') || $('body').hasClass('iframe')
+                    || $('body').hasClass('mobileapp')) {
+                    let t = await player.getCurrentTime();
+                    let watchedpoint = Math.round(t);
+                    // Make sure the watchedpoint is not the same as the last saved point or so close to it.
+                    if ((Math.abs(watchedpoint - lastSaved) < 5 && watchedpoint != Math.round(end)) || watchedpoint < start + 5) {
+                        return;
                     }
-                });
+                    lastSaved = watchedpoint;
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                        method: "POST",
+                        dataType: "text",
+                        data: {
+                            action: 'update_watchedpoint',
+                            sesskey: M.cfg.sesskey,
+                            completionid: completionid,
+                            watchedpoint: watchedpoint,
+                            contextid: M.cfg.contextid
+                        }
+                    });
+                }
             };
 
             let videoEnded = false;
@@ -980,7 +1068,7 @@ define([
 
                 dispatchEvent('timeupdate', {'time': end});
                 $('#restart').removeClass('d-none').fadeIn(300);
-                $('#end-screen').removeClass('d-none').fadeIn(300);
+                $endscreen.removeClass('d-none').fadeIn(300);
                 dispatchEvent('ended', {'time': end});
                 replaceProgressBars(100);
                 videoEnded = true;
@@ -1044,7 +1132,8 @@ define([
                     window.resumetime = t;
                 }
                 if (t > start && t < end) {
-                    $('#end-screen, #start-screen').addClass('d-none');
+                    $endscreen.addClass('d-none');
+                    $startscreen.addClass('d-none');
                 }
                 const percentage = (t - start) / (totaltime) * 100;
                 replaceProgressBars(percentage);
@@ -1089,6 +1178,7 @@ define([
                 }
 
                 if (!firstPlay) {
+                    dispatchEvent('iv:playerStart');
                     $('#autoplay-error').tooltip('hide');
                     $('#autoplay-error').remove();
                     replaceProgressBars(window.resumetime ? (window.resumetime - start) / totaltime * 100 : 0);
@@ -1103,7 +1193,8 @@ define([
                             player.play();
                         }
                     }
-                    // Player.unMute(); // In conflict with ivaudiotrack
+                    player.unMute();
+                    dispatchEvent('iv:playerStarted');
                 }
 
                 const intervalFunction = async function() {
@@ -1111,7 +1202,7 @@ define([
                     const isEnded = await player.isEnded();
                     const isPaused = await player.isPaused();
                     if (isEnded) {
-                        onEnded(end);
+                        onEnded();
                         return;
                     }
                     if (isPaused) {
@@ -1130,7 +1221,7 @@ define([
                     t = Number(t);
 
                     if (t > end) {
-                        onEnded(end);
+                        onEnded();
                         return;
                     }
 
@@ -1143,6 +1234,11 @@ define([
                     let percentagePlayed = (t - start) / totaltime;
                     percentagePlayed = percentagePlayed > 1 ? 1 : percentagePlayed;
                     replaceProgressBars(percentagePlayed * 100);
+
+                    if (subvideo) {
+                        return;
+                    }
+
                     const theAnnotation = releventAnnotations.find(x => (((t - lookbacktime).toFixed(2) <= x.timestamp
                         && (t + player.frequency).toFixed(2) >= x.timestamp) || time == x.timestamp) &&
                         x.id != 0 && !viewedAnno.includes(Number(x.id)));
@@ -1155,17 +1251,17 @@ define([
                             }
                         });
 
-                        $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] .item').trigger('mouseover')
+                        $interactionNav.find('.annotation[data-id="' + theAnnotation.id + '"] .item').trigger('mouseover')
                             .addClass('active');
                         if (isBS5) {
-                            $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] [data-bs-toggle=tooltip')
+                            $interactionNav.find('.annotation[data-id="' + theAnnotation.id + '"] [data-bs-toggle=tooltip]')
                                 .tooltip('show');
                         }
                         setTimeout(function() {
-                            $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] .item')
+                            $interactionNav.find('.annotation[data-id="' + theAnnotation.id + '"] .item')
                                 .trigger('mouseout').removeClass('active');
                             if (isBS5) {
-                                $('#interactions-nav .annotation[data-id="' + theAnnotation.id + '"] [data-bs-toggle=tooltip')
+                                $interactionNav.find('.annotation[data-id="' + theAnnotation.id + '"] [data-bs-toggle=tooltip]')
                                     .tooltip('hide');
                             }
                         }, 2000);
@@ -1223,7 +1319,7 @@ define([
                     visualized = true;
                 }
                 // Force fullscreen for mobile themes and mobile devices.
-                if ($('body').hasClass('mobiletheme') && !$('#wrapper').hasClass('fullscreen')) {
+                if ($('body').hasClass('mobiletheme') && !$wrapper.hasClass('fullscreen')) {
                     $("#fullscreen").trigger('click');
                 }
 
@@ -1244,7 +1340,8 @@ define([
                 $('#message').not('[data-placement=bottom]').not('.sticky').remove();
 
                 if (!videoEnded) {
-                    $('#end-screen, #start-screen').fadeOut(300);
+                    $endscreen.fadeOut(300);
+                    $startscreen.fadeOut(300);
                     $('#restart').addClass('d-none');
                 } else {
                     viewedAnno = [];
@@ -1257,9 +1354,9 @@ define([
                 player = new VideoPlayer();
                 if (displayoptions.passwordprotected == 1 && player.support.password) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
-                    $('#start-screen').addClass('d-none');
+                    $startscreen.addClass('d-none');
                     $('.video-block').addClass('no-pointer bg-transparent');
-                    $('#annotation-canvas').removeClass('d-none w-0');
+                    $annotationcanvas.removeClass('d-none w-0');
                 }
                 player.load(url,
                     start,
@@ -1275,7 +1372,7 @@ define([
 
             // Move toast-wrapper to the #wrapper element so it can be displayed on top of the video in fullscreen mode.
             let $toast = $('.toast-wrapper').detach();
-            $('#wrapper').append($toast);
+            $wrapper.append($toast);
 
             $(document).on('click', '.completion-required', function(e) {
                 e.preventDefault();
@@ -1353,7 +1450,7 @@ define([
                 // Put the wrapper in fullscreen mode
                 let elem = document.getElementById('wrapper');
                 $('#fullscreen').toggleClass('active');
-                if (!$('#wrapper').hasClass('fullscreen')) {
+                if (!$wrapper.hasClass('fullscreen')) {
                     if (elem.requestFullscreen) {
                         elem.requestFullscreen();
                     } else if (elem.mozRequestFullScreen) { /* Firefox */
@@ -1386,26 +1483,27 @@ define([
 
             $(document).on('fullscreenchange', async function() {
                 if (document.fullscreenElement) {
-                    $('#wrapper, #interactivevideo-container').addClass('fullscreen');
-                    $("#video-wrapper").css('padding-bottom', '0');
-                    $(`#wrapper [data${bsAffix}-toggle="tooltip"]`).tooltip({
+                    $wrapper.addClass('fullscreen');
+                    $('#interactivevideo-container').addClass('fullscreen');
+                    $videowrapper.css('padding-bottom', '0');
+                    $wrapper.find(`[data${bsAffix}-toggle="tooltip"]`).tooltip({
                         container: '#wrapper',
                         boundary: 'window',
                     });
-                    $('#controller').addClass('bg-black').removeClass('bg-dark');
+                    $controller.addClass('bg-black').removeClass('bg-dark');
                 } else {
-                    $('#wrapper, #interactivevideo-container').removeClass('fullscreen');
+                    $wrapper.removeClass('fullscreen');
+                    $('#interactivevideo-container').removeClass('fullscreen');
                     let ratio = 16 / 9;
                     if (!displayoptions.usefixedratio || displayoptions.usefixedratio == 0) {
                         ratio = player.aspectratio;
                     }
-                    $("#video-wrapper").css('padding-bottom', (1 / ratio) * 100 + '%');
-                    $('#controller').addClass('bg-dark').removeClass('bg-black');
+                    $videowrapper.css('padding-bottom', (1 / ratio) * 100 + '%');
+                    $controller.addClass('bg-dark').removeClass('bg-black');
                 }
-                $('#wrapper #fullscreen i').toggleClass('bi-fullscreen bi-fullscreen-exit');
+                $wrapper.find('#fullscreen i').toggleClass('bi-fullscreen bi-fullscreen-exit');
             });
 
-            let idleInterval = null;
             $(document).on('visibilitychange', async function() {
                 // Pause video when the tab is not visible and the pauseonblur option is enabled.
                 if (displayoptions.pauseonblur && displayoptions.pauseonblur == 1) {
@@ -1414,43 +1512,8 @@ define([
                     }
                     if (document.visibilityState == 'hidden') {
                         player.pause();
+                        onPaused(true);
                     }
-                }
-
-                if (document.visibilityState == 'hidden') {
-                    // Destroy the player if the tab is hidden and the video isn't playing for more than 30/5 minutes.
-                    // Check if the player is paused and the user is not interacting with the player.
-                    idleInterval = setInterval(async() => {
-                        const isPaused = await player.isPaused();
-                        if (isPaused || videoEnded || !playerReady || !player || !firstPlay) {
-                            // Destroy the player.
-                            try {
-                                player.destroy();
-                            } catch (error) {
-                                // Do nothing.
-                            }
-                            cancelAnimationFrame(playingInterval);
-                            clearInterval(idleInterval);
-                            $(document).off();
-                            if (!videoEnded) {
-                                $('#start-screen').show().removeClass('d-none').addClass('idled');
-                                $('#start-screen #play').removeClass('d-none');
-                            }
-                            $(document).on('click', '#start-screen #play, #endscreen #restart', function(e) {
-                                e.preventDefault();
-                                location.reload();
-                            });
-                            $('#controller').addClass('no-pointer-events');
-                            Toast.add(M.util.get_string('idlealert', 'mod_interactivevideo'), {
-                                type: 'danger',
-                                autohide: false,
-                                closeButton: true,
-                            });
-                        }
-                    }, 60 * 1000 * (videoEnded ? 5 : 30)); // 30 minutes if the video is playing, 5 minutes if the video has ended.
-                } else {
-                    // Cancel the destroy player timeout.
-                    clearInterval(idleInterval);
                 }
             });
 
@@ -1565,15 +1628,15 @@ define([
                 }
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                if ($('#video-nav').hasClass('no-click')) {
+                if ($videoNav.hasClass('no-click')) {
                     // Add a tooltip that seeking is disabled.
                     Toast.add(M.util.get_string('seekingdisabled', 'mod_interactivevideo'), {
                         type: 'danger'
                     });
                     return;
                 }
-                $('#start-screen').fadeOut(300);
-                $('#end-screen').fadeOut(300);
+                $startscreen.fadeOut(300);
+                $endscreen.fadeOut(300);
                 const parentOffset = $(this).offset();
                 const relX = e.pageX - parentOffset.left;
                 const percentage = relX / $(this).width();
@@ -1599,10 +1662,14 @@ define([
                     location.reload();
                     return;
                 }
-                $('#start-screen').fadeOut(300);
+                $startscreen.fadeOut(300);
                 $(this).addClass('d-none');
                 $videoNav.removeClass('d-none');
-                player.play();
+                try {
+                    player.play();
+                } catch (error) {
+                    // Do nothing.
+                }
             });
 
             // Handle video control events:: restart
@@ -1623,7 +1690,7 @@ define([
                 $loader.fadeIn(300);
                 await player.seek(start);
                 replaceProgressBars(0);
-                $('#end-screen').fadeOut(300);
+                $endscreen.fadeOut(300);
                 $(this).addClass('d-none');
                 $videoNav.removeClass('d-none');
                 player.play();
@@ -1666,7 +1733,7 @@ define([
                 } else {
                     let t = await player.getCurrentTime();
                     if (t >= end) {
-                        $('#end-screen #restart').trigger('click');
+                        $endscreen.find('#restart').trigger('click');
                     } else {
                         player.play();
                     }
@@ -1763,87 +1830,77 @@ define([
                 onReady();
             });
 
-            $(document).on('iv:playerPaused', function() {
-                // Remove the tooltip.
-                $('.tooltip').remove();
-                dispatchEvent('videoPaused');
-                onPaused();
+            $(document).on('iv:playerDestroyed', function() {
+                playerReady = false;
             });
 
-            $(document).on('iv:playerPlaying', function() {
-                onPlaying();
-            });
-
-            $(document).on('iv:playerPlay', function() {
-                onPlay();
-                $loader.fadeOut(300);
-            });
-
-            $(document).on('iv:playerEnded', function() {
-                onEnded();
-            });
-
-            $(document).on('iv:playerSeek', function(e) {
-                if (player.live) {
-                    return;
-                }
-                onSeek(e.detail.time);
-            });
-
-            $(document).one('iv:playerLoaded', function(e) {
-                onLoaded(e.detail);
-                const captions = e.detail.tracks;
-                if (!captions || captions.length == 0) {
-                    return;
-                }
-                $('#changecaption').removeClass('d-none');
-                $('#changecaption .dropdown-menu')
-                    .html(`<a class="dropdown-item changecaption px-3"
-                     data-lang="" href="#">
-                     <i class="bi fa-fw bi-check"></i>${M.util.get_string('off', 'mod_interactivevideo')}</a>`);
-                captions.forEach(caption => {
-                    $('#changecaption .dropdown-menu')
-                        .append(`<a class="dropdown-item changecaption text-white px-3"
-                         data-lang="${caption.code}" href="#"><i class="bi fa-fw"></i>${caption.label}</a>`);
+            const addPlayerEvents = function() {
+                $(document).on('iv:playerPaused', function() {
+                    // Remove the tooltip.
+                    $('.tooltip').remove();
+                    dispatchEvent('videoPaused');
+                    onPaused();
                 });
 
-                const lang = localStorage.getItem(`caption-${userid}`);
-                if (lang && lang.length) {
-                    $('#changecaption .changecaption[data-lang="' + lang + '"]').trigger('click');
-                }
-            });
+                $(document).on('iv:playerPlaying', function() {
+                    onPlaying();
+                });
 
-            $(document).on('iv:playerError', function() {
-                $('#annotation-canvas').removeClass('d-none w-0');
-                $('#start-screen').addClass('d-none');
-                $('.video-block').addClass('no-pointer bg-transparent');
-                $('#spinner').remove();
-                if ($('#player').is(':empty')) {
-                    $('#player').html(`<div class="alert alert-danger d-flex text-center h-100 rounded-0
+                $(document).on('iv:playerPlay', function() {
+                    onPlay();
+                    $loader.fadeOut(300);
+                });
+
+                $(document).on('iv:playerEnded', function() {
+                    onEnded();
+                });
+
+                $(document).on('iv:playerSeek', function(e) {
+                    if (player.live) {
+                        return;
+                    }
+                    onSeek(e.detail.time);
+                });
+
+                $(document).on('iv:playerLoaded', function(e) {
+                    const reloaded = e.detail.reloaded || false;
+                    onLoaded(reloaded, e);
+                });
+
+                $(document).on('iv:playerError', function() {
+                    $annotationcanvas.removeClass('d-none w-0');
+                    $startscreen.addClass('d-none');
+                    $('.video-block').addClass('no-pointer bg-transparent');
+                    $('#spinner').remove();
+                    if ($('#player').is(':empty')) {
+                        $('#player').html(`<div class="alert alert-danger d-flex text-center h-100 rounded-0
                          align-items-center justify-content-center">
                         <img src="${M.cfg.wwwroot}/mod/interactivevideo/pix/404-error.png" alt="Error" class="w-25">
                         </div>`);
-                } else {
-                    Toast.add(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), {
-                        type: 'danger'
-                    });
-                }
-            });
+                    } else {
+                        Toast.add(M.util.get_string('thereisanissueloadingvideo', 'mod_interactivevideo'), {
+                            type: 'danger'
+                        });
+                    }
+                });
 
-            $(document).on('iv:playerRateChange', function(e) {
-                $('.changerate').find('i').removeClass('bi-check');
-                $(`.changerate[data-rate="${e.originalEvent.detail.rate}"]`).find('i').addClass('bi-check');
-            });
+                $(document).on('iv:playerRateChange', function(e) {
+                    $('.changerate').find('i').removeClass('bi-check');
+                    $(`.changerate[data-rate="${e.originalEvent.detail.rate}"]`).find('i').addClass('bi-check');
+                });
 
-            $(document).on('iv:playerQualityChange', function(e) {
-                $('#changequality').attr('data-current', e.originalEvent.detail.quality);
-                $('.changequality').find('i').removeClass('bi-check');
-                $(`.changequality[data-quality="${e.originalEvent.detail.quality}"]`).find('i').addClass('bi-check');
-            });
+                $(document).on('iv:playerQualityChange', function(e) {
+                    $('#changequality').attr('data-current', e.originalEvent.detail.quality);
+                    $('.changequality').find('i').removeClass('bi-check');
+                    $(`.changequality[data-quality="${e.originalEvent.detail.quality}"]`).find('i').addClass('bi-check');
+                });
+            };
+
+            addPlayerEvents();
 
             $(document).on('annotationitemsrendered', function() {
                 try {
-                    $(`#wrapper [data${bsAffix}-toggle="tooltip"]`).tooltip({
+                    $wrapper.find(`[data${bsAffix}-toggle="tooltip"]`).tooltip({
                         container: '#wrapper',
                         boundary: 'window',
                     });
@@ -1861,7 +1918,7 @@ define([
                     $videoNav.addClass('no-click');
                 }
                 if ($interactionNav.find('li').length > 0) {
-                    $('#taskinfo').removeClass('border-0');
+                    $taskinfo.removeClass('border-0');
                 }
 
                 if (!playerReady) {
@@ -1891,7 +1948,11 @@ define([
                     if (autoplay && player.allowAutoplay && noautoplay != '1') {
                         setTimeout(async() => {
                             // Make sure to unmute.
-                            player.unMute();
+                            try {
+                                player.unMute();
+                            } catch (error) {
+                                // Do nothing.
+                            }
                             if (!moment) {
                                 $('#play').trigger('click');
                             }
@@ -1910,7 +1971,7 @@ define([
 
             window.addEventListener('beforeunload', function() {
                 player.pause();
-                onPaused();
+                onPaused(true);
                 // Remove all event listeners before unload.
                 $(document).off();
                 cancelAnimationFrame(playingInterval);
@@ -1950,19 +2011,22 @@ define([
             });
 
             $(document).on('completionupdated', function(e) {
-                if (JSON.parse(e.originalEvent.detail.response).overallcomplete > 0) {
-                    if (isCompleted) {
-                        return;
+                let overallcomplete = JSON.parse(e.originalEvent.detail.response).overallcomplete;
+                if (overallcomplete) {
+                    if (JSON.parse(e.originalEvent.detail.response).overallcomplete > 0) {
+                        if (isCompleted) {
+                            return;
+                        }
+                        isCompleted = true;
+                        fireConfetti();
+                        Toast.add(M.util.get_string('congratulationsyoucompletethisactivity', 'mod_interactivevideo'), {
+                            type: 'success',
+                        });
+                        $('#completiondropdown').html(`<i class="fs-25px bi bi-check-circle-fill text-success"></i>`);
+                    } else {
+                        isCompleted = false;
+                        $('#completiondropdown').html(`<i class="fs-25px bi bi-check-circle text-white"></i>`);
                     }
-                    isCompleted = true;
-                    fireConfetti();
-                    Toast.add(M.util.get_string('congratulationsyoucompletethisactivity', 'mod_interactivevideo'), {
-                        type: 'success',
-                    });
-                    $('#completiondropdown').html(`<i class="fs-25px bi bi-check-circle-fill text-success"></i>`);
-                } else {
-                    isCompleted = false;
-                    $('#completiondropdown').html(`<i class="fs-25px bi bi-check-circle text-white"></i>`);
                 }
                 const annotation = e.originalEvent.detail.target;
                 if (!annotation) {
@@ -1991,7 +2055,7 @@ define([
                     $('#controller, #video-wrapper, .sidebar-nav-item')
                         .removeClass('completion-required');
                 } else if (advanced.advdismissible == 0 && !anno.completed) {
-                    $('#controller').addClass('completion-required');
+                    $controller.addClass('completion-required');
                     if ($('#message.active').data('placement') == 'bottom' || $('#message.active').data('placement') == 'side') {
                         $('#video-wrapper').addClass('completion-required');
                     }
@@ -2012,6 +2076,9 @@ define([
                     $('.video-block').remove();
                 }
                 // Append a error button.
+                if ($('#autoplay-error').length) {
+                    return;
+                }
                 $('body').append(`<button id="autoplay-error" data${bsAffix}-toggle="tooltip"
                      title="${M.util.get_string('autoplayblocked', 'mod_interactivevideo')}"
                     class="btn btn-danger p-2 iv-rounded-circle pulse"><i class="bi bi-x-lg"></i></button>`);
@@ -2022,6 +2089,40 @@ define([
                         $(this).remove();
                     });
                 });
+            });
+
+            const updatePlayer = async(newPlayer) => {
+                player = newPlayer;
+                start = newPlayer.start;
+                end = newPlayer.end;
+                vtype = newPlayer.type;
+                loaded = false;
+                // Change player in all content types.
+                let types = Object.keys(ctRenderer);
+                return await Promise.all(types.map(async(type) => {
+                    return ctRenderer[type].setPlayer(newPlayer, start, end, vtype);
+                }));
+            };
+
+            $(document).on('iv:playerReload', async function(e) {
+                playerReady = true;
+                viewedAnno = [];
+                lastrun = null;
+                videoEnded = false;
+                let detail = e.originalEvent.detail;
+                if (detail.behavior == 'series') {
+                    subvideo = !detail.main;
+                } else {
+                    subvideo = false;
+                }
+
+                if (detail.player) {
+                    detail.player.subvideo = subvideo;
+                    await updatePlayer(detail.player, detail.behavior);
+                }
+
+                onReady(true, detail.main); // Main is true if the video is the default video.
+                replaceProgressBars(detail.currentTime / (end - start) * 100);
             });
 
             $(document).on('click', '#message[data-placement]:not(.active)', function(e) {
@@ -2074,14 +2175,14 @@ define([
                     $('#fullscreen').trigger('click');
                 } else if (e.code === 'KeyR') {
                     e.preventDefault();
-                    $('#end-screen #restart').trigger('click');
+                    $endscreen.find('#restart').trigger('click');
                 } else if (e.code === 'KeyS') {
                     e.preventDefault();
-                    $('#controller #share').trigger('click');
+                    $controller.find('#share').trigger('click');
                 } else if (e.code === 'KeyE') {
                     e.preventDefault();
-                    if ($('#controller #expand').length > 0) {
-                        $('#controller #expand').trigger('click');
+                    if ($controller.find('#expand').length > 0) {
+                        $controller.find('#expand').trigger('click');
                     } else {
                         $('body').toggleClass('limited-width');
                         localStorage.setItem('limitedwidth', $('body').hasClass('limited-width'));

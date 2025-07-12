@@ -25,7 +25,7 @@ import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
-var player;
+var player = {};
 class SoundCloud {
     constructor() {
         this.type = 'soundcloud';
@@ -36,6 +36,83 @@ class SoundCloud {
             password: false,
         };
         this.useAnimationFrame = false;
+    }
+    async getInfo(url, node) {
+        this.node = node;
+        let self = this;
+        const getData = function() {
+            return $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                type: 'POST',
+                dataType: 'text',
+                data: {
+                    action: 'get_from_url',
+                    contextid: M.cfg.contextid,
+                    url: 'https://soundcloud.com/oembed?format=json&url=' + encodeURIComponent(url),
+                    sesskey: M.cfg.sesskey,
+                }
+            });
+        };
+        const data = await getData();
+        let json = JSON.parse(data);
+        self.title = json.title;
+        self.posterImage = json.thumbnail_url;
+        let ready = false;
+
+        let $parent = $(`#${node}`).parent();
+        $(`#${node}`).replaceWith(json.html);
+        $parent.find('iframe').attr({
+            id: node,
+            width: '100%',
+            height: '100%',
+            allow: 'autoplay; fullscreen;',
+            allowfullscreen: 'true',
+        });
+        return new Promise((resolve) => {
+            let SC;
+            const callback = function() {
+                SC = window.SC || SC;
+                player[node] = SC.Widget(node);
+                self.player = player[node];
+                self.player.bind(window.SC.Widget.Events.READY, function() {
+                    self.player.getDuration(function(duration) {
+                        self.totaltime = Number((duration / 1000).toFixed(2));
+                        ready = true;
+                        resolve({
+                            duration: self.totaltime,
+                            title: self.title,
+                            posterImage: self.posterImage,
+                        });
+                    });
+                });
+
+                self.player.bind(window.SC.Widget.Events.PLAY_PROGRESS, function(data) {
+                    if (!ready) {
+                        return;
+                    }
+
+                    let currentTime = data.currentPosition / 1000;
+                    self.currentTime = currentTime;
+                });
+            };
+
+            // Load the IFrame Player API code asynchronously.
+            if (!window.SC) {
+                var tag = document.createElement('script');
+                tag.src = "https://w.soundcloud.com/player/api.js";
+                tag.async = true;
+                tag.type = 'text/javascript';
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                // Replace the 'player' element with an <iframe> and SoundCloud player
+                tag.onload = function() {
+                    SC = window.SC;
+                    callback();
+                };
+            } else {
+                callback();
+            }
+        });
     }
     /**
      * Creates an instance of the SoundCloud player.
@@ -101,10 +178,10 @@ class SoundCloud {
         let SC;
         const callback = function() {
             SC = window.SC || SC;
-            player = SC.Widget(node);
-            self.player = player;
-            player.bind(window.SC.Widget.Events.READY, function() {
-                player.getDuration(function(duration) {
+            player[node] = SC.Widget(node);
+            self.player = player[node];
+            self.player.bind(window.SC.Widget.Events.READY, function() {
+                self.player.getDuration(function(duration) {
                     self.totaltime = Number((duration / 1000).toFixed(2));
                     self.end = end ? Math.min(end, self.totaltime) : self.totaltime;
                     self.currentTime = start;
@@ -116,7 +193,7 @@ class SoundCloud {
                 });
             });
 
-            player.bind(window.SC.Widget.Events.PLAY_PROGRESS, function(data) {
+            self.player.bind(window.SC.Widget.Events.PLAY_PROGRESS, function(data) {
                 if (!ready) {
                     return;
                 }
@@ -133,12 +210,12 @@ class SoundCloud {
                 }
                 if (self.ended || self.currentTime < self.start) {
                     self.ended = false;
-                    player.seekTo(self.start * 1000);
+                    self.player.seekTo(self.start * 1000);
                 }
                 dispatchEvent('iv:playerPlaying');
             });
 
-            player.bind(window.SC.Widget.Events.PLAY, function() {
+            self.player.bind(window.SC.Widget.Events.PLAY, function() {
                 if (!ready) {
                     return;
                 }
@@ -146,7 +223,7 @@ class SoundCloud {
                 dispatchEvent('iv:playerPlay');
             });
 
-            player.bind(window.SC.Widget.Events.PAUSE, function() {
+            self.player.bind(window.SC.Widget.Events.PAUSE, function() {
                 if (!ready) {
                     return;
                 }
@@ -157,7 +234,7 @@ class SoundCloud {
                 dispatchEvent('iv:playerPaused');
             });
 
-            player.bind(window.SC.Widget.Events.FINISH, function() {
+            self.player.bind(window.SC.Widget.Events.FINISH, function() {
                 if (!ready) {
                     return;
                 }
@@ -166,7 +243,7 @@ class SoundCloud {
                 dispatchEvent('iv:playerEnded');
             });
 
-            player.bind(window.SC.Widget.Events.ERROR, function(data) {
+            self.player.bind(window.SC.Widget.Events.ERROR, function(data) {
                 dispatchEvent('iv:playerError', {error: data});
             });
         };
@@ -193,6 +270,9 @@ class SoundCloud {
      * @return {Void}
      */
     play() {
+        if (!this.player) {
+            return;
+        }
         this.player.play();
         this.paused = false;
     }
@@ -201,6 +281,9 @@ class SoundCloud {
      * @return {Void}
      */
     pause() {
+        if (!this.player) {
+            return;
+        }
         this.player.pause();
         this.paused = true;
         return true;
@@ -298,10 +381,11 @@ class SoundCloud {
         try {
             this.player.pause();
             $(`#${this.node}`).remove();
-            dispatchEvent('iv:playerDestroyed');
         } catch (e) {
             // Do nothing
         }
+        player[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Get the state of the player
@@ -342,7 +426,7 @@ class SoundCloud {
      * Get the original player object
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
 
     /**

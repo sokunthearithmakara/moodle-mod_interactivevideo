@@ -68,7 +68,7 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     }
                 };
 
-                let iframeDoc, iframeAnnos, details, player;
+                let iframeDoc, iframeAnnos, details, player, iframeWindow;
                 $('#playermodal').on('shown.bs.modal', function() {
                     $('body').addClass('overflow-hidden');
                     $(this).find('.modal-header').addClass('show');
@@ -89,7 +89,8 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                             cancelAnimationFrame(checkIframeDoc);
                             return;
                         }
-                        iframeAnnos = document.getElementById('ivplayer').contentWindow.IVANNO;
+                        iframeWindow = document.getElementById('ivplayer').contentWindow;
+                        iframeAnnos = iframeWindow.IVANNO;
                         if (!iframeDoc.getElementById('player')) {
                             requestAnimationFrame(checkIframeDoc);
                             return;
@@ -101,15 +102,15 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                             return;
                         }
 
-                        player = document.getElementById('ivplayer').contentWindow.IVPLAYER;
-
+                        player = iframeWindow.IVPLAYER;
                         if (showcontrols) {
                             iframeDoc.querySelector('body').classList.add('showcontrols');
                         } else {
                             iframeDoc.querySelector('body').classList.remove('showcontrols');
                         }
-
                         if (iframeDoc.getElementById('player')) {
+                            // Focus on the iframe.
+                            iframeWindow.focus();
                             $('#playermodal .modal-header').removeClass('show');
                             $('#playermodal .toggle-controls').removeClass('d-none');
 
@@ -166,6 +167,10 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                                 $('#playermodal .toggle-controls').fadeIn(300);
                             });
 
+                            iframeDoc.addEventListener('iv:playerReload', function(e) {
+                                player = e.detail.player;
+                            });
+
                             // Analytics progress bar.
                             if ($card === null) {
                                 return;
@@ -216,13 +221,13 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     } else {
                         document.title = $('li[data-id="' + id + '"] .activityname').text();
                     }
-
-                    // Focus on the iframe.
-                    document.getElementById('ivplayer').contentWindow.focus();
                 });
 
                 $('#playermodal').on('hide.bs.modal', async function() {
                     $('body').removeClass('overflow-hidden');
+                    iframeWindow.postMessage({
+                        event: 'closemodal',
+                    }, '*');
                     // Trigger hover on .image-container for 2 seconds.
                     if ($card) {
                         setTimeout(function() {
@@ -330,6 +335,12 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                         $('#playermodal').modal('hide');
                     }
                 };
+
+                $(document).off('click', '.close-modal').on('click', '.close-modal', function(e) {
+                    e.preventDefault();
+                    $('#playermodal').modal('hide');
+                    $('.modal-backdrop.show').remove();
+                });
 
                 $(document).off('click', '.lock-bar').on('click', '.lock-bar', async function(e) {
                     e.preventDefault();

@@ -24,6 +24,7 @@
 import {dispatchEvent} from 'core/event_dispatcher';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
 
+let playerids = {};
 class Html5Video {
     /**
      * Constructor for the HTML5 video player.
@@ -37,6 +38,61 @@ class Html5Video {
             quality: true,
         };
     }
+    async getInfo(url, node) {
+        this.node = node;
+        let self = this;
+
+        const loadVideo = async(player) => {
+            // Determine video type based on file extension.
+            if (url.indexOf('.m3u8') !== -1) {
+                let Hls = await import('mod_interactivevideo/player/hls');
+                window.Hls = Hls; // Make Hls globally available.
+                // Handle HLS stream.
+                if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                    var hls = new Hls();
+                    this.hls = hls;
+                    hls.loadSource(url);
+                    // Bind them together.
+                    hls.attachMedia(player);
+                } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Some browsers (like Safari) support HLS natively.
+                    player.src = url;
+                }
+            } else if (url.indexOf('.mpd') !== -1) {
+                // Handle DASH stream using dash.js.
+                let dashjs = await import('mod_interactivevideo/player/dash');
+                if (typeof dashjs !== 'undefined') {
+                    var dashPlayer = dashjs.MediaPlayer().create();
+                    dashPlayer.initialize(player, url, false);
+                    this.dash = dashPlayer;
+                }
+            } else {
+                // Standard video source.
+                player.src = url;
+            }
+            return player;
+        };
+        return new Promise((resolve) => {
+            var player = document.getElementById(node);
+            playerids[node] = player;
+            self.player = player;
+            // Play inline.
+            player.setAttribute('playsinline', '');
+
+            // Disable picture-in-picture.
+            player.setAttribute('disablePictureInPicture', '');
+            // eslint-disable-next-line promise/catch-or-return, promise/always-return
+            loadVideo(player).then((player) => {
+                player.addEventListener('loadedmetadata', function() {
+                    resolve({
+                        duration: player.duration,
+                        title: player.title,
+                        posterImage: player.poster,
+                    });
+                });
+            });
+        });
+    }
     /**
      * Loads an instance of an HTML5 video player.
      *
@@ -44,11 +100,13 @@ class Html5Video {
      * @param {number} start - The start time of the video in seconds.
      * @param {number} [end] - The end time of the video in seconds. If not provided, defaults to the video's duration.
      * @param {object} opts - The options for the player.
+     * @param {boolean} reloaded
      */
-    async load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}, reloaded = false) {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         const autoplay = opts.autoplay || false;
+        this.node = node;
         this.start = start;
         this.end = end;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
@@ -58,6 +116,7 @@ class Html5Video {
             });
         }
         var player = document.getElementById(node);
+        playerids[node] = player;
         this.posterImage = player.poster;
         // Check if the url is for video or audio.
         const video = ['fmp4', 'm4v', 'mov', 'mp4', 'ogv', 'webm', 'mkv', 'avi', 'flv', 'wmv', 'm3u8', 'mpd'];
@@ -159,9 +218,6 @@ class Html5Video {
         // Disable picture-in-picture.
         player.setAttribute('disablePictureInPicture', '');
 
-        // Disable picture-in-picture.
-        player.setAttribute('disablePictureInPicture', '');
-
         player.addEventListener('loadedmetadata', function() {
             self.aspectratio = self.ratio();
             if (isNaN(self.aspectratio)) {
@@ -212,7 +268,8 @@ class Html5Video {
                         self.captions = tracks;
                     }
                     dispatchEvent('iv:playerLoaded', {
-                        tracks: self.captions || null
+                        tracks: self.captions || null,
+                        reloaded: reloaded,
                     });
                     dispatchEvent('iv:playerReady', null, document.getElementById(node));
                 });
@@ -244,12 +301,14 @@ class Html5Video {
                     self.captions = tracks;
                 }
                 dispatchEvent('iv:playerLoaded', {
-                    tracks: self.captions || null
+                    tracks: self.captions || null,
+                    reloaded: reloaded,
                 });
                 dispatchEvent('iv:playerReady', null, document.getElementById(node));
             } else { // Standard video source.
                 dispatchEvent('iv:playerLoaded', {
-                    tracks: null
+                    tracks: null,
+                    reloaded: reloaded,
                 });
                 dispatchEvent('iv:playerReady', null, document.getElementById(node));
             }
@@ -373,6 +432,10 @@ class Html5Video {
      * @method play
      */
     play() {
+
+        if (!playerids[this.node]) {
+            return;
+        }
         if (this.live) {
             // Seek to the end of the video to simulate live streaming.
             if (this.dash) {
@@ -392,6 +455,9 @@ class Html5Video {
      * This method calls the pause function on the player instance to stop the video.
      */
     pause() {
+        if (!playerids[this.node]) {
+            return false;
+        }
         this.player.pause();
         this.paused = true;
         return true;
@@ -402,6 +468,9 @@ class Html5Video {
      * @param {number} starttime - The time (in seconds) to set the video's current time to.
      */
     stop(starttime) {
+        if (!playerids[this.node]) {
+            return;
+        }
         this.player.pause();
         this.player.currentTime = starttime;
     }
@@ -412,6 +481,9 @@ class Html5Video {
      * @returns {boolean} Returns true when the seek operation is initiated.
      */
     seek(time) {
+        if (!playerids[this.node]) {
+            return time;
+        }
         this.ended = false;
         this.player.currentTime = time;
         dispatchEvent('iv:playerSeek', {time});
@@ -423,6 +495,9 @@ class Html5Video {
      * @returns {number} The current time of the video in seconds.
      */
     getCurrentTime() {
+        if (!playerids[this.node]) {
+            return 0;
+        }
         return this.player.currentTime;
     }
     /**
@@ -431,6 +506,9 @@ class Html5Video {
      * @returns {number} The duration of the video in seconds.
      */
     getDuration() {
+        if (!playerids[this.node]) {
+            return 0;
+        }
         return this.player.duration;
     }
     /**
@@ -439,6 +517,9 @@ class Html5Video {
      * @returns {boolean} True if the player is paused, false otherwise.
      */
     isPaused() {
+        if (!playerids[this.node]) {
+            return true;
+        }
         if (this.paused) {
             return true;
         }
@@ -450,6 +531,9 @@ class Html5Video {
      * @returns {boolean} True if the video is playing, false if it is paused.
      */
     isPlaying() {
+        if (!playerids[this.node]) {
+            return false;
+        }
         if (this.paused) {
             return false;
         }
@@ -462,6 +546,9 @@ class Html5Video {
      * @returns {boolean} True if the video has ended, otherwise false.
      */
     isEnded() {
+        if (!playerids[this.node]) {
+            return false;
+        }
         return this.player.ended || this.player.currentTime >= this.end;
     }
     /**
@@ -472,6 +559,9 @@ class Html5Video {
      * @returns {number} The aspect ratio of the video.
      */
     ratio() {
+        if (!playerids[this.node]) {
+            return 16 / 9;
+        }
         if (this.audio || !this.player.videoWidth || !this.player.videoHeight) {
             return 16 / 9;
         }
@@ -484,7 +574,11 @@ class Html5Video {
      * It is used to clean up the player instance and release any resources it may be holding.
      */
     destroy() {
-        document.getElementById('video-wrapper').innerHTML = '<div id="player" style="width:100%; max-width: 100%"></div>';
+        let playerElem = document.getElementById(this.node);
+        if (playerElem) {
+            // Replace with '<div id="player" style="width:100%; max-width: 100%"></div>'.
+            playerElem.replaceWith('<div id="player" style="width:100%; max-width: 100%"></div>');
+        }
         this.player.pause();
         this.player.removeAttribute('src');
         this.player.load();
@@ -494,6 +588,8 @@ class Html5Video {
         if (this.dash) {
             this.dash.destroy();
         }
+        playerids[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Retrieves the current state of the video player.
@@ -501,6 +597,9 @@ class Html5Video {
      * @returns {string} - Returns 'paused' if the player is paused, otherwise 'playing'.
      */
     getState() {
+        if (!playerids[this.node]) {
+            return 'paused';
+        }
         return this.player.paused ? 'paused' : 'playing';
     }
 
@@ -510,6 +609,9 @@ class Html5Video {
      * @param {number} rate - The desired playback rate. A value of 1.0 represents normal speed.
      */
     setRate(rate) {
+        if (!playerids[this.node]) {
+            return;
+        }
         this.player.playbackRate = rate;
     }
 
@@ -517,17 +619,26 @@ class Html5Video {
      * Mutes the HTML5 video player.
      */
     mute() {
+        if (!playerids[this.node]) {
+            return;
+        }
         this.player.muted = true;
     }
     /**
      * Unmutes the video player.
      */
     unMute() {
+        if (!playerids[this.node]) {
+            return;
+        }
         this.player.muted = false;
         this.player.volume = 1;
     }
 
     isMuted() {
+        if (!playerids[this.node]) {
+            return false;
+        }
         return this.player.muted;
     }
 
@@ -537,6 +648,9 @@ class Html5Video {
      * @returns {Object} The video player instance.
      */
     originalPlayer() {
+        if (!playerids[this.node]) {
+            return null;
+        }
         return this.player;
     }
 
@@ -549,6 +663,9 @@ class Html5Video {
      * @returns {string} The quality setting that was passed in.
      */
     setQuality(quality) {
+        if (!playerids[this.node]) {
+            return quality;
+        }
         if (this.support.quality) {
             // Implement quality change here.
             if (this.hls) {
@@ -584,6 +701,9 @@ class Html5Video {
     }
 
     getQualities() {
+        if (!playerids[this.node]) {
+            return null;
+        }
         if (this.support.quality) {
             // Prepend an "Auto" option for quality selection.
             let keys, values, current;
@@ -616,6 +736,9 @@ class Html5Video {
      * @param {string} track - The caption track to set.
      */
     setCaption(track) {
+        if (!playerids[this.node]) {
+            return null;
+        }
         if (this.dash) {
             if (track === 'off' || track == '') {
                 this.dash.setTextTrack(null);

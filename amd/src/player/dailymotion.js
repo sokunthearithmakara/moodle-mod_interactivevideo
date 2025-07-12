@@ -23,7 +23,7 @@
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
-let player;
+let player = {};
 class DailyMotion {
     /**
      * Construct a new DailyMotion player instance.
@@ -38,6 +38,54 @@ class DailyMotion {
         };
         this.useAnimationFrame = false;
     }
+    async getInfo(url, node) {
+        this.node = node;
+        return new Promise((resolve) => {
+            let dailymotion = window.dailymotion;
+            const reg = /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/g;
+            const match = reg.exec(url);
+            const videoId = match[1];
+
+            const dailymotionEvents = async(player) => {
+                const state = await player.getState();
+                resolve({
+                    duration: state.videoDuration,
+                    title: state.videoTitle,
+                    posterImage: state.videoThumbnails["480"],
+                });
+            };
+
+            const dmOptions = {
+                video: videoId,
+                params: {
+                    startTime: 0,
+                    mute: true,
+                },
+            };
+
+            if (!window.dailymotion) {
+                // Add dailymotion script.
+                // At the time of writing this, the dailymotion player script is not generally available.
+                // Developers must set up the players and get the script from the dailymotion website.
+                var tag = document.createElement('script');
+                tag.src = "https://geo.dailymotion.com/libs/player/xsyje.js";
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+                window.dailymotion = {
+                    onScriptLoaded: async() => {
+                        dailymotion = window.dailymotion;
+                        player[node] = await dailymotion.createPlayer(node, dmOptions);
+                        dailymotionEvents(player[node]);
+                    }
+                };
+            } else {
+                player[node] = window.dailymotion.createPlayer(node, dmOptions);
+                dailymotionEvents(player[node]);
+                dailymotion = window.dailymotion;
+            }
+        });
+    }
     /**
      * Loads a new Dailymotion player instance.
      *
@@ -45,11 +93,13 @@ class DailyMotion {
      * @param {number} start - The start time of the video in seconds.
      * @param {number} end - The end time of the video in seconds.
      * @param {object} opts - The options for the player.
+     * @param {boolean} reloaded
      */
-    async load(url, start, end, opts = {}) {
+    async load(url, start, end, opts = {}, reloaded = false) {
         const showControls = opts.showControls || false;
         const customStart = opts.customStart || false;
         const node = opts.node || 'player';
+        this.node = node;
         this.start = start;
 
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
@@ -137,6 +187,7 @@ class DailyMotion {
             // Fire iv:playerLoaded event
             dispatchEvent('iv:playerLoaded', {
                 tracks: tracks, qualities: self.getQualities(),
+                reloaded: reloaded,
             });
 
             // If the browser blocks autoplay, we need to show the play button.
@@ -274,7 +325,7 @@ class DailyMotion {
             });
         };
 
-        if (!window.dailymotion) {
+        if (!window.dailymotion || !window.dailymotion.createPlayer) {
             // Add dailymotion script.
             // At the time of writing this, the dailymotion player script is not generally available.
             // Developers must set up the players and get the script from the dailymotion website.
@@ -294,13 +345,13 @@ class DailyMotion {
             window.dailymotion = {
                 onScriptLoaded: async() => {
                     dailymotion = window.dailymotion;
-                    player = await dailymotion.createPlayer(node, dmOptions);
-                    dailymotionEvents(player);
+                    player[node] = await dailymotion.createPlayer(node, dmOptions);
+                    dailymotionEvents(player[node]);
                 }
             };
         } else {
-            player = await window.dailymotion.createPlayer(node, dmOptions);
-            dailymotionEvents(player);
+            player[node] = await window.dailymotion.createPlayer(node, dmOptions);
+            dailymotionEvents(player[node]);
             dailymotion = window.dailymotion;
         }
     }
@@ -308,7 +359,10 @@ class DailyMotion {
      * Plays the Dailymotion video using the player instance.
      */
     play() {
-        player.play();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].play();
         this.paused = false;
     }
     /**
@@ -317,10 +371,13 @@ class DailyMotion {
      * This method calls the `pause` function on the `player` object to halt video playback.
      */
     async pause() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.paused) {
             return false;
         }
-        await player.pause();
+        await player[this.node].pause();
         this.paused = true;
         return true;
     }
@@ -330,8 +387,11 @@ class DailyMotion {
      * @param {number} starttime - The time (in seconds) to seek to before pausing the video.
      */
     stop(starttime) {
-        player.seek(starttime);
-        player.pause();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].seek(starttime);
+        player[this.node].pause();
     }
     /**
      * Seeks the video player to a specified time.
@@ -340,7 +400,10 @@ class DailyMotion {
      * @returns {Promise<void>} A promise that resolves when the seek operation is complete.
      */
     async seek(time) {
-        await player.seek(time);
+        if (!player[this.node]) {
+            return;
+        }
+        await player[this.node].seek(time);
         this.ended = false;
         dispatchEvent('iv:playerSeek', {time: time});
     }
@@ -350,7 +413,10 @@ class DailyMotion {
      * @returns {Promise<number>} A promise that resolves to the current video time in seconds.
      */
     async getCurrentTime() {
-        const state = await player.getState();
+        if (!player[this.node]) {
+            return 0;
+        }
+        const state = await player[this.node].getState();
         return state.videoTime;
     }
     /**
@@ -359,7 +425,10 @@ class DailyMotion {
      * @returns {Promise<number>} A promise that resolves to the duration of the video in seconds.
      */
     async getDuration() {
-        const state = await player.getState();
+        if (!player[this.node]) {
+            return 0;
+        }
+        const state = await player[this.node].getState();
         return state.videoDuration;
     }
     /**
@@ -370,10 +439,13 @@ class DailyMotion {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the player is paused.
      */
     async isPaused() {
+        if (!player[this.node]) {
+            return true;
+        }
         if (this.paused) {
             return true;
         }
-        const state = await player.getState();
+        const state = await player[this.node].getState();
         return !state.playerIsPlaying;
     }
     /**
@@ -382,10 +454,13 @@ class DailyMotion {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating if the player is playing.
      */
     async isPlaying() {
+        if (!player[this.node]) {
+            return false;
+        }
         if (this.paused) {
             return false;
         }
-        const state = await player.getState();
+        const state = await player[this.node].getState();
         return state.playerIsPlaying;
     }
 
@@ -395,10 +470,13 @@ class DailyMotion {
      * @returns {Promise<boolean>} A promise that resolves to a boolean indicating if the player is on the replay screen.
      */
     async isEnded() {
+        if (!player[this.node]) {
+            return true;
+        }
         if (this.ended) {
             return true;
         }
-        const state = await player.getState();
+        const state = await player[this.node].getState();
         return state.playerIsReplayScreen;
     }
     /**
@@ -409,7 +487,10 @@ class DailyMotion {
      * @returns {Promise<number>} The aspect ratio of the player or 16:9.
      */
     async ratio() {
-        const state = await player.getState();
+        if (!player[this.node]) {
+            return 16 / 9;
+        }
+        const state = await player[this.node].getState();
         const ratio = state.playerAspectRatio.split(':');
         return ratio[0] / ratio[1];
     }
@@ -420,8 +501,13 @@ class DailyMotion {
      * and release any resources held by the player.
      */
     destroy() {
-        player.off();
-        player.destroy();
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].off();
+        player[this.node].destroy();
+        player[this.node] = null;
+        dispatchEvent('iv:playerDestroyed');
     }
     /**
      * Asynchronously retrieves the current state of the player.
@@ -429,7 +515,10 @@ class DailyMotion {
      * @returns {Promise<Object>} A promise that resolves to the current state of the player.
      */
     async getState() {
-        const state = await player.getState();
+        if (!player[this.node]) {
+            return 'paused';
+        }
+        const state = await player[this.node].getState();
         return state;
     }
     /**
@@ -438,7 +527,10 @@ class DailyMotion {
      * @param {number} rate - The playback rate to set.
      */
     setRate(rate) {
-        player.setPlaybackSpeed(rate);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setPlaybackSpeed(rate);
     }
     /**
      * Mutes the Dailymotion player.
@@ -446,20 +538,29 @@ class DailyMotion {
      * This method sets the player's mute state to true, effectively silencing any audio.
      */
     mute() {
-        player.setMute(true);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setMute(true);
         dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmutes the Dailymotion player.
      */
     unMute() {
-        player.setMute(false);
-        player.setVolume(1);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setMute(false);
+        player[this.node].setVolume(1);
         dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     async isMuted() {
-        let state = await player.getState();
+        if (!player[this.node]) {
+            return false;
+        }
+        let state = await player[this.node].getState();
         return state.playerIsMuted;
     }
     /**
@@ -468,7 +569,7 @@ class DailyMotion {
      * @returns {Object} The Dailymotion player instance.
      */
     originalPlayer() {
-        return player;
+        return player[this.node];
     }
     /**
      * Sets the quality of the video player.
@@ -476,7 +577,10 @@ class DailyMotion {
      * @param {string} quality - The desired quality level for the video player.
      */
     setQuality(quality) {
-        player.setQuality(quality);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setQuality(quality);
     }
     /**
      * Retrieves the available video qualities and the current quality setting.
@@ -487,6 +591,9 @@ class DailyMotion {
      * - `currentQuality` {string}: The current video quality setting, 'default' if set to 'Auto'.
      */
     async getQualities() {
+        if (!player[this.node]) {
+            return null;
+        }
         let states = await this.getState();
         return {
             qualities: ['default', ...states.videoQualitiesList],
@@ -500,7 +607,10 @@ class DailyMotion {
      * @param {string} track - The caption track to set.
      */
     setCaption(track) {
-        player.setSubtitles(track);
+        if (!player[this.node]) {
+            return;
+        }
+        player[this.node].setSubtitles(track);
     }
 }
 
