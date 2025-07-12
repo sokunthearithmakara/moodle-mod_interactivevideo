@@ -282,7 +282,7 @@ class SoundCloud {
      */
     pause() {
         if (!this.player) {
-            return;
+            return false;
         }
         this.player.pause();
         this.paused = true;
