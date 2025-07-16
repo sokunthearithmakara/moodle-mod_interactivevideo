@@ -51,16 +51,24 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                 $('#playermodal').remove(); // Important:: Remove the previous modal ONLY after the new one is created.
                 $('body').append(modal);
                 $('#playermodal').modal('show');
+                $('#playermodal').find('.toggle-controls').trigger('click');
+
+                let $modal = $('#playermodal');
+                let $header = $modal.find('.modal-header');
+                let $content = $modal.find('.modal-content');
+                let $toggle = $modal.find('.toggle-controls');
+                if (showcontrols && !$content.hasClass('show-control')) {
+                    $toggle.trigger('click');
+                }
 
                 const headerFunction = function() {
-                    let $header = $('#playermodal .modal-header');
                     if ($header.hasClass('show')) {
                         return;
                     }
 
                     $header.addClass('show');
                     $header.fadeIn();
-                    if (!$('#playermodal').hasClass('locked')) {
+                    if (!$modal.hasClass('locked')) {
                         setTimeout(function() {
                             $header.removeClass('show');
                             $header.fadeOut();
@@ -69,9 +77,9 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                 };
 
                 let iframeDoc, iframeAnnos, details, player, iframeWindow;
-                $('#playermodal').on('shown.bs.modal', function() {
+                $modal.on('shown.bs.modal', function() {
                     $('body').addClass('overflow-hidden');
-                    $(this).find('.modal-header').addClass('show');
+                    $header.addClass('show');
                     if (localStorage.getItem('lock-bar')) {
                         $(this).find('.lock-bar').trigger('click');
                     }
@@ -108,21 +116,30 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                         } else {
                             iframeDoc.querySelector('body').classList.remove('showcontrols');
                         }
+
+                        let nocontrols = false;
+                        if (!iframeDoc.getElementById('controller')) {
+                            $content.addClass('show-control');
+                            // Remove the toggle button.
+                            $toggle.remove();
+                            nocontrols = true;
+                        }
+
                         if (iframeDoc.getElementById('player')) {
                             // Focus on the iframe.
                             iframeWindow.focus();
-                            $('#playermodal .modal-header').removeClass('show');
-                            $('#playermodal .toggle-controls').removeClass('d-none');
+                            $header.removeClass('show');
+                            $toggle.removeClass('d-none');
 
-                            if (!showcontrols) {
+                            if (!showcontrols && !nocontrols) {
                                 setTimeout(function() {
-                                    $('#playermodal .modal-content').removeClass('show-control');
+                                    $content.removeClass('show-control');
                                 }, 1000);
                             }
 
-                            $('#playermodal .toggle-controls').on('click', function() {
-                                $('#playermodal .modal-content').toggleClass('show-control');
-                                showcontrols = $('#playermodal .modal-content').hasClass('show-control');
+                            $toggle.on('click', function() {
+                                $content.toggleClass('show-control');
+                                showcontrols = $content.hasClass('show-control');
                                 if (showcontrols) {
                                     localStorage.setItem('showcontrols', '1');
                                     iframeDoc.querySelector('body').classList.add('showcontrols');
@@ -143,28 +160,28 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                                 let $message = iframeDoc.querySelector('#message:not(.sticky)');
                                 let $activestart = iframeDoc.querySelector('#start-screen:not(.d-none) .hasintro');
                                 if ($message || $activestart) {
-                                    $('#playermodal .modal-header').removeClass('show');
+                                    $header.removeClass('show');
                                 } else {
                                     headerFunction();
                                 }
                             });
 
                             iframeDoc.addEventListener('videoPaused', function() {
-                                if ($('#playermodal').hasClass('locked')) {
+                                if ($modal.hasClass('locked')) {
                                     return;
                                 }
                                 let $message = iframeDoc.querySelector('#message:not(.sticky)');
                                 let $activestart = iframeDoc.querySelector('#start-screen:not(.d-none) .hasintro');
                                 if ($message || $activestart) {
-                                    $('#playermodal .modal-header').removeClass('show');
+                                    $header.removeClass('show');
                                 } else {
                                     headerFunction();
                                 }
-                                $('#playermodal .toggle-controls').fadeOut(300);
+                                $toggle.fadeOut(300);
                             });
 
                             iframeDoc.addEventListener('iv:playerPlay', function() {
-                                $('#playermodal .toggle-controls').fadeIn(300);
+                                $toggle.fadeIn(300);
                             });
 
                             iframeDoc.addEventListener('iv:playerReload', function(e) {
@@ -189,7 +206,7 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                                 }
                                 if (!player) {
                                     // Remove modal.
-                                    $('#playermodal').remove();
+                                    $modal.remove();
                                 }
                             });
                         } else {
@@ -202,8 +219,8 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                         cancelAnimationFrame(checkIframeDoc);
                     });
 
-                    $(document).off('click', '#playermodal [data-action="toggle-manual-completion"]')
-                        .on('click', '#playermodal [data-action="toggle-manual-completion"]', function() {
+                    $modal.off('click', '[data-action="toggle-manual-completion"]')
+                        .on('click', '[data-action="toggle-manual-completion"]', function() {
                             $(this).parent().addClass('updated');
                             if ($(this).data('withavailability') == 1) {
                                 history.pushState(null, null, M.cfg.wwwroot + '/course/view.php?id='
@@ -223,7 +240,7 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                     }
                 });
 
-                $('#playermodal').on('hide.bs.modal', async function() {
+                $modal.on('hide.bs.modal', async function() {
                     $('body').removeClass('overflow-hidden');
                     iframeWindow.postMessage({
                         event: 'closemodal',
@@ -286,15 +303,16 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
 
                         if (details) {
                             let progressbar = $card.find('.tasks .progress-bar');
-                            if (progressbar.length > 0) {
-                                progressbar.css('width', Math.round(details.completed / details.total * 100) + '%');
+                            if (progressbar.length > 0 && details.total > 0) {
+                                let percentage = Math.round(details.completed / details.total * 100);
+                                progressbar.css('width', percentage + '%');
                                 if (details.completed == details.total) {
                                     progressbar.addClass('bg-success').removeClass('bg-primary');
                                 } else {
                                     progressbar.removeClass('bg-success').addClass('bg-primary');
                                 }
                                 $card.find('.percentage')
-                                    .text(Math.round(details.completed / details.total * 100));
+                                    .text(percentage);
                                 $card.find('.items').text(`(${details.completed}/${details.total})`);
                                 $card.find('.xp').text(details.xp);
                             }
@@ -332,24 +350,24 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                 // Close modal when the browser back button is clicked.
                 window.onpopstate = function(e) {
                     if (e.target.location.pathname == '/course/view.php') {
-                        $('#playermodal').modal('hide');
+                        $modal.modal('hide');
                     }
                 };
 
                 $(document).off('click', '.close-modal').on('click', '.close-modal', function(e) {
                     e.preventDefault();
-                    $('#playermodal').modal('hide');
+                    $modal.modal('hide');
                     $('.modal-backdrop.show').remove();
                 });
 
                 $(document).off('click', '.lock-bar').on('click', '.lock-bar', async function(e) {
                     e.preventDefault();
                     $(this).toggleClass('locked');
-                    $('#playermodal').toggleClass('locked');
+                    $modal.toggleClass('locked');
                     if ($(this).hasClass('locked')) {
                         $(this).attr('title', await str.get_string('unlock', 'mod_interactivevideo'));
                         $(this).find('i').removeClass('fa-unlock').addClass('fa-lock');
-                        $('#playermodal .modal-header').addClass('show');
+                        $header.addClass('show');
                         // Save to local storage.
                         localStorage.setItem('lock-bar', '1');
                         headerFunction();
@@ -359,18 +377,17 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                         // Remove from local storage.
                         localStorage.removeItem('lock-bar');
                         setTimeout(function() {
-                            $('#playermodal .modal-header').removeClass('show');
+                            $header.removeClass('show');
                         }, 5000);
                     }
-
                 });
 
-                $(document).off('click', '#playermodal .resize').on('click', '#playermodal .resize', function(e) {
+                $modal.off('click', '.resize').on('click', '.resize', function(e) {
                     e.preventDefault();
-                    $('#playermodal').toggleClass('modal-fullscreen iv-rounded-0 modal-resized');
-                    $('#playermodal .modal-dialog, #playermodal .modal-content').toggleClass('iv-rounded-0');
+                    $modal.toggleClass('modal-fullscreen iv-rounded-0 modal-resized');
+                    $modal.find('.modal-dialog, .modal-content').toggleClass('iv-rounded-0');
                     $(this).find('i').toggleClass('fa-expand fa-compress');
-                    if ($('#playermodal').hasClass('modal-fullscreen')) {
+                    if ($modal.hasClass('modal-fullscreen')) {
                         localStorage.removeItem('resized');
                         let showcontrols = localStorage.getItem('showcontrols') ? true : false;
                         if (showcontrols) {

@@ -810,7 +810,7 @@ define([
                     }
                 } else {
                     if (displayoptions.hidemainvideocontrols == 1) {
-                        gap = '55px';
+                        gap = '75px';
                     }
                     $("#wrapper").css({
                         'width': 'calc((100dvh - ' + gap + ' - 2rem) * ' + ratio + ')'
@@ -1012,6 +1012,10 @@ define([
                 }
                 cancelAnimationFrame(playingInterval);
                 // Save watched progress to database.
+                // We don't save the progress of the subvideo.
+                if (subvideo) {
+                    return;
+                }
                 if (savepoint || $('body').hasClass('embed-mode') || $('body').hasClass('iframe')
                     || $('body').hasClass('mobileapp')) {
                     let t = await player.getCurrentTime();
@@ -1021,17 +1025,19 @@ define([
                         return;
                     }
                     lastSaved = watchedpoint;
-                    $.ajax({
-                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                        method: "POST",
-                        dataType: "text",
-                        data: {
+                    fetch(M.cfg.wwwroot + '/mod/interactivevideo/ajax.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
                             action: 'update_watchedpoint',
                             sesskey: M.cfg.sesskey,
                             completionid: completionid,
                             watchedpoint: watchedpoint,
                             contextid: M.cfg.contextid
-                        }
+                        }).toString(),
+                        keepalive: true
                     });
                 }
             };
@@ -1388,7 +1394,9 @@ define([
                 if (!t) {
                     t = await player.getCurrentTime();
                 }
-
+                if (!t) {
+                    return false;
+                }
                 if (releventAnnotations) {
                     const theAnnotation = releventAnnotations.find(x => Number(x.timestamp) < Number(t.toFixed(2))
                         && x.completed == false && JSON.parse(x.advanced).advskippable == 0 && x.hascompletion == 1);

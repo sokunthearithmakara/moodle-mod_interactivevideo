@@ -197,7 +197,7 @@ class Rumble {
                             firstAPIrun = true;
                             dispatchEvent('iv:playerReady', null, document.getElementById(node));
                         }
-                        $(document).on('timeupdate', function() {
+                        $(document).off('timeupdate.Rumble').on('timeupdate.Rumble', function() {
                             if (!ready) {
                                 return;
                             }
@@ -214,6 +214,9 @@ class Rumble {
                                 return;
                             }
                             self.paused = false;
+                            if (!player[node]) {
+                                return;
+                            }
                             if (player[node].getCurrentTime() < start) {
                                 player[node].setCurrentTime(start);
                             }
@@ -307,6 +310,8 @@ class Rumble {
         if (!player[this.node]) {
             return time;
         }
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         time = parseFloat(time);
         return new Promise((resolve) => {
             if (time < 0) {
@@ -396,6 +401,7 @@ class Rumble {
         } catch (e) {
             window.console.error(e);
         }
+        $(document).off('timeupdate.Rumble');
         player[this.node] = null;
         dispatchEvent('iv:playerDestroyed');
     }

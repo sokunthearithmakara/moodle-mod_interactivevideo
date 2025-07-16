@@ -403,6 +403,8 @@ class DailyMotion {
         if (!player[this.node]) {
             return;
         }
+        let currentTime = await this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         await player[this.node].seek(time);
         this.ended = false;
         dispatchEvent('iv:playerSeek', {time: time});

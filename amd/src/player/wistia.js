@@ -299,6 +299,8 @@ class Wistia {
         if (!player[this.node]) {
             return time;
         }
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         player[this.node].time(time);
         this.ended = false;
         dispatchEvent('iv:playerSeek', {time: time});

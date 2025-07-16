@@ -325,6 +325,8 @@ class Spotify {
      */
     seek(time) {
         this.ended = false;
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         return new Promise((resolve) => {
             window.EmbedController.seek(time);
             this.currentTime = time;

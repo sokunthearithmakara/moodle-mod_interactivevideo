@@ -293,6 +293,8 @@ class Rutube {
         if (time < 0) {
             time = 0;
         }
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         this.ended = false;
         this.doCommand({type: 'player:setCurrentTime', data: {time}});
         dispatchEvent('iv:playerSeek', {time: time});

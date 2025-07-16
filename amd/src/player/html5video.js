@@ -23,6 +23,7 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+import $ from 'jquery';
 
 let playerids = {};
 class Html5Video {
@@ -484,6 +485,8 @@ class Html5Video {
         if (!playerids[this.node]) {
             return time;
         }
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         this.ended = false;
         this.player.currentTime = time;
         dispatchEvent('iv:playerSeek', {time});
@@ -574,11 +577,7 @@ class Html5Video {
      * It is used to clean up the player instance and release any resources it may be holding.
      */
     destroy() {
-        let playerElem = document.getElementById(this.node);
-        if (playerElem) {
-            // Replace with '<div id="player" style="width:100%; max-width: 100%"></div>'.
-            playerElem.replaceWith('<div id="player" style="width:100%; max-width: 100%"></div>');
-        }
+        $(`#${this.node}`).replaceWith(`<div id="${this.node}" style="width:100%; max-width: 100%"></div>`);
         this.player.pause();
         this.player.removeAttribute('src');
         this.player.load();

@@ -428,6 +428,8 @@ class Yt {
         if (!player[this.node]) {
             return false;
         }
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         this.ended = false;
         return new Promise((resolve) => {
             player[this.node].seekTo(time, true);
@@ -479,7 +481,11 @@ class Yt {
         if (this.paused) {
             return false;
         }
-        return player[this.node].getPlayerState() == window.YT.PlayerState.PLAYING;
+        try {
+            return player[this.node].getPlayerState() == window.YT.PlayerState.PLAYING;
+        } catch (e) {
+            return false;
+        }
     }
     /**
      * Check if the video is ended

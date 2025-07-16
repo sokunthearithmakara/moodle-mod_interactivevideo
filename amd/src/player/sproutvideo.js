@@ -346,6 +346,8 @@ class SproutVideo {
             time = 0;
         }
         this.ended = false;
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         player[this.node].seek(time);
         dispatchEvent('iv:playerSeek', {time: time});
         return true;

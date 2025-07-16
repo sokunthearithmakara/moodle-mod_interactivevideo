@@ -387,6 +387,8 @@ class Vimeo {
             time = 0;
         }
         this.ended = false;
+        let currentTime = await this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         await player[this.node].setCurrentTime(time);
         dispatchEvent('iv:playerSeek', {time: time});
         return time;

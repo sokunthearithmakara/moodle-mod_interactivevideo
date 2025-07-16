@@ -365,6 +365,8 @@ class PeerTube {
         if (!player[this.node]) {
             return time;
         }
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         this.ended = false;
         await player[this.node].seek(time);
         dispatchEvent('iv:playerSeek', {time: time});

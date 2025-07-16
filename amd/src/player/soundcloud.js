@@ -302,10 +302,12 @@ class SoundCloud {
      * @param {Number} time
      * @return {Promise<Boolean>}
      */
-    seek(time) {
+    async seek(time) {
         time = Math.min(time, this.end);
         time = Math.max(time, this.start);
         this.ended = false;
+        let currentTime = await this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         return new Promise((resolve) => {
             this.player.seekTo(time * 1000);
             this.currentTime = time;

@@ -42,6 +42,9 @@ export default class SkipSegment extends Base {
             }
 
             $(document).on('timeupdate.skipsegment', async function(e) {
+                if (!self.main) {
+                    return;
+                }
                 const t = e.originalEvent.detail.time;
 
                 let annotation = skipsegments.find((annotation) => {

@@ -868,7 +868,7 @@ html:has(.path-mod-interactivevideo) {
     width: 30px;
     bottom: 1rem;
     right: 1rem;
-    z-index: 5;
+    z-index: 1030;
     display: none;
     position: absolute;
     background-color: #fff;
@@ -1727,7 +1727,8 @@ html:has(.path-mod-interactivevideo) {
         width: 100%;
     }
 
-    .path-mod-interactivevideo #interactivevideo-container.chapter-open {
+    .path-mod-interactivevideo #interactivevideo-container.chapter-open,
+    .path-mod-interactivevideo.embed-mode #interactivevideo-container.chapter-open {
         left: 400px;
         width: calc(100% - 400px);
         transition: left ease 300ms, width ease 300ms;
@@ -1983,7 +1984,7 @@ html:has(.path-mod-interactivevideo) {
     transition: all ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog:not(:has(.show-control)) {
+.path-course-view #playermodal.modal-fullscreen > .modal-dialog:not(:has(.modal-content.show-control)) {
     max-width: 100% !important;
     width: 100% !important;
     justify-content: start;
@@ -3506,7 +3507,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 }
 
 .path-course-view #playermodal.modal-resized > .modal-dialog .modal-body iframe {
-    position: relative !important;
+    top: 0;
 }
 
 .path-course-view #playermodal.modal-resized .modal-header {
@@ -3881,7 +3882,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     vertical-align: -0.125em;
 }
 
-#playermodal .modal-header .btn,
+#playermodal .modal-header .btn:not([data-toggletype="manual:undo"]),
 .path-mod-interactivevideo.darkmode .navbar [data-action="toggle-manual-completion"]:not([data-toggletype="manual:undo"]) {
     color: #fff;
 }

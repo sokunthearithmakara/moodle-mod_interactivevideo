@@ -394,6 +394,8 @@ class Panopto {
         if (!player[this.node]) {
             return time;
         }
+        let currentTime = this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         this.ended = false;
         return new Promise((resolve) => {
             player[this.node].seekTo(time, true);
@@ -472,7 +474,6 @@ class Panopto {
      * @return {Void}
      */
     destroy() {
-        player = null;
         $(`#${this.node}`).remove();
         player[this.node] = null;
         dispatchEvent('iv:playerDestroyed');

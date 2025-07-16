@@ -336,13 +336,15 @@ class Kinescope {
      * @param {number} time - The time in seconds to seek to.
      * @returns {Promise<number>} A promise that resolves to the time in seconds to which the video was seeked.
      */
-    seek(time) {
+    async seek(time) {
         if (!player[this.node]) {
             return time;
         }
         if (time < 0) {
             time = 0;
         }
+        let currentTime = await this.getCurrentTime();
+        dispatchEvent('iv:playerSeekStart', {time: currentTime});
         this.ended = false;
         player[this.node].seekTo(parseFloat(time));
         dispatchEvent('iv:playerSeek', {time: time});
