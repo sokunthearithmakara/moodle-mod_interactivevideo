@@ -1,6 +1,42 @@
 {
     "subplugins": [
         {
+            "name": "videotrack",
+            "title": "Video Track",
+            "component": "local_ivvideotrack",
+            "description": "Add multiple video tracks to the main activity.",
+            "icon": "bi bi-collection-play",
+            "version": "2025071600",
+            "type": "paid",
+            "description_url": "",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/433444",
+            "git": "https://github.com/sokunthearithmakara/local_ivvideotrack/archive/refs/heads/master.zip"
+        },
+        {
+            "name": "audiotrack",
+            "title": "Audio Track",
+            "component": "local_ivaudiotrack",
+            "description": "Add alternative audio tracks to the video",
+            "icon": "bi bi-headset",
+            "version": "2025041102",
+            "type": "paid",
+            "description_url": "",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/433470",
+            "git": "https://github.com/sokunthearithmakara/local_ivaudiotrack/archive/refs/heads/main.zip"
+        },
+        {
+            "name": "rajabsgames",
+            "title": "Rajab's Games",
+            "component": "block_rajabsgames",
+            "description": "Add game components such as leaderboard, points, levels and badges to your course that integrate with Interactive Video.",
+            "icon": "bi bi-shield-fill-check",
+            "version": "2025070203",
+            "type": "free",
+            "description_url": "",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/433492",
+            "git": "https://github.com/sokunthearithmakara/block_rajabsgames/archive/refs/heads/master.zip"
+        },
+        {
             "name": "reaction",
             "title": "Reaction",
             "component": "local_ivreaction",
