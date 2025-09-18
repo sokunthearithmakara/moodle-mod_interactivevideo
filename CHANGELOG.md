@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 ## [1.4.4] - 2025-09-18
-
+https://mod-interactive-video.canny.io/changelog/interactive-video-144
 
 ## [1.4.3] - 2025-07-16
 https://mod-interactive-video.canny.io/changelog/interactive-video-143
