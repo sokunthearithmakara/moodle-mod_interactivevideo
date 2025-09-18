@@ -62,13 +62,12 @@ define([
     };
 
     let $meta = $('.metadata');
-    let $annochapter = $('.annolistinchapter');
     let $wrapper = $('#wrapper');
     const renderAnnotationItems = async(annos, start, totaltime) => {
         $meta.empty();
         $interactionNav.find('ul').empty();
         $videoNav.find('ul').empty();
-        $annochapter.empty();
+        $('.annolistinchapter').empty();
         if (displayoptions.preventseeking == 1) {
             $videoNav.addClass('no-pointer-events');
         }
@@ -140,6 +139,7 @@ define([
             if ((advanced.visiblebeforecompleted == "1" && !x.completed)
                 || (advanced.visibleaftercompleted == "1" && x.completed)) {
                 $('[data-region="chapterlists"] li').each(function() {
+
                     const cstart = $(this).data('start');
                     const cend = $(this).data('end');
                     if (x.timestamp >= cstart && x.timestamp < cend) {
@@ -223,6 +223,8 @@ define([
             completionpercentage, gradeiteminstance, grademax, vtype,
             preventskip = true, moment = null, doptions = {}, token = null, extendedcompletion = null, isPreviewMode = false,
             isCompleted = false, iseditor = false) {
+
+            doptions = $('#doptions').length > 0 ? JSON.parse($('#doptions').text()) : doptions;
 
             let $remainingtime = $('#remainingtime');
             let $currenttime = $('#currenttime');
@@ -2083,19 +2085,11 @@ define([
                 if (e.originalEvent.detail.requireVideoBlock === false) {
                     $('.video-block').remove();
                 }
-                // Append a error button.
-                if ($('#autoplay-error').length) {
-                    return;
-                }
-                $('body').append(`<button id="autoplay-error" data${bsAffix}-toggle="tooltip"
-                     title="${M.util.get_string('autoplayblocked', 'mod_interactivevideo')}"
-                    class="btn btn-danger p-2 iv-rounded-circle pulse"><i class="bi bi-x-lg"></i></button>`);
-                $('#autoplay-error').tooltip('show');
-                $(document).on('click', '#autoplay-error', function() {
-                    $('#autoplay-error').tooltip('hide');
-                    $(this).fadeOut(300, 'swing', function() {
-                        $(this).remove();
-                    });
+
+                Toast.add(M.util.get_string('autoplayblocked', 'mod_interactivevideo'), {
+                    type: 'default',
+                    autohide: true,
+                    delay: 5000,
                 });
             });
 

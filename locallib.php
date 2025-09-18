@@ -121,7 +121,7 @@ class interactivevideo_util {
      */
     public static function get_progress($interactivevideo, $userid, $preview = false) {
         global $DB;
-        if ($userid == 1 || $preview) {
+        if ($userid == 1 || $preview || isguestuser()) {
             global $SESSION;
             $progress = isset($SESSION->ivprogress) ? $SESSION->ivprogress : null;
             if (!isset($progress)) {
@@ -196,7 +196,7 @@ class interactivevideo_util {
     ) {
         global $DB, $CFG, $SESSION;
         // If guess user, save progress in the session; otherwise in the database.
-        if ($userid == 1) {
+        if ($userid == 1 || isguestuser()) {
             // First get the progress from the session.
             $progress = [
                 'cmid' => $interactivevideo,

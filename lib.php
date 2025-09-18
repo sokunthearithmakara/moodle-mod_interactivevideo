@@ -659,10 +659,7 @@ function interactivevideo_cm_info_dynamic(cm_info $cm) {
 
     $customdata = $cm->customdata;
     $displayoptions = json_decode($customdata['displayoptions']);
-    $isivformat = strpos($PAGE->bodyclasses, 'format-test') !== false && !$PAGE->user_is_editing();
-    if ((isset($displayoptions->displayinline) && $displayoptions->displayinline == INTERACTIVEVIDEO_DISPLAY_INLINE)
-        || $isivformat
-    ) {
+    if ((isset($displayoptions->displayinline) && $displayoptions->displayinline == INTERACTIVEVIDEO_DISPLAY_INLINE)) {
         $cm->set_no_view_link();
     } else {
         $cm->set_after_link($afterlink);
@@ -679,16 +676,13 @@ function interactivevideo_cm_info_dynamic(cm_info $cm) {
 function interactivevideo_cm_info_view(cm_info $cm) {
     global $PAGE;
     $customdata = $cm->customdata;
-    $isivformat = strpos($PAGE->bodyclasses, 'format-test') !== false && !$PAGE->user_is_editing();
     $displayoptions = json_decode($customdata['displayoptions']);
     $displayinline = isset($displayoptions->displayinline) && $displayoptions->displayinline == INTERACTIVEVIDEO_DISPLAY_INLINE;
     if ($displayoptions->launchinpopup) {
         $cm->set_extra_classes('launchinpopup');
     }
-    if ($displayinline || $isivformat) {
-        if (strpos($PAGE->bodyclasses, 'format-') !== false) { // MUST be in course view only.
-            $cm->set_content(interactivevideo_displayinline($cm));
-        }
+    if ($displayinline && strpos($PAGE->bodyclasses, 'format-') !== false) { // MUST be in course view only.
+        $cm->set_content(interactivevideo_displayinline($cm));
     }
 }
 
@@ -730,10 +724,6 @@ function interactivevideo_displayinline(cm_info $cm) {
     // Set after link.
     $afterlink = interactivevideo_afterlink($cm);
 
-    // Support for format_iv.
-    // Get course format.
-    $isivformat = strpos($PAGE->bodyclasses, 'format-test') !== false && !$PAGE->user_is_editing();
-
     $displayoptions = json_decode($cm->customdata['displayoptions']);
     if (isset($displayoptions->usecustomposterimage) && $displayoptions->usecustomposterimage) {
         $fs = get_file_storage();
@@ -768,6 +758,7 @@ function interactivevideo_displayinline(cm_info $cm) {
     $datafortemplate = [
         'interactivevideo' => $interactivevideo,
         'cm' => $cm,
+        'displayoptions' => $displayoptions,
         'hascompletion' => isset($displayoptions->hascompletion),
         'passwordprotected' => isset($displayoptions->passwordprotected) && $displayoptions->passwordprotected,
         'overallcomplete' => isset($displayoptions->hascompletion)
@@ -819,19 +810,6 @@ function interactivevideo_displayinline(cm_info $cm) {
         }
     }
 
-    if ($isivformat) {
-        $datafortemplate['showdescription'] = false;
-        $datafortemplate['showposterimage'] = true;
-        $datafortemplate['showprogressbar'] = true;
-        $datafortemplate['showcompletion'] = true;
-        $datafortemplate['showname'] = true;
-        $datafortemplate['size'] = 'large';
-        $datafortemplate['columnlayout'] = true;
-        $datafortemplate['launchinpopup'] = false;
-        $datafortemplate['formativ'] = true;
-        $datafortemplate['cardonly'] = false;
-    }
-
     if (!$cm->uservisible) {
         return $OUTPUT->render_from_template('mod_interactivevideo/activitycard', $datafortemplate);
     }
@@ -847,7 +825,7 @@ function interactivevideo_displayinline(cm_info $cm) {
         $getcompletion = true;
     }
 
-    if ($USER->id <= 1) { // Guest user.
+    if (isguestuser()) { // Guest user.
         $getcompletion = false;
     }
 
@@ -932,7 +910,7 @@ function interactivevideo_displayinline(cm_info $cm) {
         return true;
     });
 
-    if ($USER->id > 1) {
+    if (!isguestuser()) {
         $usercompletion = $DB->get_records(
             'interactivevideo_completion',
             [
@@ -2469,4 +2447,49 @@ function interactivevideo_extend_navigation_course(\navigation_node $navigation,
         null,
         new pix_icon('i/report', '')
     );
+}
+
+/**
+ * Utility function to get the type of the video from the url.
+ *
+ * @param string $url The url of the video.
+ * @return string The type of the video.
+ */
+function interactivevideo_get_type_from_url($url) {
+    $patterns = [
+        'yt' => '/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be|youtube-nocookie\.com)\/' .
+            '(?:embed\/|watch\?v=|v\/|.+\?v=)?([^&\/\?]+)(?:[&\/\?].*)?/i',
+        'vimeo' => '/(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com)\/([^\/]+)/i',
+        'dailymotion' => '/(?:https?:\/\/)?(?:www\.)?(?:dailymotion\.com|dai\.ly)\/(?:embed\/video\/|video\/|)?([^_]+)/i',
+        'wistia' => '/(?:https?:\/\/)?(?:www\.)?(?:wistia\.com)\/medias\/([a-zA-Z0-9]+)/i',
+        'sproutvideo' => '/(?:https?:\/\/)?(?:www\.)?(?:sproutvideo\.com|vids\.io)\/videos\/([a-zA-Z0-9]+)/i',
+        'rumble' => '/(?:https?:\/\/)?(?:www\.)?(?:rumble\.com)\/([a-zA-Z0-9]+)/i',
+        'kinescope' => '/(?:https?:\/\/)?(?:www\.)?(?:kinescope\.io)\/([a-zA-Z0-9]+)/i',
+        'peertube' => '/(?:https?:\/\/)?(?:www\.)?(?:[^\/]+)\/w\/([^\/]+)/',
+        'panopto' => '/(?:https?:\/\/)?(?:www\.)?(?:[^\/]*panopto\.[^\/]+)\/Panopto\/.+\?id=([^\/]+)/i',
+        'rutube' => '/(?:https?:\/\/)?(?:www\.)?(?:rutube\.ru)\/video\/([a-zA-Z0-9]+)/i',
+        'spotify' => '/(?:https?:\/\/)?(?:open\.spotify\.com)\/(episode|track)\/([^\/\?]+)(?:\?.*)?/i',
+        'soundcloud' => '/(?:https?:\/\/)?(?:www\.)?(?:soundcloud\.com)\/([^\/\?]+)/i',
+    ];
+
+    foreach ($patterns as $type => $regex) {
+        if (preg_match($regex, $url)) {
+            return $type;
+        }
+    }
+
+    $fileinfo = pathinfo($url);
+    if (isset($fileinfo)) {
+        $fileextension = $fileinfo['extension'];
+        if (!isset($fileextension) || empty($fileextension)) {
+            return '';
+        }
+
+        $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac', '.mpd', '.m3u8'];
+        if (in_array($fileextension, $acceptedextensions)) {
+            return 'html5video';
+        }
+    }
+
+    return '';
 }

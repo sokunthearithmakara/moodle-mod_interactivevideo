@@ -120,8 +120,21 @@ $subplugins = explode(',', get_config('mod_interactivevideo', 'enablecontenttype
 if (!in_array('ivplugin_chapter', $subplugins)) {
     $subplugins[] = 'ivplugin_chapter';
 }
+// Get interaction types used in the interactive video.
+$interactions = interactivevideo_util::get_items($cm->instance, $modulecontext->id);
+$interactions = array_map(function($interaction) {
+    return $interaction->type;
+}, $interactions);
+$interactions = array_unique($interactions);
+$sub = array_map(function($s) {
+    return explode('_', $s)[1];
+}, $subplugins);
 $stringman = get_string_manager();
 foreach ($subplugins as $subplugin) {
+    $name = explode('_', $subplugin)[1];
+    if (!in_array($name, $interactions) && $name != 'chapter') {
+        continue;
+    }
     $strings = $stringman->load_component_strings($subplugin, current_language());
     $PAGE->requires->strings_for_js(array_keys($strings), $subplugin);
 }
@@ -409,11 +422,13 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $moduleinstance->displayoptions['preventskipping'] && !has_capability('mod/interactivevideo:edit', $modulecontext)
         ? true : false, // Prevent skipping, applicable to student only.
     $moment, // Current time in seconds.
-    $moduleinstance->displayoptions, // Display options array set in mod_form.
+    null, // Display options array set in mod_form.
     $token ?? '', // Token for mobile app.
     $moduleinstance->extendedcompletion, // Extended completion settings.
     $preview && has_capability('mod/interactivevideo:edit', $modulecontext) ? true : false, // Preview mode.
     $datafortemplate['completed'] ?? false, // Completed status.
     has_capability('mod/interactivevideo:edit', $modulecontext) ? true : false, // Is editor.
 ]);
+
+echo '<textarea id="doptions" style="display: none;">' . json_encode($moduleinstance->displayoptions) . '</textarea>';
 echo $OUTPUT->footer();

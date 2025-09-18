@@ -288,20 +288,28 @@ class quicksettings_form extends \core_form\dynamic_form {
         $context = \context_course::instance($courseid);
         $PAGE->set_context($context);
         $format = course_get_format($courseid);
-        $courseformat = $format->get_format();
-        $renderer = $PAGE->get_renderer('format_' . $courseformat);
+        $renderer = $format->get_renderer($PAGE);
         // Rebuid the course cache.
         rebuild_course_cache($courseid, true);
 
         $modinfo = get_fast_modinfo($courseid);
         $cm = $modinfo->get_cm($data->cmid);
 
+        $section = $modinfo->get_section_info($cm->sectionnum);
+        // Implement support for mtube format.
+        if ($format->get_format() == 'mtube' && !$PAGE->user_is_editing()) {
+            \format_mtube\external\get_section_html::process_interactivevideo(
+                $courseid,
+                $cm,
+                $format->get_format_options(),
+                $section
+            );
+        }
+
         if (!$data->displayinline) {
             $cm->set_after_link(interactivevideo_afterlink($cm));
         }
 
-        $sectionid = $cm->sectionnum;
-        $section = $modinfo->get_section_info($sectionid);
         $cmitemclass = $format->get_output_classname('content\\section\\cmitem');
         $cmitem = new $cmitemclass($format, $section, $cm);
         $return = new \stdClass();

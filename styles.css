@@ -3152,8 +3152,12 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     margin: 0;
 }
 
-.path-course-view:not(.editing) .section .activity:has(.interactivevideo-card) {
+.path-course-view:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card):not(:first-child) {
     border-top: 1px solid #dee2e6;
+
+}
+
+.path-course-view:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card) {
     margin-top: 0.25rem;
     padding-top: 0.25rem;
 }
@@ -3519,7 +3523,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     margin-inline-end: 0.25rem;
 }
 
-.path-course-view:not(.editing) .section .activity:has(.interactivevideo-card):hover {
+.path-course-view:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card):hover {
     z-index: 3;
 }
 

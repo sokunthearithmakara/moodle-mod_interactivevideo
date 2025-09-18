@@ -135,15 +135,13 @@ export default class Chapter extends Base {
                 }
 
                 if (locked) {
-                    $('body').addClass('chapter-locked');
                     let lockstring = M.util.get_string(settings.lock, 'ivplugin_chapter');
                     self.addNotification(M.util.get_string('chapterlocked', 'ivplugin_chapter', lockstring), 'danger');
+                    $('body').addClass('chapter-locked');
                     // Go to the next chapter.
                     self.player.pause();
                     self.player.seek(currentchapter.start - 0.3);
                     // Show the message.
-                } else {
-                    $('body').removeClass('chapter-locked');
                 }
 
                 $chapterlists.find('.chapter').removeClass('active-chapter');
@@ -325,10 +323,10 @@ export default class Chapter extends Base {
             let placement = 'top';
             let title = annotation.formattedtitle;
             title = title.replace(/'/g, '&apos;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/&/g, '&amp;');
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/&/g, '&amp;');
             $("#video-nav ul").append(`<li class="${classes}" data-timestamp="${annotation.timestamp}"
               data-id="${annotation.id}" style="left: calc(${percentage}% - 5px)">
         <div class="item" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-container="${container}"
@@ -375,7 +373,10 @@ export default class Chapter extends Base {
             $('h2#message').remove();
             if (!this.isEditMode()) {
                 $('#message span').css('top', '0');
-                this.player.play();
+                //  This.player.play();
+                if (!$('body').hasClass('chapter-locked')) {
+                   this.player.play();
+                }
                 $('#controler').removeClass('no-pointer-events');
             }
         });

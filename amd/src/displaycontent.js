@@ -298,7 +298,7 @@ const defaultDisplayContent = async function(annotation, player) {
                 });
 
                 // If click outside the modal, add jelly animation.
-                root.off('click').on('click', function(e) {
+                root.off('click.modal').on('click.modal', function(e) {
                     if ($(e.target).closest('.modal-content').length === 0) {
                         root.addClass('jelly-anim');
                     }
