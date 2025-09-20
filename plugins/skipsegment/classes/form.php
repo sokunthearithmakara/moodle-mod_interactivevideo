@@ -92,12 +92,12 @@ class form extends \mod_interactivevideo\form\base_form {
             [2, 1]
         );
         $elements[] = $mform->createElement(
-                'static',
-                'force',
-                '',
-                '<span class="text-muted small w-100 d-block">'
-                    . get_string('force_desc', 'ivplugin_skipsegment') . '</span>'
-            );
+            'static',
+            'force',
+            '',
+            '<span class="text-muted small w-100 d-block">'
+                . get_string('force_desc', 'ivplugin_skipsegment') . '</span>'
+        );
         $mform->addGroup($elements, '', get_string('force', 'ivplugin_skipsegment'));
         $mform->setDefault('intg1', 1);
         $mform->setDefault('intg2', 1);

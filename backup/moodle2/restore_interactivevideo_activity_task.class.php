@@ -17,7 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/restore_interactivevideo_stepslib.php');
-require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/restore_itneractivevideo_course_settings.php');
+require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/restore_interactivevideo_course_settings.php');
 
 /**
  * Testore task that provides all the settings and steps to perform one complete restore of the activity
@@ -27,7 +27,6 @@ require_once($CFG->dirroot . '/mod/interactivevideo/backup/moodle2/restore_itner
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_interactivevideo_activity_task extends restore_activity_task {
-
     /**
      * Define (add) particular settings this activity can have
      */

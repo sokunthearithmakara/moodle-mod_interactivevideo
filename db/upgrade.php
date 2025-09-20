@@ -35,7 +35,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
     if ($oldversion < 2024092204) {
-
         // Changing type of field start on table interactivevideo to number.
         $table = new xmldb_table('interactivevideo');
         $field = new xmldb_field('start', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, null, 'displayasstartscreen');
@@ -53,7 +52,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024092214) {
-
         // Define field extendedcompletion to be added to interactivevideo.
         $table = new xmldb_table('interactivevideo');
         $field = new xmldb_field('extendedcompletion', XMLDB_TYPE_TEXT, null, null, null, null, null, 'posterimage');
@@ -68,7 +66,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024092222) {
-
         // Rename field start on table interactivevideo to starttime.
         $table = new xmldb_table('interactivevideo');
         $field = new xmldb_field('start', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, null, 'displayasstartscreen');
@@ -81,7 +78,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024092223) {
-
         // Rename field end on table interactivevideo to endtime.
         $table = new xmldb_table('interactivevideo');
         $field = new xmldb_field('end', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, null, 'starttime');
@@ -94,7 +90,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025010100) {
-
         // Define field intg1 to be added to interactivevideo_items.
         $table = new xmldb_table('interactivevideo_items');
         $field = new xmldb_field('intg1', XMLDB_TYPE_INTEGER, '20', null, null, null, '0', 'advanced');
@@ -123,7 +118,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025010101) {
-
         // Define field lastviewed to be added to interactivevideo_completion.
         $table = new xmldb_table('interactivevideo_completion');
         $field = new xmldb_field('lastviewed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'completiondetails');
@@ -138,7 +132,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025011309) {
-
         // Define table interactivevideo_settings to be created.
         $table = new xmldb_table('interactivevideo_settings');
 
@@ -172,7 +165,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025033001) {
-
         // Define key usermodified (foreign) to be dropped form interactivevideo_settings.
         $table = new xmldb_table('interactivevideo_settings');
         $key = new xmldb_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
@@ -192,7 +184,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025041202) {
-
         // Define field timeended to be added to interactivevideo_completion.
         $table = new xmldb_table('interactivevideo_completion');
         $field = new xmldb_field('timeended', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'timecompleted');
@@ -207,7 +198,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025052803) {
-
         // Define field intg4 to be added to interactivevideo_log.
         $table = new xmldb_table('interactivevideo_log');
         $field = new xmldb_field('intg4', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'intg3');
@@ -266,7 +256,6 @@ function xmldb_interactivevideo_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025052805) {
-
         // Define table interactivevideo_defaults to be created.
         $table = new xmldb_table('interactivevideo_defaults');
 

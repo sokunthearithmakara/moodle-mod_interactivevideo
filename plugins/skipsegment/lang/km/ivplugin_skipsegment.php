@@ -33,4 +33,3 @@ $string['skipped'] = 'រំលង';
 $string['skipsegmentcontent'] = 'កំណាត់រំលង';
 $string['skipsegmentdescription'] = 'រំលងផ្នែកណាមួយនៃវីដេអូ';
 $string['untiltimemustbegreaterthantimestamp'] = 'ពេលបញ្ចប់ត្រូវធំជាងពេលចាប់ផ្តើម';
-

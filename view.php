@@ -122,16 +122,24 @@ if (!in_array('ivplugin_chapter', $subplugins)) {
 }
 // Get interaction types used in the interactive video.
 $interactions = interactivevideo_util::get_items($cm->instance, $modulecontext->id);
-$interactions = array_map(function($interaction) {
+$interactions = array_map(function ($interaction) {
     return $interaction->type;
 }, $interactions);
 $interactions = array_unique($interactions);
-$sub = array_map(function($s) {
-    return explode('_', $s)[1];
+$sub = array_map(function ($s) {
+    $s = explode('_', $s)[1];
+    // Remove 'iv' prefix (prefix only).
+    if (substr($s, 0, 2) == 'iv') {
+        $s = substr($s, 2);
+    }
+    return $s;
 }, $subplugins);
 $stringman = get_string_manager();
 foreach ($subplugins as $subplugin) {
     $name = explode('_', $subplugin)[1];
+    if (substr($name, 0, 2) == 'iv') {
+        $name = substr($name, 2);
+    }
     if (!in_array($name, $interactions) && $name != 'chapter') {
         continue;
     }
