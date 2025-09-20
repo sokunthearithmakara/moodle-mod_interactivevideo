@@ -105,7 +105,8 @@ class restore_interactivevideo_course_settings extends restore_activity_structur
         if ($DB->record_exists('interactivevideo_defaults', [
             'courseid' => $this->get_courseid(),
             'type' => $data['type'],
-        ])) { return;
+        ])) {
+            return;
         }
 
         $data = (object)$data;
