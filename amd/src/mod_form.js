@@ -366,6 +366,19 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     }
                 }
 
+                // BUNNYSTREAM:: Check if the link is a bunnystream link.
+                if (videotypes.includes('bunnystream') || currenttype == 'bunnystream') {
+                    // Extract id from the URL https://iframe.mediadelivery.net/watch/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf
+                    let regex = /https?:\/\/iframe\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9]+)/i;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('bunnystream');
+                        defaultLoadFunction('bunnystream');
+                        return;
+                    }
+                }
+
                 // PEERTUBE:: Check if the link is a peertube link.
                 // e.g. https://video.hardlimit.com/w/hFwjKHQa3ixivePeqGc4KR
                 if (videotypes.includes('peertube') || currenttype == 'peertube') {
@@ -376,6 +389,59 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         videowrapper.show();
                         videotype.val('peertube');
                         defaultLoadFunction('peertube');
+                        return;
+                    }
+                }
+
+                // Viostream:: Check if the link is a viostream link.
+                // E.g. https://share.viostream.com/ritie6zritioc1
+                if (videotypes.includes('viostream') || currenttype == 'viostream') {
+                    let regex = /(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('viostream');
+                        defaultLoadFunction('viostream');
+                        return;
+                    }
+                }
+
+                // Vidyard:: Check if the link is a vidyard link.
+                // E.g. https://share.vidyard.com/watch/6xY4kDZfFJw8nmfHitJzdJ
+                if (videotypes.includes('vidyard') || currenttype == 'vidyard') {
+                    let regex = /(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('vidyard');
+                        defaultLoadFunction('vidyard');
+                        return;
+                    }
+                }
+
+                // VDOCIPHER:: Check if the link is a vdocipher link.
+                // E.g. https://www.vdocipher.com/dashboard/video/2559f558c99c43169a7dc590cd970789/tab/settings;
+                // or https://www.vdocipher.com/dashboard/video/embed/2559f558c99c43169a7dc590cd970789;
+                if (videotypes.includes('vdocipher') || currenttype == 'vdocipher') {
+                    let regex = /(?:https?:\/\/)?(?:www\.)?(?:[^.]+\.)*(?:vdocipher\.com)\/dashboard\/video\/([^/]+)/;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('vdocipher');
+                        defaultLoadFunction('vdocipher');
+                        return;
+                    }
+                }
+
+                // Dyntube:: Check if the link is a dyntube link.
+                // e.g. https://videos.dyntube.com/videos/lnOpxoBgLk2YbpaVkZGUeQ
+                if (videotypes.includes('dyntube') || currenttype == 'dyntube') {
+                    let regex = /(?:https?:\/\/)?(?:videos\.dyntube\.com|dyntube\.com)\/(?:videos|iframes)\/([^/]+)/;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('dyntube');
+                        defaultLoadFunction('dyntube');
                         return;
                     }
                 }
@@ -554,23 +620,25 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     });
                     videoinput.val(e.detail.video);
                     videotype.val('html5video');
-                    uploadfield.hide();
-                    deletefield.show();
+                    uploadfield.css('display', 'none');
+                    deletefield.css('display', 'flex');
                 });
             });
 
             $(document).on('change', '#id_source', function() {
                 if ($(this).val() == 'file') {
+                    uploadfield.css('display', 'flex');
+                    deletefield.css('display', 'flex');
                     if (videoinput.val() == '' || videoinput.val() == '0') {
-                        uploadfield.show();
-                        deletefield.hide();
+                        uploadfield.css('display', 'flex');
+                        deletefield.css('display', 'none');
                     } else {
-                        uploadfield.hide();
-                        deletefield.show();
+                        uploadfield.css('display', 'none');
+                        deletefield.css('display', 'flex');
                     }
                 } else {
-                    uploadfield.hide();
-                    deletefield.hide();
+                    uploadfield.css('display', 'none');
+                    deletefield.css('display', 'none');
                 }
             });
 
@@ -612,16 +680,14 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
             });
 
             // DOM ready.
-            $(function() {
-                uploadfield.hide();
-                deletefield.hide();
+            $(document).ready(function() {
                 if (videourlinput.val() != '') {
                     videourlinput.trigger('input');
                 }
                 if (sourceinput.val() != 'url') {
                     if (videoinput.val() != '' && videoinput.val() != '0') {
-                        uploadfield.hide();
-                        deletefield.show();
+                        uploadfield.css('display', 'none');
+                        deletefield.css('display', 'flex');
                         const url = videofile.val();
                         videowrapper.html('<video id="player" class="w-100"></video>');
                         require(['mod_interactivevideo/player/html5video'], function(VP) {
@@ -632,10 +698,14 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                             });
                         });
                     } else {
-                        uploadfield.show();
-                        deletefield.hide();
+                        uploadfield.css('display', 'flex');
+                        deletefield.css('display', 'none');
                     }
+                } else {
+                    uploadfield.css('display', 'none');
+                    deletefield.css('display', 'none');
                 }
+
                 // Display warning message if the completion is not unlocked.
                 if ($('[name=completionunlocked]').val() == '0') {
                     $('#warning').removeClass('d-none');
@@ -658,6 +728,12 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         });
                     });
                 }
+
+                setTimeout(function() {
+                    uploadfield.removeClass('d-none');
+                    deletefield.removeClass('d-none');
+                }, sourceinput.val() != 'file' ? 5000 : 0);
+
             });
 
             startassistinput.val(convertSecondsToHMS(startinput.val()));

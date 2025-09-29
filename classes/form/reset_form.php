@@ -92,19 +92,21 @@ class reset_form extends \core_form\dynamic_form {
             'distractionfreemode',
             'darkmode',
             'usefixedratio',
+            'autohidecontrols',
+            'alignindicator',
             'disablechapternavigation',
             'useoriginalvideocontrols',
             'hidemainvideocontrols',
             'hideinteractions',
+            'beforecompletion',
+            'aftercompletion',
         ];
 
         $behavior = [
             'autoplay',
             'pauseonblur',
-            'preventskipping',
-            'preventseeking',
-            'disableinteractionclick',
-            'disableinteractionclickuntilcompleted',
+            'beforecompletionbehavior',
+            'aftercompletionbehavior',
         ];
 
         $cache = \cache::make('mod_interactivevideo', 'interactivevideo_settings');
@@ -125,6 +127,37 @@ class reset_form extends \core_form\dynamic_form {
             foreach ($behaviorsettings as $setting) {
                 $displayoptions->$setting = 1;
             }
+            $appearanceoptions = [
+                'useoriginalvideocontrols' => $displayoptions->useoriginalvideocontrols,
+                'hidemainvideocontrols' => $displayoptions->hidemainvideocontrols,
+                'interactionbar' => $displayoptions->hideinteractions ? 0 : 1,
+                'progressbar' => 1,
+                'chaptertoggle' => $displayoptions->disablechapternavigation ? 0 : 1,
+                'chaptertitle' => 1,
+                'timestamp' => 1,
+                'rewind' => 0,
+                'forward' => 0,
+                'captions' => 1,
+                'playbackrate' => 1,
+                'quality' => 1,
+                'mute' => 1,
+                'share' => 1,
+                'expand' => 1,
+                'fullscreen' => 1,
+            ];
+
+            $displayoptions->beforecompletion = $appearanceoptions;
+            $displayoptions->aftercompletion = $appearanceoptions;
+
+            $behavioroptions = [
+                'preventseeking' => $displayoptions->preventseeking,
+                'preventskipping' => $displayoptions->preventskipping,
+                'disableinteractionclick' => $displayoptions->disableinteractionclick,
+                'disableinteractionclickuntilcompleted' => $displayoptions->disableinteractionclickuntilcompleted,
+            ];
+
+            $displayoptions->beforecompletionbehavior = $behavioroptions;
+            $displayoptions->aftercompletionbehavior = $behavioroptions;
             $defaultsettings->displayoptions = json_encode($displayoptions);
         }
 

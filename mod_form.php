@@ -122,8 +122,11 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         }
 
         // Video player.
-        $mform->addElement('html', '<div class="mx-auto w-100" style="max-width: 800px;">
-            <div id="video-wrapper" class="mt-2 mb-3" style="display: none;">
+        $mform->addElement('html', '<div class="mx-auto w-100" style="max-width: 800px;">' .
+            (
+                array_intersect($videotypes, ['bunnystream', 'viostream']) ?
+                '<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>' : '') .
+            '<div id="video-wrapper" class="mt-2 mb-3" style="display: none;">
             <div id="player" style="width:100%; max-width: 100%"></div>
             </div></div>
             <div class="position-fixed w-100 h-100 no-pointer" id="background-loading" style="background: rgba(0, 0, 0, 0.3);">
@@ -163,11 +166,15 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
 
         if ($allowupload) {
             // Add upload button.
-            $mform->addElement('button', 'upload', get_string('uploadvideobutton', 'mod_interactivevideo'));
+            $mform->addElement('button', 'upload', get_string('uploadvideobutton', 'mod_interactivevideo'), [
+                'class' => 'd-none',
+            ]);
             $mform->hideIf('upload', 'source', 'eq', 'url');
 
             // Add delete button.
-            $mform->addElement('button', 'delete', get_string('deletevideobutton', 'mod_interactivevideo'));
+            $mform->addElement('button', 'delete', get_string('deletevideobutton', 'mod_interactivevideo'), [
+                'class' => 'd-none',
+            ]);
             $mform->hideIf('delete', 'source', 'eq', 'url');
         }
 
@@ -646,14 +653,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'showdescriptiononheader',
                 'darkmode',
                 'usefixedratio',
-                'disablechapternavigation',
-                'preventskipping',
-                'useoriginalvideocontrols',
-                'hidemainvideocontrols',
-                'preventseeking',
-                'disableinteractionclick',
-                'disableinteractionclickuntilcompleted',
-                'hideinteractions',
+                'alignindicator',
+                'autohidecontrols',
                 'theme',
                 'distractionfreemode',
                 'usecustomposterimage',
@@ -674,6 +675,10 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'columnlayout',
                 'squareposterimage',
                 'passwordprotected',
+                'beforecompletion',
+                'aftercompletion',
+                'beforecompletionbehavior',
+                'aftercompletionbehavior',
             ];
             if (empty($defaultvalues['displayoptions'])) {
                 $defaultvalues['displayoptions'] = json_encode(array_fill_keys($displayoptions, 0));
@@ -686,6 +691,55 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 }
                 if ($option == 'customdescription' && empty($defaultvalues[$option])) {
                     $defaultvalues[$option] = '';
+                }
+                if (in_array($option, [
+                    'beforecompletion',
+                    'aftercompletion',
+                    'beforecompletionbehavior',
+                    'aftercompletionbehavior',
+                ]) && $defaultvalues[$option] == 0) {
+                    $defaultvalues[$option] = [];
+                }
+            }
+
+            // Backward compatibility.
+            $mapping = [
+                'disablechapternavigation' => [
+                    'beforecompletion.chaptertoggle',
+                    'aftercompletion.chaptertoggle',
+                    function ($v) {
+                        return $v ? 0 : 1;
+                    },
+                ],
+                'useoriginalvideocontrols' => [
+                    'beforecompletion.useoriginalvideocontrols',
+                    'aftercompletion.useoriginalvideocontrols',
+                ],
+                'hidemainvideocontrols' => ['beforecompletion.hidemainvideocontrols', 'aftercompletion.hidemainvideocontrols'],
+                'hideinteractions' => ['beforecompletion.interactionbar', 'aftercompletion.interactionbar', function ($v) {
+                    return $v ? 0 : 1;
+                }],
+                'preventseeking' => ['beforecompletionbehavior.preventseeking', 'aftercompletionbehavior.preventseeking'],
+                'preventskipping' => ['beforecompletionbehavior.preventskipping', 'aftercompletionbehavior.preventskipping'],
+                'disableinteractionclick' => [
+                    'beforecompletionbehavior.disableinteractionclick',
+                    'aftercompletionbehavior.disableinteractionclick',
+                ],
+                'disableinteractionclickuntilcompleted' => [
+                    'beforecompletionbehavior.disableinteractionclickuntilcompleted',
+                    'aftercompletionbehavior.disableinteractionclickuntilcompleted',
+                ],
+            ];
+            foreach ($mapping as $key => $targets) {
+                if (isset($defaultdisplayoptions[$key])) {
+                    $value = $defaultdisplayoptions[$key];
+                    if (isset($targets[2]) && is_callable($targets[2])) {
+                        $value = $targets[2]($value);
+                    }
+                    foreach (array_slice($targets, 0, 2) as $target) {
+                        [$group, $field] = explode('.', $target);
+                        $defaultvalues[$group][$field] = $value;
+                    }
                 }
             }
 

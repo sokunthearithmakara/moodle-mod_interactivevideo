@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/interactivevideo/db" VERSION="20250607" COMMENT="XMLDB file for Moodle mod/interactivevideo"
+<XMLDB PATH="mod/interactivevideo/db" VERSION="20250924" COMMENT="XMLDB file for Moodle mod/interactivevideo"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -14,7 +14,7 @@
         <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Activity description."/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The format of the intro field."/>
         <FIELD NAME="source" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="video source: url or file"/>
-        <FIELD NAME="videourl" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The video url"/>
+        <FIELD NAME="videourl" TYPE="char" LENGTH="1333" NOTNULL="false" SEQUENCE="false" COMMENT="The video url"/>
         <FIELD NAME="type" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The video url type"/>
         <FIELD NAME="video" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The video file"/>
         <FIELD NAME="endscreentext" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="End screen description."/>

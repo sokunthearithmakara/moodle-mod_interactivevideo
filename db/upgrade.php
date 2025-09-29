@@ -296,5 +296,18 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025052805, 'interactivevideo');
     }
 
+    if ($oldversion < 2025091802) {
+
+        // Changing precision of field videourl on table interactivevideo to (1333).
+        $table = new xmldb_table('interactivevideo');
+        $field = new xmldb_field('videourl', XMLDB_TYPE_CHAR, '1333', null, null, null, null, 'source');
+
+        // Launch change of precision for field videourl.
+        $dbman->change_field_precision($table, $field);
+
+        // Interactivevideo savepoint reached.
+        upgrade_mod_savepoint(true, 2025091802, 'interactivevideo');
+    }
+
     return true;
 }

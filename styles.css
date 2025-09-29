@@ -970,12 +970,20 @@ html:has(.path-mod-interactivevideo) {
     border-radius: 5px;
 }
 
+.path-mod-interactivevideo #controller.align-indicator #video-nav ul {
+    height: 4px;
+}
+
 .path-mod-interactivevideo #interactions-nav {
     width: 100%;
     position: relative;
     display: flex;
     padding: 0;
     justify-content: center;
+}
+
+.path-mod-interactivevideo #controller.align-indicator #interactions-nav {
+    top: -3px;
 }
 
 .path-mod-interactivevideo #video-nav ul,
@@ -986,6 +994,10 @@ html:has(.path-mod-interactivevideo) {
     display: flex;
     align-items: center;
     margin: 0;
+}
+
+.path-mod-interactivevideo #controller.align-indicator #interactions-nav ul {
+    justify-content: center;
 }
 
 #page-mod-interactivevideo-interactions #video-nav ul {
@@ -1022,15 +1034,36 @@ html:has(.path-mod-interactivevideo) {
     color: #fff;
 }
 
+.path-mod-interactivevideo #controller.align-indicator #interactions-nav li {
+    width: 100%;
+    max-width: 30px;
+    margin: 0 2px;
+    position: relative;
+    left: unset !important;
+}
+
 .path-mod-interactivevideo #video-nav li .item,
 .path-mod-interactivevideo #interactions-nav li .item {
     border-radius: 50%;
     width: 5px;
     height: 5px;
     border: 1px solid #000;
-    background-color: #fff;
+    background-color: #ddd;
     transition: transform ease-in-out 300ms;
     cursor: pointer;
+}
+
+.path-mod-interactivevideo #controller.align-indicator #interactions-nav li .item {
+    width: 100%;
+    border: none !important;
+    border-radius: 2px;
+    opacity: 0.7;
+    transition: opacity ease-in-out 300ms;
+}
+
+.path-mod-interactivevideo #controller.align-indicator #video-nav > div {
+    height: 4px;
+    position: absolute;
 }
 
 .path-mod-interactivevideo #video-nav li.dragging {
@@ -1042,8 +1075,8 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo:not(.mobiletheme) #video-nav .item:hover,
-.path-mod-interactivevideo:not(.mobiletheme) #interactions-nav .item:hover,
-.path-mod-interactivevideo #interactions-nav .item.active {
+.path-mod-interactivevideo:not(.mobiletheme) #controller:not(.align-indicator) #interactions-nav .item:hover,
+.path-mod-interactivevideo #controller:not(.align-indicator) #interactions-nav .item.active {
     transform: scale(1.75);
     box-shadow:
         0 0 10px #399be2,
@@ -1057,6 +1090,11 @@ html:has(.path-mod-interactivevideo) {
         0 0 90px #399be2,
         0 0 100px #399be2;
     transition: all ease-in-out 300ms;
+    opacity: 1;
+}
+
+.path-mod-interactivevideo #controller.align-indicator #interactions-nav li .item:hover,
+.path-mod-interactivevideo #controller.align-indicator #interactions-nav li .item.active {
     opacity: 1;
 }
 
@@ -1087,8 +1125,8 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo #interactions-nav li.no-completion .item,
 .path-mod-interactivevideo #video-nav li.no-completion .item {
-    border: 1px solid #aaa;
-    background-color: #aaa;
+    border: 1px solid #777;
+    background-color: #777;
 }
 
 .path-mod-interactivevideo #video-wrapper #message,
@@ -1695,9 +1733,33 @@ html:has(.path-mod-interactivevideo) {
     opacity: 1;
 }
 
+@media (min-width: 992px) {
+    .path-mod-interactivevideo.distraction-free:not(.embed-mode) #controller {
+        margin: 0 1rem;
+        border-radius: 1rem 1rem 0 0;
+        max-width: calc(100% - 2rem);
+    }
+}
+
 .path-mod-interactivevideo #wrapper.fullscreen #controller #expand,
 .path-mod-interactivevideo.embed-mode #controller #expand {
     display: none !important;
+}
+
+.path-mod-interactivevideo #controller.fadeOut,
+.path-mod-interactivevideo .navbar.fadeOut {
+    opacity: 0 !important;
+    transition: opacity ease-in-out 600ms;
+}
+
+.path-mod-interactivevideo #controller:not(.fadeOut),
+.path-mod-interactivevideo .navbar:not(.fadeOut) {
+    transition: opacity ease-in-out 600ms;
+}
+
+.path-mod-interactivevideo #controller.fadeOut:hover,
+.path-mod-interactivevideo .navbar.fadeOut:hover {
+    opacity: 1 !important;
 }
 
 .path-mod-interactivevideo [data-region="chapterlists"] .chapter.active-chapter > div {
@@ -2237,6 +2299,10 @@ html:has(.path-mod-interactivevideo) {
     display: flex;
     min-width: 100%;
     position: relative;
+}
+
+.path-mod-interactivevideo #controller.align-indicator #taskinfo {
+    border-top: none;
 }
 
 .path-mod-interactivevideo #user-menu-toggle {
@@ -3890,3 +3956,24 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 .path-mod-interactivevideo.darkmode .navbar [data-action="toggle-manual-completion"]:not([data-toggletype="manual:undo"]) {
     color: #fff;
 }
+
+.fitem[data-groupname="beforecompletion"] .form-check-inline,
+.fitem[data-groupname="aftercompletion"] .form-check-inline,
+.fitem[data-groupname="beforecompletionbehavior"] .form-check-inline,
+.fitem[data-groupname="aftercompletionbehavior"] .form-check-inline,
+.fitem[data-groupname="activitycardgroup"] .form-check-inline,
+.fitem[data-groupname="cardoptiongroup"] .form-check-inline,
+.fitem[data-groupname="behaviorgroup"] .form-check-inline {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.fitem[data-groupname="beforecompletion"] [data-fieldtype="group"] > *,
+.fitem[data-groupname="aftercompletion"] [data-fieldtype="group"] > * {
+    column-count: 2;
+}
+
+.vidyard-player-container #backlink {
+    display: none;
+}
+

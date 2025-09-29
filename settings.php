@@ -178,11 +178,16 @@ $sources = [
     'rutube' => get_string('rutube', 'mod_interactivevideo'),
     'rumble' => get_string('rumble', 'mod_interactivevideo'),
     'panopto' => get_string('panopto', 'mod_interactivevideo'),
+    'dyntube' => get_string('dyntube', 'mod_interactivevideo'),
+    'vdocipher' => get_string('vdocipher', 'mod_interactivevideo'),
     'spotify' => get_string('spotify', 'mod_interactivevideo')
         . '<span class="badge alert-primary mx-1">' . get_string('audio', 'mod_interactivevideo') . '</span>',
     'soundcloud' => get_string('soundcloud', 'mod_interactivevideo')
         . '<span class="badge alert-primary mx-1">' . get_string('audio', 'mod_interactivevideo') . '</span>',
     'peertube' => get_string('peertube', 'mod_interactivevideo'),
+    'vidyard' => get_string('vidyard', 'mod_interactivevideo'),
+    'bunnystream' => get_string('bunnystream', 'mod_interactivevideo'),
+    'viostream' => get_string('viostream', 'mod_interactivevideo'),
 ];
 // Sort the sources by name a-z.
 asort($sources);
@@ -295,6 +300,7 @@ $asettings->add(new admin_setting_configmulticheckbox(
         'showname' => get_string('showname', 'mod_interactivevideo'),
         'distractionfreemode' => get_string('distractionfreemode', 'mod_interactivevideo'),
         'darkmode' => get_string('darkmode', 'mod_interactivevideo'),
+        'alignindicator' => get_string('alignindicatorcenter', 'mod_interactivevideo'),
     ],
     [
         'displayinline' => get_string('displayinline', 'mod_interactivevideo'),
@@ -312,6 +318,8 @@ $asettings->add(new admin_setting_configmulticheckbox(
         'distractionfreemode' => get_string('distractionfreemode', 'mod_interactivevideo'),
         'darkmode' => get_string('darkmode', 'mod_interactivevideo'),
         'usefixedratio' => get_string('usefixedratio', 'mod_interactivevideo'),
+        'autohidecontrols' => get_string('autohidecontrols', 'mod_interactivevideo'),
+        'alignindicator' => get_string('alignindicatorcenter', 'mod_interactivevideo'),
         'disablechapternavigation' => get_string('disablechapternavigation', 'mod_interactivevideo'),
         'useoriginalvideocontrols' => get_string('useoriginalvideocontrols', 'mod_interactivevideo'),
         'hidemainvideocontrols' => get_string('hidemainvideocontrols', 'mod_interactivevideo'),
@@ -379,6 +387,21 @@ $rsettings->add(new admin_setting_configmultiselect(
 
 $ADMIN->add('modivfolder', $rsettings);
 
+// Provider APIs node.
+$providerapis = new admin_settingpage(
+    'mod_interactivevideo_providerapis',
+    get_string('providerapis', 'mod_interactivevideo')
+);
+
+$providerapis->add(new admin_setting_configtext(
+    'mod_interactivevideo/auth_vdocipher',
+    get_string('auth_tool', 'mod_interactivevideo', 'VdoCipher'),
+    get_string('auth_tool_desc', 'mod_interactivevideo', 'VdoCipher'),
+    '',
+    PARAM_TEXT
+));
+
+$ADMIN->add('modivfolder', $providerapis);
 
 // Content types node.
 $modcontenttype = new admin_category(
@@ -387,3 +410,5 @@ $modcontenttype = new admin_category(
     $module->is_enabled() === false
 );
 $ADMIN->add('modivfolder', $modcontenttype);
+
+

@@ -331,13 +331,32 @@ if ($iframe || $embed) {
     $rendernav = false;
 }
 if ($rendernav) {
+    // Understanding the course format: singlepage or multiplepages.
+    $format = course_get_format($course);
+    if (
+        $format->get_course_display() == COURSE_DISPLAY_MULTIPAGE &&
+        !$format->show_editor()
+    ) {
+        if ($CFG->branch >= 404) { // Section.php started to exist in Moodle 4.4.
+            $returnurl = new moodle_url('/course/section.php', [
+                'id' => $cm->section,
+            ]);
+        } else {
+            $returnurl = new moodle_url('/course/view.php', [
+                'id' => $course->id,
+                'section' => $cm->section,
+            ]);
+        }
+    } else {
+        $returnurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+    }
     $datafortemplate = [
         "cmid" => $cm->id,
         "instance" => $cm->instance,
         "contextid" => $modulecontext->id,
         "courseid" => $course->id,
         "darkmode" => $moduleinstance->displayoptions['darkmode'] == '1',
-        "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
+        "returnurl" => $returnurl,
         "completion" => $completion,
         "manualcompletion" => $cm->completion == 1,
         "canedit" => has_capability('mod/interactivevideo:edit', $modulecontext),
@@ -397,6 +416,66 @@ if (empty($moduleinstance->posterimage) && optional_param('mobileapp', 0, PARAM_
     $moduleinstance->posterimage = $OUTPUT->get_generated_image_for_id($cm->id);
 }
 
+if (!isset($moduleinstance->displayoptions['beforecompletion'])) {
+    $defaultappearance = [
+        'useoriginalvideocontrols' => $moduleinstance->displayoptions['useoriginalvideocontrols'],
+        'hidemainvideocontrols' => $moduleinstance->displayoptions['hidemainvideocontrols'],
+        'interactionbar' => $moduleinstance->displayoptions['hideinteractions'] ? 0 : 1,
+        'progressbar' => 1,
+        'chaptertoggle' => $moduleinstance->displayoptions['disablechapternavigation'] ? 0 : 1,
+        'chaptertitle' => 1,
+        'timestamp' => 1,
+        'rewind' => 0,
+        'forward' => 0,
+        'captions' => 1,
+        'playbackrate' => 1,
+        'quality' => 1,
+        'mute' => 1,
+        'share' => 1,
+        'expand' => 1,
+        'fullscreen' => 1,
+    ];
+    $moduleinstance->displayoptions['beforecompletion'] = $defaultappearance;
+    $moduleinstance->displayoptions['aftercompletion'] = $defaultappearance;
+
+    $defaultbehavior = [
+        'preventskipping' => 0,
+        'preventseeking' => 0,
+        'disableinteractionclick' => 0,
+        'disableinteractionclickuntilcompleted' => 0,
+    ];
+    $moduleinstance->displayoptions['beforecompletionbehavior'] = $defaultbehavior;
+    $moduleinstance->displayoptions['aftercompletionbehavior'] = $defaultbehavior;
+}
+
+// Display options based on completion.
+if (isset($completed) && $completed) {
+    $appearance = $moduleinstance->displayoptions['aftercompletion'];
+    $behavior = $moduleinstance->displayoptions['aftercompletionbehavior'];
+} else {
+    $appearance = $moduleinstance->displayoptions['beforecompletion'];
+    $behavior = $moduleinstance->displayoptions['beforecompletionbehavior'];
+}
+
+foreach ($appearance as $key => $value) {
+    if ($key == 'interactionbar') {
+        $moduleinstance->displayoptions['hideinteractions'] = $value ? 0 : 1;
+    } else if ($key == 'chaptertoggle') {
+        $moduleinstance->displayoptions['disablechapternavigation'] = $value ? 0 : 1;
+    }
+    $moduleinstance->displayoptions[$key] = $value;
+}
+foreach ($behavior as $key => $value) {
+    $moduleinstance->displayoptions[$key] = $value;
+}
+
+unset(
+    $moduleinstance->displayoptions['beforecompletion'],
+    $moduleinstance->displayoptions['beforecompletionbehavior'],
+    $moduleinstance->displayoptions['aftercompletion'],
+    $moduleinstance->displayoptions['aftercompletionbehavior']
+);
+
 // Display player.
 $datafortemplate = [
     "darkmode" => $moduleinstance->displayoptions['darkmode'] == '1',
@@ -412,6 +491,7 @@ $datafortemplate = [
     "completed" => isset($completed) && $completed,
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
     'square' => $moduleinstance->displayoptions['squareposterimage'] ?? false,
+    "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream']),
 ];
 echo $OUTPUT->render_from_template('mod_interactivevideo/player', $datafortemplate);
 

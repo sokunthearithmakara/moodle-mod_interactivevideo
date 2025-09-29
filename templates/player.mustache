@@ -18,13 +18,16 @@ Example context (json):
 {
 }
 }}
+{{! Required for viostream, bunnystream.}}
+{{#useembedly}}
+<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
+{{/useembedly}}
 <div id="interactivevideo-container"
      class="container-fluid {{#darkmode}}p-sm-3{{/darkmode}} {{^darkmode}}p-sm-3{{/darkmode}} alternative {{#displayoptions.distractionfreemode}}position-absolute{{/displayoptions.distractionfreemode}}"
      data-complete="{{completed}}">
     <div class="row justify-content-center mx-0">
         <div class="col-12 px-0">
             <div id="wrapper" class="position-relative mx-auto">
-
                 <div id="video-wrapper"
                      class="d-flex align-items-center justify-content-center {{^darkmode}}border{{/darkmode}}">
                     {{! start of toolbar}}
@@ -163,80 +166,7 @@ Example context (json):
 </div>
 {{/displayoptions.hidemainvideocontrols}}
 </div>
-{{^displayoptions.hidemainvideocontrols}}
-<div class="mt-0 mt-md-2 bg-dark d-flex flex-column p-0 justify-content-center opacity-1" dir="ltr"
-     id="controller">
-    <div id="taskinfo" dir="ltr"
-         class="border-0 flex-column align-items-center justify-content-end px-3 bg-transparent">
-        <div class="align-items-start position-relative w-100"
-             id="interactions-nav">
-            <ul>
-            </ul>
-        </div>
-        <div class="flex-column align-items-center position-relative w-100"
-             id="video-nav">
-            <ul>
-            </ul>
-            <div class="w-100 d-flex align-items-center" dir="ltr">
-                <div id="progress" class="bg-danger"></div>
-                <div id="seek" class="w-100 position-absolute iv-rounded"></div>
-                <div id="seekhead" class="position-absolute iv-rounded-circle bg-danger"></div>
-            </div>
-        </div>
-    </div>
-    <div class="w-100 px-2 d-flex align-items-center justify-content-between pb-2"
-         style="height: 30px">
-        <div class="d-flex align-items-center">
-            <span data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-                  data{{bs}}-trigger="hover"
-                  role="button"
-                  data{{bs}}-title="{{#str}}playtooltip, mod_interactivevideo{{/str}}"
-                  id="playpause"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-0">
-                <i class="bi bi-play-fill fs-25px"></i>
-            </span>
-            {{^displayoptions.disablechapternavigation}}
-            <div id="chaptertoggle" class="mx-1">
-                <span data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-                      data{{bs}}-trigger="hover"
-                      data{{bs}}-title="{{#str}}togglechapter, mod_interactivevideo{{/str}}"
-                      class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1"
-                      id="chapterbutton"><i class="bi bi-collection"></i></span>
-            </div>
-        {{/displayoptions.disablechapternavigation}}
-        <span class="text-white mx-1 d-none d-md-inline" id="currenttime">00:00</span><span class="d-none d-md-inline text-white mx-1">/</span>
-        <span class="text-white mx-1 d-none d-md-inline" id="duration">--:--</span>
-        <span class="text-white d-md-none d-inline mx-1 " id="remainingtime">--:--</span>
-        <span class="text-secondary mx-1 d-none d-md-inline" id="chaptertitle"></span>
-    </div>
-    <div class="d-flex align-items-center">
-        <span id="mute"
-              class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}mutetooltip,mod_interactivevideo{{/str}}"><i class="bi bi-volume-up"></i></span>
-        {{> mod_interactivevideo/captionmenu }}
-        {{> mod_interactivevideo/speedmenu }}
-        {{> mod_interactivevideo/qualitymenu }}
-        <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1"
-              id="share"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}sharethismoment,mod_interactivevideo{{/str}}"><i class="bi bi-share"></i></span>
-        <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 rotate d-none"
-              id="expand"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}resize,mod_interactivevideo{{/str}}"><i class="bi bi-file"></i></span>
-        <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1"
-              id="fullscreen"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}togglefullscreen,mod_interactivevideo{{/str}}"><i class="bi bi-fullscreen"></i></span>
-    </div>
-</div>
-</div>
-{{/displayoptions.hidemainvideocontrols}}
+{{> mod_interactivevideo/controls}}
 </div>
 {{! Content }}
 <div id="annotation-content"

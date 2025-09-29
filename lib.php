@@ -87,38 +87,42 @@ function interactivevideo_get_subplugins($classname) {
  */
 function interactivevideo_display_options($moduleinstance) {
     $options = [];
-    $options['disablechapternavigation'] = $moduleinstance->disablechapternavigation ?? 0;
-    $options['preventskipping'] = $moduleinstance->preventskipping ?? 0;
-    $options['useoriginalvideocontrols'] = $moduleinstance->useoriginalvideocontrols ?? 0;
-    $options['hidemainvideocontrols'] = $moduleinstance->hidemainvideocontrols ?? 0;
-    $options['preventseeking'] = $moduleinstance->preventseeking ?? 0;
-    $options['disableinteractionclick'] = $moduleinstance->disableinteractionclick ?? 0;
-    $options['disableinteractionclickuntilcompleted'] = $moduleinstance->disableinteractionclickuntilcompleted ?? 0;
-    $options['hideinteractions'] = $moduleinstance->hideinteractions ?? 0;
-    $options['theme'] = $moduleinstance->theme ?? '';
-    $options['distractionfreemode'] = $moduleinstance->distractionfreemode ?? 0;
-    $options['darkmode'] = $moduleinstance->darkmode ?? 1;
-    $options['usefixedratio'] = $moduleinstance->usefixedratio ?? 0;
-    $options['pauseonblur'] = $moduleinstance->pauseonblur ?? 0;
-    $options['usecustomposterimage'] = $moduleinstance->usecustomposterimage ?? 0;
-    $options['displayinline'] = $moduleinstance->displayinline ?? 0;
     $options['cardsize'] = $moduleinstance->cardsize ?? 'large';
-    $options['posterimagesize'] = $moduleinstance->posterimagesize ?? 0;
-    $options['cardonly'] = $moduleinstance->cardonly ?? 0;
-    $options['showposterimageright'] = $moduleinstance->showposterimageright ?? 0;
-    $options['usecustomdescription'] = $moduleinstance->usecustomdescription ?? 0;
+    $options['theme'] = $moduleinstance->theme ?? '';
+    $options['darkmode'] = $moduleinstance->darkmode ?? 1;
     $options['customdescription'] = $moduleinstance->customdescription ?? '';
-    $options['launchinpopup'] = $moduleinstance->launchinpopup ?? 0;
-    $options['aligncenter'] = $moduleinstance->aligncenter ?? 0;
-    $options['showprogressbar'] = $moduleinstance->showprogressbar ?? 0;
-    $options['showcompletionrequirements'] = $moduleinstance->showcompletionrequirements ?? 0;
-    $options['showposterimage'] = $moduleinstance->showposterimage ?? 0;
-    $options['squareposterimage'] = $moduleinstance->squareposterimage ?? 0;
-    $options['showname'] = $moduleinstance->showname ?? 0;
-    $options['autoplay'] = $moduleinstance->autoplay ?? 0;
-    $options['columnlayout'] = $moduleinstance->columnlayout ?? 0;
-    $options['showdescriptiononheader'] = $moduleinstance->showdescriptiononheader ?? 0;
-    $options['passwordprotected'] = $moduleinstance->passwordprotected ?? 0;
+    $fields = [
+        'distractionfreemode',
+        'usefixedratio',
+        'alignindicator',
+        'autohidecontrols',
+        'pauseonblur',
+        'usecustomposterimage',
+        'displayinline',
+        'posterimagesize',
+        'cardonly',
+        'showposterimageright',
+        'usecustomdescription',
+        'launchinpopup',
+        'aligncenter',
+        'showprogressbar',
+        'showcompletionrequirements',
+        'showposterimage',
+        'squareposterimage',
+        'showname',
+        'autoplay',
+        'columnlayout',
+        'showdescriptiononheader',
+        'passwordprotected',
+    ];
+    foreach ($fields as $field) {
+        $options[$field] = $moduleinstance->$field ?? 0;
+    }
+    $options['beforecompletion'] = $moduleinstance->beforecompletion ?? [];
+    $options['aftercompletion'] = $moduleinstance->aftercompletion ?? [];
+    $options['beforecompletionbehavior'] = $moduleinstance->beforecompletionbehavior ?? [];
+    $options['aftercompletionbehavior'] = $moduleinstance->aftercompletionbehavior ?? [];
+
     return $options;
 }
 
@@ -1610,6 +1614,27 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             continue;
         }
 
+        // Check if it is a Dyntube url.
+        $dyntuberegex = '/(?:https?:\/\/)?(?:videos\.dyntube\.com|dyntube\.com)\/videos\/([^/]+)/i';
+        if (preg_match($dyntuberegex, $video->videourl, $matches) && in_array('dyntube', $videotypes)) {
+            $video->type = 'dyntube';
+            // Get info from OEmbed endpoint.
+            $response = file_get_contents('https://videos.dyntube.com/oembed/oembed.json?url=' . urlencode($video->videourl));
+            $response = json_decode($response);
+            $video->posterimage = $response->thumbnail_url;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $response->duration) {
+                $video->endtime = (int)$response->duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
         // Check if it is a direct video/audio file using mime type.
         $fileinfo = pathinfo($video->videourl);
         $fileextension = $fileinfo['extension'];
@@ -1916,16 +1941,8 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         );
         $mform->hideIf('posterimagehr', 'usecustomposterimage', 'eq', 0);
 
-        $mform->addElement(
-            'advcheckbox',
-            'displayinline',
-            get_string('activitycard', 'mod_interactivevideo'),
-            get_string('displayinline', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->addElement(
+        $group = [];
+        $group[] = $mform->createElement(
             'advcheckbox',
             'launchinpopup',
             '',
@@ -1934,15 +1951,16 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             [0, 1]
         );
 
-        $mform->addElement(
+        $group[] = $mform->createElement(
             'advcheckbox',
-            'aligncenter',
+            'displayinline',
             '',
-            get_string('centeroncoursepage', 'mod_interactivevideo'),
+            get_string('displayinline', 'mod_interactivevideo'),
             ['group' => 1],
             [0, 1]
         );
-        $mform->hideIf('aligncenter', 'displayinline', 'eq', 0);
+
+        $mform->addGroup($group, 'activitycardgroup', get_string('activitycard', 'mod_interactivevideo'), '', false);
 
         // Card sizes.
         if ($CFG->branch >= 403) {
@@ -1971,117 +1989,38 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
 
         $mform->hideIf('cardsize', 'displayinline', 'eq', 0);
 
-        // Poster image size.
-        $mform->addElement(
-            'advcheckbox',
-            'posterimagesize',
-            '',
-            get_string('fullavailablewidth', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('posterimagesize', 'displayinline', 'eq', 0);
+        $checkboxes = [
+            ['aligncenter', get_string('centeroncoursepage', 'mod_interactivevideo')],
+            ['posterimagesize', get_string('fullavailablewidth', 'mod_interactivevideo')],
+            ['cardonly', get_string('usecardonlydesign', 'mod_interactivevideo')],
+            ['columnlayout', get_string('usecolumnlayout', 'mod_interactivevideo')],
+            ['showprogressbar', get_string('showprogressbar', 'mod_interactivevideo')],
+            ['showcompletionrequirements', get_string('showcompletionrequirements', 'mod_interactivevideo')],
+            ['showposterimage', get_string('showposterimage', 'mod_interactivevideo')],
+            ['squareposterimage', get_string('squareposterimage', 'mod_interactivevideo')],
+            ['showname', get_string('showname', 'mod_interactivevideo')],
+            ['showposterimageright', get_string('showposterimageright', 'mod_interactivevideo')],
+            ['usecustomdescription', get_string('usecustomdescription', 'mod_interactivevideo')],
+        ];
 
-        // Card only design for small card size.
-        $mform->addElement(
-            'advcheckbox',
-            'cardonly',
-            '',
-            get_string('usecardonlydesign', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('cardonly', 'displayinline', 'eq', 0);
-
-        // Column layout.
-        $mform->addElement(
-            'advcheckbox',
-            'columnlayout',
-            '',
-            get_string('usecolumnlayout', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('columnlayout', 'displayinline', 'eq', 0);
+        $group = [];
+        foreach ($checkboxes as $checkbox) {
+            $group[] = $mform->createElement(
+                'advcheckbox',
+                $checkbox[0],
+                '',
+                $checkbox[1],
+                ['group' => 1],
+                [0, 1]
+            );
+            $mform->hideIf($checkbox[0], 'displayinline', 'eq', 0);
+        }
         $mform->hideIf('columnlayout', 'cardonly', 'eq', 1);
-
-        // Show progress bar.
-        $mform->addElement(
-            'advcheckbox',
-            'showprogressbar',
-            '',
-            get_string('showprogressbar', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showprogressbar', 'displayinline', 'eq', 0);
-
-        // Show completion requirements.
-        $mform->addElement(
-            'advcheckbox',
-            'showcompletionrequirements',
-            '',
-            get_string('showcompletionrequirements', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showcompletionrequirements', 'displayinline', 'eq', 0);
-
-        // Show poster image.
-        $mform->addElement(
-            'advcheckbox',
-            'showposterimage',
-            '',
-            get_string('showposterimage', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showposterimage', 'displayinline', 'eq', 0);
         $mform->hideIf('showposterimage', 'cardonly', 'eq', 1);
-
-        // Square poster image.
-        $mform->addElement(
-            'advcheckbox',
-            'squareposterimage',
-            '',
-            get_string('squareposterimage', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Show name.
-        $mform->addElement(
-            'advcheckbox',
-            'showname',
-            '',
-            get_string('showname', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showname', 'displayinline', 'eq', 0);
-
-        // Show poster image on the right.
-        $mform->addElement(
-            'advcheckbox',
-            'showposterimageright',
-            '',
-            get_string('showposterimageright', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('showposterimageright', 'displayinline', 'eq', 0);
         $mform->hideIf('showposterimageright', 'cardonly', 'eq', 1);
-
-        $mform->addElement(
-            'advcheckbox',
-            'usecustomdescription',
-            '',
-            get_string('usecustomdescription', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->hideIf('usecustomdescription', 'displayinline', 'eq', 0);
         $mform->hideIf('usecustomdescription', 'cardonly', 'eq', 1);
+
+        $mform->addGroup($group, 'cardoptiongroup', '', '', false);
 
         if ($CFG->branch >= 403) {
             $mform->addElement(
@@ -2118,17 +2057,18 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         $mform->hideIf('displayinlinehr', 'displayinline', 'eq', 0);
 
         // Use distraction-free mode.
-        $mform->addElement(
+        $group = [];
+        $group[] = $mform->createElement(
             'advcheckbox',
             'distractionfreemode',
-            get_string('player', 'mod_interactivevideo'),
+            '',
             get_string('distractionfreemode', 'mod_interactivevideo'),
             ['group' => 1],
             [0, 1]
         );
 
         // Dark mode.
-        $mform->addElement(
+        $group[] = $mform->createElement(
             'advcheckbox',
             'darkmode',
             '',
@@ -2139,7 +2079,7 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         $mform->hideIf('darkmode', 'distractionfreemode', 'eq', 0);
 
         // Fix aspect ratio.
-        $mform->addElement(
+        $group[] = $mform->createElement(
             'advcheckbox',
             'usefixedratio',
             '',
@@ -2149,47 +2089,123 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         );
         $mform->hideIf('userfixedratio', 'distractionfreemode', 'eq', 0);
 
-        // Disable chapter navigation.
-        $mform->addElement(
+        // Autohide controls.
+        $group[] = $mform->createElement(
             'advcheckbox',
-            'disablechapternavigation',
+            'autohidecontrols',
             '',
-            get_string('disablechapternavigation', 'mod_interactivevideo'),
+            get_string('autohidecontrols', 'mod_interactivevideo'),
             ['group' => 1],
             [0, 1]
         );
 
-        // Use orginal video controls.
-        $mform->addElement(
+        $group[] = $mform->createElement(
             'advcheckbox',
+            'alignindicator',
+            '',
+            get_string('alignindicatorcenter', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+
+        $mform->addGroup($group, 'beforecompletionbehavior', get_string('player', 'mod_interactivevideo'), '', false);
+
+        // 1.4.5 options.
+        // Controls before completion.
+        $controls = [
             'useoriginalvideocontrols',
-            '',
-            get_string('useoriginalvideocontrols', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        // Hide main video controls.
-        $mform->addElement(
-            'advcheckbox',
             'hidemainvideocontrols',
-            '',
-            get_string('hidemainvideocontrols', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
+            'interactionbar',
+            'progressbar',
+            'chaptertoggle',
+            'chaptertitle',
+            'rewind',
+            'forward',
+            'timestamp',
+            'captions',
+            'playbackrate',
+            'quality',
+            'mute',
+            'share',
+            'expand',
+            'fullscreen',
+        ];
 
-        // Hide interactions.
         $mform->addElement(
-            'advcheckbox',
-            'hideinteractions',
+            'static',
+            'beforecompletionheader',
             '',
-            get_string('hideinteractions', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
+            '<b class="w-100 d-block">' . get_string('controlsbeforecompletion', 'mod_interactivevideo') . '</b>'
+        );
+        $group = [];
+        foreach ($controls as $control) {
+            $group[] = $mform->createElement(
+                'advcheckbox',
+                $control,
+                '',
+                get_string($control, 'mod_interactivevideo'),
+                ['group' => 1],
+                [0, 1]
+            );
+        }
+
+        $mform->addGroup(
+            $group,
+            'beforecompletion',
+            '',
+            '',
+            true
         );
 
-        $mform->hideIf('hideinteractions', 'hidemainvideocontrols', 'eq', 1);
+        // Controls after completion.
+        $mform->addElement(
+            'static',
+            'aftercompletionheader',
+            '',
+            '<b class="w-100 d-block">' . get_string('controlsaftercompletion', 'mod_interactivevideo') . '</b>'
+        );
+        $group = [];
+        foreach ($controls as $control) {
+            $group[] = $mform->createElement(
+                'advcheckbox',
+                $control,
+                '',
+                get_string($control, 'mod_interactivevideo'),
+                ['group' => 1],
+                [0, 1]
+            );
+        }
+
+        $mform->addGroup(
+            $group,
+            'aftercompletion',
+            '',
+            '',
+            true
+        );
+
+        $defaultappearance = [
+            'useoriginalvideocontrols' => 0,
+            'hidemainvideocontrols' => 0,
+            'interactionbar' => 1,
+            'progressbar' => 1,
+            'chaptertoggle' => 1,
+            'chaptertitle' => 1,
+            'timestamp' => 1,
+            'rewind' => 0,
+            'forward' => 0,
+            'captions' => 1,
+            'playbackrate' => 1,
+            'quality' => 1,
+            'mute' => 1,
+            'share' => 1,
+            'expand' => 1,
+            'fullscreen' => 1,
+        ];
+        $mform->setDefaults([
+            'beforecompletion' => $defaultappearance,
+            'aftercompletion' => $defaultappearance,
+        ]);
     }
     if (in_array('behavior', $sections)) {
         $mform->addElement(
@@ -2200,7 +2216,8 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
         );
 
         // Auto play.
-        $mform->addElement(
+        $group = [];
+        $group[] = $mform->createElement(
             'advcheckbox',
             'autoplay',
             '',
@@ -2208,10 +2225,9 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             ['group' => 1],
             [0, 1]
         );
-        $mform->addHelpButton('autoplay', 'autoplay', 'mod_interactivevideo');
 
         // Pause video if window is not active.
-        $mform->addElement(
+        $group[] = $mform->createElement(
             'advcheckbox',
             'pauseonblur',
             '',
@@ -2220,57 +2236,81 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             [0, 1]
         );
 
-        // Prevent skipping.
-        $mform->addElement(
-            'advcheckbox',
+        $mform->addGroup($group, 'behaviorgroup', '', '', false);
+
+        // 1.4.5 options.
+        // Behavior before completion.
+        $controls = [
             'preventskipping',
-            '',
-            get_string('preventskipping', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-        $mform->addHelpButton('preventskipping', 'preventskipping', 'mod_interactivevideo');
-
-        // Prevent seeking.
-        $mform->addElement(
-            'advcheckbox',
             'preventseeking',
-            '',
-            get_string('preventseeking', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->hideIf('preventseeking', 'hidemainvideocontrols', 'eq', 1);
-
-        // Disable interaction click.
-        $mform->addElement(
-            'advcheckbox',
             'disableinteractionclick',
-            '',
-            get_string('disableinteractionclick', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
-        );
-
-        $mform->hideIf('disableinteractionclick', 'preventseeking', 'eq', 1);
-        $mform->hideIf('disableinteractionclick', 'hidemainvideocontrols', 'eq', 1);
-        $mform->hideIf('disableinteractionclick', 'hideinteractions', 'eq', 1);
-
-        // Disable interaction click until completed.
-        $mform->addElement(
-            'advcheckbox',
             'disableinteractionclickuntilcompleted',
+        ];
+        $group = [];
+        $group[] = $mform->createElement(
+            'static',
+            'beforecompletionheader',
             '',
-            get_string('disableinteractionclickuntilcompleted', 'mod_interactivevideo'),
-            ['group' => 1],
-            [0, 1]
+            '<b class="w-100 d-block">' . get_string('behaviorbeforecompletion', 'mod_interactivevideo') . '</b>'
+        );
+        foreach ($controls as $control) {
+            $group[] = $mform->createElement(
+                'advcheckbox',
+                $control,
+                '',
+                get_string($control, 'mod_interactivevideo'),
+                ['group' => 1],
+                [0, 1]
+            );
+        }
+
+        $mform->addGroup(
+            $group,
+            'beforecompletionbehavior',
+            '',
+            '',
+            true
         );
 
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'preventseeking', 'eq', 1);
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'disableinteractionclick', 'eq', 1);
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'hidemainvideocontrols', 'eq', 1);
-        $mform->hideIf('disableinteractionclickuntilcompleted', 'hideinteractions', 'eq', 1);
+        // Behavior after completion.
+        $group = [];
+        $group[] = $mform->createElement(
+            'static',
+            'aftercompletionheader',
+            '',
+            '<b class="w-100 d-block">' . get_string('behavioraftercompletion', 'mod_interactivevideo') . '</b>'
+        );
+        foreach ($controls as $control) {
+            $group[] = $mform->createElement(
+                'advcheckbox',
+                $control,
+                '',
+                get_string($control, 'mod_interactivevideo'),
+                ['group' => 1],
+                [0, 1]
+            );
+        }
+
+        $mform->addGroup(
+            $group,
+            'aftercompletionbehavior',
+            '',
+            '',
+            true
+        );
+
+        $mform->hideIf(
+            'beforecompletionbehavior[disableinteractionclickuntilcompleted]',
+            'beforecompletionbehavior[disableinteractionclick]',
+            'eq',
+            1
+        );
+        $mform->hideIf(
+            'aftercompletionbehavior[disableinteractionclickuntilcompleted]',
+            'aftercompletionbehavior[disableinteractionclick]',
+            'eq',
+            1
+        );
     }
 
     if ($current && !$current->instance) {
@@ -2297,6 +2337,29 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
     $defaultarray['cardsize'] = get_config('mod_interactivevideo', 'cardsize');
     $defaultarray['source'] = get_config('mod_interactivevideo', 'defaultvideosource');
     $defaultarray['theme'] = get_config('mod_interactivevideo', 'defaulttheme');
+
+    // Backward compatibility.
+    $defaultarray['beforecompletion'] = [
+        'chaptertoggle' => isset($defaultarray['disablechapternavigation']) ?
+            ($defaultarray['disablechapternavigation'] ? 0 : 1) : 1,
+        'useoriginalvideocontrols' => isset($defaultarray['useoriginalvideocontrols']) ?
+            $defaultarray['useoriginalvideocontrols'] : null,
+        'hidemainvideocontrols' => isset($defaultarray['hidemainvideocontrols']) ?
+            $defaultarray['hidemainvideocontrols'] : null,
+        'interactionbar' => isset($defaultarray['hideinteractions']) ?
+            ($defaultarray['hideinteractions'] ? 0 : 1) : null,
+    ];
+    $defaultarray['aftercompletion'] = $defaultarray['beforecompletion'];
+
+    $defaultarray['beforecompletionbehavior'] = [
+        'preventseeking' => isset($defaultarray['preventseeking']) ? $defaultarray['preventseeking'] : null,
+        'preventskipping' => isset($defaultarray['preventskipping']) ? $defaultarray['preventskipping'] : null,
+        'disableinteractionclick' => isset($defaultarray['disableinteractionclick']) ?
+            $defaultarray['disableinteractionclick'] : null,
+        'disableinteractionclickuntilcompleted' => isset($defaultarray['disableinteractionclickuntilcompleted']) ?
+            $defaultarray['disableinteractionclickuntilcompleted'] : null,
+    ];
+    $defaultarray['aftercompletionbehavior'] = $defaultarray['beforecompletionbehavior'];
 
     $mform->setDefaults($defaultarray);
 }
@@ -2470,6 +2533,9 @@ function interactivevideo_get_type_from_url($url) {
         'rutube' => '/(?:https?:\/\/)?(?:www\.)?(?:rutube\.ru)\/video\/([a-zA-Z0-9]+)/i',
         'spotify' => '/(?:https?:\/\/)?(?:open\.spotify\.com)\/(episode|track)\/([^\/\?]+)(?:\?.*)?/i',
         'soundcloud' => '/(?:https?:\/\/)?(?:www\.)?(?:soundcloud\.com)\/([^\/\?]+)/i',
+        'vdocipher' => '/(?:https?:\/\/)?(?:www\.)?vdocipher\.com\/dashboard\/video\/(?:embed\/|)([a-zA-Z0-9_-]+)/i',
+        'dyntube' => '/(?:https?:\/\/)?(?:videos\.dyntube\.com|dyntube\.com)\/(?:videos|iframes)\/([^\/]+)/i',
+        'vidyard' => '/(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i',
     ];
 
     foreach ($patterns as $type => $regex) {

@@ -127,15 +127,34 @@ $primarymenu = $primary->export_for_template($renderer);
 $bs = $CFG->branch >= 500 ? '-bs' : '';
 
 // Display page navigation.
+// Understanding the course format: singlepage or multiplepages.
+$format = course_get_format($course);
+if (
+    $format->get_course_display() == COURSE_DISPLAY_MULTIPAGE &&
+    !$format->show_editor()
+) {
+    if ($CFG->branch >= 404) { // Section.php started to exist in Moodle 4.4.
+        $returnurl = new moodle_url('/course/section.php', [
+            'id' => $cm->section,
+        ]);
+    } else {
+        $returnurl = new moodle_url('/course/view.php', [
+            'id' => $course->id,
+            'section' => $cm->section,
+        ]);
+    }
+} else {
+    $returnurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+}
 $datafortemplate = [
     "cmid" => $cm->id,
     "instance" => $cm->instance,
     "contextid" => $modulecontext->id,
     "courseid" => $course->id,
-    "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
+    "returnurl" => $returnurl,
     "canedit" => has_capability('mod/interactivevideo:edit', $modulecontext),
     "completion" => ($attempted ? '<span class="mb-0 iv-border-left border-danger iv-pl-3"><button class="btn btn-sm"
-          type="button" data' . $bs . '-toggle="popover" data'.$bs. '-html="true" data' . $bs . '-content=\'' .
+          type="button" data' . $bs . '-toggle="popover" data' . $bs . '-html="true" data' . $bs . '-content=\'' .
         get_string('interactionscannotbeedited', 'mod_interactivevideo') . '\'>
          <i class="bi bi-exclamation-circle-fill text-warning fs-25px"></i></button></span>' : ''),
     "manualcompletion" => 1,
@@ -165,9 +184,64 @@ $datafortemplate = [
     "title" => format_string($moduleinstance->name),
     "grade" => $moduleinstance->grade,
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
+    "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream']),
 ];
 
 echo $OUTPUT->render_from_template('mod_interactivevideo/editor', $datafortemplate);
+
+if (!isset($moduleinstance->displayoptions['beforecompletion'])) {
+    $defaultappearance = [
+        'useoriginalvideocontrols' => $moduleinstance->displayoptions['useoriginalvideocontrols'],
+        'hidemainvideocontrols' => $moduleinstance->displayoptions['hidemainvideocontrols'],
+        'interactionbar' => $moduleinstance->displayoptions['hideinteractions'] ? 0 : 1,
+        'progressbar' => 1,
+        'chaptertoggle' => $moduleinstance->displayoptions['disablechapternavigation'] ? 0 : 1,
+        'chaptertitle' => 1,
+        'timestamp' => 1,
+        'rewind' => 0,
+        'forward' => 0,
+        'captions' => 1,
+        'playbackrate' => 1,
+        'quality' => 1,
+        'mute' => 1,
+        'share' => 1,
+        'expand' => 1,
+        'fullscreen' => 1,
+    ];
+    $moduleinstance->displayoptions['beforecompletion'] = $defaultappearance;
+    $moduleinstance->displayoptions['aftercompletion'] = $defaultappearance;
+
+    $defaultbehavior = [
+        'preventskipping' => 0,
+        'preventseeking' => 0,
+        'disableinteractionclick' => 0,
+        'disableinteractionclickuntilcompleted' => 0,
+    ];
+    $moduleinstance->displayoptions['beforecompletionbehavior'] = $defaultbehavior;
+    $moduleinstance->displayoptions['aftercompletionbehavior'] = $defaultbehavior;
+}
+
+$appearance = $moduleinstance->displayoptions['beforecompletion'];
+$behavior = $moduleinstance->displayoptions['beforecompletionbehavior'];
+
+foreach ($appearance as $key => $value) {
+    if ($key == 'interactionbar') {
+        $moduleinstance->displayoptions['hideinteractions'] = $value ? 0 : 1;
+    } else if ($key == 'chaptertoggle') {
+        $moduleinstance->displayoptions['disablechapternavigation'] = $value ? 0 : 1;
+    }
+    $moduleinstance->displayoptions[$key] = $value;
+}
+foreach ($behavior as $key => $value) {
+    $moduleinstance->displayoptions[$key] = $value;
+}
+
+unset(
+    $moduleinstance->displayoptions['beforecompletion'],
+    $moduleinstance->displayoptions['beforecompletionbehavior'],
+    $moduleinstance->displayoptions['aftercompletion'],
+    $moduleinstance->displayoptions['aftercompletionbehavior']
+);
 
 $PAGE->requires->js_call_amd(
     'mod_interactivevideo/editannotation',
@@ -181,12 +255,13 @@ $PAGE->requires->js_call_amd(
         $moduleinstance->endtime,
         $coursecontext->id,
         $moduleinstance->type,
-        $moduleinstance->displayoptions,
+        null,
         $USER->id,
         $moduleinstance->posterimage,
         $moduleinstance->extendedcompletion, // Extended completion settings.
-
     ]
 );
+
+echo '<textarea id="doptions" style="display: none;">' . json_encode($moduleinstance->displayoptions) . '</textarea>';
 
 echo $OUTPUT->footer();

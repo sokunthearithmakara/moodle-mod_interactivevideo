@@ -361,4 +361,30 @@ switch ($action) {
         $saved = interactivevideo_util::save_defaults($defaults, $contextid);
         echo json_encode($saved);
         break;
+    case 'get_vdocipher':
+        require_capability('mod/interactivevideo:view', $context);
+        $key = get_config('mod_interactivevideo', 'auth_vdocipher');
+        $videoid = required_param('videoid', PARAM_TEXT);
+        $info = required_param('info', PARAM_TEXT);
+        require_once($CFG->libdir . '/filelib.php');
+        $curl = new curl(['ignoresecurity' => true]);
+        $curl->setHeader('Accept: application/json');
+        $curl->setHeader('Authorization: Apisecret ' . $key);
+        $curl->setHeader('Content-Type: application/json');
+
+        if ($info == 'otp') {
+            $url = "https://www.vdocipher.com/api/videos/$videoid/otp";
+
+            $payload = json_encode([
+                "ttl" => // 30 years in seconds.
+                30 * 365 * 24 * 60 * 60,
+            ]);
+            $response = $curl->post($url, $payload);
+        } else {
+            $url = "https://www.vdocipher.com/api/videos/$videoid";
+            $response = $curl->get($url);
+        }
+
+        echo $response;
+        break;
 }

@@ -622,6 +622,8 @@ class Html5Video {
             return;
         }
         this.player.muted = true;
+        this.player.volume = 0;
+        dispatchEvent('iv:playerVolumeChange', {volume: 0});
     }
     /**
      * Unmutes the video player.
@@ -632,6 +634,7 @@ class Html5Video {
         }
         this.player.muted = false;
         this.player.volume = 1;
+        dispatchEvent('iv:playerVolumeChange', {volume: 1});
     }
 
     isMuted() {

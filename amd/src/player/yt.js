@@ -137,7 +137,6 @@ class Yt {
         this.node = node;
 
         // Hide the player first.
-    //    $(`#video-wrapper`).addClass('invisible');
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked', {

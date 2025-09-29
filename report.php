@@ -168,12 +168,31 @@ echo $OUTPUT->header();
 $primary = new core\navigation\output\primary($PAGE);
 $renderer = $PAGE->get_renderer('core');
 $primarymenu = $primary->export_for_template($renderer);
+// Understanding the course format: singlepage or multiplepages.
+$format = course_get_format($course);
+if (
+    $format->get_course_display() == COURSE_DISPLAY_MULTIPAGE &&
+    !$format->show_editor()
+) {
+    if ($CFG->branch >= 404) { // Section.php started to exist in Moodle 4.4.
+        $returnurl = new moodle_url('/course/section.php', [
+            'id' => $cm->section,
+        ]);
+    } else {
+        $returnurl = new moodle_url('/course/view.php', [
+            'id' => $course->id,
+            'section' => $cm->section,
+        ]);
+    }
+} else {
+    $returnurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+}
 $datafortemplate = [
     "cmid" => $cm->id,
     "instance" => $cm->instance,
     "contextid" => $context->id,
     "courseid" => $course->id,
-    "returnurl" => new moodle_url('/course/view.php', ['id' => $course->id]),
+    "returnurl" => $returnurl,
     "completion" => '<h4 class="mb-0 iv-border-left border-danger iv-pl-3 clamp-1">'
         . format_string($moduleinstance->name) . '</h4>',
     "manualcompletion" => 1,

@@ -101,6 +101,8 @@ define(['jquery',
         init: function(url, coursemodule, interaction, course, start, end, coursecontextid,
             type = 'yt', displayoptions, userid, posterimage, extendedcompletion) {
 
+            displayoptions = $('#doptions').length > 0 ? JSON.parse($('#doptions').text()) : displayoptions;
+
             let $videonav = $('#video-nav');
             let $videotimeline = $('#video-timeline');
             let $annotationlist = $('#annotation-list');
@@ -471,6 +473,7 @@ define(['jquery',
                     && player.type != 'html5video'
                     && player.type != 'panopto'
                     && player.type != "peertube"
+                    && player.type != "dyntube"
                     && player.type != "rutube") { // Vimeo/HTML5 does not pause/play on click.
                     $('#video-block').addClass('no-pointer');
                 }

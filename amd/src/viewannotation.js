@@ -238,6 +238,8 @@ define([
             let $videowrapper = $('#video-wrapper');
             let $wrapper = $('#wrapper');
             let $annotationcanvas = $('#annotation-canvas');
+            let $rewindbutton = $('#rewindbutton');
+            let $forwardbutton = $('#forwardbutton');
 
             quickform({
                 contextid: M.cfg.contextid,
@@ -882,8 +884,6 @@ define([
                     setTimeout(() => {
                         $('#toast-0').css('margin-top', '70px');
                         $('#interactivevideo-container').addClass('no-pointer-events');
-                        $('#autoplay-error').tooltip('hide');
-                        $('#autoplay-error').remove();
                     }, 500);
                     return;
                 }
@@ -1187,8 +1187,6 @@ define([
 
                 if (!firstPlay) {
                     dispatchEvent('iv:playerStart');
-                    $('#autoplay-error').tooltip('hide');
-                    $('#autoplay-error').remove();
                     replaceProgressBars(window.resumetime ? (window.resumetime - start) / totaltime * 100 : 0);
                     viewedAnno = [];
                     firstPlay = true;
@@ -1355,6 +1353,15 @@ define([
                     viewedAnno = [];
                 }
 
+                // Autohide controls if $videowrapper is not hovered after 5 seconds.
+                if (displayoptions.autohidecontrols == 1
+                    && !$('body').hasClass('embed-mode' && !$('body').hasClass('mobileapp') && !$('body').hasClass('iframe'))) {
+                    setTimeout(function() {
+                        if (!$videowrapper.is(':hover')) {
+                            $controller.addClass('fadeOut');
+                        }
+                    }, 5000);
+                }
             };
 
             // Implement the player.
@@ -1771,6 +1778,30 @@ define([
                 }
             });
 
+            // Autohide controls when mouse leaves #video-wrapper after 5 seconds.
+            if (displayoptions.autohidecontrols == 1
+                && !$('body').hasClass('embed-mode' && !$('body').hasClass('mobileapp') && !$('body').hasClass('iframe'))) {
+                $videowrapper.on('mouseleave', function() {
+                    setTimeout(function() {
+                        // Check if the mouse is still over #video-wrapper.
+                        if ($videowrapper.is(':hover')) {
+                            return;
+                        }
+                        // Hide the controls.
+                        $controller.addClass('fadeOut');
+                    }, 3000);
+                });
+
+                $videowrapper.on('mouseenter', function() {
+                    setTimeout(function() {
+                        if (!$videowrapper.is(':hover')) {
+                            return;
+                        }
+                        $controller.removeClass('fadeOut');
+                    }, 1000); // To avoid accidental mouseenter event.
+                });
+            }
+
             // Handle video control events:: mute/unmute
             $(document).on('click', '#mute', function(e) {
                 e.preventDefault();
@@ -1835,6 +1866,25 @@ define([
                 // Save the caption language to local storage.
                 localStorage.setItem(`caption-${userid}`, lang);
             });
+
+            if (displayoptions.preventseeking == 0) {
+                $rewindbutton.on('click', async function() {
+                    let t = await player.getCurrentTime() - 5;
+                    if (t < start) {
+                        t = start;
+                    }
+                    await player.seek(t);
+                });
+
+
+                $forwardbutton.on('click', async function() {
+                    let t = await player.getCurrentTime() + 5;
+                    if (t > end) {
+                        t = end;
+                    }
+                    await player.seek(t);
+                });
+            }
 
             $(document).one('iv:playerReady', function() {
                 onReady();
@@ -2150,45 +2200,61 @@ define([
                     return; // Ignore if any modifier keys are pressed.
                 }
 
-                if (e.code === 'Space') {
-                    e.preventDefault(); // Prevent page scroll.
-                    if (await player.isPaused()) {
-                        player.play();
-                    } else {
-                        player.pause();
-                    }
-                } else if (e.code === 'KeyC') {
-                    e.preventDefault();
-                    $('#chaptertoggle .btn').trigger('click');
-                } else if (e.code === 'KeyM') {
-                    e.preventDefault();
-                    if ($('#mute').length > 0) {
-                        $('#mute').trigger('click');
-                    } else {
-                        const isMuted = await player.isMuted();
-                        if (isMuted) {
-                            player.unMute();
+                switch (e.code) {
+                    case 'Space':
+                        e.preventDefault(); // Prevent page scroll.
+                        if (await player.isPaused()) {
+                            player.play();
                         } else {
-                            player.mute();
+                            player.pause();
                         }
-                    }
-                } else if (e.code === 'KeyF') {
-                    e.preventDefault();
-                    $('#fullscreen').trigger('click');
-                } else if (e.code === 'KeyR') {
-                    e.preventDefault();
-                    $endscreen.find('#restart').trigger('click');
-                } else if (e.code === 'KeyS') {
-                    e.preventDefault();
-                    $controller.find('#share').trigger('click');
-                } else if (e.code === 'KeyE') {
-                    e.preventDefault();
-                    if ($controller.find('#expand').length > 0) {
-                        $controller.find('#expand').trigger('click');
-                    } else {
-                        $('body').toggleClass('limited-width');
-                        localStorage.setItem('limitedwidth', $('body').hasClass('limited-width'));
-                    }
+                        break;
+                    case 'KeyC':
+                        e.preventDefault();
+                        $('#chaptertoggle .btn').trigger('click');
+                        break;
+                    case 'KeyM':
+                        e.preventDefault();
+                        if ($('#mute').length > 0) {
+                            $('#mute').trigger('click');
+                        } else {
+                            const isMuted = await player.isMuted();
+                            if (isMuted) {
+                                player.unMute();
+                            } else {
+                                player.mute();
+                            }
+                        }
+                        break;
+                    case 'KeyF':
+                        e.preventDefault();
+                        $('#fullscreen').trigger('click');
+                        break;
+                    case 'KeyR':
+                        e.preventDefault();
+                        $endscreen.find('#restart').trigger('click');
+                        break;
+                    case 'KeyS':
+                        e.preventDefault();
+                        $controller.find('#share').trigger('click');
+                        break;
+                    case 'KeyE':
+                        e.preventDefault();
+                        if ($controller.find('#expand').length > 0) {
+                            $controller.find('#expand').trigger('click');
+                        } else {
+                            $('body').toggleClass('limited-width');
+                            localStorage.setItem('limitedwidth', $('body').hasClass('limited-width'));
+                        }
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        $rewindbutton.trigger('click');
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        $forwardbutton.trigger('click');
+                        break;
                 }
             });
         }

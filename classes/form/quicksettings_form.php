@@ -126,14 +126,8 @@ class quicksettings_form extends \core_form\dynamic_form {
             'showdescriptiononheader',
             'darkmode',
             'usefixedratio',
-            'disablechapternavigation',
-            'preventskipping',
-            'useoriginalvideocontrols',
-            'hidemainvideocontrols',
-            'preventseeking',
-            'disableinteractionclick',
-            'disableinteractionclickuntilcompleted',
-            'hideinteractions',
+            'autohidecontrols',
+            'alignindicator',
             'theme',
             'distractionfreemode',
             'usecustomposterimage',
@@ -155,6 +149,10 @@ class quicksettings_form extends \core_form\dynamic_form {
             'columnlayout',
             'squareposterimage',
             'passwordprotected',
+            'beforecompletion',
+            'aftercompletion',
+            'beforecompletionbehavior',
+            'aftercompletionbehavior',
         ];
 
         if (empty($defaultvalues['displayoptions'])) {
@@ -169,6 +167,48 @@ class quicksettings_form extends \core_form\dynamic_form {
             }
             if ($option == 'customdescription' && empty($defaultvalues[$option])) {
                 $defaultvalues[$option] = '';
+            }
+            if (
+                in_array($option, ['beforecompletion', 'aftercompletion', 'beforecompletionbehavior', 'aftercompletionbehavior'])
+                && $defaultvalues[$option] == 0
+            ) {
+                $defaultvalues[$option] = [];
+            }
+        }
+        // Backward compatibility.
+        $map = [
+            'disablechapternavigation' => ['beforecompletion.chaptertoggle', 'aftercompletion.chaptertoggle', function ($v) {
+                return $v ? 0 : 1;
+            }],
+            'useoriginalvideocontrols' => ['beforecompletion.useoriginalvideocontrols', 'aftercompletion.useoriginalvideocontrols'],
+            'hidemainvideocontrols' => ['beforecompletion.hidemainvideocontrols', 'aftercompletion.hidemainvideocontrols'],
+            'hideinteractions' => ['beforecompletion.interactionbar', 'aftercompletion.interactionbar', function ($v) {
+                return $v ? 0 : 1;
+            }],
+            'preventseeking' => ['beforecompletionbehavior.preventseeking', 'aftercompletionbehavior.preventseeking'],
+            'preventskipping' => ['beforecompletionbehavior.preventskipping', 'aftercompletionbehavior.preventskipping'],
+            'disableinteractionclick' =>
+            ['beforecompletionbehavior.disableinteractionclick', 'aftercompletionbehavior.disableinteractionclick'],
+            'disableinteractionclickuntilcompleted' =>
+            [
+                'beforecompletionbehavior.disableinteractionclickuntilcompleted',
+                'aftercompletionbehavior.disableinteractionclickuntilcompleted',
+            ],
+        ];
+
+        foreach ($map as $key => $targets) {
+            if (isset($defaultdisplayoptions[$key])) {
+                $value = $defaultdisplayoptions[$key];
+                if (isset($targets[2]) && is_callable($targets[2])) {
+                    $value = $targets[2]($value);
+                }
+                foreach ([$targets[0], $targets[1]] as $target) {
+                    [$parent, $child] = explode('.', $target);
+                    if (!isset($defaultvalues[$parent]) || !is_array($defaultvalues[$parent])) {
+                        $defaultvalues[$parent] = [];
+                    }
+                    $defaultvalues[$parent][$child] = $value;
+                }
             }
         }
         $this->set_data($defaultvalues);
