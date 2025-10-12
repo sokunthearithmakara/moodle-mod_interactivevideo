@@ -30,7 +30,6 @@ use moodle_url;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mobile {
-
     /**
      * Returns the interactive video course view for the mobile app.
      *
@@ -78,7 +77,8 @@ class mobile {
     public static function login_after_validate_token($token, $cmid) {
         global $DB;
         $modulecontext = context_module::instance($cmid);
-        if ($user = $DB->get_record_sql("
+        if (
+            $user = $DB->get_record_sql("
                 SELECT u.*
                 FROM {user} u
                 JOIN {external_tokens} t ON t.userid = u.id
@@ -89,7 +89,8 @@ class mobile {
             'contextid' => $modulecontext->id,
             'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,
             'token' => $token,
-        ])) {
+            ])
+        ) {
             // Check if the user is logged in; if not, try login.
             if (!isloggedin()) {
                 complete_user_login($user);

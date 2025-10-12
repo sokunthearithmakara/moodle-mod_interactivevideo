@@ -24,7 +24,6 @@ namespace mod_interactivevideo\plugininfo;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class ivplugin extends \core\plugininfo\base {
-
     /**
      * Allow uninstall
      *

@@ -102,10 +102,12 @@ class restore_interactivevideo_course_settings extends restore_activity_structur
 
         global $DB;
         // If the current course already has the defaults for this type, we don't need to restore it.
-        if ($DB->record_exists('interactivevideo_defaults', [
+        if (
+            $DB->record_exists('interactivevideo_defaults', [
             'courseid' => $this->get_courseid(),
             'type' => $data['type'],
-        ])) {
+            ])
+        ) {
             return;
         }
 

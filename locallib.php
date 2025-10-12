@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class interactivevideo_util {
-
     /**
      * Get all interactions in one interactive video module.
      *
@@ -328,7 +327,7 @@ class interactivevideo_util {
         if (empty($roles)) {
             return [];
         }
-        list($inparams, $inparamsvalues) = $DB->get_in_or_equal(explode(',', $roles));
+        [$inparams, $inparamsvalues] = $DB->get_in_or_equal(explode(',', $roles));
         if ($group == 0) {
             // Get all enrolled users (student only).
             $sql = "SELECT " . $dbfields . ", ac.timecompleted, ac.timecreated,

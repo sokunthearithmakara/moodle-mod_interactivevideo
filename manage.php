@@ -131,7 +131,7 @@ if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesetti
         return $cm->instance;
     }, $cms);
 
-    list($inparams, $inparamsvalues) = $DB->get_in_or_equal($cminstances);
+    [$inparams, $inparamsvalues] = $DB->get_in_or_equal($cminstances);
     // Get all interaction_completion in the course.
     $completion = $DB->get_records_sql(
         "SELECT id, cmid FROM {interactivevideo_completion} WHERE cmid $inparams",
@@ -196,7 +196,7 @@ if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesetti
             );
             $cache->set($cm->instance, $items);
         }
-        list($starttime, $endtime) = explode('-', $cm->customdata['startendtime']);
+        [$starttime, $endtime] = explode('-', $cm->customdata['startendtime']);
         $items = array_values($items);
 
         $activitycount = $activitytypes;

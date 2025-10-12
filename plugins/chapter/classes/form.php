@@ -24,7 +24,6 @@ namespace ivplugin_chapter;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class form extends \mod_interactivevideo\form\base_form {
-
     /**
      * Sets data for dynamic submission
      * @return void

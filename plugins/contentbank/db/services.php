@@ -28,7 +28,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
-
     'ivplugin_contentbank_getitems' => [
         'classname' => ivplugin_contentbank\external\getitems::class,
         'description' => 'Get interactive contents from course content bank',

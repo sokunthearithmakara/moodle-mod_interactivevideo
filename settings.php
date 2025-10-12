@@ -411,5 +411,3 @@ $modcontenttype = new admin_category(
     $module->is_enabled() === false
 );
 $ADMIN->add('modivfolder', $modcontenttype);
-
-

@@ -1012,8 +1012,10 @@ function interactivevideo_displayinline(cm_info $cm) {
                 $datafortemplate['analytics'] = $analyticsitem->percentage;
             }
 
-            if ($datafortemplate['analytics'] == 100 || ($datafortemplate['analyticsexpected'] > 0
-                && $datafortemplate['analytics'] >= $datafortemplate['analyticsexpected'])) {
+            if (
+                $datafortemplate['analytics'] == 100 || ($datafortemplate['analyticsexpected'] > 0 &&
+                $datafortemplate['analytics'] >= $datafortemplate['analyticsexpected'])
+            ) {
                 $datafortemplate['analyticscompleted'] = true;
             }
         }
@@ -1738,7 +1740,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
                 ]
             );
         } else {
-            list($module, $context, $cw, $cm, $d) = prepare_new_moduleinfo_data(
+            [$module, $context, $cw, $cm, $d] = prepare_new_moduleinfo_data(
                 $uploadinfo->course,
                 'interactivevideo',
                 $sectionid

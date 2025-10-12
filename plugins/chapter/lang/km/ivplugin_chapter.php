@@ -30,4 +30,3 @@ $string['chapterdescription'] = 'បំបែកវីដេអូជាជំ�
 $string['pluginname'] = 'ជំពូក';
 $string['privacy:metadata'] = 'Chapter មិនរក្សាទិន្នន័យបុគ្គលទេ';
 $string['startchapter'] = 'ចាប់ផ្តើម';
-

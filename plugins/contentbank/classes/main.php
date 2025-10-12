@@ -135,7 +135,6 @@ class main extends \ivplugin_richtext\main {
             $context = \context::instance_by_id($record->contextid, MUST_EXIST);
             // Check capability.
             if ($contenttype->can_copy($content)) {
-
                 // This content can be copied.
                 $crecord = $content->get_content();
                 unset($crecord->id);

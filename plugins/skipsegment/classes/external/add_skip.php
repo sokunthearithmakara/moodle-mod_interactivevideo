@@ -32,7 +32,6 @@ require_once($CFG->libdir . '/externallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class add_skip extends external_api {
-
     /**
      * Describes the parameters for ivplugin_skipsegment_add_skip
      *

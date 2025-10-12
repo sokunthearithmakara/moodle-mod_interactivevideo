@@ -26,7 +26,6 @@ require_once($CFG->dirroot . '/course/moodleform_mod.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_interactivevideo_mod_form extends moodleform_mod {
-
     /**
      * Plugins with mform.
      *
@@ -689,12 +688,14 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 if ($option == 'customdescription' && empty($defaultvalues[$option])) {
                     $defaultvalues[$option] = '';
                 }
-                if (in_array($option, [
+                if (
+                    in_array($option, [
                     'beforecompletion',
                     'aftercompletion',
                     'beforecompletionbehavior',
                     'aftercompletionbehavior',
-                ]) && $defaultvalues[$option] == 0) {
+                    ]) && $defaultvalues[$option] == 0
+                ) {
                     $defaultvalues[$option] = [];
                 }
             }

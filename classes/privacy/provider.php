@@ -34,8 +34,8 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements
-    \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\metadata\provider,
     \core_privacy\local\request\plugin\provider {
     /**
      * Returns metadata about this plugin's privacy data.
@@ -178,7 +178,7 @@ class provider implements
             helper::export_context_files($context, $user);
         }
 
-        list($insql, $inparams) = $DB->get_in_or_equal($contexts, SQL_PARAMS_NAMED);
+        [$insql, $inparams] = $DB->get_in_or_equal($contexts, SQL_PARAMS_NAMED);
 
         // Export completion data.
         $sql = "SELECT c.id AS contextid, ivc.*
@@ -314,7 +314,7 @@ class provider implements
         }
 
         $userids = $userlist->get_userids();
-        list($insql, $inparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
 
         $sql = "SELECT ivc.id
                 FROM {interactivevideo_completion} ivc
@@ -361,7 +361,7 @@ class provider implements
         }
         $userid = $contextlist->get_user()->id;
         // Prepare SQL to gather all completed IDs.
-        list($insql, $inparams) = $DB->get_in_or_equal($contextids, SQL_PARAMS_NAMED);
+        [$insql, $inparams] = $DB->get_in_or_equal($contextids, SQL_PARAMS_NAMED);
         // Delete completion data.
         $sql = "SELECT ivc.id
                 FROM {interactivevideo_completion} ivc
