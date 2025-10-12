@@ -146,6 +146,10 @@ if (
 } else {
     $returnurl = new moodle_url('/course/view.php', ['id' => $course->id]);
 }
+
+$courseindex = isset($moduleinstance->displayoptions['courseindex']) && $moduleinstance->displayoptions['courseindex'] ?
+ core_course_drawer() : '';
+$hascourseindex = !empty($courseindex);
 $datafortemplate = [
     "cmid" => $cm->id,
     "instance" => $cm->instance,
@@ -153,7 +157,7 @@ $datafortemplate = [
     "courseid" => $course->id,
     "returnurl" => $returnurl,
     "canedit" => has_capability('mod/interactivevideo:edit', $modulecontext),
-    "completion" => ($attempted ? '<span class="mb-0 iv-border-left border-danger iv-pl-3"><button class="btn btn-sm"
+    "completion" => ($attempted ? '<span class="mb-0 iv-border-left border-danger iv-pl-3 iv-ml-2"><button class="btn btn-sm"
           type="button" data' . $bs . '-toggle="popover" data' . $bs . '-html="true" data' . $bs . '-content=\'' .
         get_string('interactionscannotbeedited', 'mod_interactivevideo') . '\'>
          <i class="bi bi-exclamation-circle-fill text-warning fs-25px"></i></button></span>' : ''),
@@ -174,6 +178,7 @@ $datafortemplate = [
         ['contextid' => $modulecontext->id]
     ) : '',
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
+    "hascourseindex" => $hascourseindex,
 ];
 
 echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $datafortemplate);
@@ -185,9 +190,11 @@ $datafortemplate = [
     "grade" => $moduleinstance->grade,
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
     "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream']),
+    "hascourseindex" => $hascourseindex,
+    "courseindex" => $courseindex,
 ];
 
-echo $OUTPUT->render_from_template('mod_interactivevideo/editor', $datafortemplate);
+echo $OUTPUT->render_from_template('mod_interactivevideo/editor/editor', $datafortemplate);
 
 if (!isset($moduleinstance->displayoptions['beforecompletion'])) {
     $defaultappearance = [
@@ -263,5 +270,4 @@ $PAGE->requires->js_call_amd(
 );
 
 echo '<textarea id="doptions" style="display: none;">' . json_encode($moduleinstance->displayoptions) . '</textarea>';
-
 echo $OUTPUT->footer();

@@ -1,0 +1,84 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/editor/annotationlistitem
+
+    TODO describe template annotationlistitem
+
+    Example context (json):
+    {
+    }
+}}
+
+<table>
+    <tr id="annotation-template"
+        class="annotation listItem border-bottom d-none position-relative"
+        data-timestamp="0"
+        data-id="0"
+        data-type="">
+        <td>
+            <div class="d-flex align-items-center">
+                <span data-editable="timestamp"
+                        title="{{#str}}goto, mod_interactivevideo{{/str}}"
+                        class="timestamp bg-light px-2 py-1 iv-rounded text-truncate">0</span>
+                <input type="text"
+                        name="timestampassist"
+                        data-field="timestamp"
+                        title="{{#str}}rightclicktosetcurrenttime, mod_interactivevideo{{/str}}"
+                        class="form-control form-control-sm d-none">
+            </div>
+        </td>
+        <td>
+            <div class="w-100 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center flex-grow-1 type-name rotatey-360">
+                    <span class="border-0 btn btn-sm type-icon iv-mr-2" title="">
+                        <i class="fa fa-fw"></i>
+                    </span>
+                    <span data-editable="title"
+                            class="title iv-font-weight-bold text-primary cursor-pointer"></span>
+                    <input type="text"
+                            data-field="title"
+                            class="form-control form-control-sm d-none">
+                </div>
+                <div class="btns d-flex align-items-center">
+                    <span data-editable="xp"
+                            title="{{#str}}xppoint, mod_interactivevideo{{/str}}"
+                            class="border-0 p-1 btn btn-sm xp">
+                        <span></span>
+                        <i class="bi bi-star iv-ml-1"></i>
+                    </span>
+                    <input type="number"
+                            min="0"
+                            data-field="xp"
+                            class="form-control form-control-sm d-none">
+                    <button title="{{#str}}clone, mod_interactivevideo{{/str}}"
+                            class="border-0 px-2 btn btn-sm copy">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                    <button title="{{#str}}edit, mod_interactivevideo{{/str}}"
+                            class="border-0 px-2 btn btn-sm edit">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="border-0 px-2 btn btn-sm text-danger delete"
+                            title="{{#str}}delete, mod_interactivevideo{{/str}}">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>

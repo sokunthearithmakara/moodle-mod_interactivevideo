@@ -1,0 +1,39 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/editor/videoactions
+
+    TODO describe template videoactions
+
+    Example context (json):
+    {
+    }
+}}
+<div id="video-action"
+        class="px-3 py-2 bg-light d-flex align-items-center justify-content-between mx-auto w-100 position-sticky">
+    <div class="text-truncate">
+        <span class="h4 mb-0 text-truncate iv-font-weight-bold">{{{title}}}</span>
+    </div>
+    <div class="d-flex align-items-center">
+        <div class="btn border-0" id="xp">
+            <span class="iv-font-weight-bold">0</span>
+            <i class="bi bi-star iv-ml-1"></i>
+        </div>
+        <span class="mx-2 iv-font-weight-bold text-truncate"
+                title="{{#str}}gradenoun{{/str}}">/ {{grade}}</span>
+    </div>
+</div>

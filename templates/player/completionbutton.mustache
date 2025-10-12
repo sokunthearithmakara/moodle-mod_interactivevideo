@@ -1,0 +1,35 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/player/completionbutton
+
+    TODO describe template completionbutton
+
+    Example context (json):
+    {
+    }
+}}
+
+<button id="completiontoggle" class="btn btn-flex text-truncate mark-{{#iscompleted}}undone btn-success{{/iscompleted}}{{^iscompleted}}done btn-secondary{{/iscompleted}} btn-sm border-0" data-id="{{id}}">
+    <i class="bi bi-{{#iscompleted}}check2{{/iscompleted}}{{^iscompleted}}circle{{/iscompleted}}"></i>
+    <span class="iv-ml-2 d-none d-sm-block">{{#iscompleted}}{{#str}}completionmarkincomplete,mod_interactivevideo{{/str}}{{/iscompleted}}{{^iscompleted}}{{#str}}completionmarkcomplete,mod_interactivevideo{{/str}}{{/iscompleted}}</span>
+</button>
+{{#isPlayerMode}}
+<button class="btn btn-flex btn-secondary btn-sm iv-ml-2 rotatez-360 border-0"
+         data-id="{{id}}" id="refresh">
+        <i class="bi bi-arrow-repeat"></i></button>
+{{/isPlayerMode}}

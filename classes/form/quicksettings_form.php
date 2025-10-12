@@ -149,6 +149,7 @@ class quicksettings_form extends \core_form\dynamic_form {
             'columnlayout',
             'squareposterimage',
             'passwordprotected',
+            'courseindex',
             'beforecompletion',
             'aftercompletion',
             'beforecompletionbehavior',

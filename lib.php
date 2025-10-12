@@ -114,6 +114,7 @@ function interactivevideo_display_options($moduleinstance) {
         'columnlayout',
         'showdescriptiononheader',
         'passwordprotected',
+        'courseindex',
     ];
     foreach ($fields as $field) {
         $options[$field] = $moduleinstance->$field ?? 0;
@@ -1906,6 +1907,15 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             $mform->addElement('hidden', 'theme', '');
         }
         $mform->setType('theme', PARAM_TEXT);
+
+        $mform->addElement(
+            'advcheckbox',
+            'courseindex',
+            get_string('courseindex', 'mod_interactivevideo'),
+            get_string('showindexindf', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
 
         // Use custom poster image.
         $mform->addElement(

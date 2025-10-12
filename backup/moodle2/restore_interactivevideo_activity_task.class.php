@@ -88,6 +88,7 @@ class restore_interactivevideo_activity_task extends restore_activity_task {
 
         $rules[] = new restore_decode_rule('INTERACTIVEVIDEOVIEWBYID', '/mod/interactivevideo/view.php?id=$1', 'course_module');
         $rules[] = new restore_decode_rule('INTERACTIVEVIDEOINDEX', '/mod/interactivevideo/index.php?id=$1', 'course');
+        $rules[] = new restore_decode_rule('INTERACTIVEVIDEOVIEWCMID', '/mod/interactivevideo/view.php?i=$1', 'interactivevideo');
 
         return $rules;
     }

@@ -303,6 +303,7 @@ $asettings->add(new admin_setting_configmulticheckbox(
         'alignindicator' => get_string('alignindicatorcenter', 'mod_interactivevideo'),
     ],
     [
+        'courseindex' => get_string('courseindex', 'mod_interactivevideo'),
         'displayinline' => get_string('displayinline', 'mod_interactivevideo'),
         'launchinpopup' => get_string('launchinpopup', 'mod_interactivevideo'),
         'aligncenter' => get_string('centeroncoursepage', 'mod_interactivevideo'),

@@ -1,0 +1,72 @@
+{{!
+This file is part of Moodle - http://moodle.org/
+Moodle is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+Moodle is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Moodle. If not, see <http://www.gnu.org/licenses />.
+}}
+{{!
+@template mod_interactivevideo/player/player
+TODO describe template player
+Example context (json):
+{
+}
+}}
+{{! Required for viostream, bunnystream.}}
+{{#useembedly}}
+<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
+{{/useembedly}}
+<div id="interactivevideo-container"
+     class="container-fluid {{#darkmode}}p-sm-3{{/darkmode}} {{^darkmode}}p-sm-3{{/darkmode}} alternative {{#displayoptions.distractionfreemode}}position-absolute{{/displayoptions.distractionfreemode}}"
+     data-complete="{{completed}}">
+    <div class="row justify-content-center mx-0">
+        <div class="col-12 px-0">
+            <div id="wrapper" class="position-relative mx-auto">
+                <div id="video-wrapper"
+                     class="d-flex align-items-center justify-content-center {{^darkmode}}border{{/darkmode}}">
+                    {{! start of toolbar}}
+                    <div id="toolbar" class="bg-transparent pt-5 position-fixed"></div>
+                    {{! end of toolbar }}
+                    {{> mod_interactivevideo/backgroundloading}}
+                {{#displayoptions.hidemainvideocontrols}}
+                    <span class="rotatex-360 btn border-0 btn-sm btn-control iv-rounded-circle p-1"
+                          id="fullscreen"
+                          data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+                          data{{bs}}-trigger="hover"
+                          data{{bs}}-title="{{#str}}togglefullscreen,mod_interactivevideo{{/str}}"><i class="bi bi-fullscreen"></i></span>
+                {{/displayoptions.hidemainvideocontrols}}
+                {{^displayoptions.disablechapternavigation}}
+                    {{> mod_interactivevideo/player/chapterpanel}}
+                {{/displayoptions.disablechapternavigation}}
+                {{^displayoptions.useoriginalvideocontrols}}
+                    <div class="video-block"></div>
+                {{/displayoptions.useoriginalvideocontrols}}
+                {{> mod_interactivevideo/player/startscreen}}
+                {{> mod_interactivevideo/player/endscreen}}
+                {{> mod_interactivevideo/player/annotationcanvas}}
+                {{#displayoptions.hidemainvideocontrols}}
+                <div id="lightprogress">
+                <div id="lightprogressbar"
+                    class="bg-danger position-absolute h-100"
+                    style="width: 0%"></div>
+                </div>
+                {{/displayoptions.hidemainvideocontrols}}
+            </div>
+        {{> mod_interactivevideo/player/controls}}
+        </div>
+{{! Content }}
+<div id="annotation-content"
+     class="position-relative overflow-hidden border-0 mx-auto"></div>
+</div>
+</div>
+</div>
+{{> mod_interactivevideo/blocksettingshack }}
+{{#hascourseindex}}
+{{> mod_interactivevideo/courseindex}}
+{{/hascourseindex}}

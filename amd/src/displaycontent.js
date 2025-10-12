@@ -26,6 +26,8 @@ import Fragment from 'core/fragment';
 import {dispatchEvent} from 'core/event_dispatcher';
 import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
+import Templates from 'core/templates';
+
 /**
  * Return main formatted content of the annotation
  * @param {Object} annotation - The annotation object
@@ -99,11 +101,12 @@ const formatText = async function(text, shorttext = false) {
  * defaultDisplayContent(annotation, player);
  */
 const defaultDisplayContent = async function(annotation, player) {
-    const isBS5 = $('body').hasClass('bs-5');
-    const isPlayerMode = $('body').attr('id') == 'page-mod-interactivevideo-view';
+    let $body = $('body');
+    const isBS5 = $body.hasClass('bs-5');
+    const isPlayerMode = $body.attr('id') == 'page-mod-interactivevideo-view';
     const isPreviewMode = annotation.previewMode;
     const advanced = JSON.parse(annotation.advanced);
-    const isDarkMode = $('body').hasClass('darkmode');
+    const isDarkMode = $body.hasClass('darkmode');
 
     // Play pop sound
     const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
@@ -117,11 +120,11 @@ const defaultDisplayContent = async function(annotation, player) {
         }
 
         // If the theme is mobile, display the message as a popup.
-        if ($('body').hasClass('mobiletheme') && displayoptions == 'inline') {
+        if ($body.hasClass('mobiletheme') && displayoptions == 'inline') {
             displayoptions = 'popup';
         }
 
-        if ($('body').hasClass('embed-mode')) {
+        if ($body.hasClass('embed-mode')) {
             // Check the size of the body. If it is less than 800px, display the message as inline.
             if ($(window).width() < 1000 || $(window).height() < 500) {
                 displayoptions = 'inline';
@@ -159,41 +162,27 @@ const defaultDisplayContent = async function(annotation, player) {
         ${annotation.completed ? earned : Number(annotation.xp)} XP</span>`;
     }
     // Display the completion button conditionally.
-    if (annotation.hascompletion == 1 && annotation.completed) {
-        completionbutton += `<button id="completiontoggle" class="btn btn-flex text-truncate mark-undone btn-success
-         btn-sm border-0"
-             data-id="${annotation.id}"><i class="bi bi-check2"></i>
-             <span class="iv-ml-2 d-none d-sm-block">
-             ${M.util.get_string('completionmarkincomplete', 'mod_interactivevideo')}</span></button>`;
-    } else if (annotation.hascompletion == 1 && annotation.completed == false) {
-        completionbutton += `<button id="completiontoggle" class="btn btn-flex text-truncate mark-done btn-secondary btn-sm
-         border-0"
-             data-id="${annotation.id}"><i class="bi bi-circle"></i>
-             <span class="iv-ml-2 d-none d-sm-block">
-             ${M.util.get_string('completionmarkcomplete', 'mod_interactivevideo')}</span></button>`;
+    if (annotation.hascompletion == 1) {
+        completionbutton += await Templates.render('mod_interactivevideo/player/completionbutton', {
+            id: annotation.id,
+            iscompleted: annotation.completed,
+            isPlayerMode: isPlayerMode && !isPreviewMode,
+        });
     }
 
     // Append refresh button after the completion button.
-    if (isPlayerMode && !isPreviewMode) {
-        completionbutton += `<button class="btn btn-flex btn-secondary btn-sm iv-ml-2 rotatez-360 border-0"
-         data-id="${annotation.id}" id="refresh">
-        <i class="bi bi-arrow-repeat"></i></button>`;
-    } else {
+    if (!isPlayerMode || isPreviewMode) {
         completionbutton = ``;
     }
 
     // Message title.
     let prop = JSON.parse(annotation.prop);
-    let messageTitle = `<h5 class="modal-title text-truncate mb-0">
-    <i class="${prop.icon} iv-mr-2 d-none d-md-inline"></i><span>${annotation.formattedtitle}</span></h5>
-                            <div class="btns d-flex align-items-center">
-                            ${completionbutton}
-                            <button data-id="${annotation.id}"
-                             class="btn btn-flex mx-2 p-0 border-0 interaction-dismiss bg-transparent" id="close-${annotation.id}"
-                             aria-label="Close">
-                            <i class="bi bi-x-lg fa-fw fs-25px"></i>
-                            </button>
-                            </div>`;
+    let messageTitle = await Templates.render('mod_interactivevideo/player/messagetitle', {
+        icon: prop.icon || 'bi bi-info-circle',
+        title: annotation.formattedtitle || '',
+        completionbutton: completionbutton,
+        id: annotation.id,
+    });
 
     // Hide existing modal if it shows.
     $('#annotation-modal').modal('hide');
@@ -228,7 +217,7 @@ const defaultDisplayContent = async function(annotation, player) {
         }
 
         if (displayoptions == 'side') {
-            $('body').removeClass('hassidebar');
+            $body.removeClass('hassidebar');
             $('#annotation-sidebar').addClass('hide');
             if (isPlayerMode && !isPreviewMode) {
                 $(this).closest("#message").removeClass('active');
@@ -243,8 +232,6 @@ const defaultDisplayContent = async function(annotation, player) {
             $(this).trigger(ModalEvents.hidden);
         });
         const targetMessage = $(this).closest("#message");
-        targetMessage.removeClass('active');
-        targetMessage.addClass('bottom-0');
         targetMessage.remove();
         if (isPlayerMode && !isPreviewMode) {
             setTimeout(function() {
@@ -266,25 +253,25 @@ const defaultDisplayContent = async function(annotation, player) {
                 isVerticallyCentered: true,
             }).then((modal) => {
                 let root = modal.getRoot();
-                root.attr('id', 'annotation-modal');
-                root.attr('data-id', annotation.id);
-                // Disable keyboard dismiss.
                 root.attr({
-                    'data-bs-backdrop': 'static',
-                    'data-bs-keyboard': 'false',
+                    'id': 'annotation-modal',
+                    'data-id': annotation.id,
                 });
 
                 // eslint-disable-next-line promise/always-return
-                if ($('body').hasClass('iframe')) {
+                if ($body.hasClass('iframe')) {
                     root.addClass('modal-fullscreen');
                 }
 
-                root.find('.modal-dialog').attr('data-id', annotation.id);
-                root.find('.modal-dialog').attr('data-placement', 'popup');
-                root.find('.modal-dialog').attr('id', 'message');
-                root.find('.modal-dialog').addClass('active ' + annotation.type);
+                root.find('.modal-dialog')
+                    .attr({
+                        'data-id': annotation.id,
+                        'data-placement': 'popup',
+                        'id': 'message'
+                    })
+                    .addClass('active ' + annotation.type);
                 root.find('#message').html(`<div class="modal-content iv-rounded-lg">
-                        <div class="modal-header d-flex align-items-center shadow-sm iv-pr-0 iv-pl-3" id="title">
+                        <div class="modal-header d-flex align-items-center shadow-sm" id="title">
                             ${messageTitle}
                         </div>
                         <div class="modal-body" id="content">
@@ -334,7 +321,7 @@ const defaultDisplayContent = async function(annotation, player) {
         return new Promise((resolve) => {
             $('#video-wrapper').append(`<div id="message" style="z-index:105;top:100%" data-placement="inline"
          data-id="${annotation.id}" class="${annotation.type} active modal" tabindex="0">
-        <div id="title" class="modal-header shadow-sm iv-pr-0 iv-pl-3 iv-rounded-0">
+        <div id="title" class="modal-header shadow-sm iv-rounded-0">
         ${messageTitle}</div><div class="modal-body" id="content">
         </div></div>`);
             $(`#message[data-id='${annotation.id}']`).animate({
@@ -347,10 +334,9 @@ const defaultDisplayContent = async function(annotation, player) {
 
     const handleBottomDisplay = (annotation, messageTitle, isDarkMode) => {
         return new Promise((resolve) => {
-            $('#annotation-content').empty();
-            $('#annotation-content').append(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
+            $('#annotation-content').html(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
                  iv-rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}" tabindex="0">
-                 <div id='title' class='modal-header shadow-sm iv-pr-0 iv-pl-3'>${messageTitle}</div>
+                 <div id='title' class='modal-header shadow-sm'>${messageTitle}</div>
                 <div class="modal-body" id="content"></div></div>`);
             $('html, body, #page.drawers, .modal-body').animate({
                 scrollTop: $("#annotation-content").offset().top
@@ -361,7 +347,7 @@ const defaultDisplayContent = async function(annotation, player) {
     };
 
     const handleSideDisplay = (annotation, messageTitle) => {
-        $('body').addClass('hassidebar');
+        $body.addClass('hassidebar');
         // Make sure all sidebar are hidden.
         $('#wrapper .iv-sidebar').addClass('hide');
         // Create sidebar if it does not exist.
@@ -373,7 +359,7 @@ const defaultDisplayContent = async function(annotation, player) {
                 </div>`);
             $sidebar = $('#annotation-sidebar');
             // Initialize resizable.
-            const rtl = $('body').hasClass('dir-rtl');
+            const rtl = $body.hasClass('dir-rtl');
             $sidebar.resizable({
                 handles: rtl ? 'e' : 'w',
                 minWidth: 475,
@@ -421,8 +407,9 @@ const defaultDisplayContent = async function(annotation, player) {
             // Switch between messages.
             $(document).on('click', '#sidebar-nav .sidebar-nav-item', async function() {
                 const current = $(`#sidebar-nav .sidebar-nav-item.active`).data('id');
+                const $sidebarcontent = $('#sidebar-content');
                 if (current) {
-                    $(`#sidebar-content #message[data-id='${current}']`).removeClass('active');
+                    $sidebarcontent.find(`#message[data-id='${current}']`).removeClass('active');
                     dispatchEvent('interactionclose', {
                         annotation: {
                             id: current
@@ -431,8 +418,8 @@ const defaultDisplayContent = async function(annotation, player) {
                 }
                 const target = $(this).data('id');
                 $(this).addClass('active').siblings().removeClass('active');
-                $('#sidebar-content #message').fadeOut(300);
-                $(`#sidebar-content #message[data-id='${target}']`).fadeIn(300).addClass('active');
+                $sidebarcontent.find('#message').fadeOut(300);
+                $sidebarcontent.find(`#message[data-id='${target}']`).fadeIn(300).addClass('active');
                 const isPaused = await player.isPaused();
                 if (isPaused) {
                     dispatchEvent('interactionrun', {
@@ -493,7 +480,7 @@ const defaultDisplayContent = async function(annotation, player) {
         // Append the message to the sidebar.
         $sidebar.find('#sidebar-content').append(`<div id="message" data-placement="side"
                     data-id="${annotation.id}" class="${annotation.type} sticky active" tabindex="0">
-                    <div id="title" class="modal-header shadow-sm iv-pr-0 iv-pl-3 border-bottom">${messageTitle}</div>
+                    <div id="title" class="modal-header shadow-sm border-bottom">${messageTitle}</div>
                     <div class="modal-body" id="content"></div>
                     </div>`);
         return new Promise((resolve) => {

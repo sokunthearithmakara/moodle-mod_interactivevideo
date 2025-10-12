@@ -69,6 +69,10 @@ class backup_interactivevideo_activity_task extends backup_activity_task {
         $search = "/(" . $base . "\/mod\/interactivevideo\/view.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@INTERACTIVEVIDEOVIEWBYID*$2@$', $content);
 
+        // Link to interactivevideo view by cmid.
+        $search = "/(" . $base . "\/mod\/interactivevideo\/view.php\?i\=)([0-9]+)/";
+        $content = preg_replace($search, '$@INTERACTIVEVIDEOVIEWCMID*$2@$', $content);
+
         return $content;
     }
 }

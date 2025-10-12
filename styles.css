@@ -722,7 +722,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo #toolbar {
-    right: 25px;
+    right: 45px;
     width: 0;
     overflow: visible;
     z-index: 1032;
@@ -734,14 +734,29 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo #toolbar .btn {
     left: 0;
-    width: 25px;
+    width: 40px;
+    height: 40px;
     text-align: center;
-    padding: 0.5rem 0;
+    padding: 0;
     position: relative;
-    background: #fff;
-    border-radius: 0.5rem 0 0 0.5rem;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 50%;
     margin-bottom: 0.25rem;
-    opacity: 0.5;
+    opacity: 0.75;
+    transition: all ease-in-out 300ms;
+    border: 0;
+}
+
+.path-mod-interactivevideo.embed-mode #toolbar,
+.path-mod-interactivevideo:not(#page-mod-interactivevideo-view) #toolbar {
+    right: 25px;
+}
+
+.path-mod-interactivevideo.embed-mode #toolbar .btn,
+.path-mod-interactivevideo:not(#page-mod-interactivevideo-view) #toolbar .btn {
+    width: 25px;
+    border-radius: 5px 0 0 5px;
 }
 
 .path-mod-interactivevideo #toolbar .btn:hover {
@@ -749,7 +764,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo:not(.bg-dark) #toolbar .btn {
-    opacity: 0.8;
+    color: #000;
 }
 
 #page-mod-interactivevideo-interactions {
@@ -1607,6 +1622,41 @@ html:has(.path-mod-interactivevideo) {
     background: linear-gradient(135deg, black, transparent);
 }
 
+.path-mod-interactivevideo #video-info .h1 {
+    border-left: 5px solid var(--ivdanger);
+    padding-inline-start: 0.3em;
+    margin-top: 0.3em;
+    position: relative;
+    transition: all ease-in-out 300ms;
+    opacity: 1;
+    top: 0;
+}
+
+.path-mod-interactivevideo #video-info .h1.trantohide {
+    position: relative;
+    top: -100%;
+    opacity: 0;
+    transition: all ease-in-out 300ms;
+}
+
+@media (max-width: 767.98px) {
+    .path-mod-interactivevideo #video-info {
+        background: linear-gradient(0deg, black, transparent);
+    }
+
+    .path-mod-interactivevideo #video-info .h1 {
+        bottom: 0;
+        top: unset;
+    }
+
+    .path-mod-interactivevideo #video-info .h1.trantohide {
+        bottom: -100%;
+        opacity: 0;
+        top: unset;
+        transition: all ease-in-out 300ms;
+    }
+}
+
 [dir="rtl"] .path-mod-interactivevideo #video-info {
     background: linear-gradient(45deg, transparent, black);
 }
@@ -2162,8 +2212,12 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo.hassidebar.distraction-free #controller {
-    width: calc(100% - 475px);
+    width: calc(100% - 475px - 2rem);
     transition: width ease-in-out 300ms;
+}
+
+.path-mod-interactivevideo.hassidebar.distraction-free.embed-mode #controller {
+    width: calc(100% - 475px);
 }
 
 .path-mod-interactivevideo #lightprogress {
@@ -2726,12 +2780,6 @@ html:has(.path-mod-interactivevideo) {
 
 #page-mod-interactivevideo-report.embed-mode .completiontablewrapper {
     max-height: calc(var(--ivdvh) - 120px);
-}
-
-#page-mod-interactivevideo-view #video-info .h1 {
-    border-left: 5px solid var(--ivdanger);
-    padding-inline-start: 0.3em;
-    margin-top: 0.3em;
 }
 
 #page-mod-interactivevideo-view.embed-mode #interactivevideo-container {
@@ -3957,23 +4005,48 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     color: #fff;
 }
 
-.fitem[data-groupname="beforecompletion"] .form-check-inline,
-.fitem[data-groupname="aftercompletion"] .form-check-inline,
-.fitem[data-groupname="beforecompletionbehavior"] .form-check-inline,
-.fitem[data-groupname="aftercompletionbehavior"] .form-check-inline,
-.fitem[data-groupname="activitycardgroup"] .form-check-inline,
-.fitem[data-groupname="cardoptiongroup"] .form-check-inline,
-.fitem[data-groupname="behaviorgroup"] .form-check-inline {
+.path-mod-interactivevideo .fitem[data-groupname]:is([data-groupname="beforecompletion"], [data-groupname="aftercompletion"], [data-groupname="beforecompletionbehavior"], [data-groupname="aftercompletionbehavior"], [data-groupname="activitycardgroup"], [data-groupname="cardoptiongroup"], [data-groupname="behaviorgroup"]) .form-check-inline {
     width: 100%;
     justify-content: flex-start;
 }
 
-.fitem[data-groupname="beforecompletion"] [data-fieldtype="group"] > *,
-.fitem[data-groupname="aftercompletion"] [data-fieldtype="group"] > * {
+.path-mod-interactivevideo .fitem:is([data-groupname="beforecompletion"], [data-groupname="aftercompletion"]) [data-fieldtype="group"] > * {
     column-count: 2;
 }
 
-.vidyard-player-container #backlink {
+.path-mod-interactivevideo .vidyard-player-container #backlink {
     display: none;
 }
 
+.path-mod-interactivevideo.dir-rtl:not(.bs-5) .dropup .dropdown-menu {
+    top: auto !important;
+    bottom: 100% !important;
+    margin-top: 0 !important;
+    margin-bottom: .125rem !important;
+    left: unset !important;
+    right: 0 !important;
+}
+
+.path-mod-interactivevideo.dir-rtl:not(.bs-5) .dropdown div.dropdown-menu.dropdown-menu-right:not(#user-action-menu,#courseindexdrawercontrolsmenu) {
+    left: unset !important;
+}
+
+.path-mod-interactivevideo.pagelayout-embedded .drawer.drawer-left {
+    z-index: 1050;
+    top: 0;
+    height: var(--ivdvh);
+}
+
+.path-mod-interactivevideo.pagelayout-embedded.darkmode .drawer.drawer-left,
+.path-mod-interactivevideo.pagelayout-embedded.darkmode .courseindex .courseindex-item.pageitem,
+.path-mod-interactivevideo.pagelayout-embedded.darkmode .courseindex .courseindex-item .completioninfo.completion_complete {
+    filter: invert(1);
+}
+
+#page-mod-interactivevideo-report #filterregion .input-group > input {
+    height: unset;
+}
+
+#page-mod-interactivevideo-report .dt-buttons .btn-group {
+    position: relative;
+}

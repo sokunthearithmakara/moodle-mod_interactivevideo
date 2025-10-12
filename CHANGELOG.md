@@ -1,6 +1,12 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.5.0] - 2025-10-12
+https://mod-interactive-video.canny.io/changelog/interactive-video-150
+
+## [1.4.5] - 2025-09-29
+https://mod-interactive-video.canny.io/changelog/interactive-video-145
+
 ## [1.4.4] - 2025-09-18
 https://mod-interactive-video.canny.io/changelog/interactive-video-144
 

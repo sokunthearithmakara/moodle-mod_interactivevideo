@@ -25,17 +25,7 @@ Example context (json):
      class="p-3 position-relative"
      style="margin-top: 70px">
     {{{groupselector}}}
-    <div class="position-absolute w-100 h-100 no-pointer bg-white"
-         id="background-loading">
-        <div class="d-flex h-100 align-items-center justify-content-center">
-            <div class="spinner-border text-danger"
-                 style="width: 3rem;
-                        height: 3rem"
-                 role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-        </div>
-    </div>
+    {{> mod_interactivevideo/backgroundloading}}
     <table id="completiontable"
            class="table table-sm table-bordered border table-striped w-100 m-0">
         <thead class="sticky-top bg-white">
@@ -125,3 +115,7 @@ Example context (json):
 </tbody>
 </table>
 </div>
+
+{{#hascourseindex}}
+{{> mod_interactivevideo/courseindex}}
+{{/hascourseindex}}

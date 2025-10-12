@@ -240,6 +240,9 @@ define([
             let $annotationcanvas = $('#annotation-canvas');
             let $rewindbutton = $('#rewindbutton');
             let $forwardbutton = $('#forwardbutton');
+            let $body = $('body');
+            let $progressbar = $videoNav.find('#progress');
+            let $seekhead = $videoNav.find('#seekhead');
 
             quickform({
                 contextid: M.cfg.contextid,
@@ -270,12 +273,12 @@ define([
             let timeended = null;
 
             if (localStorage.getItem('limitedwidth') == 'true' && displayoptions.hidemainvideocontrols == 0) {
-                $('body').addClass('limited-width');
+                $body.addClass('limited-width');
                 $controller.find('#expand i').removeClass('bi-file').addClass('bi-square');
             }
 
             if (vtype == 'spotify') { // Spotify player.
-                $('body').addClass('limited-width');
+                $body.addClass('limited-width');
             }
 
             /**
@@ -305,8 +308,8 @@ define([
                     $currenttime.text(convertSecondsToHMS(time));
                     $remainingtime.text(
                         player.live ? M.util.get_string('live', 'mod_interactivevideo') : convertSecondsToHMS(totaltime - time));
-                    $videoNav.find('#progress').css('width', percentage + '%');
-                    $videoNav.find('#seekhead').css('left', percentage + '%');
+                    $progressbar.css('width', percentage + '%');
+                    $seekhead.css('left', percentage + '%');
                     $lightprogressbar.css('width', percentage + '%');
                     resolve(true);
                 });
@@ -652,7 +655,7 @@ define([
                 // If the annotation has displayoptions == 'side' and it is already run, then we don't need to run it again.
                 // But we need to show the message.
                 if (annotation.displayoptions == 'side' && $(`.sidebar-nav-item[data-id=${annotation.id}]`).length > 0 && !force) {
-                    if (!$('body').hasClass('hassidebar')) {
+                    if (!$body.hasClass('hassidebar')) {
                         // Toggle the drawer.
                         $('#annotation-toggle').trigger('click');
                     }
@@ -802,7 +805,7 @@ define([
                 }
                 $videowrapper.css('padding-bottom', (1 / ratio) * 100 + '%');
                 let gap = '125px';
-                if ($("body").hasClass('embed-mode')) {
+                if ($body.hasClass('embed-mode')) {
                     if (displayoptions.hidemainvideocontrols == 1) {
                         $("#wrapper").css({
                             'width': 'calc(100dvh * ' + ratio + ')'
@@ -848,10 +851,10 @@ define([
                     updateExpandVisibility();
 
                     // Scroll into view #video-wrapper
-                    if ($('body').hasClass('embed-mode')) {
+                    if ($body.hasClass('embed-mode')) {
                         return;
                     }
-                    vwrapper.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+                    $('#annotation-content')[0].scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
                 }
             };
 
@@ -944,7 +947,7 @@ define([
                 }
 
                 if (!reloaded) {
-                    $('#seekhead').draggable({
+                    $seekhead.draggable({
                         'containment': '#video-nav',
                         'axis': 'x',
                         'cursor': 'col-resize',
@@ -1018,8 +1021,8 @@ define([
                 if (subvideo) {
                     return;
                 }
-                if (savepoint || $('body').hasClass('embed-mode') || $('body').hasClass('iframe')
-                    || $('body').hasClass('mobileapp')) {
+                if (savepoint || $body.hasClass('embed-mode') || $body.hasClass('iframe')
+                    || $body.hasClass('mobileapp')) {
                     let t = await player.getCurrentTime();
                     let watchedpoint = Math.round(t);
                     // Make sure the watchedpoint is not the same as the last saved point or so close to it.
@@ -1318,14 +1321,14 @@ define([
                 if (!playerReady) {
                     return;
                 }
-                $('body').removeClass('disablekb');
+                $body.removeClass('disablekb');
                 // Initialize the player visualizer for html5 audio.
                 if (player.audio && !visualized) {
                     player.visualizer();
                     visualized = true;
                 }
                 // Force fullscreen for mobile themes and mobile devices.
-                if ($('body').hasClass('mobiletheme') && !$wrapper.hasClass('fullscreen')) {
+                if ($body.hasClass('mobiletheme') && !$wrapper.hasClass('fullscreen')) {
                     $("#fullscreen").trigger('click');
                 }
 
@@ -1355,7 +1358,7 @@ define([
 
                 // Autohide controls if $videowrapper is not hovered after 5 seconds.
                 if (displayoptions.autohidecontrols == 1
-                    && !$('body').hasClass('embed-mode' && !$('body').hasClass('mobileapp') && !$('body').hasClass('iframe'))) {
+                    && !$body.hasClass('embed-mode' && !$body.hasClass('mobileapp') && !$body.hasClass('iframe'))) {
                     setTimeout(function() {
                         if (!$videowrapper.is(':hover')) {
                             $controller.addClass('fadeOut');
@@ -1367,6 +1370,9 @@ define([
             // Implement the player.
             require(['mod_interactivevideo/player/' + vtype], function(VideoPlayer) {
                 player = new VideoPlayer();
+                player.poster = $('#posterimagehidden').attr('src');
+                player.doptions = doptions;
+                player.title = $('#titlehidden').val();
                 if (displayoptions.passwordprotected == 1 && player.support.password) {
                     // Remove start screen, set .video-block to d-none, #annotation-canvas remove d-none.
                     $startscreen.addClass('d-none');
@@ -1537,8 +1543,8 @@ define([
             // Handle player size change event.
             $(document).on('click', '#controller #expand', function(e) {
                 e.preventDefault();
-                $('body').toggleClass('limited-width');
-                localStorage.setItem('limitedwidth', $('body').hasClass('limited-width'));
+                $body.toggleClass('limited-width');
+                localStorage.setItem('limitedwidth', $body.hasClass('limited-width'));
                 $(this).find('i').toggleClass('bi-square bi-file');
             });
 
@@ -1679,6 +1685,7 @@ define([
                     location.reload();
                     return;
                 }
+                $startscreen.find('.h1').addClass('trantohide');
                 $startscreen.fadeOut(300);
                 $(this).addClass('d-none');
                 $videoNav.removeClass('d-none');
@@ -1695,10 +1702,10 @@ define([
                 dispatchEvent('iv:playerRestart');
                 $('#message').remove();
                 // Remove sidebar/drawer.
-                if ($('body').hasClass('hassidebar')) {
+                if ($body.hasClass('hassidebar')) {
                     $('#annotation-toggle').trigger('click');
                     $('#annotation-sidebar, #annotation-toggle').remove();
-                    $('body').removeClass('hassidebar');
+                    $body.removeClass('hassidebar');
                     $('.iv-sidebar').addClass('hide');
                 }
 
@@ -1768,7 +1775,7 @@ define([
 
             $(document).on('click', '#toolbar #annotation-toggle', function(e) {
                 e.preventDefault();
-                $('body').addClass('hassidebar');
+                $body.addClass('hassidebar');
                 $('#annotation-sidebar').removeClass('hide');
                 // Get the active annotation.
                 const current = $(`#sidebar-nav .sidebar-nav-item.active`).data('id');
@@ -1780,7 +1787,7 @@ define([
 
             // Autohide controls when mouse leaves #video-wrapper after 5 seconds.
             if (displayoptions.autohidecontrols == 1
-                && !$('body').hasClass('embed-mode' && !$('body').hasClass('mobileapp') && !$('body').hasClass('iframe'))) {
+                && !$body.hasClass('embed-mode' && !$body.hasClass('mobileapp') && !$body.hasClass('iframe'))) {
                 $videowrapper.on('mouseleave', function() {
                     setTimeout(function() {
                         // Check if the mouse is still over #video-wrapper.
@@ -2192,7 +2199,7 @@ define([
                     return;
                 }
 
-                if ($('body').hasClass('disablekb')) {
+                if ($body.hasClass('disablekb')) {
                     return;
                 }
 
@@ -2243,8 +2250,8 @@ define([
                         if ($controller.find('#expand').length > 0) {
                             $controller.find('#expand').trigger('click');
                         } else {
-                            $('body').toggleClass('limited-width');
-                            localStorage.setItem('limitedwidth', $('body').hasClass('limited-width'));
+                            $body.toggleClass('limited-width');
+                            localStorage.setItem('limitedwidth', $body.hasClass('limited-width'));
                         }
                         break;
                     case 'ArrowLeft':

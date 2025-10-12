@@ -141,6 +141,7 @@ class settings_form extends \core_form\dynamic_form {
             'columnlayout',
             'squareposterimage',
             'passwordprotected',
+            'courseindex',
             'source',
             'showdescription',
             'completionview',

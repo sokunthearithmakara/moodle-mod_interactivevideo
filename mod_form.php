@@ -58,7 +58,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      * Defines forms elements
      */
     public function definition() {
-        global $CFG, $PAGE, $USER;
+        global $CFG, $PAGE, $USER, $OUTPUT;
         $bsaffix = $CFG->branch >= 500 ? '-bs' : '';
         $current = $this->current;
 
@@ -128,14 +128,10 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 '<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>' : '') .
             '<div id="video-wrapper" class="mt-2 mb-3" style="display: none;">
             <div id="player" style="width:100%; max-width: 100%"></div>
-            </div></div>
-            <div class="position-fixed w-100 h-100 no-pointer" id="background-loading" style="background: rgba(0, 0, 0, 0.3);">
-                        <div class="d-flex h-100 align-items-center justify-content-center">
-                            <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                        </div>
-                    </div>');
+            </div></div>' . $OUTPUT->render_from_template('mod_interactivevideo/backgroundloading', [
+                'position' => 'fixed',
+                'show' => true,
+            ]));
 
         // Adding the "general" fieldset, where all the common settings are shown.
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -675,6 +671,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'columnlayout',
                 'squareposterimage',
                 'passwordprotected',
+                'courseindex',
                 'beforecompletion',
                 'aftercompletion',
                 'beforecompletionbehavior',
@@ -782,6 +779,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      * @return array Contains the names of the added form elements
      */
     public function add_completion_rules() {
+        global $CFG;
+        $bsaffix = $CFG->branch >= 500 ? '-bs' : '';
         $mform = $this->_form;
         $suffix = '';
         if (method_exists($this, 'get_suffix')) {
@@ -798,6 +797,13 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         $completionpercentageel = 'completionpercentage' . $suffix;
         $group[] = &$mform->createElement('text', $completionpercentageel, '', ['size' => 3]);
         $mform->setType($completionpercentageel, PARAM_INT);
+        $group[] = &$mform->createElement(
+            'html',
+            "<span class=\"btn\" data$bsaffix-html=\"true\" data$bsaffix-toggle=\"tooltip\" "
+                . "data$bsaffix-placement=\"right\" data$bsaffix-title=\""
+                . get_string('completionpercentagehelp', 'mod_interactivevideo')
+                . "\"><i class=\"fa fa-circle-question\"></i></span>"
+        );
         $completionpercentagegroupel = 'completionpercentagegroup' . $suffix;
         $mform->addGroup($group, $completionpercentagegroupel, '', ' ', false);
         $mform->disabledIf($completionpercentageel, $completionpercentageenabledel, 'notchecked');

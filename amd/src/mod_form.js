@@ -199,6 +199,20 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     return;
                 }
 
+                if (url !== videourlinput.attr('data-original')) {
+                    nameinput.val('');
+                    startinput.val(0);
+                    endinput.val(0);
+                    startassistinput.val('00:00:00.00');
+                    endassistinput.val('00:00:00.00');
+                } else {
+                    nameinput.val(nameinput.attr('data-original'));
+                    startinput.val(startinput.attr('data-original'));
+                    endinput.val(endinput.attr('data-original'));
+                    startassistinput.val(startassistinput.attr('data-original'));
+                    endassistinput.val(endassistinput.attr('data-original'));
+                }
+
                 let defaultLoadFunction = (type) => {
                     require(['mod_interactivevideo/player/' + type], function(VP) {
                         player = new VP();
@@ -682,6 +696,12 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
             // DOM ready.
             $(document).ready(function() {
                 if (videourlinput.val() != '') {
+                    videourlinput.attr('data-original', videourlinput.val());
+                    nameinput.attr('data-original', nameinput.val());
+                    startinput.attr('data-original', startinput.val());
+                    endinput.attr('data-original', endinput.val());
+                    startassistinput.attr('data-original', startassistinput.val());
+                    endassistinput.attr('data-original', endassistinput.val());
                     videourlinput.trigger('input');
                 }
                 if (sourceinput.val() != 'url') {

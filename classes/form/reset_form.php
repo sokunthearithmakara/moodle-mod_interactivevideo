@@ -75,6 +75,7 @@ class reset_form extends \core_form\dynamic_form {
         $cmids = explode(',', $fromform->cmids);
         $modinfo = get_fast_modinfo($courseid);
         $appearance = [
+            'courseindex',
             'theme',
             'displayinline',
             'launchinpopup',

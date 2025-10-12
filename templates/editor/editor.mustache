@@ -1,0 +1,75 @@
+{{!
+This file is part of Moodle - http://moodle.org/
+Moodle is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+Moodle is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Moodle. If not, see
+<http : //www.gnu.org/licenses />.
+}}
+{{!
+@template mod_interactivevideo/editor/editor
+HTML body for the interaction page.
+Example context (json):
+{
+}
+}}
+{{! Required for viostream, bunnystream.}}
+{{#useembedly}}
+<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
+{{/useembedly}}
+<div id="wrapper">
+    <div id="top-region">
+        <div class="iv-row m-0 position-relative">
+            <div class="p-3" id="player-region">
+                {{! Player }}
+                <div id="video-wrapper">
+                    {{! start of toolbar}}
+                    <div id="toolbar" class="bg-transparent pt-5 position-fixed"></div>
+                    {{! end of toolbar }}
+                    {{> mod_interactivevideo/backgroundloading}}
+                    <div id="annotation-canvas" class="d-none w-0">
+                        <div id="video-block"
+                             class="position-absolute w-100 h-100"
+                             style="z-index: 1"></div>
+                        {{#html5}}
+                        <video id="player" class="w-100 bg-black">
+                        </video>
+                    {{/html5}}
+                    {{^html5}}
+                    <div id="player" class="w-100 p-0"></div>
+                {{/html5}}
+            </div>
+        </div>
+        <div id="annotation-content" class="w-100 position-relative"></div>
+    </div>
+    <div id="separator"
+         class="d-none iv-border-left d-lg-flex align-items-center justify-content-center h-100 position-absolute z-index-1">
+        <i class="position-absolute bi bi-grip-vertical"></i>
+    </div>
+    <div class="p-3 position-relative" id="content-region">
+        <div class="w-100 h-100 overflow-auto border iv-rounded-lg position-relative" id="contentblock">
+            {{! action bar }}
+            {{> mod_interactivevideo/editor/videoactions}}
+            {{! content item list }}
+            {{> mod_interactivevideo/editor/annotationwrapper}}
+            {{! content item template }}
+            {{> mod_interactivevideo/editor/annotationlistitem }}
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{{! content type modal }}
+{{> mod_interactivevideo/editor/addcontenttype }}
+{{> mod_interactivevideo/editor/editortimeline }}
+{{! a little hack for sites that use classic-based themes }}
+{{> mod_interactivevideo/blocksettingshack }}
+{{#hascourseindex}}
+{{> mod_interactivevideo/courseindex}}
+{{/hascourseindex}}

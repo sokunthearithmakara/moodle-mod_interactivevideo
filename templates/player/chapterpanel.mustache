@@ -1,0 +1,42 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/player/chapterpanel
+
+    TODO describe template chapterpanel
+
+    Example context (json):
+    {
+    }
+}}
+
+<div id="chapter-container-left"
+        class="d-none sticky-top position-fixed w-100">
+    <div data-region="chapterwrapper"
+            class="d-flex w-100 position-absolute h-100 flex-column shadow">
+        <div class="w-100 p-3 d-flex flex-column">
+            <button id="closechapter"
+                    class="btn btn-small iv-rounded-circle p-0 bg-secondary border-0">
+                <i class="fa fa-times"></i>
+            </button>
+            <div class="metadata"></div>
+            <span class="h4 mt-2 mb-0 text-truncate">{{{title}}}</span>
+        </div>
+        <ul data-region="chapterlists" class="list-group w-100 iv-rounded-0 m-0">
+        </ul>
+    </div>
+</div>

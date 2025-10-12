@@ -323,6 +323,7 @@ $renderer = $PAGE->get_renderer('core');
 $primarymenu = $primary->export_for_template($renderer);
 
 // Display page navigation.
+$courseindex = '';
 $rendernav = true;
 if (!$moduleinstance->displayoptions['distractionfreemode']) {
     $rendernav = false;
@@ -331,6 +332,8 @@ if ($iframe || $embed) {
     $rendernav = false;
 }
 if ($rendernav) {
+    $courseindex = isset($moduleinstance->displayoptions['courseindex']) && $moduleinstance->displayoptions['courseindex'] ?
+     core_course_drawer() : '';
     // Understanding the course format: singlepage or multiplepages.
     $format = course_get_format($course);
     if (
@@ -384,6 +387,7 @@ if ($rendernav) {
             ['contextid' => $modulecontext->id]
         ) : '',
         "bs" => $CFG->branch >= 500 ? '-bs' : '',
+        "hascourseindex" => !empty($courseindex),
     ];
     echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $datafortemplate);
 }
@@ -492,8 +496,10 @@ $datafortemplate = [
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
     'square' => $moduleinstance->displayoptions['squareposterimage'] ?? false,
     "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream']),
+    "courseindex" => $courseindex,
+    "hascourseindex" => !empty($courseindex) && $rendernav,
 ];
-echo $OUTPUT->render_from_template('mod_interactivevideo/player', $datafortemplate);
+echo $OUTPUT->render_from_template('mod_interactivevideo/player/player', $datafortemplate);
 
 $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $url, // Video URL.
@@ -517,6 +523,8 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $datafortemplate['completed'] ?? false, // Completed status.
     has_capability('mod/interactivevideo:edit', $modulecontext) ? true : false, // Is editor.
 ]);
-
 echo '<textarea id="doptions" style="display: none;">' . json_encode($moduleinstance->displayoptions) . '</textarea>';
+echo '<textarea id="titlehidden" style="display: none;">' . format_string($moduleinstance->name) . '</textarea>';
+$posterurl = $moduleinstance->posterimage != "" ? $moduleinstance->posterimage : $OUTPUT->get_generated_image_for_id($cm->id);
+echo '<img id="posterimagehidden" style="display: none;" src="' . $posterurl . '">';
 echo $OUTPUT->footer();

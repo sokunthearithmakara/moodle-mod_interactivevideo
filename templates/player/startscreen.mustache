@@ -1,0 +1,79 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/player/startscreen
+
+    TODO describe template startscreen
+
+    Example context (json):
+    {
+    }
+}}
+
+{{#displayasstartscreen}}
+        <div id="start-screen"
+             class="w-100 position-absolute h-100 bg-white bottom-0">
+            <div class="intro-content {{#hasintro}}hasintro{{/hasintro}} bg-light w-100 p-0 align-items-start">
+                <div id="title-section"
+                     class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky">
+                    <div class="d-flex flex-column justify-content-center" style="max-width: calc(100% - 3rem);">
+                        <div class="metadata d-block d-md-none"></div>
+                        <h2 class="line-height-100 mb-0 title">{{{title}}}</h2>
+                    </div>
+                    <div id="spinner"
+                         class="spinner-border text-danger"
+                         style="width: 3rem;
+                                height: 3rem"
+                         role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <button id="play"
+                            class="btn btn-flex iv-rounded-circle d-none pulse bg-white position-sticky">
+                        <i class="bi bi-play-circle-fill text-danger"></i>
+                    </button>
+                </div>
+                {{#hasintro}}
+                <div class="p-2 p-md-3">{{{intro}}}</div>
+            {{/hasintro}}
+        </div>
+    </div>
+{{/displayasstartscreen}}
+{{^displayasstartscreen}}
+<div id="start-screen" class="w-100 position-absolute h-100 bottom-0 {{#square}}square{{/square}}" {{#posterimage}}style="background: url({{{posterimage}}}) center center / cover no-repeat;"{{/posterimage}} data-poster="{{{posterimage}}}">
+    <div class="intro-content d-flex align-items-center justify-content-center position-absolute w-100"></div>
+    <div id="video-info"
+         class="p-1 p-sm-3 text-white w-100 h-100 position-absolute align-items-start flex-column justify-content-between d-flex">
+        <div class="justify-content-between w-100 h-100 d-flex flex-column">
+            <div class="metadata d-block d-md-none text-shadow"></div>
+            <span class="h1 text-white iv-font-weight-bold line-height-100 m-1 m-sm-2 p-sm-2 p-1">{{{title}}}</span>
+        </div>
+        <div id="spinner"
+             class="spinner-border text-danger position-absolute"
+             role="status"
+             style="width: 3rem;
+                    height: 3rem;
+                    left: calc(50% - 1.5rem);
+                    top: calc(50% - 1.5rem)">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <button class="btn btn-flex bg-white iv-rounded-circle d-none position-absolute pulse"
+                id="play">
+            <i class="bi bi-play-circle-fill text-danger"></i>
+        </button>
+    </div>
+</div>
+{{/displayasstartscreen}}

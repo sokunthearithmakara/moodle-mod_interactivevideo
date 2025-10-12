@@ -187,13 +187,17 @@ if (
 } else {
     $returnurl = new moodle_url('/course/view.php', ['id' => $course->id]);
 }
+
+$courseindex = isset($moduleinstance->displayoptions['courseindex']) && $moduleinstance->displayoptions['courseindex']
+ ? core_course_drawer() : '';
+$hascourseindex = !empty($courseindex);
 $datafortemplate = [
     "cmid" => $cm->id,
     "instance" => $cm->instance,
     "contextid" => $context->id,
     "courseid" => $course->id,
     "returnurl" => $returnurl,
-    "completion" => '<h4 class="mb-0 iv-border-left border-danger iv-pl-3 clamp-1">'
+    "completion" => '<h4 class="mb-0 iv-border-left border-danger iv-pl-3 clamp-1 iv-ml-2">'
         . format_string($moduleinstance->name) . '</h4>',
     "manualcompletion" => 1,
     "settingurl" => has_capability('mod/interactivevideo:edit', $context)
@@ -212,8 +216,8 @@ $datafortemplate = [
         ['contextid' => $context->id]
     ) : '',
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
+    "hascourseindex" => $hascourseindex,
 ];
-
 
 echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $datafortemplate);
 
@@ -258,6 +262,8 @@ $reporttabledata = [
         ];
     }, $items),
     'bs' => $CFG->branch >= 500 ? '-bs' : '',
+    'hascourseindex' => $hascourseindex,
+    'courseindex' => $courseindex,
 ];
 
 echo $OUTPUT->render_from_template('mod_interactivevideo/reporttable', $reporttabledata);

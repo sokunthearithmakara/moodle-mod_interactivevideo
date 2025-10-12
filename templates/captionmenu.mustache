@@ -25,16 +25,16 @@
 }}
 
 <div class="btn-group dropup d-none" id="changecaption" data-uniqid="{{uniqid}}">
-            <span role="button"
-                  data{{bs}}-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.captions}}d-none{{/displayoptions.captions}}">
-                <i class="bi bi-badge-cc"
-                   data{{bs}}-toggle="tooltip" data-bs-container="#wrapper"
-                   data{{bs}}-trigger="hover"
-                   data{{bs}}-title="{{#str}}subtitle,mod_interactivevideo{{/str}}"></i>
-            </span>
-            <div id="caption-dropdown"
-                 class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black text-white"></div>
-        </div>
+    <span role="button"
+            data{{bs}}-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+            class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{#displayoptions}}{{^displayoptions.captions}}d-none{{/displayoptions.captions}}{{/displayoptions}}">
+        <i class="bi bi-badge-cc"
+            data{{bs}}-toggle="tooltip" data-bs-container="#wrapper"
+            data{{bs}}-trigger="hover"
+            data{{bs}}-title="{{#str}}subtitle,mod_interactivevideo{{/str}}"></i>
+    </span>
+    <div id="caption-dropdown"
+            class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black text-white"></div>
+</div>

@@ -21,7 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery'], function($) {
+define(['jquery', 'core/templates'], function($, Templates) {
     const bsAffix = $('body').hasClass('bs-5') ? '-bs' : '';
     return {
         settings: async function(courseid, coursecontextid, userid) {
@@ -529,14 +529,11 @@ define(['jquery'], function($) {
             });
 
             // Launch report modal when clicking on the report icon.
-            let Modal, Templates;
+            let Modal;
             $(document).on('click', '.launch-report', async function(e) {
                 e.preventDefault();
                 const href = $(this).data('href');
                 let $this = $(this);
-                if (!Templates) {
-                    Templates = await import('core/templates');
-                }
                 const data = {
                     id: 'reportModal',
                     title: M.util.get_string('reportfor', 'mod_interactivevideo', $this.data('title')),
@@ -561,17 +558,7 @@ define(['jquery'], function($) {
                     <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
                         <div class="modal-content bg-black overflow-hidden border-0">
                             <div class="modal-body position-relative">
-                            <div class="position-absolute w-100 h-100 no-pointer bg-transparent"
-                                id="background-loading">
-                                <div class="d-flex h-100 align-items-center justify-content-center">
-                                    <div class="spinner-border text-danger"
-                                        style="width: 3rem;
-                                                height: 3rem"
-                                        role="status">
-                                        <span class="sr-only">Loading...</span>
-                                    </div>
-                                </div>
-                            </div>
+                            ${await Templates.render('mod_interactivevideo/backgroundloading', {})}
                             <iframe src="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${$(this)
                         .data('id')}&embed=1&dm=1&df=1&preview=1"
                              class="w-100 h-100 border-0 position-absolute" style="z-index:1050"></iframe>

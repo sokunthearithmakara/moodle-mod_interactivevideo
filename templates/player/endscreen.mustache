@@ -1,0 +1,50 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/player/endscreen
+
+    TODO describe template endscreen
+
+    Example context (json):
+    {
+    }
+}}
+
+<div id="end-screen"
+     class="w-100 position-absolute h-100 {{#hasendscreentext}}bg-light{{/hasendscreentext}}{{^hasendscreentext}}{{^darkmode}}bg-light{{/darkmode}}{{#darkmode}}bg-black{{/darkmode}}{{/hasendscreentext}} d-none bottom-0">
+    <div class="end-content {{#hasendscreentext}}hascontent w-100 p-0 align-items-start{{/hasendscreentext}} position-relative">
+    {{#hasendscreentext}}
+        <div id="title-section"
+             class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky">
+            <div class="d-flex flex-column justify-content-center">
+                <div class="metadata d-block d-md-none"></div>
+                <span class="h1 line-height-100 mb-0 title">{{{title}}}</span>
+            </div>
+            <button class="btn btn-flex btn-danger iv-rounded-circle pulse position-sticky"
+                    id="restart">
+                <i class="bi bi-arrow-repeat"></i>
+            </button>
+        </div>
+        <div class="p-2 p-md-3">{{{endscreentext}}}</div>
+    {{/hasendscreentext}}
+    {{^hasendscreentext}}
+    <button class="btn btn-flex btn-danger iv-rounded-circle pulse" id="restart">
+        <i class="bi bi-arrow-repeat"></i>
+    </button>
+    {{/hasendscreentext}}
+</div>
+</div>

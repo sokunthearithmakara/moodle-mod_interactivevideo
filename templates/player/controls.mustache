@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_interactivevideo/controls
+    @template mod_interactivevideo/player/controls
 
     TODO describe template controls
 
@@ -23,7 +23,7 @@
     {
     }
 }}
-<div class="mt-0 mt-md-2 bg-dark {{#displayoptions.hidemainvideocontrols}}d-none{{/displayoptions.hidemainvideocontrols}}{{^displayoptions.hidemainvideocontrols}}d-flex{{/displayoptions.hidemainvideocontrols}} flex-column p-0 justify-content-center opacity-1 {{#displayoptions.alignindicator}}align-indicator{{/displayoptions.alignindicator}}" dir="ltr"
+<div class="mt-0 mt-md-2 bg-dark {{#displayoptions.hidemainvideocontrols}}d-none{{/displayoptions.hidemainvideocontrols}}{{^displayoptions.hidemainvideocontrols}}d-flex{{/displayoptions.hidemainvideocontrols}} flex-column p-0 justify-content-center opacity-1 {{#displayoptions.alignindicator}}align-indicator{{/displayoptions.alignindicator}} {{^displayoptions.distractionfreemode}}mb-2{{/displayoptions.distractionfreemode}}" dir="ltr"
      id="controller">
     <div id="taskinfo" dir="ltr"
          class="border-0 flex-column align-items-center justify-content-end px-3 bg-transparent">
@@ -88,8 +88,8 @@
               data{{bs}}-trigger="hover"
               data{{bs}}-title="{{#str}}mutetooltip,mod_interactivevideo{{/str}}"><i class="bi bi-volume-up"></i></span>
         {{> mod_interactivevideo/captionmenu }}
-        {{> mod_interactivevideo/speedmenu }}
-        {{> mod_interactivevideo/qualitymenu }}
+        {{> mod_interactivevideo/player/speedmenu }}
+        {{> mod_interactivevideo/player/qualitymenu }}
         <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 {{^displayoptions.share}}d-none{{/displayoptions.share}}"
               id="share"
               data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
