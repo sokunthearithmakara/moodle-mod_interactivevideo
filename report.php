@@ -181,7 +181,7 @@ if (
     } else {
         $returnurl = new moodle_url('/course/view.php', [
             'id' => $course->id,
-            'section' => $cm->section,
+            'section' => $cm->sectionnum,
         ]);
     }
 } else {

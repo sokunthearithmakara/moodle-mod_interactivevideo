@@ -333,7 +333,7 @@ if ($iframe || $embed) {
 }
 if ($rendernav) {
     $courseindex = isset($moduleinstance->displayoptions['courseindex']) && $moduleinstance->displayoptions['courseindex'] ?
-     core_course_drawer() : '';
+        core_course_drawer() : '';
     // Understanding the course format: singlepage or multiplepages.
     $format = course_get_format($course);
     if (
@@ -347,7 +347,7 @@ if ($rendernav) {
         } else {
             $returnurl = new moodle_url('/course/view.php', [
                 'id' => $course->id,
-                'section' => $cm->section,
+                'section' => $cm->sectionnum,
             ]);
         }
     } else {
