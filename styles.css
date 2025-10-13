@@ -492,11 +492,11 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo.darkmode #user-action-menu {
-    color: #fff;
-    background-color: var(--ivdarker);
+    filter: invert(1);
+    border: 0;
 }
 
-.path-mod-interactivevideo.darkmode #user-action-menu .dropdown-item {
+.path-mod-interactivevideo.darkmode .usertext {
     color: #fff;
 }
 
