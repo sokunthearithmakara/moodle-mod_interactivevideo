@@ -179,9 +179,10 @@ if (
             'id' => $cm->section,
         ]);
     } else {
+        $modinfo = get_fast_modinfo($course);
         $returnurl = new moodle_url('/course/view.php', [
             'id' => $course->id,
-            'section' => $cm->sectionnum,
+            'section' => $modinfo->get_cm($cm->id)->sectionnum,
         ]);
     }
 } else {
@@ -189,7 +190,7 @@ if (
 }
 
 $courseindex = isset($moduleinstance->displayoptions['courseindex']) && $moduleinstance->displayoptions['courseindex']
- ? core_course_drawer() : '';
+    ? core_course_drawer() : '';
 $hascourseindex = !empty($courseindex);
 $datafortemplate = [
     "cmid" => $cm->id,
