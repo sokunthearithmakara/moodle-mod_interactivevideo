@@ -265,12 +265,14 @@ class interactivevideo_util {
         }
 
         // Update grade.
-        if ($grade > 0) {
+        if ($gradeiteminstance > 0) {
             require_once($CFG->libdir . '/gradelib.php');
             $gradeitem = new stdClass();
             $gradeitem->userid = $userid;
             $gradeitem->rawgrade = $grade;
-
+            if ($grade <= 0) {
+                $gradeitem->rawgrade = null;
+            }
             grade_update('mod/interactivevideo', $courseid, 'mod', 'interactivevideo', $gradeiteminstance, 0, $gradeitem);
 
             $record->grade = $grade;
