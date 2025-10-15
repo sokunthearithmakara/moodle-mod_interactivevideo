@@ -1358,7 +1358,7 @@ define([
 
                 // Autohide controls if $videowrapper is not hovered after 5 seconds.
                 if (displayoptions.autohidecontrols == 1
-                    && !$body.hasClass('embed-mode' && !$body.hasClass('mobileapp') && !$body.hasClass('iframe'))) {
+                    && !$body.hasClass('embed-mode') && !$body.hasClass('mobileapp') && !$body.hasClass('iframe')) {
                     setTimeout(function() {
                         if (!$videowrapper.is(':hover')) {
                             $controller.addClass('fadeOut');
@@ -1787,7 +1787,7 @@ define([
 
             // Autohide controls when mouse leaves #video-wrapper after 5 seconds.
             if (displayoptions.autohidecontrols == 1
-                && !$body.hasClass('embed-mode' && !$body.hasClass('mobileapp') && !$body.hasClass('iframe'))) {
+                && !$body.hasClass('embed-mode') && !$body.hasClass('mobileapp') && !$body.hasClass('iframe')) {
                 $videowrapper.on('mouseleave', function() {
                     setTimeout(function() {
                         // Check if the mouse is still over #video-wrapper.
@@ -2031,9 +2031,7 @@ define([
 
             $(`[data${bsAffix}-toggle="tooltip"]`).on('click', function() {
                 const $this = $(this);
-                setTimeout(function() {
-                    $this.tooltip('hide');
-                }, 2000); // Hide after 3 seconds
+                $this.tooltip('hide');
             });
 
             window.addEventListener('beforeunload', function() {
