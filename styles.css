@@ -4053,3 +4053,9 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 #page-mod-interactivevideo-report .dt-buttons .btn-group {
     position: relative;
 }
+
+.path-course-view button.description-toggle {
+    border-radius: 50%;
+    background-color: var(--ivprimaryalt);
+    font-size: small;
+}

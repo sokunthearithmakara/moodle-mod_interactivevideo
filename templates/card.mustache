@@ -83,7 +83,7 @@ Example context (json):
             {{#showname}}
             {{#cm.uservisible}}
             <a href="{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}"
-               class="clamp-2 text-dark h5 text-decoration-none mb-1 title-link"
+               class="clamp-2 text-dark h5 text-decoration-none mb-1 title-link flex-grow-1"
                data-id="{{cm.id}}"
                data-contextid="{{cm.context.id}}"
                data-instance="{{cm.instance}}"
@@ -112,7 +112,7 @@ Example context (json):
             {{#formattedintro}}
             {{^usecustomdesc}}
             <button class="description-toggle btn btn-link p-0 m-0" aria-expanded="false" aria-controls="description-{{cm.id}}">
-                <i class="fa fa-chevron-right description-show iv-ml-auto iv-mr-1 mb-0"></i>
+                <i class="fa fa-chevron-right description-show mx-2 mb-0"></i>
                 <span class="visually-hidden">Show description</span>
             </button>
             {{/usecustomdesc}}
@@ -122,7 +122,7 @@ Example context (json):
 
         {{#showdescription}}
         {{#formattedintro}}
-        <div id="description-{{cm.id}}" class="description {{^showname}}mt-0{{/showname}} {{#showname}}mt-2{{/showname}}" {{^usecustomdesc}}hidden{{/usecustomdesc}}>
+        <div id="description-{{cm.id}}" class="description {{^showname}}mt-0{{/showname}} {{#showname}}mt-2{{/showname}}" {{^usecustomdesc}}style="display:none;"{{/usecustomdesc}}>
             {{{formattedintro}}}
         </div>
         {{/formattedintro}}
