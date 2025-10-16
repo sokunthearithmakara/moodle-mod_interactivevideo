@@ -26,17 +26,37 @@ Example context (json):
          data-title="{{formattedname}}"
          data-contextid="{{cm.context.id}}"
          data-instance="{{cm.instance}}"
-         data-courseid="{{cm.course}}">
+         data-courseid="{{cm.course}}"
+         role="region"
+         aria-labelledby="iv-title-{{cm.instance}}"
+         aria-describedby="iv-desc-{{cm.instance}}">
+
         {{^cardonly}}
+            <div id="iv-title-{{cm.instance}}" class="visually-hidden">
+                {{formattedname}}
+            </div>
+            {{#showdescription}}{{#formattedintro}}
+                <div id="iv-desc-{{cm.instance}}" class="visually-hidden">
+                    {{{formattedintro}}}
+                </div>
+            {{/formattedintro}}{{/showdescription}}
             {{> mod_interactivevideo/card}}
         {{/cardonly}}
+
         {{#cardonly}}
+            <div id="iv-title-{{cm.instance}}" class="visually-hidden">
+                {{formattedname}}
+            </div>
             {{> mod_interactivevideo/cardonly}}
         {{/cardonly}}
+    </div>
+
+    {{^displayoptions.sectionname}}
+        {{#afterlink}}
+            <div class="afterlink" role="note">
+                {{{afterlink}}}
+            </div>
+        {{/afterlink}}
+    {{/displayoptions.sectionname}}
 </div>
-{{^displayoptions.sectionname}}
-    {{#afterlink}}
-    {{{afterlink}}}
-    {{/afterlink}}
-{{/displayoptions.sectionname}}
-</div>
+

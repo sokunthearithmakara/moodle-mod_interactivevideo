@@ -24,89 +24,141 @@
     }
 }}
 <div class="mt-0 mt-md-2 bg-dark {{#displayoptions.hidemainvideocontrols}}d-none{{/displayoptions.hidemainvideocontrols}}{{^displayoptions.hidemainvideocontrols}}d-flex{{/displayoptions.hidemainvideocontrols}} flex-column p-0 justify-content-center opacity-1 {{#displayoptions.alignindicator}}align-indicator{{/displayoptions.alignindicator}} {{^displayoptions.distractionfreemode}}mb-2{{/displayoptions.distractionfreemode}}" dir="ltr"
-     id="controller">
+     id="controller" role="group" aria-label="{{#str}}videocontrols, mod_interactivevideo{{/str}}">
+
     <div id="taskinfo" dir="ltr"
          class="border-0 flex-column align-items-center justify-content-end px-3 bg-transparent">
         <div class="align-items-start position-relative w-100 {{#displayoptions.hideinteractions}}d-none{{/displayoptions.hideinteractions}}"
-             id="interactions-nav">
-            <ul>
-            </ul>
+             id="interactions-nav" aria-label="{{#str}}interactions, mod_interactivevideo{{/str}}">
+            <ul></ul>
         </div>
+
         <div class="flex-column align-items-center position-relative w-100"
              id="video-nav"
-             {{^displayoptions.progressbar}}style="visibility: hidden;"{{/displayoptions.progressbar}}>
-            <ul>
-            </ul>
+             {{^displayoptions.progressbar}}style="visibility: hidden;" aria-hidden="true"{{/displayoptions.progressbar}}>
+            <ul></ul>
             <div class="w-100 d-flex align-items-center" dir="ltr">
-                <div id="progress" class="bg-danger"></div>
-                <div id="seek" class="w-100 position-absolute iv-rounded"></div>
-                <div id="seekhead" class="position-absolute iv-rounded-circle bg-danger"></div>
+                <div id="progress" class="bg-danger" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="{{#str}}videoprogress, mod_interactivevideo{{/str}}"></div>
+                <div id="seek" class="w-100 position-absolute iv-rounded" aria-hidden="true"></div>
+                <div id="seekhead" class="position-absolute iv-rounded-circle bg-danger" aria-hidden="true"></div>
             </div>
         </div>
     </div>
-    <div class="w-100 px-2 d-flex align-items-center justify-content-between pb-2"
-         style="height: 30px">
-        <div class="d-flex align-items-center">
-            <span data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+
+    <div class="w-100 px-2 d-flex align-items-center justify-content-between pb-2" style="height: 30px">
+        <div class="d-flex align-items-center" role="group" aria-label="{{#str}}playbackcontrols, mod_interactivevideo{{/str}}">
+
+            <button id="playpause"
+                data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
                   data{{bs}}-trigger="hover"
                   role="button"
                   data{{bs}}-title="{{#str}}playtooltip, mod_interactivevideo{{/str}}"
-                  id="playpause"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-0">
-                <i class="bi bi-play-fill fs-25px"></i>
-            </span>
-            <span data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+                    type="button"
+                    class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-0"
+                    aria-label="{{#str}}playpause, mod_interactivevideo{{/str}}"
+                    title="{{#str}}playtooltip, mod_interactivevideo{{/str}}">
+                <i class="bi bi-play-fill fs-25px" aria-hidden="true"></i>
+            </button>
+
+            <button id="rewindbutton"
+                data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
                   data{{bs}}-trigger="hover"
                   data{{bs}}-title="{{#str}}rewindtooltip, mod_interactivevideo{{/str}}"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.rewind}}d-none{{/displayoptions.rewind}}"
-                  id="rewindbutton"><i class="fa fa-history"></i></span>
-            <span data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+                    type="button"
+                    class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.rewind}}d-none{{/displayoptions.rewind}}"
+                    aria-label="{{#str}}rewind, mod_interactivevideo{{/str}}"
+                    title="{{#str}}rewindtooltip, mod_interactivevideo{{/str}}">
+                <i class="fa fa-history" aria-hidden="true"></i>
+            </button>
+
+            <button id="forwardbutton"
+                data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
                   data{{bs}}-trigger="hover"
                   data{{bs}}-title="{{#str}}forwardtooltip, mod_interactivevideo{{/str}}"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.forward}}d-none{{/displayoptions.forward}}"
-                  id="forwardbutton"><i class="fa fa-history fa-flip-horizontal"></i></span>
+                    type="button"
+                    class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.forward}}d-none{{/displayoptions.forward}}"
+                    aria-label="{{#str}}forward, mod_interactivevideo{{/str}}"
+                    title="{{#str}}forwardtooltip, mod_interactivevideo{{/str}}">
+                <i class="fa fa-history fa-flip-horizontal" aria-hidden="true"></i>
+            </button>
+
             {{^displayoptions.disablechapternavigation}}
             <div id="chaptertoggle" class="mx-1">
-                <span data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+                <button id="chapterbutton"
+                    data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
                       data{{bs}}-trigger="hover"
                       data{{bs}}-title="{{#str}}togglechapter, mod_interactivevideo{{/str}}"
-                      class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1"
-                      id="chapterbutton"><i class="bi bi-collection"></i></span>
+                        type="button"
+                        class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1"
+                        aria-label="{{#str}}togglechapter, mod_interactivevideo{{/str}}"
+                        title="{{#str}}togglechapter, mod_interactivevideo{{/str}}">
+                    <i class="bi bi-collection" aria-hidden="true"></i>
+                </button>
             </div>
             {{/displayoptions.disablechapternavigation}}
-        {{#displayoptions.timestamp}}
-        <span class="text-white mx-1 d-none d-md-inline" id="currenttime">00:00</span><span class="d-none d-md-inline text-white mx-1">/</span>
-        <span class="text-white mx-1 d-none d-md-inline" id="duration">--:--</span>
-        <span class="text-white d-md-none d-inline mx-1 " id="remainingtime">--:--</span>
-        {{/displayoptions.timestamp}}
-        <span class="text-secondary mx-1 d-none {{#displayoptions.chaptertitle}}d-md-inline{{/displayoptions.chaptertitle}}" id="chaptertitle"></span>
+
+            {{#displayoptions.timestamp}}
+            <span class="text-white mx-1 d-none d-md-inline" id="currenttime" aria-label="{{#str}}currenttime, mod_interactivevideo{{/str}}">00:00</span>
+            <span class="d-none d-md-inline text-white mx-1" aria-hidden="true">/</span>
+            <span class="text-white mx-1 d-none d-md-inline" id="duration" aria-label="{{#str}}duration, mod_interactivevideo{{/str}}">--:--</span>
+            <span class="text-white d-md-none d-inline mx-1" id="remainingtime" aria-label="{{#str}}remainingtime, mod_interactivevideo{{/str}}">--:--</span>
+            {{/displayoptions.timestamp}}
+
+            <span class="text-secondary mx-1 d-none {{#displayoptions.chaptertitle}}d-md-inline{{/displayoptions.chaptertitle}}"
+                  id="chaptertitle"
+                  aria-live="polite"></span>
+        </div>
+
+        <div class="d-flex align-items-center" role="group" aria-label="{{#str}}audiovideooptions, mod_interactivevideo{{/str}}">
+            <button id="mute"
+                    type="button"
+                    class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.mute}}d-none{{/displayoptions.mute}}"
+                    data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+                    data{{bs}}-trigger="hover"
+                    data{{bs}}-title="{{#str}}mutetooltip,mod_interactivevideo{{/str}}"
+                    aria-label="{{#str}}mutetooltip, mod_interactivevideo{{/str}}"
+                    title="{{#str}}mutetooltip, mod_interactivevideo{{/str}}">
+                <i class="bi bi-volume-up" aria-hidden="true"></i>
+            </button>
+
+            {{> mod_interactivevideo/captionmenu }}
+            {{> mod_interactivevideo/player/speedmenu }}
+            {{> mod_interactivevideo/player/qualitymenu }}
+
+            <button id="share"
+                    data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+                    data{{bs}}-trigger="hover"
+                    data{{bs}}-title="{{#str}}sharethismoment,mod_interactivevideo{{/str}}"
+                    type="button"
+                    class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 {{^displayoptions.share}}d-none{{/displayoptions.share}}"
+                    aria-label="{{#str}}sharethismoment, mod_interactivevideo{{/str}}"
+                    title="{{#str}}sharethismoment, mod_interactivevideo{{/str}}">
+                <i class="bi bi-share" aria-hidden="true"></i>
+            </button>
+
+            {{#displayoptions.expand}}
+            <button id="expand"
+                    type="button"
+                    class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 rotate d-none"
+                    aria-label="{{#str}}resize, mod_interactivevideo{{/str}}"
+                    data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+              data{{bs}}-trigger="hover"
+              data{{bs}}-title="{{#str}}resize,mod_interactivevideo{{/str}}"
+                    title="{{#str}}resize, mod_interactivevideo{{/str}}">
+                <i class="bi bi-file" aria-hidden="true"></i>
+            </button>
+            {{/displayoptions.expand}}
+
+            <button id="fullscreen"
+            data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+              data{{bs}}-trigger="hover"
+              data{{bs}}-title="{{#str}}togglefullscreen,mod_interactivevideo{{/str}}"
+                    type="button"
+                    class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 {{^displayoptions.fullscreen}}d-none{{/displayoptions.fullscreen}}"
+                    aria-label="{{#str}}togglefullscreen, mod_interactivevideo{{/str}}"
+                    title="{{#str}}togglefullscreen, mod_interactivevideo{{/str}}">
+                <i class="bi bi-fullscreen" aria-hidden="true"></i>
+            </button>
+        </div>
     </div>
-    <div class="d-flex align-items-center">
-        <span id="mute"
-              class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.mute}}d-none{{/displayoptions.mute}}"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}mutetooltip,mod_interactivevideo{{/str}}"><i class="bi bi-volume-up"></i></span>
-        {{> mod_interactivevideo/captionmenu }}
-        {{> mod_interactivevideo/player/speedmenu }}
-        {{> mod_interactivevideo/player/qualitymenu }}
-        <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 {{^displayoptions.share}}d-none{{/displayoptions.share}}"
-              id="share"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}sharethismoment,mod_interactivevideo{{/str}}"><i class="bi bi-share"></i></span>
-        {{#displayoptions.expand}}
-        <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 rotate d-none"
-              id="expand"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}resize,mod_interactivevideo{{/str}}"><i class="bi bi-file"></i></span>
-              {{/displayoptions.expand}}
-        <span class="btn border-0 btn-sm btn-control text-white py-0 px-1 mx-1 {{^displayoptions.fullscreen}}d-none{{/displayoptions.fullscreen}}"
-              id="fullscreen"
-              data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-              data{{bs}}-trigger="hover"
-              data{{bs}}-title="{{#str}}togglefullscreen,mod_interactivevideo{{/str}}"><i class="bi bi-fullscreen"></i></span>
-    </div>
-</div>
 </div>

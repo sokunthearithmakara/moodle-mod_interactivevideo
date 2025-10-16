@@ -25,26 +25,57 @@
 }}
 
 <div id="end-screen"
-     class="w-100 position-absolute h-100 {{#hasendscreentext}}bg-light{{/hasendscreentext}}{{^hasendscreentext}}{{^darkmode}}bg-light{{/darkmode}}{{#darkmode}}bg-black{{/darkmode}}{{/hasendscreentext}} d-none bottom-0">
-    <div class="end-content {{#hasendscreentext}}hascontent w-100 p-0 align-items-start{{/hasendscreentext}} position-relative">
-    {{#hasendscreentext}}
-        <div id="title-section"
-             class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky">
+     class="w-100 position-absolute h-100 
+            {{#hasendscreentext}}bg-light{{/hasendscreentext}}
+            {{^hasendscreentext}}
+                {{^darkmode}}bg-light{{/darkmode}}
+                {{#darkmode}}bg-black{{/darkmode}}
+            {{/hasendscreentext}} 
+            d-none bottom-0"
+     role="region"
+     aria-label="{{#str}}endscreen, mod_interactivevideo{{/str}}"
+     tabindex="-1">
+
+    <div class="end-content 
+                {{#hasendscreentext}}hascontent w-100 p-0 align-items-start{{/hasendscreentext}} 
+                position-relative">
+
+        {{#hasendscreentext}}
+        <header id="title-section"
+                class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky"
+                role="banner">
             <div class="d-flex flex-column justify-content-center">
-                <div class="metadata d-block d-md-none"></div>
-                <span class="h1 line-height-100 mb-0 title">{{{title}}}</span>
+                <div class="metadata d-block d-md-none" aria-hidden="true"></div>
+                <h1 class="h1 line-height-100 mb-0 title" id="end-title">{{{title}}}</h1>
             </div>
+
             <button class="btn btn-flex btn-danger iv-rounded-circle pulse position-sticky"
-                    id="restart">
-                <i class="bi bi-arrow-repeat"></i>
+                    id="restart"
+                    type="button"
+                    aria-label="{{#str}}restart, mod_interactivevideo{{/str}}"
+                    title="{{#str}}restart, mod_interactivevideo{{/str}}">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                <span class="visually-hidden">{{#str}}restart, mod_interactivevideo{{/str}}</span>
+            </button>
+        </header>
+
+        <div class="p-2 p-md-3" role="document" aria-describedby="end-title">
+            {{{endscreentext}}}
+        </div>
+        {{/hasendscreentext}}
+
+        {{^hasendscreentext}}
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <button class="btn btn-flex btn-danger iv-rounded-circle pulse"
+                    id="restart"
+                    type="button"
+                    aria-label="{{#str}}restart, mod_interactivevideo{{/str}}"
+                    title="{{#str}}restart, mod_interactivevideo{{/str}}">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                <span class="visually-hidden">{{#str}}restart, mod_interactivevideo{{/str}}</span>
             </button>
         </div>
-        <div class="p-2 p-md-3">{{{endscreentext}}}</div>
-    {{/hasendscreentext}}
-    {{^hasendscreentext}}
-    <button class="btn btn-flex btn-danger iv-rounded-circle pulse" id="restart">
-        <i class="bi bi-arrow-repeat"></i>
-    </button>
-    {{/hasendscreentext}}
-</div>
+        {{/hasendscreentext}}
+
+    </div>
 </div>

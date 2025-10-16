@@ -238,11 +238,6 @@ export default class Chapter extends Base {
             self.player.seek(starttime);
 
             self.player.play();
-
-            // Replace the progress bar.
-            const percentage = (starttime - self.start) / self.totaltime * 100;
-            $('#video-nav #progress').replaceWith(`<div id="progress"
-             style="width: ${percentage > 100 ? 100 : percentage}%;"></div>`);
             // If the .chapter is in the left container, hide it.
             if ($(this).closest('#chapter-container-left').length > 0) {
                 $('#chaptertoggle .btn').trigger('click');

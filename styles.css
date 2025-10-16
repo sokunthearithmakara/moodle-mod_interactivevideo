@@ -336,6 +336,14 @@
     padding-inline-end: 15px;
 }
 
+[dir="ltr"] .path-mod-interactivevideo .dir-ltr-hide {
+    display: none !important;
+}
+
+[dir="rtl"] .path-mod-interactivevideo .dir-rtl-hide {
+    display: none !important;
+}
+
 .path-mod-interactivevideo.bs-5 .alert-success {
     color: var(--bs-success-text-emphasis);
     background: var(--bs-success-bg-subtle);
@@ -1055,6 +1063,7 @@ html:has(.path-mod-interactivevideo) {
     margin: 0 2px;
     position: relative;
     left: unset !important;
+    right: unset !important;
 }
 
 .path-mod-interactivevideo #video-nav li .item,
@@ -1886,12 +1895,6 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo.default-mode .chapter-open #chapter-container-left #closechapter,
 .path-mod-interactivevideo.embed-mode .chapter-open #chapter-container-left #closechapter {
     position: absolute;
-}
-
-.path-mod-interactivevideo #chaptertoggle button {
-    height: 30px;
-    width: 30px;
-    background: var(--ivinfo);
 }
 
 .path-mod-interactivevideo.no-original-controls video::-webkit-media-controls-panel,

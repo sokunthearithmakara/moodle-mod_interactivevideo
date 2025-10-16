@@ -24,12 +24,12 @@
     }
 }}
 
-<div id="annotation-canvas" class="d-none w-0">
+<div id="annotation-canvas" class="d-none w-0" role="region" aria-label="{{#str}}canvas, mod_interactivevideo{{/str}}">
     {{#html5}}
     <video id="player">
     </video>
     {{/html5}}
     {{^html5}}
-    <div id="player" class="p-0"></div>
+    <div id="player" class="p-0" role="application" aria-label="{{#str}}player, mod_interactivevideo{{/str}}"></div>
     {{/html5}}
 </div>

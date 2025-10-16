@@ -25,54 +25,82 @@
 }}
 
 {{#displayasstartscreen}}
-        <div id="start-screen"
-             class="w-100 position-absolute h-100 bg-white bottom-0">
-            <div class="intro-content {{#hasintro}}hasintro{{/hasintro}} bg-light w-100 p-0 align-items-start">
-                <div id="title-section"
-                     class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky">
-                    <div class="d-flex flex-column justify-content-center" style="max-width: calc(100% - 3rem);">
-                        <div class="metadata d-block d-md-none"></div>
-                        <h2 class="line-height-100 mb-0 title">{{{title}}}</h2>
-                    </div>
-                    <div id="spinner"
-                         class="spinner-border text-danger"
-                         style="width: 3rem;
-                                height: 3rem"
-                         role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                    <button id="play"
-                            class="btn btn-flex iv-rounded-circle d-none pulse bg-white position-sticky">
-                        <i class="bi bi-play-circle-fill text-danger"></i>
-                    </button>
-                </div>
-                {{#hasintro}}
-                <div class="p-2 p-md-3">{{{intro}}}</div>
-            {{/hasintro}}
+<div id="start-screen"
+     class="w-100 position-absolute h-100 bg-white bottom-0"
+     role="region"
+     aria-label="{{#str}}startscreen, mod_interactivevideo{{/str}}">
+    <div class="intro-content {{#hasintro}}hasintro{{/hasintro}} bg-light w-100 p-0 align-items-start">
+        <div id="title-section"
+             class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky"
+             role="banner">
+            <div class="d-flex flex-column justify-content-center" style="max-width: calc(100% - 3rem);">
+                <div class="metadata d-block d-md-none" aria-live="polite"></div>
+                <h2 class="line-height-100 mb-0 title">{{{title}}}</h2>
+            </div>
+
+            <div id="spinner"
+                 class="spinner-border text-danger"
+                 style="width: 3rem; height: 3rem;"
+                 role="status"
+                 aria-live="polite"
+                 aria-label="{{#str}}loading, core{{/str}}">
+                <span class="visually-hidden">{{#str}}loading, core{{/str}}</span>
+            </div>
+
+            <button id="play"
+                    class="btn btn-flex iv-rounded-circle d-none pulse bg-white position-sticky"
+                    type="button"
+                    aria-label="{{#str}}playvideo, mod_interactivevideo{{/str}}">
+                <i class="bi bi-play-circle-fill text-danger" aria-hidden="true"></i>
+                <span class="visually-hidden">{{#str}}playvideo, mod_interactivevideo{{/str}}</span>
+            </button>
         </div>
+
+        {{#hasintro}}
+        <div class="p-2 p-md-3" id="intro-text" role="document">
+            {{{intro}}}
+        </div>
+        {{/hasintro}}
     </div>
+</div>
 {{/displayasstartscreen}}
+
 {{^displayasstartscreen}}
-<div id="start-screen" class="w-100 position-absolute h-100 bottom-0 {{#square}}square{{/square}}" {{#posterimage}}style="background: url({{{posterimage}}}) center center / cover no-repeat;"{{/posterimage}} data-poster="{{{posterimage}}}">
-    <div class="intro-content d-flex align-items-center justify-content-center position-absolute w-100"></div>
+<div id="start-screen"
+     class="w-100 position-absolute h-100 bottom-0 {{#square}}square{{/square}}"
+     role="region"
+     aria-label="{{#str}}startscreen, mod_interactivevideo{{/str}}"
+     {{#posterimage}}style="background: url({{{posterimage}}}) center center / cover no-repeat;"{{/posterimage}}
+     data-poster="{{{posterimage}}}">
+    <div class="intro-content d-flex align-items-center justify-content-center position-absolute w-100"
+         role="presentation"></div>
+
     <div id="video-info"
-         class="p-1 p-sm-3 text-white w-100 h-100 position-absolute align-items-start flex-column justify-content-between d-flex">
+         class="p-1 p-sm-3 text-white w-100 h-100 position-absolute align-items-start flex-column justify-content-between d-flex"
+         role="group"
+         aria-label="{{#str}}videoinformation, mod_interactivevideo{{/str}}">
         <div class="justify-content-between w-100 h-100 d-flex flex-column">
-            <div class="metadata d-block d-md-none text-shadow"></div>
-            <span class="h1 text-white iv-font-weight-bold line-height-100 m-1 m-sm-2 p-sm-2 p-1">{{{title}}}</span>
+            <div class="metadata d-block d-md-none text-shadow" aria-live="polite"></div>
+            <h1 class="h1 text-white iv-font-weight-bold line-height-100 m-1 m-sm-2 p-sm-2 p-1">
+                {{{title}}}
+            </h1>
         </div>
+
         <div id="spinner"
              class="spinner-border text-danger position-absolute"
              role="status"
-             style="width: 3rem;
-                    height: 3rem;
-                    left: calc(50% - 1.5rem);
-                    top: calc(50% - 1.5rem)">
-            <span class="sr-only">Loading...</span>
+             aria-live="polite"
+             aria-label="{{#str}}loading, core{{/str}}"
+             style="width: 3rem; height: 3rem; left: calc(50% - 1.5rem); top: calc(50% - 1.5rem);">
+            <span class="visually-hidden">{{#str}}loading, core{{/str}}</span>
         </div>
-        <button class="btn btn-flex bg-white iv-rounded-circle d-none position-absolute pulse"
-                id="play">
-            <i class="bi bi-play-circle-fill text-danger"></i>
+
+        <button id="play"
+                class="btn btn-flex bg-white iv-rounded-circle d-none position-absolute pulse"
+                type="button"
+                aria-label="{{#str}}playvideo, mod_interactivevideo{{/str}}">
+            <i class="bi bi-play-circle-fill text-danger" aria-hidden="true"></i>
+            <span class="visually-hidden">{{#str}}playvideo, mod_interactivevideo{{/str}}</span>
         </button>
     </div>
 </div>

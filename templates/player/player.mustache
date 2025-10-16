@@ -24,49 +24,83 @@ Example context (json):
 {{/useembedly}}
 <div id="interactivevideo-container"
      class="container-fluid {{#darkmode}}p-sm-3{{/darkmode}} {{^darkmode}}p-sm-3{{/darkmode}} alternative {{#displayoptions.distractionfreemode}}position-absolute{{/displayoptions.distractionfreemode}}"
-     data-complete="{{completed}}">
+     data-complete="{{completed}}"
+     role="main"
+     aria-label="{{#str}}interactivevideo, mod_interactivevideo{{/str}}">
+
     <div class="row justify-content-center mx-0">
         <div class="col-12 px-0">
-            <div id="wrapper" class="position-relative mx-auto">
+            <div id="wrapper"
+                 class="position-relative mx-auto"
+                 role="region"
+                 aria-label="{{#str}}videoplayer, mod_interactivevideo{{/str}}">
+
                 <div id="video-wrapper"
-                     class="d-flex align-items-center justify-content-center {{^darkmode}}border{{/darkmode}}">
-                    {{! start of toolbar}}
-                    <div id="toolbar" class="bg-transparent pt-5 position-fixed"></div>
-                    {{! end of toolbar }}
+                     class="d-flex align-items-center justify-content-center {{^darkmode}}border{{/darkmode}}"
+                     aria-live="off"
+                     aria-atomic="false">
+
+                    {{! Start of toolbar }}
+                    <div id="toolbar"
+                         class="bg-transparent pt-5 position-fixed"
+                         role="toolbar"
+                         aria-label="{{#str}}videotoolbar, mod_interactivevideo{{/str}}">
+                    </div>
+                    {{! End of toolbar }}
+
                     {{> mod_interactivevideo/backgroundloading}}
-                {{#displayoptions.hidemainvideocontrols}}
-                    <span class="rotatex-360 btn border-0 btn-sm btn-control iv-rounded-circle p-1"
-                          id="fullscreen"
-                          data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
-                          data{{bs}}-trigger="hover"
-                          data{{bs}}-title="{{#str}}togglefullscreen,mod_interactivevideo{{/str}}"><i class="bi bi-fullscreen"></i></span>
-                {{/displayoptions.hidemainvideocontrols}}
-                {{^displayoptions.disablechapternavigation}}
-                    {{> mod_interactivevideo/player/chapterpanel}}
-                {{/displayoptions.disablechapternavigation}}
-                {{^displayoptions.useoriginalvideocontrols}}
-                    <div class="video-block"></div>
-                {{/displayoptions.useoriginalvideocontrols}}
-                {{> mod_interactivevideo/player/startscreen}}
-                {{> mod_interactivevideo/player/endscreen}}
-                {{> mod_interactivevideo/player/annotationcanvas}}
-                {{#displayoptions.hidemainvideocontrols}}
-                <div id="lightprogress">
-                <div id="lightprogressbar"
-                    class="bg-danger position-absolute h-100"
-                    style="width: 0%"></div>
+
+                    {{#displayoptions.hidemainvideocontrols}}
+                    <button type="button"
+                            class="rotatex-360 btn border-0 btn-sm btn-control iv-rounded-circle p-1"
+                            id="fullscreen"
+                            aria-label="{{#str}}togglefullscreen, mod_interactivevideo{{/str}}"
+                            title="{{#str}}togglefullscreen, mod_interactivevideo{{/str}}"
+                            data{{bs}}-toggle="tooltip"
+                            data{{bs}}-container="#wrapper"
+                            data{{bs}}-trigger="hover">
+                        <i class="bi bi-fullscreen" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{#str}}togglefullscreen, mod_interactivevideo{{/str}}</span>
+                    </button>
+                    {{/displayoptions.hidemainvideocontrols}}
+
+                    {{^displayoptions.disablechapternavigation}}
+                        {{> mod_interactivevideo/player/chapterpanel}}
+                    {{/displayoptions.disablechapternavigation}}
+
+                    {{^displayoptions.useoriginalvideocontrols}}
+                        <div class="video-block" aria-hidden="true"></div>
+                    {{/displayoptions.useoriginalvideocontrols}}
+
+                    {{> mod_interactivevideo/player/startscreen}}
+                    {{> mod_interactivevideo/player/endscreen}}
+                    {{> mod_interactivevideo/player/annotationcanvas}}
+
+                    {{#displayoptions.hidemainvideocontrols}}
+                    <div id="lightprogress" role="progressbar"
+                         aria-label="{{#str}}videoprogress, mod_interactivevideo{{/str}}"
+                         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div id="lightprogressbar"
+                             class="bg-danger position-absolute h-100"
+                             style="width: 0%;"></div>
+                    </div>
+                    {{/displayoptions.hidemainvideocontrols}}
                 </div>
-                {{/displayoptions.hidemainvideocontrols}}
+
+                {{> mod_interactivevideo/player/controls}}
             </div>
-        {{> mod_interactivevideo/player/controls}}
+
+            {{! Content region for annotations, Q&A, etc. }}
+            <div id="annotation-content"
+                 class="position-relative overflow-hidden border-0 mx-auto"
+                 role="region"
+                 aria-label="{{#str}}annotationcontent, mod_interactivevideo{{/str}}"></div>
         </div>
-{{! Content }}
-<div id="annotation-content"
-     class="position-relative overflow-hidden border-0 mx-auto"></div>
+    </div>
 </div>
-</div>
-</div>
+
 {{> mod_interactivevideo/blocksettingshack }}
+
 {{#hascourseindex}}
 {{> mod_interactivevideo/courseindex}}
 {{/hascourseindex}}

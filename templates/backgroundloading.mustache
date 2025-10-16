@@ -25,14 +25,19 @@
 }}
 
 <div class="position-{{#position}}fixed{{/position}}{{^position}}absolute{{/position}} w-100 h-100 no-pointer {{^position}}bg-transparent{{/position}}"
-        id="background-loading"
-        {{^show}}style="display:none"{{/show}}{{#position}} style="background: rgba(0, 0, 0, 0.3);"{{/position}}>
+     id="background-loading"
+     {{^show}}style="display: none;"{{/show}}
+     {{#position}} style="background: rgba(0, 0, 0, 0.3);"{{/position}}
+     role="alert"
+     aria-live="assertive"
+     aria-label="Content is loading">
+
     <div class="d-flex h-100 align-items-center justify-content-center">
         <div class="spinner-border text-danger"
-                style="width: 3rem;
-                    height: 3rem"
-                role="status">
-            <span class="sr-only">Loading...</span>
+             style="width: 3rem; height: 3rem;"
+             role="status"
+             aria-hidden="true">
         </div>
+        <span class="visually-hidden">Loading, please wait...</span>
     </div>
 </div>

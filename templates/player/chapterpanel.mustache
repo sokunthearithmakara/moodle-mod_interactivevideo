@@ -25,18 +25,25 @@
 }}
 
 <div id="chapter-container-left"
-        class="d-none sticky-top position-fixed w-100">
+    class="d-none sticky-top position-fixed w-100"
+    role="complementary"
+    aria-label="{{#str}}chapters, mod_interactivevideo{{/str}}">
     <div data-region="chapterwrapper"
-            class="d-flex w-100 position-absolute h-100 flex-column shadow">
-        <div class="w-100 p-3 d-flex flex-column">
-            <button id="closechapter"
-                    class="btn btn-small iv-rounded-circle p-0 bg-secondary border-0">
-                <i class="fa fa-times"></i>
-            </button>
-            <div class="metadata"></div>
-            <span class="h4 mt-2 mb-0 text-truncate">{{{title}}}</span>
-        </div>
-        <ul data-region="chapterlists" class="list-group w-100 iv-rounded-0 m-0">
-        </ul>
+        class="d-flex w-100 position-absolute h-100 flex-column shadow">
+    <div class="w-100 p-3 d-flex flex-column">
+        <button id="closechapter"
+            class="btn btn-small iv-rounded-circle p-0 bg-secondary border-0"
+            aria-label="{{#str}}closechapterpanel, mod_interactivevideo{{/str}}">
+        <i class="fa fa-times" aria-hidden="true"></i>
+        <span class="sr-only">{{#str}}closechapterpanel, mod_interactivevideo{{/str}}</span>
+        </button>
+        <div class="metadata" role="region" aria-label="{{#str}}chaptermetadata, mod_interactivevideo{{/str}}"></div>
+        <span class="h4 mt-2 mb-0 text-truncate" role="heading" aria-level="2">{{{title}}}</span>
+    </div>
+    <ul data-region="chapterlists"
+        class="list-group w-100 iv-rounded-0 m-0"
+        role="list"
+        aria-label="{{#str}}chapterlist, mod_interactivevideo{{/str}}">
+    </ul>
     </div>
 </div>

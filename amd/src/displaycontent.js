@@ -191,6 +191,7 @@ const defaultDisplayContent = async function(annotation, player) {
     let toast;
     $(document).off('click', `#close-${annotation.id}`).on('click', `#close-${annotation.id}`, async function(e) {
         e.preventDefault();
+        $('.tooltip').remove();
         // Set active element to body.
         document.body.focus();
         const anno = window.IVANNO ? window.IVANNO.find(anno => anno.id == annotation.id) : null;
@@ -336,7 +337,7 @@ const defaultDisplayContent = async function(annotation, player) {
         return new Promise((resolve) => {
             $('#annotation-content').html(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
                  iv-rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}" tabindex="0">
-                 <div id='title' class='modal-header shadow-sm'>${messageTitle}</div>
+                 <div id='title' class='modal-header shadow-sm px-2'>${messageTitle}</div>
                 <div class="modal-body" id="content"></div></div>`);
             $('html, body, #page.drawers, .modal-body').animate({
                 scrollTop: $("#annotation-content").offset().top
@@ -347,6 +348,7 @@ const defaultDisplayContent = async function(annotation, player) {
     };
 
     const handleSideDisplay = (annotation, messageTitle) => {
+        const rtl = $body.hasClass('dir-rtl');
         $body.addClass('hassidebar');
         // Make sure all sidebar are hidden.
         $('#wrapper .iv-sidebar').addClass('hide');
@@ -359,7 +361,6 @@ const defaultDisplayContent = async function(annotation, player) {
                 </div>`);
             $sidebar = $('#annotation-sidebar');
             // Initialize resizable.
-            const rtl = $body.hasClass('dir-rtl');
             $sidebar.resizable({
                 handles: rtl ? 'e' : 'w',
                 minWidth: 475,
@@ -437,7 +438,7 @@ const defaultDisplayContent = async function(annotation, player) {
             if ($('#wrapper #toolbar #annotation-toggle').length == 0) {
                 $('#wrapper #toolbar')
                     .append(`<button id="annotation-toggle" class="btn btn-sm border-0">
-                    <i class="bi bi-chevron-left"></i></button>`);
+                    <i class="bi bi-chevron-${rtl ? 'right' : 'left'}"></i></button>`);
             }
         }
         // Show the sidebar.

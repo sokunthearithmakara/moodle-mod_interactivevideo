@@ -23,17 +23,31 @@
     {
     }
 }}
-<div class="d-none btn-group dropup" id="changequality" data-current="">
-            <span role="button"
-                  data{{bs}}-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.quality}}d-none{{/displayoptions.quality}}">
-                <i class="bi bi-gear"
-                   data{{bs}}-toggle="tooltip" data-bs-container="#wrapper"
+<div id="changequality"
+     class="dropup d-none"
+     data-current=""
+     role="group"
+     aria-label="{{#str}}videoquality, mod_interactivevideo{{/str}}">
+    <button type="button"
+            class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.quality}}d-none{{/displayoptions.quality}}"
+            id="qualityMenuButton"
+            data{{bs}}-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-controls="qualitieslist"
+            title="{{#str}}videoquality, mod_interactivevideo{{/str}}">
+        <i class="bi bi-gear"
+        data{{bs}}-toggle="tooltip" data-bs-container="#wrapper"
                    data{{bs}}-trigger="hover"
-                   data{{bs}}-title="{{#str}}videoquality,mod_interactivevideo{{/str}}"></i>
-            </span>
-            <div class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black text-white"
-                 id="qualitieslist"></div>
-        </div>
+                   data{{bs}}-title="{{#str}}videoquality,mod_interactivevideo{{/str}}"
+           aria-hidden="true"></i>
+        <span class="visually-hidden">{{#str}}changevideoquality, mod_interactivevideo{{/str}}</span>
+    </button>
+
+    <div id="qualitieslist"
+         class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black text-white"
+         role="menu"
+         aria-labelledby="qualityMenuButton">
+        <!-- Quality options populated dynamically -->
+    </div>
+</div>
