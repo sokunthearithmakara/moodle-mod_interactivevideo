@@ -524,6 +524,8 @@ class base_form extends \core_form\dynamic_form {
         return [
             'maxfiles' => EDITOR_UNLIMITED_FILES,
             'maxbytes' => 0,
+            'changeformat' => 1,
+            'noclean' => true,
             'trusttext' => false,
             'context' => $this->get_context_for_dynamic_submission(),
         ];

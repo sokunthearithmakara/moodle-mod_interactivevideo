@@ -87,6 +87,7 @@ class main {
         $options = new \stdClass();
         $options->para = false;
         $options->overflowdiv = true;
+        $options->noclean = true;
         $content = format_text($content, $format, $options);
         return $content;
     }
