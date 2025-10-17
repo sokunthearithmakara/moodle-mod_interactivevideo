@@ -427,10 +427,10 @@ define(['jquery', 'core/str', 'core/templates'], function($, str, Templates) {
                 window.open($(this).data('href'), '_blank');
             });
 
-            $(document).on('click', '.interactivevideo-card .description-show', function() {
+            $(document).on('click', '.interactivevideo-card .description-toggle', function() {
                 const $description = $(this).closest('.top-section').find('.description');
                 $description.slideToggle('fast', 'swing');
-                $(this).toggleClass('rotate');
+                $(this).find('.description-show').toggleClass('rotate');
             });
 
             // Get the #hash from the url and scroll to the element and hover it.

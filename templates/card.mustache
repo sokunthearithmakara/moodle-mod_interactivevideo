@@ -111,8 +111,9 @@ Example context (json):
             {{#showdescription}}
             {{#formattedintro}}
             {{^usecustomdesc}}
-            <button class="description-toggle btn btn-link p-0 m-0" aria-expanded="false" aria-controls="description-{{cm.id}}">
-                <i class="fa fa-chevron-right description-show mx-2 mb-0"></i>
+            <button class="description-toggle btn btn-link m-0" aria-expanded="false" aria-controls="description-{{cm.id}}">
+                <i class="dir-rtl-hide fa fa-chevron-right description-show mb-0"></i>
+                <i class="dir-ltr-hide fa fa-chevron-left description-show mb-0"></i>
                 <span class="visually-hidden sr-only">Show description</span>
             </button>
             {{/usecustomdesc}}
