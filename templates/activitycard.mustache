@@ -31,11 +31,11 @@ Example context (json):
          aria-labelledby="iv-title-{{cm.instance}}">
 
         {{^cardonly}}
-            <div id="iv-title-{{cm.instance}}" class="visually-hidden">
+            <div id="iv-title-{{cm.instance}}" class="visually-hidden sr-only">
                 {{formattedname}}
             </div>
             {{#showdescription}}{{#formattedintro}}
-                <div id="iv-desc-{{cm.instance}}" class="visually-hidden">
+                <div id="iv-desc-{{cm.instance}}" class="visually-hidden sr-only">
                     {{{formattedintro}}}
                 </div>
             {{/formattedintro}}{{/showdescription}}
@@ -43,7 +43,7 @@ Example context (json):
         {{/cardonly}}
 
         {{#cardonly}}
-            <div id="iv-title-{{cm.instance}}" class="visually-hidden">
+            <div id="iv-title-{{cm.instance}}" class="visually-hidden sr-only">
                 {{formattedname}}
             </div>
             {{> mod_interactivevideo/cardonly}}
