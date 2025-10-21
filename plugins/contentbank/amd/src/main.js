@@ -106,18 +106,21 @@ export default class ContentBank extends Base {
         $message.addClass('hascontentbank');
         $message.find('.modal-dialog').addClass('modal-xl');
         if (annotation.completiontracking !== 'view') {
-            let $completiontoggle = $message.find('#completiontoggle');
+            const tooltipAttr = self.isBS5 ? 'data-bs' : 'data';
             $message.find('#title .info').remove();
-            $completiontoggle.before(`<i class="bi bi-info-circle-fill iv-mr-2 info" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
-            data${self.isBS5 ? '-bs' : ''}-container="#message" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
-            title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}"></i>`);
+            $message.find('#completiontoggle').before(
+                `<i class="bi bi-info-circle-fill iv-mr-2 info"
+                    ${tooltipAttr}-toggle="tooltip"
+                    ${tooltipAttr}-container="#message"
+                    ${tooltipAttr}-trigger="hover"
+                    title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}">
+                </i>`
+            );
+
             if (!annotation.completed) {
-                setTimeout(function() {
-                    $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('show');
-                }, 1000);
-                setTimeout(function() {
-                    $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('hide');
-                }, 3000);
+                const tooltip = $message.find(`#title .info[${tooltipAttr}-toggle="tooltip"]`);
+                setTimeout(() => tooltip.tooltip('show'), 1000);
+                setTimeout(() => tooltip.tooltip('hide'), 3000);
             }
         }
         if (annotation.hascompletion == 1

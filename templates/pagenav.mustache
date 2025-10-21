@@ -31,16 +31,18 @@ Example context (json):
         </a>
 
         {{#hascourseindex}}
-        <span role="button"
+        <button role="button"
               class="rotatex-360 btn btn-sm iv-mr-2 border-0 p-0 iv-ml-2"
               data-toggler="drawers"
               data-action="toggle"
               data-target="theme_boost-drawers-courseindex"
               aria-label="{{#str}}opendrawerindex, core{{/str}}"
+              title="{{#str}}opendrawerindex, core{{/str}}"
               data{{bs}}-toggle="tooltip"
-              data{{bs}}-placement="bottom">
+              data{{bs}}-placement="bottom"
+              >
             <i class="bi bi-list-ul fs-25px {{#darkmode}}text-white{{/darkmode}}" aria-hidden="true"></i>
-        </span>
+        </button>
         {{/hascourseindex}}
 
         {{#manualcompletion}}

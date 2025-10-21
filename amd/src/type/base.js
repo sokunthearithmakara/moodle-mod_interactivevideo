@@ -925,17 +925,19 @@ class Base {
         }
         if ((annotation.completiontracking == 'view' || annotation.completiontracking == 'manual')
             && annotation.requiremintime > 0) {
+            const infoIcon = `<i class="bi bi-info-circle-fill iv-mr-2 info"
+                data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+                data${self.isBS5 ? '-bs' : ''}-container="#message"
+                title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`;
+
             let $completiontoggle = $message.find('#completiontoggle');
             $message.find('#title .info').remove();
-            $completiontoggle.before(`<i class="bi bi-info-circle-fill iv-mr-2 info" data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
-            data${self.isBS5 ? '-bs' : ''}-container="#message" data${self.isBS5 ? '-bs' : ''}-trigger="hover"
-            title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`);
-            setTimeout(function() {
-                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('show');
-            }, 1000);
-            setTimeout(function() {
-                $message.find(`[data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip('hide');
-            }, 3000);
+            $completiontoggle.before(infoIcon);
+
+            // Show and hide tooltip
+            const $tooltip = $message.find('#title .info');
+            setTimeout(() => $tooltip.tooltip('show'), 1000);
+            setTimeout(() => $tooltip.tooltip('hide'), 3000);
         }
     }
 

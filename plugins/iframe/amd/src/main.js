@@ -58,6 +58,19 @@ export default class Iframe extends Base {
                 success: function(data) {
                     const providers = data;
                     let url = $('[name="iframeurl"]').val();
+
+                    // Add support for Google Drive: https://{app}.google.com/{type}/d/{file_id}/{action}, if so, turn to embed url.
+                    let regex = /https:\/\/(.*).google.com\/(.*)\/d\/(.*)\/(.*)/;
+                    let match = regex.exec(url);
+                    if (match) {
+                        let action = match[4];
+                        if (!action.includes('viewform')) {
+                            url = url.replace(action, 'preview');
+                        }
+                        fallback(url);
+                        return;
+                    }
+
                     // Format the url to match the provider_url.
                     let providerUrl = url.split('/')[2];
                     const domain = providerUrl.split('.');

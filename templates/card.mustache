@@ -21,7 +21,7 @@ Example context (json):
 {{#showposterimage}}
 <div class="image-container position-relative {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
     <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}">
-        <img src="{{interactivevideo.posterimage}}" loading="lazy" alt="{{formattedname}}">
+        <img src="{{interactivevideo.posterimage}}" loading="lazy">
 
         {{#cm.uservisible}}
         <a href="{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}{{/launchinpopup}}{{#launchinpopup}}javascript:void(0){{/launchinpopup}}"
@@ -111,11 +111,13 @@ Example context (json):
             {{#showdescription}}
             {{#formattedintro}}
             {{^usecustomdesc}}
+            <div>
             <button class="description-toggle btn btn-link m-0" aria-expanded="false" aria-controls="description-{{cm.id}}">
                 <i class="dir-rtl-hide fa fa-chevron-right description-show mb-0"></i>
                 <i class="dir-ltr-hide fa fa-chevron-left description-show mb-0"></i>
                 <span class="visually-hidden sr-only">Show description</span>
             </button>
+            </div>
             {{/usecustomdesc}}
             {{/formattedintro}}
             {{/showdescription}}

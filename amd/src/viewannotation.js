@@ -1456,6 +1456,7 @@ define([
             $(document).on('click', '#message #refresh', function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
+                $(this).tooltip('hide');
                 const id = $(this).data('id');
                 const annotation = releventAnnotations.find(x => x.id == id);
                 $(this).closest('#message').remove();

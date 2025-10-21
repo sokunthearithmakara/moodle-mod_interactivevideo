@@ -24,13 +24,45 @@
     }
 }}
 
-<button id="completiontoggle" class="btn btn-flex text-truncate mark-{{#iscompleted}}undone btn-success{{/iscompleted}}{{^iscompleted}}done btn-secondary{{/iscompleted}} btn-sm border-0" data-id="{{id}}" title="{{#str}}togglecompletion, mod_interactivevideo{{/str}}" aria-label="{{#str}}togglecompletion, mod_interactivevideo{{/str}}" aria-pressed="{{#iscompleted}}true{{/iscompleted}}{{^iscompleted}}false{{/iscompleted}}" type="button">
-    <i class="bi bi-{{#iscompleted}}check2{{/iscompleted}}{{^iscompleted}}circle{{/iscompleted}}" aria-hidden="true"></i>
-    <span class="iv-ml-2 d-none d-sm-block">{{#iscompleted}}{{#str}}completionmarkincomplete,mod_interactivevideo{{/str}}{{/iscompleted}}{{^iscompleted}}{{#str}}completionmarkcomplete,mod_interactivevideo{{/str}}{{/iscompleted}}</span>
+<button
+    id="completiontoggle"
+    class="btn btn-flex text-truncate mark-{{#iscompleted}}undone btn-success{{/iscompleted}}{{^iscompleted}}done btn-secondary{{/iscompleted}} btn-sm border-0"
+    data-id="{{id}}"
+    title="{{#str}}togglecompletion, mod_interactivevideo{{/str}}"
+    aria-label="{{#str}}togglecompletion, mod_interactivevideo{{/str}}"
+    aria-pressed="{{#iscompleted}}true{{/iscompleted}}{{^iscompleted}}false{{/iscompleted}}"
+    type="button"
+>
+    <i
+        class="bi bi-{{#iscompleted}}check2{{/iscompleted}}{{^iscompleted}}circle{{/iscompleted}}"
+        aria-hidden="true"
+    ></i>
+    <span class="iv-ml-2 d-none d-sm-block">
+        {{#iscompleted}}
+            {{#str}}completionmarkincomplete, mod_interactivevideo{{/str}}
+        {{/iscompleted}}
+        {{^iscompleted}}
+            {{#str}}completionmarkcomplete, mod_interactivevideo{{/str}}
+        {{/iscompleted}}
+    </span>
 </button>
+
 {{#isPlayerMode}}
-<button class="btn btn-flex btn-secondary btn-sm iv-ml-2 rotatez-360 border-0 focus-visible:ring-2" type="button" data{{bs}}-toggle="tooltip"
-         data{{bs}}-container="#wrapper" data{{bs}}-trigger="hover" title="{{#str}}refresh, mod_interactivevideo{{/str}}" aria-label="{{#str}}refresh, mod_interactivevideo{{/str}}">
+    <button
+        id="refresh"
+        class="btn btn-flex btn-secondary btn-sm iv-ml-2 rotatez-360 border-0"
+        type="button"
+        data{{bs}}-toggle="tooltip"
+        data{{bs}}-container="#wrapper"
+        data{{bs}}-trigger="hover"
+        title="{{#str}}refresh, mod_interactivevideo{{/str}}"
+        aria-label="{{#str}}refresh, mod_interactivevideo{{/str}}"
+        data-id="{{id}}"
+    >
         <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-        <span class="sr-only">{{#str}}refresh, mod_interactivevideo{{/str}}</span></button>
+        <span class="sr-only">
+            {{#str}}refresh, mod_interactivevideo{{/str}}
+        </span>
+    </button>
 {{/isPlayerMode}}
+

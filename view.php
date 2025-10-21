@@ -190,8 +190,9 @@ if ($moduleinstance->displayoptions['darkmode'] && $moduleinstance->displayoptio
 }
 
 // Force theme.
-if (isset($moduleinstance->displayoptions['theme']) && $moduleinstance->displayoptions['theme'] != '') {
-    $PAGE->force_theme($moduleinstance->displayoptions['theme']);
+$ft = optional_param('forcetheme', null, PARAM_TEXT);
+if ((isset($moduleinstance->displayoptions['theme']) && $moduleinstance->displayoptions['theme'] != '') || $ft) {
+    $PAGE->force_theme($ft ?? $moduleinstance->displayoptions['theme']);
 }
 
 // Get completion information.

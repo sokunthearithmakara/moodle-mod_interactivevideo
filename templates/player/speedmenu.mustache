@@ -27,19 +27,20 @@
      class="dropup d-none"
      role="group"
      aria-label="{{#str}}changeplaybackspeed, mod_interactivevideo{{/str}}">
+    <div data{{bs}}-toggle="dropdown">
     <button type="button"
             class="btn border-0 btn-sm btn-control text-white bg-transparent py-0 px-1 mx-1 {{^displayoptions.playbackrate}}d-none{{/displayoptions.playbackrate}}"
             id="rateMenuButton"
-            data{{bs}}-toggle="dropdown"
             aria-haspopup="true"
             aria-expanded="false"
             aria-controls="ratelist"
-            title="{{#str}}changeplaybackspeed, mod_interactivevideo{{/str}}">
-        <i class="bi bi-speedometer2" aria-hidden="true" data{{bs}}-toggle="tooltip" data-bs-container="#wrapper"
-                   data{{bs}}-trigger="hover"
-                   data{{bs}}-title="{{#str}}changeplaybackspeed,mod_interactivevideo{{/str}}"></i>
+            data{{bs}}-title="{{#str}}changeplaybackspeed, mod_interactivevideo{{/str}}"
+            data{{bs}}-toggle="tooltip" data{{bs}}-container="#wrapper"
+            data{{bs}}-trigger="hover">
+        <i class="bi bi-speedometer2" aria-hidden="true"></i>
         <span class="visually-hidden sr-only">{{#str}}changeplaybackspeed, mod_interactivevideo{{/str}}</span>
     </button>
+    </div>
 
     <div id="ratelist"
          class="dropdown-menu dropdown-menu-{{#bs}}end{{/bs}}{{^bs}}right{{/bs}} bg-black"
