@@ -24,6 +24,7 @@
     }
 }}
 
+{{^refreshonly}}
 <button
     id="completiontoggle"
     class="btn btn-flex text-truncate mark-{{#iscompleted}}undone btn-success{{/iscompleted}}{{^iscompleted}}done btn-secondary{{/iscompleted}} btn-sm border-0"
@@ -46,6 +47,7 @@
         {{/iscompleted}}
     </span>
 </button>
+{{/refreshonly}}
 
 {{#isPlayerMode}}
     <button

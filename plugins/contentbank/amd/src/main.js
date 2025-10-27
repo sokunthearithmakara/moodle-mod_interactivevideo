@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 /* eslint-disable complexity */
 
 // This file is part of Moodle - http://moodle.org/
@@ -102,6 +101,7 @@ export default class ContentBank extends Base {
      *                               otherwise returns the callback function.
      */
     postContentRender(annotation, callback) {
+        let self = this;
         const $message = $(`#message[data-id='${annotation.id}']`);
         $message.addClass('hascontentbank');
         $message.find('.modal-dialog').addClass('modal-xl');
@@ -111,6 +111,7 @@ export default class ContentBank extends Base {
             $message.find('#completiontoggle').before(
                 `<i class="bi bi-info-circle-fill iv-mr-2 info"
                     ${tooltipAttr}-toggle="tooltip"
+                    ${tooltipAttr}-placement="auto"
                     ${tooltipAttr}-container="#message"
                     ${tooltipAttr}-trigger="hover"
                     title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}">
@@ -156,11 +157,11 @@ export default class ContentBank extends Base {
         const resizeObserver = new ResizeObserver(() => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-            const iframe = modalbody.querySelector('iframe.h5p-player');
-            if (iframe) {
-                const height = iframe.scrollHeight;
-                modalbody.style.height = `${height + 2000}px`;
-            }
+                const iframe = modalbody.querySelector('iframe.h5p-player');
+                if (iframe) {
+                    const height = iframe.scrollHeight;
+                    modalbody.style.height = `${height + 2000}px`;
+                }
             }, 100);
         });
 
@@ -225,7 +226,8 @@ export default class ContentBank extends Base {
                             requestAnimationFrame(detectH5P);
                             return;
                         }
-                        if (document.querySelector(`#message[data-id='${annoid}'] iframe`).contentWindow.H5PIntegration === undefined) {
+                        if (document.querySelector(`#message[data-id='${annoid}'] iframe`)
+                            .contentWindow.H5PIntegration === undefined) {
                             requestAnimationFrame(detectH5P);
                             return;
                         }
@@ -306,7 +308,8 @@ export default class ContentBank extends Base {
                      <span><i class="bi bi-list-check iv-mr-2"></i>
                      ${result.score.raw}/${result.score.max}</span></span>'>
                      <i class="${textclass}"></i><br><span>${Number(details.xp)}</span></span>`;
-                                        details.details = saveState == 1 ? window.H5PIntegration.contents[id].contentUserData[0].state : '';
+                                        details.details = saveState == 1 ? window.H5PIntegration.contents[id]
+                                            .contentUserData[0].state : '';
                                         // Must wait 1.5 seconds or so to let the saveState finish.
                                         // Otherwise, the completion will be incomplete.
                                         setTimeout(function() {
@@ -330,7 +333,7 @@ export default class ContentBank extends Base {
                                                 let textonfailed = await self.formatContent(condition.textonfailed.text);
                                                 $message.find('.passfail-message').remove();
                                                 $message.find(`#content`)
-                                                    .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
+                                                    .prepend(`<div class="alert bg-light mt-2 mx-3 passfail-message">
                                             ${textonfailed}</div>`);
                                                 notifyFilter($('.passfail-message'));
                                             }
@@ -348,7 +351,7 @@ export default class ContentBank extends Base {
                                                 let textonpassing = await self.formatContent(condition.textonpassing.text);
                                                 $message.find('.passfail-message').remove();
                                                 $message.find(`#content`)
-                                                    .prepend(`<div class="alert bg-secondary mt-2 mx-3 passfail-message">
+                                                    .prepend(`<div class="alert bg-light mt-2 mx-3 passfail-message">
                                             ${textonpassing}</div>`);
                                                 notifyFilter($('.passfail-message'));
                                             }
@@ -375,7 +378,7 @@ export default class ContentBank extends Base {
 
             $message.find(`.modal-body`).html(data).attr('id', 'content').fadeIn(300);
 
-            xAPICheck(annotation);
+            self.postContentRender(annotation, xAPICheck(annotation));
 
             if (existingstate !== null && existingstate !== undefined) {
                 return;
@@ -388,7 +391,7 @@ export default class ContentBank extends Base {
             // If annotation is incomplete, we want to save the state when the interaction is closed.
             if (!annotation.completed && firstview && saveState == 1) {
                 let namespace = annotation.id;
-                let eventName = `interactionclose.${namespace} interactionrefresh.${namespace}`; // Use a unique namespace for the event.
+                let eventName = `interactionclose.${namespace} interactionrefresh.${namespace}`; // Use a unique namespace.
                 $(document).off(eventName).on(eventName, async function(e) {
                     if (e.detail.annotation.id == annotation.id) {
                         try {

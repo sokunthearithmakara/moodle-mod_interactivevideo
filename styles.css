@@ -3100,13 +3100,11 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 
 .path-course-view .modtype_interactivevideo .description-container .fa.rotate {
     transform: rotate(90deg);
-    margin-inline-end: 3px;
 
 }
 
 .path-course-view.dir-rtl .modtype_interactivevideo .description-container .fa.rotate {
     transform: rotate(-90deg);
-    margin-inline-end: 3px;
 }
 
 .path-course-view .modtype_interactivevideo .interactivevideo-card .progress {

@@ -927,6 +927,8 @@ class Base {
             && annotation.requiremintime > 0) {
             const infoIcon = `<i class="bi bi-info-circle-fill iv-mr-2 info"
                 data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
+                data${self.isBS5 ? '-bs' : ''}-html="true"
+                data${self.isBS5 ? '-bs' : ''}-placement="auto"
                 data${self.isBS5 ? '-bs' : ''}-container="#message"
                 title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`;
 

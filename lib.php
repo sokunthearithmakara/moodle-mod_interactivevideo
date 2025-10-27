@@ -1173,7 +1173,7 @@ function interactivevideo_get_user_grades($moduleinstance, $userid = 0) {
 function interactivevideo_reset_userdata($data) {
     global $DB;
     $status = [];
-    $resetcompletion = $data->reset_completion;
+    $resetcompletion = isset($data->reset_completion) && $data->reset_completion;
     $courseid = $data->courseid;
 
     if ($resetcompletion) { // Reset completion and grade since they are related.

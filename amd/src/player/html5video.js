@@ -120,9 +120,9 @@ class Html5Video {
         playerids[node] = player;
         this.posterImage = player.poster;
         // Check if the url is for video or audio.
-        const video = ['fmp4', 'm4v', 'mov', 'mp4', 'ogv', 'webm', 'mkv', 'avi', 'flv', 'wmv', 'm3u8', 'mpd'];
+        const audio = ['mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac'];
         const ext = url.split('.').pop();
-        if (video.indexOf(ext) === -1) {
+        if (audio.find(e => ext.includes(e))) {
             // Change the player to an audio player.
             this.audio = true;
             // Append a canvas element to the video.

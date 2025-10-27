@@ -104,7 +104,7 @@ const defaultDisplayContent = async function(annotation, player) {
     let $body = $('body');
     const isBS5 = $body.hasClass('bs-5');
     const isPlayerMode = $body.attr('id') == 'page-mod-interactivevideo-view';
-    const isPreviewMode = annotation.previewMode;
+    const isPreviewMode = annotation.previewMode || false;
     const advanced = JSON.parse(annotation.advanced);
     const isDarkMode = $body.hasClass('darkmode');
 
@@ -162,13 +162,13 @@ const defaultDisplayContent = async function(annotation, player) {
         ${annotation.completed ? earned : Number(annotation.xp)} XP</span>`;
     }
     // Display the completion button conditionally.
-    if (annotation.hascompletion == 1) {
-        completionbutton += await Templates.render('mod_interactivevideo/player/completionbutton', {
-            id: annotation.id,
-            iscompleted: annotation.completed,
-            isPlayerMode: isPlayerMode && !isPreviewMode,
-        });
-    }
+
+    completionbutton += await Templates.render('mod_interactivevideo/player/completionbutton', {
+        id: annotation.id,
+        iscompleted: annotation.completed,
+        isPlayerMode: isPlayerMode && !isPreviewMode,
+        refreshonly: annotation.hascompletion != 1
+    });
 
     // Append refresh button after the completion button.
     if (!isPlayerMode || isPreviewMode) {
