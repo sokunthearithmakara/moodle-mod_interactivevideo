@@ -1,99 +1,87 @@
 {{!
-This file is part of Moodle - http://moodle.org/
-Moodle is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-Moodle is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Moodle. If not, see <http://www.gnu.org/licenses />.
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-@template mod_interactivevideo/playermodal
-Player modal
-Example context (json):
-{
-}
+    @template mod_interactivevideo/playermodal
+
+    TODO describe template playermodal
+
+    Example context (json):
+    {
+    }
 }}
-<div class="modal fade p-0 {{#fullscreen}}modal-fullscreen iv-rounded-0{{/fullscreen}}{{^fullscreen}}modal-resized{{/fullscreen}}"
-     id="playermodal"
-     data-backdrop="static"
-     data-keyboard="false"
-     data-bs-backdrop="static"
-     data-bs-keyboard="false"
-     tabindex="-1"
-     role="dialog"
-     aria-modal="true"
-     aria-labelledby="playermodalLabel"
-     aria-hidden="true">
-    <div class="{{#fullscreen}}iv-rounded-0{{/fullscreen}} modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl position-relative">
-        <div class="modal-content show-control {{#fullscreen}}iv-rounded-0{{/fullscreen}} border-0">
 
-            <div class="modal-header border-0 text-white align-items-center py-0 h-0 position-absolute w-100 z-index-1 iv-rounded-0">
-                <div class="modal-background w-100 position-absolute"></div>
+<div id="body">
+{{> mod_interactivevideo/backgroundloading}}
+<iframe id="ivplayer"
+    src="{{wwwroot}}/mod/interactivevideo/view.php?id={{id}}&embed=1"
+    class="w-100 position-absolute h-100 border-0"
+    allow="autoplay"
+    title="{{{title}}}">
+</iframe>
 
-                <span class="modal-title flex-grow-0 position-relative z-index-1 d-flex align-items-center overflow-hidden"
-                      id="playermodalLabel">
-                    <span class="h5 mb-0">
-                        <button type="button"
-                                class="btn border-0 m-1 p-1 h5 bg-transparent close-modal"
-                                aria-label="{{#str}}close,mod_interactivevideo{{/str}}"
-                                title="{{#str}}close,mod_interactivevideo{{/str}}">
-                            <i class="dir-rtl-hide fa fa-arrow-left text-white m-0 fa-2x" aria-hidden="true"></i>
-                            <i class="dir-ltr-hide fa fa-arrow-right text-white m-0 fa-2x" aria-hidden="true"></i>
-                        </button>
-                    </span>
-                </span>
-
-                <div class="iv-ml-auto modal-action d-flex align-items-center position-relative z-index-1">
-                    <div class="d-none d-sm-block small" data-region="activity-completion" aria-hidden="true"></div>
-
-                    <button type="button"
-                            class="btn iv-ml-2 border-0 h5 mb-0 lock-bar"
-                            aria-label="{{#str}}lock,mod_interactivevideo{{/str}}"
-                            title="{{#str}}lock,mod_interactivevideo{{/str}}">
-                        <i class="fa fa-unlock text-white m-0 fa-xl" aria-hidden="true"></i>
-                    </button>
-
-                    <button type="button"
-                            class="btn border-0 h5 mb-0 resize"
-                            aria-label="{{#str}}toggleview,mod_interactivevideo{{/str}}"
-                            title="{{#str}}toggleview,mod_interactivevideo{{/str}}">
-                        <i class="fa fa-{{^fullscreen}}expand{{/fullscreen}}{{#fullscreen}}compress{{/fullscreen}} text-white m-0 fa-xl" aria-hidden="true"></i>
-                    </button>
-
-                    <a href="{{root}}/mod/interactivevideo/view.php?id={{id}}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       class="btn border-0 h5 mb-0 open-external-link"
-                       aria-label="{{#str}}openinnewtab,mod_interactivevideo{{/str}}"
-                       title="{{#str}}openinnewtab,mod_interactivevideo{{/str}}">
-                        <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i>
-                    </a>
-                </div>
-            </div>
-
-            <div class="modal-body p-0 position-relative overflow-hidden">
-                {{> mod_interactivevideo/backgroundloading}}
-
-                <iframe id="ivplayer"
-                        src="{{root}}/mod/interactivevideo/view.php?id={{id}}&embed=1"
-                        class="w-100 position-absolute h-100 border-0"
-                        allow="autoplay"
-                        title="{{{title}}}">
-                </iframe>
-
-                <button type="button"
-                        class="btn border-0 m-1 p-1 h5 toggle-controls d-none"
-                        aria-label="{{#str}}togglecontrols,mod_interactivevideo{{/str}}"
-                        title="{{#str}}togglecontrols,mod_interactivevideo{{/str}}">
-                    <i class="fa fa-chevron-up text-white m-0 fa-2x" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
-    </div>
+<button type="button"
+    class="btn border-0 m-1 p-1 h5 toggle-controls d-none"
+    aria-label="{{#str}}togglecontrols, mod_interactivevideo{{/str}}"
+    title="{{#str}}togglecontrols, mod_interactivevideo{{/str}}">
+    <i class="fa fa-chevron-up text-white m-0 fa-2x" aria-hidden="true"></i>
+</button>
 </div>
 
+<div id="head">
+    <div class="modal-background w-100 position-absolute"></div>
+    <span class="modal-title flex-grow-0 position-relative z-index-1 d-flex align-items-center overflow-hidden"
+            id="playermodalLabel">
+        <span class="h5 mb-0">
+            <button type="button" data-action="hidemodal"
+                    class="btn border-0 m-1 p-1 h5 bg-transparent"
+                    aria-label="{{#str}}close, mod_interactivevideo{{/str}}"
+                    title="{{#str}}close, mod_interactivevideo{{/str}}">
+                <i class="dir-rtl-hide fa fa-arrow-left text-white m-0 fa-2x" aria-hidden="true"></i>
+                <i class="dir-ltr-hide fa fa-arrow-right text-white m-0 fa-2x" aria-hidden="true"></i>
+            </button>
+            <button data-action="hide" class="btn-close d-none" aria-label="Close"></button>
+        </span>
+    </span>
+
+    <div class="iv-ml-auto modal-action d-flex align-items-center position-relative z-index-1">
+        <div class="d-none d-sm-block small" data-region="activity-completion" aria-hidden="true"></div>
+
+        <button type="button"
+                class="btn iv-ml-2 border-0 h5 mb-0 lock-bar"
+                aria-label="{{#str}}lock, mod_interactivevideo{{/str}}"
+                title="{{#str}}lock, mod_interactivevideo{{/str}}">
+            <i class="fa fa-unlock text-white m-0 fa-xl" aria-hidden="true"></i>
+        </button>
+
+        <button type="button"
+                class="btn border-0 h5 mb-0 resize"
+                aria-label="{{#str}}toggleview, mod_interactivevideo{{/str}}"
+                title="{{#str}}toggleview, mod_interactivevideo{{/str}}">
+            <i class="fa fa-{{#fullscreen}}compress{{/fullscreen}}{{^fullscreen}}expand{{/fullscreen}} text-white m-0 fa-xl"
+                aria-hidden="true"></i>
+        </button>
+
+        <a href="{{wwwroot}}/mod/interactivevideo/view.php?id={{id}}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn border-0 h5 mb-0 open-external-link"
+            aria-label="{{#str}}openinnewtab, mod_interactivevideo{{/str}}"
+            title="{{#str}}openinnewtab, mod_interactivevideo{{/str}}">
+            <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i>
+        </a>
+    </div>
+</div>

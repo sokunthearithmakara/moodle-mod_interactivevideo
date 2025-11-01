@@ -157,8 +157,6 @@ export default class SkipSegment extends Base {
             annotation: newAnnotation,
             action: 'add'
         });
-
-        $('#contentmodal').modal('hide');
     }
 
     /**

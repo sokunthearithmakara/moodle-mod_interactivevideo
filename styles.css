@@ -2363,6 +2363,7 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo #user-menu-toggle {
     border: 0;
+    padding-inline-end: 0;
 }
 
 .path-mod-interactivevideo.darkmode .viewingas {
@@ -3561,6 +3562,7 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 .path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content {
     height: calc(var(--ivdvh) + 55px);
     transition: height ease-in-out 300ms;
+    max-height: unset;
 }
 
 .path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content .toggle-controls {
@@ -4010,6 +4012,15 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 #playermodal .modal-header .btn:not([data-toggletype="manual:undo"]),
 .path-mod-interactivevideo.darkmode .navbar [data-action="toggle-manual-completion"]:not([data-toggletype="manual:undo"]) {
     color: #fff;
+}
+
+.path-mod-interactivevideo.darkmode .navbar .dropdown-menu:has([data-region="activity-information"]) {
+    filter: invert(1);
+    border: 0;
+}
+
+.path-mod-interactivevideo.darkmode .navbar .dropdown-menu:has([data-region="activity-information"]) .badge {
+    filter: invert(1);
 }
 
 .path-mod-interactivevideo .fitem[data-groupname]:is([data-groupname="beforecompletion"], [data-groupname="aftercompletion"], [data-groupname="beforecompletionbehavior"], [data-groupname="aftercompletionbehavior"], [data-groupname="activitycardgroup"], [data-groupname="cardoptiongroup"], [data-groupname="behaviorgroup"]) .form-check-inline {

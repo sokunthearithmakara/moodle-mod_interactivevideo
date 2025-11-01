@@ -529,49 +529,59 @@ define(['jquery', 'core/templates'], function($, Templates) {
             });
 
             // Launch report modal when clicking on the report icon.
-            let Modal;
             $(document).on('click', '.launch-report', async function(e) {
                 e.preventDefault();
                 const href = $(this).data('href');
                 let $this = $(this);
-                const data = {
-                    id: 'reportModal',
-                    title: M.util.get_string('reportfor', 'mod_interactivevideo', $this.data('title')),
-                    body: `<iframe src="${href}&embed=1"
-                                    style="width: 100%; height: 100%; border: 0; z-index:1050; position:absolute;"></iframe>`,
-                };
-                Modal = await Templates.render('mod_interactivevideo/fullscreenmodal', data);
-                $('body').append(Modal);
-                $('#reportModal').modal('show');
-                $('#reportModal').on('shown.bs.modal', function() {
-                    $(this).focus();
+                let ModalFactory = await import('core/modal_factory');
+                let ModalEvents = await import('core/modal_events');
+                let str = await import('core/str');
+                const reportModal = await ModalFactory.create({
+                    body: await Templates.render('mod_interactivevideo/backgroundloading', {show: true}) +
+                        `<iframe src="${href}&embed=1"
+                         class="w-100 position-absolute h-100 border-0"
+                         allow="autoplay" style="z-index:1050"></iframe>`,
+                    title: await str.get_string('reportfor', 'mod_interactivevideo', $this.data('title')),
+                    large: true,
+                    show: false,
+                    removeOnClose: true,
+                    isVerticallyCentered: true,
                 });
-                $('#reportModal').on('hidden.bs.modal', function() {
-                    $(this).remove();
+
+                const root = reportModal.getRoot();
+                root.attr('id', 'reportModal').addClass('modal-fullscreen iv-modal');
+                root.find('.modal-body').addClass('p-0');
+                reportModal.show();
+                root.off(ModalEvents.hidden);
+                root.on(ModalEvents.hidden, function() {
+                    reportModal.destroy();
                 });
             });
 
             // Launch video when clicking on the poster.
             $(document).on('click', '.poster-wrapper', async function(e) {
                 e.preventDefault();
-                const modal = `<div class="modal fade p-0" id="posterModal" tabindex="-1" role="dialog">
-                    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-                        <div class="modal-content bg-black overflow-hidden border-0">
-                            <div class="modal-body position-relative">
-                            ${await Templates.render('mod_interactivevideo/backgroundloading', {})}
-                            <iframe src="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${$(this)
+                let ModalFactory = await import('core/modal_factory');
+                let ModalEvents = await import('core/modal_events');
+                const reportModal = await ModalFactory.create({
+                    body: await Templates.render('mod_interactivevideo/backgroundloading', {show: true}) +
+                        `<iframe src="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${$(this)
                         .data('id')}&embed=1&dm=1&df=1&preview=1"
-                             class="w-100 h-100 border-0 position-absolute" style="z-index:1050"></iframe>
-                            </iframe>
-                            </div>
-                        </div>
-                    </div>
-                    </div>`;
-                $('body').append(modal);
-                $('#posterModal').modal('show');
-
-                $('#posterModal').on('hidden.bs.modal', function() {
-                    $(this).remove();
+                         class="w-100 position-absolute h-100 border-0"
+                         allow="autoplay" style="z-index:1050"></iframe>`,
+                    large: true,
+                    show: false,
+                    removeOnClose: true,
+                    isVerticallyCentered: true,
+                });
+                const root = reportModal.getRoot();
+                root.attr('id', 'posterModal');
+                root.find('.modal-header').remove();
+                root.find('.modal-content').addClass('bg-black border-0');
+                reportModal.show();
+                root.off(ModalEvents.hidden);
+                root.on(ModalEvents.hidden, function() {
+                    reportModal.destroy();
                 });
             });
 
@@ -609,6 +619,7 @@ define(['jquery', 'core/templates'], function($, Templates) {
                     e.stopImmediatePropagation();
                     // Replace the .modal-lg class with .modal-xl.
                     setTimeout(() => {
+                        $('.modal.show').addClass('path-mod-interactivevideo');
                         $('.modal-dialog').removeClass('modal-lg').addClass('modal-xl');
                     }, 1000);
                     setTimeout(async() => {

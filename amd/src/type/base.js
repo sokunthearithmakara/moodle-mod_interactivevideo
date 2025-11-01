@@ -532,8 +532,6 @@ class Base {
                 }),
             }
         });
-        $("#contentmodal").modal('hide');
-        $('#addcontentdropdown a').removeClass('active');
         form.show();
 
         const onEditFormLoaded = (e) => {

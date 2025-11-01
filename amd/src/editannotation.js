@@ -660,8 +660,8 @@ define(['jquery',
                         $annotationlist.find(`tr:not([data-id="${currentAnnotation.id}"])`).removeClass('active');
                         if (!$annotationlist.find(`tr[data-id="${currentAnnotation.id}"]`).hasClass('active')) {
                             $annotationlist.find(`tr[data-id="${currentAnnotation.id}"]`)
-                            .addClass('active')
-                            .trigger('mouseenter');
+                                .addClass('active')
+                                .trigger('mouseenter');
                             setTimeout(function() {
                                 $annotationlist.find(`tr[data-id="${currentAnnotation.id}"]`).trigger('mouseleave');
                             }, 2000);
@@ -1895,7 +1895,7 @@ define(['jquery',
                     });
                 });
 
-                root.on('click', '.modal-header .close', function() {
+                root.on('click', '.modal-header [type="button"]', function() {
                     contentTypeModal.hide();
                 });
 
@@ -1968,42 +1968,29 @@ define(['jquery',
             resizeObserver.observe(timelineWrapper);
 
             // Implement import content
-            $(document).on('click', '#importcontent', function(e) {
+            $(document).on('click', '#importcontent', async function(e) {
                 e.preventDefault();
-                const importmodal = `<div class="modal fade" id="importmodal" tabindex="-1" aria-labelledby="importmodalLabel"
-                 aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title flex-grow-1" id="importmodalLabel">
-                                ${M.util.get_string('importcontent', 'mod_interactivevideo')}</h5>
-                                <button type="button" class="btn p-0 border-0" data${bsAffix}-dismiss="modal" aria-label="Close">
-                                    <i class="bi bi-x-lg fa-fw fs-25px"></i>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary border-0" data${bsAffix}-dismiss="modal">
-                                ${M.util.get_string('cancel', 'mod_interactivevideo')}</button>
-                                <button type="button" class="btn btn-primary border-0" id="importcontentbutton">
-                                ${M.util.get_string('import', 'mod_interactivevideo')}</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-                $('body').append(importmodal);
-                $('#importmodal').modal('show');
-
-                $('#importmodal').on('hidden.bs.modal', function() {
-                    $('#importmodal').remove();
+                const importmodal = await ModalFactory.create({
+                    body: ``,
+                    title: M.util.get_string('importcontent', 'mod_interactivevideo'),
+                    footer: `<button type="button" class="btn btn-secondary border-0" data${bsAffix}-dismiss="modal">
+                        ${M.util.get_string('cancel', 'mod_interactivevideo')}</button>
+                        <button type="button" class="btn btn-primary border-0" id="importcontentbutton">
+                        ${M.util.get_string('import', 'mod_interactivevideo')}</button>`,
+                    show: false,
+                    large: true,
+                    removeOnClose: true,
+                    isVerticallyCentered: true,
                 });
-
-                $('#importmodal').off('shown.bs.modal').on('shown.bs.modal', function() {
-                    // Make the modal draggable.
-                    $('#importmodal .modal-dialog').draggable({
+                let root = importmodal.getRoot();
+                root.attr('id', 'importmodal');
+                importmodal.show();
+                root.off(ModalEvents.shown);
+                root.on(ModalEvents.shown, async function() {
+                    root.find('.modal-dialog').draggable({
                         handle: ".modal-header"
                     });
+
                     // Render the course select dropdown.
                     $.ajax({
                         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
@@ -2028,71 +2015,79 @@ define(['jquery',
                             <label class="iv-font-weight-bold form-label" for="importcourse">
                             ${M.util.get_string('selectcourse', 'mod_interactivevideo')}</label>
                             ${courseSelect}</div>`;
-                            $('#importmodal .modal-body').append(selectfield);
+                            root.find('.modal-body').empty();
+                            root.find('.modal-body').append(selectfield);
+
                             // Default current course.
-                            $('#importmodal #importcourse').val(course);
-                            $('#importmodal #importcourse').trigger('change');
+                            root.find('#importcourse').val(course);
+                            root.find('#importcourse').trigger('change');
                         }
                     });
                 });
-            });
 
-            $(document).on('change', '#importmodal #importcourse', function() {
-                $(`#importmodal .selectcm, #importmodal .select-interaction`).remove();
-                $.ajax({
-                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                    method: "POST",
-                    dataType: "text",
-                    data: {
-                        action: 'get_cm_by_courseid',
-                        sesskey: M.cfg.sesskey,
-                        contextid: M.cfg.contextid,
-                        courseid: $(this).val()
-                    },
-                    success: function(data) {
-                        let cms = JSON.parse(data);
-                        cms.sort((a, b) => a.name.localeCompare(b.name));
-                        let cmSelect = `<select class="${isBS5 ? 'form' : 'custom'}-select w-100" id="importcm">
+                root.on(ModalEvents.hidden, function() {
+                    importmodal.destroy();
+                });
+
+                root.off('change', '#importcourse');
+                root.on('change', '#importcourse', function() {
+                    root.find('.selectcm, .select-interaction').remove();
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                        method: "POST",
+                        dataType: "text",
+                        data: {
+                            action: 'get_cm_by_courseid',
+                            sesskey: M.cfg.sesskey,
+                            contextid: M.cfg.contextid,
+                            courseid: $(this).val()
+                        },
+                        success: function(data) {
+                            let cms = JSON.parse(data);
+                            cms.sort((a, b) => a.name.localeCompare(b.name));
+                            let cmSelect = `<select class="${isBS5 ? 'form' : 'custom'}-select w-100" id="importcm">
                         <option value="">${M.util.get_string('select', 'mod_interactivevideo')}</option>`;
-                        cms.forEach(cm => {
-                            cmSelect += `<option value="${cm.id}" ${cm.id == interaction ? 'disabled' : ''}>${cm.name}</option>`;
-                        });
-                        cmSelect += `</select>`;
-                        let selectfield = `<div class="iv-form-group selectcm">
+                            cms.forEach(cm => {
+                                cmSelect += `<option value="${cm.id}"
+                                 ${cm.id == interaction ? 'disabled' : ''}>${cm.name}</option>`;
+                            });
+                            cmSelect += `</select>`;
+                            let selectfield = `<div class="iv-form-group selectcm">
                         <label for="importcm" class="iv-font-weight-bold form-label">
                         ${M.util.get_string('selectactivity', 'mod_interactivevideo')}</label>
                         ${cmSelect}</div>`;
-                        $(`#importmodal .selectcourse`).after(selectfield);
-                    }
+                            root.find('.selectcourse').after(selectfield);
+                        }
+                    });
                 });
-            });
 
-            $(document).on('change', '#importmodal #importcm', async function() {
-                $(`#importmodal .select-interaction`).remove();
-                $(`#importmodal #importcm`).after(`<div class="select-interaction py-3">
+                root.off('change', '#importcm');
+                root.on('change', '#importcm', async function() {
+                    root.find('.select-interaction').remove();
+                    root.find('#importcm').after(`<div class="select-interaction py-3">
                     <iframe src="${M.cfg.wwwroot + '/mod/interactivevideo/view.php?i=' + $(this).val()}&embed=1&preview=1"
                     frameborder=0 width="100%" height="500" class="loader"></iframe></div>`);
-                let interactions = await $.ajax({
-                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                    method: "POST",
-                    dataType: "text",
-                    data: {
-                        action: 'get_items',
-                        sesskey: M.cfg.sesskey,
-                        id: $(this).val(),
-                        contextid: M.cfg.contextid,
-                        coursecontextid: M.cfg.courseContextId
-                    }
-                });
-                interactions = JSON.parse(interactions);
-                interactions = interactions.filter(x => x.type != 'skipsegment');
-                if (interactions.length == 0) {
-                    $(`#importmodal .select-interaction`).append(`<div class="alert alert-warning mt-3">
+                    let interactions = await $.ajax({
+                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                        method: "POST",
+                        dataType: "text",
+                        data: {
+                            action: 'get_items',
+                            sesskey: M.cfg.sesskey,
+                            id: $(this).val(),
+                            contextid: M.cfg.contextid,
+                            coursecontextid: M.cfg.courseContextId
+                        }
+                    });
+                    interactions = JSON.parse(interactions);
+                    interactions = interactions.filter(x => x.type != 'skipsegment');
+                    if (interactions.length == 0) {
+                        root.find('.select-interaction').append(`<div class="alert alert-warning mt-3">
                         ${M.util.get_string('nocontent', 'mod_interactivevideo')}</div>`);
-                    return;
-                }
+                        return;
+                    }
 
-                $(`#importmodal .select-interaction`).append(`<div class="input-group mb-1 w-100 flex-nowrap align-items-center
+                    root.find('.select-interaction').append(`<div class="input-group mb-1 w-100 flex-nowrap align-items-center
                      no-pointer">
                      <div class="input-group-prepend border-0 invisible">
                             <label class="input-group-text bg-white">
@@ -2100,55 +2095,57 @@ define(['jquery',
                                 <i class="bi bi-plus iv-ml-3 fs-unset"></i>
                             </label>
                         </div>
-                <input type="text" class="form-control border-0 iv-font-weight-bold"
-                 value="${M.util.get_string('title', 'mod_interactivevideo')}">
-                <input type="text" class="form-control border-0 iv-font-weight-bold" style="max-width: 50px;"
-                value="XP">
-                <input type="text" style="max-width: 150px;" value="${M.util.get_string('timestamp', 'mod_interactivevideo')}"
-                 class="form-control border-0 iv-font-weight-bold"></div>`);
+                        <input type="text" class="form-control border-0 iv-font-weight-bold"
+                        value="${M.util.get_string('title', 'mod_interactivevideo')}">
+                        <input type="text" class="form-control border-0 iv-font-weight-bold" style="max-width: 50px;"
+                        value="XP">
+                        <input type="text" style="max-width: 150px;"
+                         value="${M.util.get_string('timestamp', 'mod_interactivevideo')}"
+                        class="form-control border-0 iv-font-weight-bold"></div>`);
 
-                interactions = interactions.map(int => {
-                    // Get the icon and check if the interaction is out of range (start, end time);
-                    const ctype = contentTypes.find(y => y.name === int.type);
-                    int.prop = JSON.stringify(ctype);
-                    int.icon = ctype.icon;
-                    if ((int.timestamp > end || int.timestamp < start) && int.timestamp > 0) {
-                        int.outside = true;
-                    } else {
-                        int.outside = false;
-                    }
-                    // Check if the interaction can be added (e.g. annotation content type can only be added once per activity);
-                    if (!ctype.allowmultiple && annotations.find(x => x.type == int.type)) {
-                        int.disabled = true;
-                    }
-                    return int;
-                });
+                    interactions = interactions.map(int => {
+                        // Get the icon and check if the interaction is out of range (start, end time);
+                        const ctype = contentTypes.find(y => y.name === int.type);
+                        int.prop = JSON.stringify(ctype);
+                        int.icon = ctype.icon;
+                        if ((int.timestamp > end || int.timestamp < start) && int.timestamp > 0) {
+                            int.outside = true;
+                        } else {
+                            int.outside = false;
+                        }
+                        // Check if the interaction can be added (e.g. annotation content type can only be added once per activity);
+                        if (!ctype.allowmultiple && annotations.find(x => x.type == int.type)) {
+                            int.disabled = true;
+                        }
+                        return int;
+                    });
 
-                interactions.sort((a, b) => a.timestamp - b.timestamp);
-                interactions.forEach(int => {
-                    const inputgroup = `<div class="input-group mb-1 w-100 flex-nowrap align-items-center"
-                     data-id="${int.id}">
+                    interactions.sort((a, b) => a.timestamp - b.timestamp);
+                    let inputs = '';
+                    interactions.forEach(int => {
+                        const inputgroup = `<div class="input-group mb-1 w-100 flex-nowrap align-items-center"
+                        data-id="${int.id}">
                         <div class="input-group-prepend">
                             <label class="input-group-text">
                                 <input type="checkbox" ${int.disabled ? 'disabled' : ''}/>
                                 <i class="${int.icon} iv-ml-3 fs-unset"></i>
                             </label>
                         </div>
-                <input type="text" class="form-control name" ${int.timestamp < 0 ? 'readonly' : ''}
-                 value="${int.title}">
-                <input type="text" style="max-width: 50px;" ${int.timestamp < 0 || int.hascompletion == 0 ? 'readonly' : ''}
-                 class="form-control xp" value="${int.xp}">
-                <input type="text" placeholder="00:00:00" style="max-width: 150px;" ${int.timestamp < 0 ? 'readonly' : ''}
-                 class="form-control timestamp-input ${int.outside ? 'is-invalid' : ''}"
-                value="${int.timestamp < 0 ? int.timestamp :
-                            convertSecondsToHMS(int.timestamp, false, false)}"></div>`;
-                    $(`#importmodal .select-interaction`).append(inputgroup);
-                });
+                        <input type="text" class="form-control name" ${int.timestamp < 0 ? 'readonly' : ''}
+                        value="${int.title}">
+                        <input type="text" style="max-width: 50px;" ${int.timestamp < 0 || int.hascompletion == 0 ? 'readonly' : ''}
+                        class="form-control xp" value="${int.xp}">
+                        <input type="text" placeholder="00:00:00" style="max-width: 150px;" ${int.timestamp < 0 ? 'readonly' : ''}
+                        class="form-control timestamp-input ${int.outside ? 'is-invalid' : ''}"
+                        value="${int.timestamp < 0 ? int.timestamp : convertSecondsToHMS(int.timestamp, false, false)}"></div>`;
+                        inputs += inputgroup;
+                    });
+                    root.find('.select-interaction').append(inputs);
 
-                $(document).off('click', '#importmodal #importcontentbutton').on('click', '#importmodal #importcontentbutton',
+                    root.off('click', '#importcontentbutton').on('click', '#importcontentbutton',
                     async function(e) {
                         e.preventDefault();
-                        let $selected = $(`#importmodal .select-interaction input[type="checkbox"]:checked`);
+                        let $selected = root.find(`.select-interaction input[type="checkbox"]:checked`);
                         let selectedInt = [];
                         $selected.each(function() {
                             let $row = $(this).closest('.input-group');
@@ -2204,7 +2201,7 @@ define(['jquery',
                             interactions = JSON.parse(interactions);
 
                             // Dismiss modal.
-                            $('#importmodal').modal('hide');
+                            importmodal.hide();
 
                             // Add the imported annotations to the current annotations.
                             annotations = annotations.concat(interactions);
@@ -2221,6 +2218,7 @@ define(['jquery',
                             });
                         }
                     });
+                });
             });
 
             // Implement content type filter.

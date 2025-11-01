@@ -12,89 +12,145 @@ You should have received a copy of the GNU General Public License
 along with Moodle. If not, see
 <http : //www.gnu.org/licenses />.
 }}
+
 {{!
 @template mod_interactivevideo/reporttable
 Report table.
+
 Example context (json):
 {
 }
 }}
+
 <div id="wrapper" class="position-relative"></div>
 <div id="toolbar" class="bg-transparent pt-5 position-fixed"></div>
+
 <div id="reporttable" class="p-3 position-relative" style="margin-top: 70px">
     {{{groupselector}}}
+
     {{> mod_interactivevideo/backgroundloading}}
-    <table id="completiontable" class="table table-sm table-bordered table-striped w-100 m-0">
+
+    <table id="completiontable" class="table table-sm table-bordered table-striped w-100 m-0 border">
         <thead class="sticky-top bg-white">
             <tr>
-                <th id="id" scope="col" class="exportable inv">{{#str}}id,mod_interactivevideo{{/str}}</th>
-                <th id="participant" scope="col" class="bg-white sticky-left-0">{{#str}}participant,mod_interactivevideo{{/str}}</th>
-                <th id="firstname" scope="col" class="exportable colvis inv profilefield">{{#str}}firstname{{/str}}</th>
-                <th id="lastname" scope="col" class="exportable colvis inv profilefield">{{#str}}lastname{{/str}}</th>
+                <th id="id" scope="col" class="exportable inv">
+                    {{#str}}id, mod_interactivevideo{{/str}}
+                </th>
+
+                <th id="participant" scope="col" class="bg-white sticky-left-0">
+                    {{#str}}participant, mod_interactivevideo{{/str}}
+                </th>
+
+                <th id="firstname" scope="col" class="exportable colvis inv profilefield">
+                    {{#str}}firstname{{/str}}
+                </th>
+
+                <th id="lastname" scope="col" class="exportable colvis inv profilefield">
+                    {{#str}}lastname{{/str}}
+                </th>
+
                 {{#identity}}
-                <th id="{{name}}" scope="col" class="exportable colvis inv profilefield">{{label}}</th>
+                    <th id="{{name}}" scope="col" class="exportable colvis inv profilefield">
+                        {{label}}
+                    </th>
                 {{/identity}}
+
                 <th id="timecreated" scope="col" class="text-truncate">
-                    {{#str}}timestarted,mod_interactivevideo{{/str}}
+                    {{#str}}timestarted, mod_interactivevideo{{/str}}
                     <div class="position-absolute iv-font-weight-normal controls d-none" style="bottom: 0">
                         <div class="d-flex align-items-center">
-                            <input type="checkbox" id="started-true" checked data-start="true">
-                            <label for="started-true" class="mx-2">{{#str}}started,mod_interactivevideo{{/str}}</label>
+                            <input type="checkbox" checked data-start="true">
+                            <small class="mx-2">
+                                {{#str}}started, mod_interactivevideo{{/str}}
+                            </small>
                         </div>
                         <div class="d-flex align-items-center">
-                            <input type="checkbox" id="started-false" checked data-start="false">
-                            <label for="started-false" class="iv-ml-2">{{#str}}notstarted,mod_interactivevideo{{/str}}</label>
+                            <input type="checkbox" checked data-start="false">
+                            <small class="iv-ml-2">
+                                {{#str}}notstarted, mod_interactivevideo{{/str}}
+                            </small>
                         </div>
                     </div>
                 </th>
+
                 <th id="timecompleted" scope="col" class="text-truncate">
-                    {{#str}}timecompleted,mod_interactivevideo{{/str}}
+                    {{#str}}timecompleted, mod_interactivevideo{{/str}}
                     <div class="position-absolute iv-font-weight-normal controls d-none" style="bottom: 0">
                         <div class="d-flex align-items-center">
-                            <input type="checkbox" id="completed-true" checked data-completed="true">
-                            <label for="completed-true" class="mx-2">{{#str}}completed,mod_interactivevideo{{/str}}</label>
+                            <input type="checkbox" checked data-completed="true">
+                            <small class="mx-2">
+                                {{#str}}completed, mod_interactivevideo{{/str}}
+                            </small>
                         </div>
                         <div class="d-flex align-items-center">
-                            <input type="checkbox" id="completed-false" checked data-completed="false">
-                            <label for="completed-false" class="iv-ml-2">{{#str}}incomplete,mod_interactivevideo{{/str}}</label>
+                            <input type="checkbox" checked data-completed="false">
+                            <small class="iv-ml-2">
+                                {{#str}}incomplete, mod_interactivevideo{{/str}}
+                            </small>
                         </div>
                     </div>
                 </th>
+
                 <th id="completionpercentage" scope="col">
-                    {{#str}}completionpercentage,mod_interactivevideo{{/str}}
+                    {{#str}}completionpercentage, mod_interactivevideo{{/str}}
                     {{#completionfilter}}
-                    <div class="position-absolute iv-font-weight-normal controls d-none" style="bottom: 0">
-                        <div class="d-flex align-items-center">
-                            <input type="checkbox" id="less-{{completionpercentage}}-filter" checked class="less" data-percentage="{{completionpercentage}}">
-                            <label for="less-{{completionpercentage}}-filter" class="iv-ml-2">&lt; {{completionpercentage}}%</label>
+                        <div class="position-absolute iv-font-weight-normal controls d-none" style="bottom: 0">
+                            <div class="d-flex align-items-center">
+                                <input type="checkbox"
+                                       id="less-{{completionpercentage}}-filter"
+                                       checked
+                                       class="less"
+                                       data-percentage="{{completionpercentage}}">
+                                <small for="less-{{completionpercentage}}-filter" class="iv-ml-2">
+                                    &lt; {{completionpercentage}}%
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <input type="checkbox"
+                                       id="more-{{completionpercentage}}-filter"
+                                       checked
+                                       class="more"
+                                       data-percentage="{{completionpercentage}}">
+                                <small for="more-{{completionpercentage}}-filter" class="iv-ml-2">
+                                    &ge; {{completionpercentage}}%
+                                </small>
+                            </div>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <input type="checkbox" id="more-{{completionpercentage}}-filter" checked class="more" data-percentage="{{completionpercentage}}">
-                            <label for="more-{{completionpercentage}}-filter" class="iv-ml-2">&ge; {{completionpercentage}}%</label>
-                        </div>
-                    </div>
                     {{/completionfilter}}
                 </th>
-                <th id="xp" scope="col">{{#str}}xp,mod_interactivevideo{{/str}}/{{totalxp}}</th>
-                {{#items}}
-                <th class="rotate" id="item-{{id}}" data-item="{{id}}" data-type="{{type}}" scope="col">
-                    <div>
-                        <input type="checkbox" class="form-check-input rotate-0 controls d-none" id="item-{{id}}-filter" data-item="{{id}}" data-type="{{type}}">
-                        <label for="item-{{id}}-filter">
-                            <i aria-hidden="true" title="{{typetitle}}" class="fa-fw fa mx-1 {{icon}}"></i>
-                            <span class="sr-only">{{title}}</span>
-                        </label>
-                        <a class="text-link cursor-pointer">{{title}}</a>
-                    </div>
+
+                <th id="xp" scope="col">
+                    {{#str}}xp, mod_interactivevideo{{/str}} / {{totalxp}}
                 </th>
+
+                {{#items}}
+                    <th class="rotate"
+                        id="item-{{id}}"
+                        data-item="{{id}}"
+                        data-type="{{type}}"
+                        data{{bs}}-toggle="tooltip"
+                        data{{bs}}-trigger="hover"
+                        data{{bs}}-placement="top"
+                        title="{{title}}">
+                        <div>
+                            <input type="checkbox"
+                                   class="form-check-input rotate-0 controls d-none"
+                                   id="item-{{id}}"
+                                   data-item="{{id}}"
+                                   data-type="{{type}}">
+                            <i title="{{typetitle}}" class="fa-fw fa mx-1 {{icon}}"></i>
+                            <a class="text-link cursor-pointer">{{title}}</a>
+                        </div>
+                    </th>
                 {{/items}}
             </tr>
         </thead>
+
         <tbody>
         </tbody>
     </table>
 </div>
 
 {{#hascourseindex}}
-{{> mod_interactivevideo/courseindex}}
+    {{> mod_interactivevideo/courseindex}}
 {{/hascourseindex}}

@@ -151,7 +151,7 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
                     optionsc = optionsc.filter(x => x !== '');
                     if (optionsc.length > 1) {
                         optionsc.sort();
-                        input = `<select class="${isBS5 ? 'form' : 'custom'} ${isBS5 ? 'form' : 'custom'}-sm w-100"
+                        input = `<select class="${isBS5 ? 'form' : 'custom'}-select ${isBS5 ? 'form' : 'custom'}-sm w-100"
                          multiple id="filter-${element.index}"
                          data-index="${element.index}">
                             ${optionsc.map(x => `<option value="${x}">${x}</option>`).join('')}
@@ -1096,18 +1096,20 @@ const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, 
         });
 
         let root = modal.getRoot();
-        root.attr('id', 'annotation-modal');
-        root.attr('data-id', theAnnotation.id);
-
+        root.attr({
+            'id': 'annotation-modal',
+            'data-id': theAnnotation.id,
+        });
 
         if ($('body').hasClass('iframe')) {
             root.addClass('modal-fullscreen');
         }
 
-        root.find('.modal-dialog').attr('data-id', theAnnotation.id);
-        root.find('.modal-dialog').attr('data-placement', 'popup');
-        root.find('.modal-dialog').attr('id', 'message');
-        root.find('.modal-dialog').addClass('active ' + theAnnotation.type);
+        root.find('.modal-dialog').attr({
+            'data-id': theAnnotation.id,
+            'data-placement': 'popup',
+            'id': 'message',
+        }).addClass('active ' + theAnnotation.type);
         root.find('#message').html(`<div class="modal-content iv-rounded-lg">
                 <div class="modal-header d-flex align-items-center shadow-sm" id="title">
                     <h5 class="modal-title text-truncate mb-0">${title}</h5>

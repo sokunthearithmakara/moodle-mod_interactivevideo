@@ -21,49 +21,48 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery'], function($) {
-    var init = function() {
-        $('#ivplugin_checkupdate').off('click').on('click', async function(e) {
-            e.preventDefault();
-            const modal = `<div class="modal fade" id="ivplugin_checkupdate_modal"
-             tabindex="-1" role="dialog" aria-labelledby="ivplugin_checkupdate_modal" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header" style="border-bottom: 0;">
-                            <h5 class="modal-title" id="ivplugin_checkupdate_modal">Available interaction types</h5>
-                        </div>
-                        <div class="modal-body">
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-            $('body').append(modal);
-            $('#ivplugin_checkupdate_modal').modal('show');
-            let plugins = $('#ivplugin_updateinfo').val();
-            plugins = JSON.parse(plugins);
-            let installed = $('#ivplugin_installed').val();
-            installed = JSON.parse(installed);
-            plugins = plugins.map((plugin) => {
-                plugin.installed = installed.find((p) => p.component === plugin.component);
-                return plugin;
-            });
+define(['jquery', 'core/modal_factory', 'core/modal_events'],
+    function($, modalFactory, modalEvents) {
 
-            // Sort by title.
-            plugins.sort((a, b) => {
-                if (a.title < b.title) {
-                    return -1;
-                }
-                if (a.title > b.title) {
-                    return 1;
-                }
-                return 0;
-            });
+        var init = function() {
+            $('#ivplugin_checkupdate').off('click').on('click', async function(e) {
+                e.preventDefault();
+                const modal = await modalFactory.create({
+                    body: '<div class="spinner"></div>',
+                    title: 'Available interaction types',
+                    show: false,
+                    removeOnClose: true,
+                    isVerticallyCentered: true,
+                });
 
-            let table = '<table class="table table-striped table-bordered">';
-            table += '<tbody>';
-            plugins.forEach((plugin) => {
-                table += '<tr>';
-                const row = `<td>
+                let root = modal.getRoot();
+                root.attr('id', 'ivplugin_checkupdate_modal');
+
+                let plugins = $('#ivplugin_updateinfo').val();
+                plugins = JSON.parse(plugins);
+                let installed = $('#ivplugin_installed').val();
+                installed = JSON.parse(installed);
+                plugins = plugins.map((plugin) => {
+                    plugin.installed = installed.find((p) => p.component === plugin.component);
+                    return plugin;
+                });
+
+                // Sort by title.
+                plugins.sort((a, b) => {
+                    if (a.title < b.title) {
+                        return -1;
+                    }
+                    if (a.title > b.title) {
+                        return 1;
+                    }
+                    return 0;
+                });
+
+                let table = '<table class="table table-striped table-bordered">';
+                table += '<tbody>';
+                plugins.forEach((plugin) => {
+                    table += '<tr>';
+                    const row = `<td>
                 <p class="iv-font-weight-bold mb-1 d-flex justify-content-between"><span>${plugin.title}</span>
                 <span><a href="${plugin.description_url}" class="iv-mr-2" target="_blank">
                 <i class="fa fa-circle-info"></i></a>
@@ -78,15 +77,19 @@ define(['jquery'], function($) {
                 <div>${plugin.type == 'free' ? 'Free' : 'Paid'}</div>
                 </div>
                 </td>`;
-                table += row;
-                table += '</tr>';
-            });
-            table += '</tbody></table>';
-            $('#ivplugin_checkupdate_modal .modal-body').html(table);
-        });
-    };
+                    table += row;
+                    table += '</tr>';
+                });
+                table += '</tbody></table>';
+                root.find('.modal-body').html(table);
+                modal.show();
 
-    return {
-        init: init
-    };
-});
+                root.off(modalEvents.hidden);
+                root.on(modalEvents.hidden, function() {
+                    modal.destroy();
+                });
+            });
+        };
+
+        return {init};
+    });

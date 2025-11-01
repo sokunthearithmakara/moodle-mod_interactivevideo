@@ -268,6 +268,10 @@ define([
 
             displayoptions = doptions;
 
+            if (displayoptions.hidemainvideocontrols == 1 && displayoptions.useoriginalvideocontrols == 1) {
+                $lightprogressbar.remove();
+            }
+
             let playerReady = false;
             let uprogress = null;
             let timeended = null;
