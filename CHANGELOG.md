@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.5.1] - 2025-11-02
+https://mod-interactive-video.canny.io/changelog/interactive-video-16
+
 ## [1.5.0+] - 2025-10-13
 ### Fixed
 - In Moodle 4.3 and lower, the section parameter takes the section number instead of the section id.
