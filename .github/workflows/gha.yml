@@ -69,6 +69,12 @@ jobs:
           - php: '8.3'
             moodle-branch: 'MOODLE_500_STABLE'
             database: 'mariadb'
+          - php: '8.1'
+            moodle-branch: 'MOODLE_501_STABLE'
+            database: 'pgsql'
+          - php: '8.3'
+            moodle-branch: 'MOODLE_501_STABLE'
+            database: 'mariadb'
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
