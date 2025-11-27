@@ -44,6 +44,9 @@ class SproutVideo {
         this.node = node;
         let regex = /(?:https?:\/\/)?(?:[^.]+\.)*(?:sproutvideo\.com\/(?:videos|embed)|vids\.io\/videos)\/(.+)/;
         let match = regex.exec(url);
+        if (!match) {
+            return Promise.reject(new Error('Invalid SproutVideo URL'));
+        }
         let videoId = match[1];
         if (!url.includes('embed')) {
             videoId = videoId.split('/')[0];
@@ -70,7 +73,7 @@ class SproutVideo {
             self.title = 'Private Video';
             self.aspectratio = 16 / 9;
             if (!url.includes('embed')) {
-                return null;
+                return Promise.reject(new Error('Video not found'));
             }
         } else {
             self.title = data.title;
@@ -87,18 +90,37 @@ class SproutVideo {
                  src='${iframeurl}' frameborder='0' referrerpolicy="no-referrer-when-downgrade"
                   allow="autoplay; fullscreen; picture-in-picture; encrypted-media;"></iframe>`);
 
-        return new Promise((resolve) => {
-            const executeFunction = (player) => {
-                player.bind('ready', function() {
-                    resolve({
-                        duration: player.getDuration(),
-                        title: player.getVideoTitle(),
-                        posterImage: self.posterImage,
-                    });
+        return new Promise((resolve, reject) => {
+            const executeFunction = (playerInstance) => {
+                playerInstance.bind('ready', function() {
+                    try {
+                        let result = {
+                            duration: playerInstance.getDuration(),
+                            title: self.title,
+                            posterImage: self.posterImage,
+                        };
+                        resolve(result);
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+                playerInstance.bind('error', function(e) {
+                    reject(e);
                 });
             };
 
-            // Create a player instance.
+            /**
+             *
+             */
+            function createPlayerAndBind() {
+                try {
+                    player[node] = new window.SV.Player({videoId: videoId.split('/')[0]});
+                    executeFunction(player[node]);
+                } catch (e) {
+                    reject(e);
+                }
+            }
+
             if (!window.SV) {
                 var tag = document.createElement('script');
                 tag.src = 'https://c.sproutvideo.com/player_api.js';
@@ -107,13 +129,12 @@ class SproutVideo {
                 tag.rel = "preload";
                 var firstScriptTag = document.getElementsByTagName('script')[0];
                 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-                tag.onload = function() {
-                    player[node] = new window.SV.Player({videoId: videoId.split('/')[0]});
-                    executeFunction(player[node]);
+                tag.onload = createPlayerAndBind;
+                tag.onerror = function() {
+                    reject(new Error('Failed to load SproutVideo API'));
                 };
             } else {
-                player[node] = new window.SV.Player({videoId: videoId.split('/')[0]});
-                executeFunction(player[node]);
+                createPlayerAndBind();
             }
         });
     }

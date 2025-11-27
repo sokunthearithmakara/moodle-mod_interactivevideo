@@ -508,3 +508,5 @@ $string['youmustcompletethistaskfirst'] = 'You must complete this task first.';
 $string['youmustspendatleastminutesbeforemarkingcomplete'] = 'You must spend at least <b>{$a->timerequire} minutes</b> before marking this as complete.<br><br><b>Time you spent: {$a->timespent} minutes.</b>';
 $string['youtube'] = 'YouTube';
 $string['yt'] = 'YouTube';
+$string['enableembedly'] = 'Enable Embedly player library';
+$string['enableembedly_desc'] = 'Embedly must be preloaded to run videos from BunnyStream and VioStream. If your site does not use these sources, you can disable this option.';

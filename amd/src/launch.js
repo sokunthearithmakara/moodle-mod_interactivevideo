@@ -133,7 +133,6 @@ define(['jquery', 'core/str', 'core/templates', 'core/modal_factory', 'core/moda
                             }
 
                             player = iframeWindow.IVPLAYER;
-                            window.console.log(player);
                             if (player.doptions.hidemainvideocontrols == 1) {
                                 showcontrols = true;
                                 $toggle.remove();
@@ -209,7 +208,6 @@ define(['jquery', 'core/str', 'core/templates', 'core/modal_factory', 'core/moda
                                 });
 
                                 iframeDoc.addEventListener('iv:playerPlay', function() {
-                                    window.console.log('iv:playerPlay');
                                     $toggle.fadeIn(300);
                                 });
 
@@ -227,7 +225,6 @@ define(['jquery', 'core/str', 'core/templates', 'core/modal_factory', 'core/moda
                                 }
                                 let current = $progressbar.data('current');
                                 iframeDoc.addEventListener('analyticsupdated', function(e) {
-                                    window.console.log(e.detail);
                                     let percentage = e.detail.percentage;
                                     if (percentage > current) {
                                         $progressbar.css('width', percentage + '%')

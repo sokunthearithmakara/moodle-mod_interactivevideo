@@ -1026,7 +1026,7 @@ define([
                     return;
                 }
                 if (savepoint || $body.hasClass('embed-mode') || $body.hasClass('iframe')
-                    || $body.hasClass('mobileapp')) {
+                    || $body.hasClass('mobileapp') || navigator.userAgent.includes('MoodleMobile') || $body.hasClass('embed')) {
                     let t = await player.getCurrentTime();
                     let watchedpoint = Math.round(t);
                     // Make sure the watchedpoint is not the same as the last saved point or so close to it.

@@ -318,11 +318,6 @@ if (empty($url)) {
     die;
 }
 
-// Render primary navigation.
-$primary = new core\navigation\output\primary($PAGE);
-$renderer = $PAGE->get_renderer('core');
-$primarymenu = $primary->export_for_template($renderer);
-
 // Display page navigation.
 $courseindex = '';
 $rendernav = true;
@@ -355,6 +350,11 @@ if ($rendernav) {
     } else {
         $returnurl = new moodle_url('/course/view.php', ['id' => $course->id]);
     }
+
+    // Render primary navigation.
+    $primary = new core\navigation\output\primary($PAGE);
+    $primarymenu = $primary->export_for_template();
+
     $datafortemplate = [
         "cmid" => $cm->id,
         "instance" => $cm->instance,
@@ -497,7 +497,8 @@ $datafortemplate = [
     "completed" => isset($completed) && $completed,
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
     'square' => $moduleinstance->displayoptions['squareposterimage'] ?? false,
-    "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream']),
+    "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream'])
+        || get_config('mod_interactivevideo', 'enableembedly'),
     "courseindex" => $courseindex,
     "hascourseindex" => !empty($courseindex) && $rendernav,
 ];

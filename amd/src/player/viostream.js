@@ -41,8 +41,84 @@ class Viostream {
     }
 
     async getInfo(url, node) {
-        this.node = node;
-        // To do.
+        let self = this;
+        self.node = node;
+        let regex = /(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i;
+        let match = regex.exec(url);
+        let videoId = match ? match[1] : null;
+        self.videoId = videoId;
+        self.aspectratio = 16 / 9;
+
+        await new Promise((resolve, reject) => {
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                type: 'POST',
+                dataType: 'text',
+                data: {
+                    action: 'get_from_url',
+                    contextid: M.cfg.contextid,
+                    url: url,
+                    sesskey: M.cfg.sesskey,
+                },
+                complete: function(res) {
+                    let text = res.responseText;
+
+                    // Use regex to extract <meta name="twitter:title" content="...">
+                    let titleMatch = text.match(/<meta\s+name=["']twitter:title["']\s+content=["']([^"']+)["']/i);
+                    let title = titleMatch ? titleMatch[1] : '';
+
+                    // Use regex to extract <meta property="og:image" content="...">
+                    let posterMatch = text.match(/<meta\s+(?:property|name)=["']og:image["']\s+content=["']([^"']+)["']/i);
+                    let poster = posterMatch ? posterMatch[1] : '';
+
+                    // Use regex to extract <meta property="twitter:player:width" content="...">
+                    let widthMatch = text.match(
+                        /<meta\s+(?:property|name)=["']twitter:player:width["']\s+content=["']([^"']+)["']/i);
+                    let width = widthMatch ? widthMatch[1] : '';
+
+                    // Use regex to extract <meta property="twitter:player:height" content="...">
+                    let heightMatch = text.match(
+                        /<meta\s+(?:property|name)=["']twitter:player:height["']\s+content=["']([^"']+)["']/i);
+                    let height = heightMatch ? heightMatch[1] : '';
+                    self.title = title;
+                    self.posterImage = poster;
+                    self.aspectratio = width / height;
+                    resolve(title);
+                },
+                error: function(xhr, status, error) {
+                    reject(error);
+                }
+            });
+        });
+
+        let iframe = `<iframe src="https://play.viostream.com/iframe/${videoId}" id="${node}"
+        referrerpolicy="strict-origin-when-cross-origin" webkitallowfullscreen mozallowfullscreen allowfullscreen
+         frameborder="0" ></iframe>`;
+
+        $(`#${node}`)
+            .replaceWith(iframe);
+
+        player[node] = new window.playerjs.Player(document.getElementById(node));
+
+        return new Promise((resolve) => {
+            player[node].on('ready', () => {
+                player[node].play(); // We need to play the video to get the duration.
+
+                let interval = setInterval(() => {
+                    player[node].getDuration(duration => {
+                        if (!duration) {
+                            return;
+                        }
+                        clearInterval(interval);
+                        resolve({
+                            duration: duration,
+                            title: self.title,
+                            posterImage: self.posterImage,
+                        });
+                    });
+                }, 500);
+            });
+        });
     }
     /**
      * Creates an instance of the viostream player.

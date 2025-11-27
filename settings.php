@@ -394,6 +394,13 @@ $providerapis = new admin_settingpage(
     get_string('providerapis', 'mod_interactivevideo')
 );
 
+$providerapis->add(new admin_setting_configcheckbox(
+    'mod_interactivevideo/enableembedly',
+    get_string('enableembedly', 'mod_interactivevideo'),
+    get_string('enableembedly_desc', 'mod_interactivevideo'),
+    0,
+));
+
 $providerapis->add(new admin_setting_configtext(
     'mod_interactivevideo/auth_vdocipher',
     get_string('auth_tool', 'mod_interactivevideo', 'VdoCipher'),

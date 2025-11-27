@@ -23,7 +23,7 @@ Example context (json):
 <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
 {{/useembedly}}
 <div id="interactivevideo-container"
-     class="container-fluid {{#darkmode}}p-sm-3{{/darkmode}} {{^darkmode}}p-sm-3{{/darkmode}} alternative {{#displayoptions.distractionfreemode}}position-absolute{{/displayoptions.distractionfreemode}}"
+     class="container-fluid alternative {{#displayoptions.distractionfreemode}}p-sm-3 position-absolute{{/displayoptions.distractionfreemode}}{{^displayoptions.distractionfreemode}}p-0{{/displayoptions.distractionfreemode}}"
      data-complete="{{completed}}"
      role="main"
      aria-label="{{#str}}interactivevideo, mod_interactivevideo{{/str}}">
