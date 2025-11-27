@@ -190,7 +190,8 @@ $datafortemplate = [
     "title" => format_string($moduleinstance->name),
     "grade" => $moduleinstance->grade,
     "bs" => $CFG->branch >= 500 ? '-bs' : '',
-    "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream']) || get_config('mod_interactivevideo', 'enableembedly'),
+    "useembedly" => in_array($moduleinstance->type, ['bunnystream', 'viostream'])
+        || get_config('mod_interactivevideo', 'enableembedly'),
     "hascourseindex" => $hascourseindex,
     "courseindex" => $courseindex,
 ];
