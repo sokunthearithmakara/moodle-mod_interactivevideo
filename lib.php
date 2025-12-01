@@ -119,8 +119,8 @@ function interactivevideo_display_options($moduleinstance) {
     foreach ($fields as $field) {
         $options[$field] = $moduleinstance->$field ?? 0;
     }
-    $options['beforecompletion'] = $moduleinstance->beforecompletion ?? [];
-    $options['aftercompletion'] = $moduleinstance->aftercompletion ?? [];
+    $options['beforecompletion'] = $moduleinstance->beforecompletion ?? interactivevideo_default_appearance();
+    $options['aftercompletion'] = $moduleinstance->aftercompletion ?? interactivevideo_default_appearance();
     $options['beforecompletionbehavior'] = $moduleinstance->beforecompletionbehavior ?? [];
     $options['aftercompletionbehavior'] = $moduleinstance->aftercompletionbehavior ?? [];
 
@@ -181,37 +181,37 @@ function interactivevideo_add_instance($moduleinstance, $mform = null, $batch = 
         if (!$cmexist) {
             $DB->set_field('course_modules', 'instance', $moduleinstance->id, ['id' => $cmid]);
         }
+    }
 
-        // Handle the file upload for video.
-        if ($moduleinstance->source == 'url') {
-            // Make sure the video field is empty.
-            $DB->set_field('interactivevideo', 'video', '', ['id' => $moduleinstance->id]);
+    // Handle the file upload for video.
+    if ($moduleinstance->source == 'url') {
+        // Make sure the video field is empty.
+        $DB->set_field('interactivevideo', 'video', '', ['id' => $moduleinstance->id]);
 
-            // Delete the draft area files. This is normally done by the cron job, but we might as well do it now.
-            if (!empty($moduleinstance->video)) {
-                $fs = get_file_storage();
-                $usercontext = context_user::instance($USER->id);
-                $fs->delete_area_files($usercontext->id, 'user', 'draft', $moduleinstance->video);
-            }
-        } else {
-            $draftitemid = $moduleinstance->video;
-            // Move the file from draft area to the correct area.
-            file_save_draft_area_files(
-                $draftitemid,
-                $context->id,
-                'mod_interactivevideo',
-                'video',
-                0,
-            );
-
-            // Clear the videourl field.
-            $DB->set_field('interactivevideo', 'videourl', '', ['id' => $moduleinstance->id]);
-
-            // Delete the draft area files. This is normally done by the cron job, but we might as well do it now.
-            $usercontext = context_user::instance($USER->id);
+        // Delete the draft area files. This is normally done by the cron job, but we might as well do it now.
+        if (!empty($moduleinstance->video)) {
             $fs = get_file_storage();
-            $fs->delete_area_files($usercontext->id, 'user', 'draft', $draftitemid);
+            $usercontext = context_user::instance($USER->id);
+            $fs->delete_area_files($usercontext->id, 'user', 'draft', $moduleinstance->video);
         }
+    } else {
+        $draftitemid = $moduleinstance->video;
+        // Move the file from draft area to the correct area.
+        file_save_draft_area_files(
+            $draftitemid,
+            $context->id,
+            'mod_interactivevideo',
+            'video',
+            0,
+        );
+
+        // Clear the videourl field.
+        $DB->set_field('interactivevideo', 'videourl', '', ['id' => $moduleinstance->id]);
+
+        // Delete the draft area files. This is normally done by the cron job, but we might as well do it now.
+        $usercontext = context_user::instance($USER->id);
+        $fs = get_file_storage();
+        $fs->delete_area_files($usercontext->id, 'user', 'draft', $draftitemid);
     }
 
     $requiredupdate = false;
@@ -1014,7 +1014,7 @@ function interactivevideo_displayinline(cm_info $cm) {
 
             if (
                 $datafortemplate['analytics'] == 100 || ($datafortemplate['analyticsexpected'] > 0 &&
-                $datafortemplate['analytics'] >= $datafortemplate['analyticsexpected'])
+                    $datafortemplate['analytics'] >= $datafortemplate['analyticsexpected'])
             ) {
                 $datafortemplate['analyticscompleted'] = true;
             }
@@ -1272,31 +1272,39 @@ function interactivevideo_dndupload_register() {
 /**
  * Handle a file that has been uploaded
  * @param object $uploadinfo details of the file / content that has been uploaded
+ * @param string $videodata
+ * @param int $beforemod
  * @return int instance id of the newly created mod
  */
-function interactivevideo_dndupload_handle($uploadinfo) {
+function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = null, ?int $beforemod = null) {
     global $USER, $DB, $CFG;
-    // First get the file content.
-    $usercontextid = context_user::instance($USER->id)->id;
-    $fs = get_file_storage();
-    $files = $fs->get_area_files($usercontextid, 'user', 'draft', $uploadinfo->draftitemid, 'filesize DESC');
-    if (!$files) {
-        throw new moodle_exception('nofile', 'error');
-    }
-    $file = reset($files);
-
-    $content = $file->get_content();
-
-    $csv = str_getcsv($content, "\n");
-    // Verify the first row contains the correct headers.
-    $requiredfields = [
-        'videourl',
-    ];
-    $headers = array_map('trim', str_getcsv(array_shift($csv)));
-    foreach ($requiredfields as $field) {
-        if (!in_array($field, $headers)) {
-            throw new moodle_exception('invalidcolumn', 'mod_interactivevideo');
+    if (!$videodata) {
+        // First get the file content.
+        $usercontextid = context_user::instance($USER->id)->id;
+        $fs = get_file_storage();
+        $files = $fs->get_area_files($usercontextid, 'user', 'draft', $uploadinfo->draftitemid, 'filesize DESC');
+        if (!$files) {
+            throw new moodle_exception('nofile', 'error');
         }
+        $file = reset($files);
+
+        $content = $file->get_content();
+
+        $csv = str_getcsv($content, "\n");
+        $headers = array_map('trim', str_getcsv(array_shift($csv)));
+
+        // Verify the first row contains the correct headers.
+        $requiredfields = [
+            'videourl',
+        ];
+        foreach ($requiredfields as $field) {
+            if (!in_array($field, $headers)) {
+                throw new moodle_exception('invalidcolumn', 'mod_interactivevideo');
+            }
+        }
+    } else {
+        $csv = str_getcsv($videodata, "\n");
+        $headers = array_map('trim', str_getcsv(array_shift($csv)));
     }
 
     $videotypes = get_config('mod_interactivevideo', 'videosources');
@@ -1319,6 +1327,24 @@ function interactivevideo_dndupload_handle($uploadinfo) {
 
         if (empty($video->videourl) || !filter_var($video->videourl, FILTER_VALIDATE_URL)) {
             continue;
+        }
+
+        $video->source = 'url';
+
+        if ($video->type == 'html5video') { // To be uploaded.
+            // Regex to get the draft item id from URL: {randomhttpsaddress}/user/draft/{id}/{filename}.{ext}.
+            $draftregex = '/\/user\/draft\/(\d+)\/(.*)\.(\w+)/i';
+            if (preg_match($draftregex, $video->videourl, $matches)) {
+                $video->video = $matches[1];
+                $video->filename = $matches[2];
+                $video->videourl = '';
+                $video->source = 'upload';
+                $video->name = !empty($video->name) ? $video->name : $video->filename;
+                $videoinfo[] = $video;
+                continue;
+            } else {
+                continue;
+            }
         }
 
         // Start processing the url to get the name, poster image and duration. Note that the duration is not always available.
@@ -1684,6 +1710,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
         $defaultsettings = $DB->get_record('interactivevideo_settings', ['course' => $courseid]);
         $cache->set($courseid, $defaultsettings);
     }
+
     $displayoptions = [];
     if (isset($defaultsettings->displayoptions) && get_config('mod_interactivevideo', 'enablecoursesettings')) {
         $displayoptions = json_decode($defaultsettings->displayoptions, true);
@@ -1702,7 +1729,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             $video->completion : (isset($defaultsettings->completion) ? $defaultsettings->completion : 0);
 
         $data['course'] = $uploadinfo->course->id;
-        $data['source'] = 'url';
+        $data['source'] = $video->source;
         $data['section'] = $sectionid;
         $data['introformat'] = FORMAT_HTML;
         $data['completionpercentage'] =
@@ -1847,7 +1874,7 @@ function interactivevideo_dndupload_handle($uploadinfo) {
             // Rebuild the course cache after update action.
             rebuild_course_cache($data->course, true, true);
 
-            course_add_cm_to_section($uploadinfo->course, $cmid, $sectionid);
+            course_add_cm_to_section($uploadinfo->course, $cmid, $sectionid, $beforemod);
 
             set_coursemodule_visible($cmid, $visible);
             if (!$visible) {
@@ -1874,6 +1901,32 @@ function interactivevideo_dndupload_handle($uploadinfo) {
     }
 
     return $id;
+}
+
+/**
+ * Default appearance settings
+ *
+ * @return array
+ */
+function interactivevideo_default_appearance() {
+    return [
+        'useoriginalvideocontrols' => 0,
+        'hidemainvideocontrols' => 0,
+        'interactionbar' => 1,
+        'progressbar' => 1,
+        'chaptertoggle' => 1,
+        'chaptertitle' => 1,
+        'timestamp' => 1,
+        'rewind' => 0,
+        'forward' => 0,
+        'captions' => 1,
+        'playbackrate' => 1,
+        'quality' => 1,
+        'mute' => 1,
+        'share' => 1,
+        'expand' => 1,
+        'fullscreen' => 1,
+    ];
 }
 
 /**
@@ -2196,24 +2249,7 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             true
         );
 
-        $defaultappearance = [
-            'useoriginalvideocontrols' => 0,
-            'hidemainvideocontrols' => 0,
-            'interactionbar' => 1,
-            'progressbar' => 1,
-            'chaptertoggle' => 1,
-            'chaptertitle' => 1,
-            'timestamp' => 1,
-            'rewind' => 0,
-            'forward' => 0,
-            'captions' => 1,
-            'playbackrate' => 1,
-            'quality' => 1,
-            'mute' => 1,
-            'share' => 1,
-            'expand' => 1,
-            'fullscreen' => 1,
-        ];
+        $defaultappearance = interactivevideo_default_appearance();
         $mform->setDefaults([
             'beforecompletion' => $defaultappearance,
             'aftercompletion' => $defaultappearance,

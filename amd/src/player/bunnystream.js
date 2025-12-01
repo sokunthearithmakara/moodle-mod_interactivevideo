@@ -46,7 +46,9 @@ class BunnyStream {
 
         // URL: https://iframe.mediadelivery.net/embed/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf
         // URL: https://iframe.mediadelivery.net/watch/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf
-        let regex = /https?:\/\/iframe\.mediadelivery\.net\/(?:embed|watch)\/\d+\/([a-zA-Z0-9-]+)/i;
+        // URL: https://player.mediadelivery.net/embed/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf?autoplay=1
+
+        let regex = /https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch)\/\d+\/([a-zA-Z0-9-]+)/i;
         var match = regex.exec(url);
         var videoId = match ? match[1] : null;
         this.videoId = videoId;
