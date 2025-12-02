@@ -383,7 +383,7 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                 // BUNNYSTREAM:: Check if the link is a bunnystream link.
                 if (videotypes.includes('bunnystream') || currenttype == 'bunnystream') {
                     // Extract id from the URL https://iframe.mediadelivery.net/watch/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf
-                    let regex = /https?:\/\/iframe\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9]+)/i;
+                    let regex = /https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/i;
                     let match = regex.exec(url);
                     if (match) {
                         videowrapper.show();

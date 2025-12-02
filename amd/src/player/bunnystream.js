@@ -48,7 +48,7 @@ class BunnyStream {
         // URL: https://iframe.mediadelivery.net/watch/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf
         // URL: https://player.mediadelivery.net/embed/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf?autoplay=1
 
-        let regex = /https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch)\/\d+\/([a-zA-Z0-9-]+)/i;
+        let regex = /https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/i;
         var match = regex.exec(url);
         var videoId = match ? match[1] : null;
         this.videoId = videoId;
@@ -56,22 +56,37 @@ class BunnyStream {
         // Get data from oembed.
         let oembedUrl = `https://video.bunnycdn.com/OEmbed?url=${encodeURIComponent(url)}`;
 
-        const getdata = await fetch(oembedUrl);
-        if (!getdata.ok) {
-            dispatchEvent('iv:playerError', {error: getdata});
-            return;
-        }
-        const getdatajson = await getdata.json();
-        if (getdatajson.error) {
-            dispatchEvent('iv:playerError', {error: getdatajson});
-            return;
-        }
-        self.title = getdatajson.title;
-        self.posterImage = getdatajson.thumbnail_url;
+        let data = await $.ajax({
+            url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+            type: 'POST',
+            dataType: 'text',
+            data: {
+                action: 'get_from_url',
+                contextid: M.cfg.contextid,
+                url: oembedUrl,
+                sesskey: M.cfg.sesskey,
+            }
+        });
 
+        try {
+            data = JSON.parse(data);
+        } catch (e) {
+            dispatchEvent('iv:playerError', {error: data});
+            return;
+        }
+        if (!data.title) {
+            dispatchEvent('iv:playerError', {error: data});
+            return;
+        }
+
+        self.title = data.title;
+        self.posterImage = data.thumbnail_url;
+
+        // Replace 'iframe.' with 'player.' in the HTML.
+        data.html = data.html.replace(/iframe\./g, 'player.');
         let $parent = $(`#${node}`).parent();
         $(`#${node}`)
-            .replaceWith(getdatajson.html);
+            .replaceWith(data.html);
         $parent.find('iframe').attr('id', node);
         player[node] = new window.playerjs.Player(document.getElementById(node));
 
@@ -99,10 +114,10 @@ class BunnyStream {
      * @param {object} opts - The options for the player.
      */
     async load(url, start, end, opts = {}) {
-            const node = opts.node || 'player';
-            this.node = node;
-            this.allowAutoplay = await allowAutoplay(document.getElementById(node));
-            if (!this.allowAutoplay) {
+        const node = opts.node || 'player';
+        this.node = node;
+        this.allowAutoplay = await allowAutoplay(document.getElementById(node));
+        if (!this.allowAutoplay) {
             dispatchEvent('iv:autoplayBlocked', {
                 requireVideoBlock: true,
             });
@@ -112,7 +127,8 @@ class BunnyStream {
 
         // URL: https://iframe.mediadelivery.net/embed/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf
         // URL: https://iframe.mediadelivery.net/watch/501013/66a7eb77-5878-4fde-8dc0-926a3c7f51bf
-        let regex = /https?:\/\/iframe\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/i;
+        // URL: https://player.mediadelivery.net/embed/397733/9ab497c4-557a-4ed1-b2b8-a0693fdff84f
+        let regex = /https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/i;
         var match = regex.exec(url);
         var videoId = match ? match[1] : null;
         this.videoId = videoId;
@@ -120,23 +136,40 @@ class BunnyStream {
         // Get data from oembed.
         let oembedUrl = `https://video.bunnycdn.com/OEmbed?url=${encodeURIComponent(url)}`;
 
-        const getdata = await fetch(oembedUrl);
-        if (!getdata.ok) {
-            dispatchEvent('iv:playerError', {error: getdata});
+        let data = await $.ajax({
+            url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+            type: 'POST',
+            dataType: 'text',
+            data: {
+                action: 'get_from_url',
+                contextid: M.cfg.contextid,
+                url: oembedUrl,
+                sesskey: M.cfg.sesskey,
+            }
+        });
+
+        try {
+            data = JSON.parse(data);
+        } catch (e) {
+            dispatchEvent('iv:playerError', {error: data});
             return;
         }
-        const getdatajson = await getdata.json();
-        if (getdatajson.error) {
-            dispatchEvent('iv:playerError', {error: getdatajson});
+
+        if (!data.title) {
+            dispatchEvent('iv:playerError', {error: data});
             return;
         }
-        self.title = getdatajson.title;
-        self.posterImage = getdatajson.thumbnail_url;
-        self.aspectratio = getdatajson.width / getdatajson.height;
+
+        self.title = data.title;
+        self.posterImage = data.thumbnail_url;
+        self.aspectratio = data.width / data.height;
+
+        // Replace 'iframe.' with 'player.' in the HTML.
+        data.html = data.html.replace(/iframe\./g, 'player.');
 
         let $parent = $(`#${node}`).parent();
         $(`#${node}`)
-            .replaceWith(getdatajson.html);
+            .replaceWith(data.html);
         $parent.find('iframe').attr('id', node);
         $parent.removeClass('d-none w-0');
         $('.video-block, #video-block').remove();

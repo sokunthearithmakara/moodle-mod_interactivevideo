@@ -1331,18 +1331,21 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
 
         $video->source = 'url';
 
-        if ($video->type == 'html5video') { // To be uploaded.
+        if ($video->type == 'html5video' && !empty($video->endtime)) { // To be uploaded.
             // Regex to get the draft item id from URL: {randomhttpsaddress}/user/draft/{id}/{filename}.{ext}.
             $draftregex = '/\/user\/draft\/(\d+)\/(.*)\.(\w+)/i';
-            if (preg_match($draftregex, $video->videourl, $matches)) {
+            if (preg_match($draftregex, $video->videourl, $matches)) { // If the video is uploaded.
                 $video->video = $matches[1];
                 $video->filename = $matches[2];
                 $video->videourl = '';
-                $video->source = 'upload';
+                $video->source = 'file';
                 $video->name = !empty($video->name) ? $video->name : $video->filename;
                 $videoinfo[] = $video;
                 continue;
             } else {
+                $video->source = 'url';
+                $video->name = !empty($video->name) ? $video->name : 'Untitled';
+                $videoinfo[] = $video;
                 continue;
             }
         }
@@ -1664,13 +1667,153 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             continue;
         }
 
+        // Check if it is a vdocipher url.
+        // E.g. https://www.vdocipher.com/dashboard/video/embed/5a8c3b0c-e7e8-4e2d-a7b3-c0e5e6f7a8b9.
+        $vdocipherregex = '/(?:https?:\/\/)?(?:www\.)?vdocipher\.com\/dashboard\/video\/(?:embed\/|)([a-zA-Z0-9_-]+)/i';
+        if (preg_match($vdocipherregex, $video->videourl, $matches) && in_array('vdocipher', $videotypes)) {
+            $video->type = 'vdocipher';
+            $key = get_config('mod_interactivevideo', 'auth_vdocipher');
+            $videoid = explode('/', $matches[1])[0];
+            require_once($CFG->libdir . '/filelib.php');
+            $curl = new curl(['ignoresecurity' => true]);
+            $curl->setHeader('Accept: application/json');
+            $curl->setHeader('Authorization: Apisecret ' . $key);
+            $curl->setHeader('Content-Type: application/json');
+            $response = $curl->get("https://www.vdocipher.com/api/videos/$videoid");
+            $response = json_decode($response, true);
+            $video->posterimage = $response['posters'][0] ? $response['posters'][0]['url'] : $response['poster'];
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response['title'];
+            }
+            if ($video->endtime == 0 || $video->endtime > $response['length']) {
+                $video->endtime = (int)$response['length'];
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if it is a vidyard url.
+        // E.g. https://share.vidyard.com/watch/q7u7z7Z-2021-2022-panini-chronicles-draft-picks-basketball-3-box-break-1-ebay.
+        $vidyardregex = '/(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i';
+        if (preg_match($vidyardregex, $video->videourl, $matches) && in_array('vidyard', $videotypes)) {
+            $video->type = 'vidyard';
+            $response = file_get_contents($video->videourl);
+            if (!$response) {
+                require_once($CFG->libdir . '/filelib.php');
+                $curl = new curl(['ignoresecurity' => true]);
+                $curl->setHeader('Content-Type: application/json');
+                $response = $curl->get($video->videourl);
+            }
+            $title = '';
+            $posterimage = '';
+            $duration = 0;
+            $doc = new DOMDocument();
+            @$doc->loadHTML($response);
+            $metatags = $doc->getElementsByTagName('meta');
+            foreach ($metatags as $tag) {
+                if ($tag->getAttribute('property') == 'og:title') {
+                    $title = $tag->getAttribute('content');
+                }
+                if ($tag->getAttribute('property') == 'og:image') {
+                    $posterimage = $tag->getAttribute('content');
+                }
+                if ($tag->getAttribute('property') == 'video:duration') {
+                    $duration = $tag->getAttribute('content');
+                }
+            }
+            $video->posterimage = $posterimage;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $duration) {
+                $video->endtime = (int)$duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if it is a viostream url.
+        // E.g. https://share.viostream.com/nhedxonrxsyfee .
+        $viostreamregex = '/(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i';
+        if (preg_match($viostreamregex, $video->videourl, $matches) && in_array('viostream', $videotypes)) {
+            $video->type = 'viostream';
+            $response = file_get_contents($video->videourl);
+            if (!$response) {
+                require_once($CFG->libdir . '/filelib.php');
+                $curl = new curl(['ignoresecurity' => true]);
+                $curl->setHeader('Content-Type: application/json');
+                $response = $curl->get($video->videourl);
+            }
+            $title = '';
+            $posterimage = '';
+            $duration = 0;
+            $doc = new DOMDocument();
+            @$doc->loadHTML($response);
+            $metatags = $doc->getElementsByTagName('meta');
+            foreach ($metatags as $tag) {
+                if ($tag->getAttribute('property') == 'og:title') {
+                    $title = $tag->getAttribute('content');
+                }
+                if ($tag->getAttribute('property') == 'og:image') {
+                    $posterimage = $tag->getAttribute('content');
+                }
+            }
+            $video->posterimage = $posterimage;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $duration) {
+                $video->endtime = (int)$duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if it is a bunnystream url.
+        $bunnyregex = '/https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/i';
+        if (preg_match($bunnyregex, $video->videourl, $matches) && in_array('bunnystream', $videotypes)) {
+            $video->type = 'bunnystream';
+            $oembedurl = 'https://video.bunnycdn.com/OEmbed?url=' . urlencode($video->videourl);
+            $response = file_get_contents($oembedurl);
+            if (!$response) {
+                require_once($CFG->libdir . '/filelib.php');
+                $curl = new curl(['ignoresecurity' => true]);
+                $curl->setHeader('Content-Type: application/json');
+                $response = $curl->get($oembedurl);
+            }
+
+            $response = json_decode($response);
+            $title = $response->title;
+            $video->posterimage = $response->thumbnail_url;
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $title ?? 'Untitled';
+            }
+            if ($video->endtime == 0 || $video->endtime > $duration) {
+                $video->endtime = 0;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
         // Check if it is a direct video/audio file using mime type.
         $fileinfo = pathinfo($video->videourl);
         $fileextension = $fileinfo['extension'];
         if (!isset($fileextension) || empty($fileextension)) {
             continue;
         }
-        $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac', '.mpd', '.m3u8'];
+        $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac', 'mpd', 'm3u8'];
         if (in_array($fileextension, $acceptedextensions) && in_array('videolink', $videotypes)) {
             $video->type = 'html5video';
             $video->posterimage = '';
@@ -2584,6 +2727,8 @@ function interactivevideo_get_type_from_url($url) {
         'vdocipher' => '/(?:https?:\/\/)?(?:www\.)?vdocipher\.com\/dashboard\/video\/(?:embed\/|)([a-zA-Z0-9_-]+)/i',
         'dyntube' => '/(?:https?:\/\/)?(?:videos\.dyntube\.com|dyntube\.com)\/(?:videos|iframes)\/([^\/]+)/i',
         'vidyard' => '/(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i',
+        'viostream' => '/(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i',
+        'bunnystream' => '/(?:https?:\/\/)?(?:www\.)?(?:bunnystream\.com)\/embed\/([a-zA-Z0-9]+)/i',
     ];
 
     foreach ($patterns as $type => $regex) {

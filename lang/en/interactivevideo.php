@@ -510,3 +510,4 @@ $string['youmustcompletethistaskfirst'] = 'You must complete this task first.';
 $string['youmustspendatleastminutesbeforemarkingcomplete'] = 'You must spend at least <b>{$a->timerequire} minutes</b> before marking this as complete.<br><br><b>Time you spent: {$a->timespent} minutes.</b>';
 $string['youtube'] = 'YouTube';
 $string['yt'] = 'YouTube';
+$string['novalidvideoinfo'] = 'No valid video info found.';
