@@ -60,28 +60,26 @@ const quickform = async() => {
 
         form.show();
 
-        form.addEventListener(form.events.LOADED, (e) => {
+        form.addEventListener(form.events.LOADED, async(e) => {
             e.stopImmediatePropagation();
             if (window.IVPLAYER) {
                 window.IVPLAYER.pause();
             }
             // Replace the .modal-lg class with .modal-xl.
-            setTimeout(() => {
-                $('.modal-dialog').removeClass('modal-lg').addClass('modal-xl');
-            }, 1000);
-            setTimeout(async() => {
-                let strings = await str.get_strings([
-                    {key: 'moresettings', component: 'mod_interactivevideo'},
-                    {key: 'resettodefaults', component: 'mod_interactivevideo'},
-                ]);
-                $('[data-region="footer"]').css('align-items', 'unset')
-                    .prepend(`<span class="btn btn-secondary iv-mr-1 default" title="${strings[1]}"><i class="fa fa-refresh"></i>
+            let root = form.modal.getRoot();
+            root.find('.modal-dialog').removeClass('modal-lg').addClass('modal-xl');
+            root.addClass('path-mod-interactivevideo');
+            let strings = await str.get_strings([
+                {key: 'moresettings', component: 'mod_interactivevideo'},
+                {key: 'resettodefaults', component: 'mod_interactivevideo'},
+            ]);
+            root.find('[data-region="footer"]').css('align-items', 'unset')
+                .prepend(`<span class="btn btn-secondary iv-mr-1 default" title="${strings[1]}"><i class="fa fa-refresh"></i>
                         </span>
                         <a type="button" class="btn btn-secondary iv-mr-auto" data-dismiss="modal" title="${strings[0]}"
                          data-bs-dismiss="modal"
                  href="${M.cfg.wwwroot}/course/modedit.php?update=${data.cmid}"><i class="fa fa-cog"></i>
                  </a>`);
-            }, 2000);
         });
 
         form.addEventListener(form.events.FORM_SUBMITTED, (e) => {

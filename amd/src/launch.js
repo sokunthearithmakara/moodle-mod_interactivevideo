@@ -411,7 +411,7 @@ define(['jquery', 'core/str', 'core/templates', 'core/modal_factory', 'core/moda
                             $(this).find('i').removeClass('fa-arrow-left fa-arrow-right').addClass('fa-circle-o-notch fa-spin');
                             if (player) {
                                 try {
-                                   await player.pause();
+                                    await player.pause();
                                 } catch (e) {
                                     // Do nothing.
                                 }
@@ -591,26 +591,23 @@ define(['jquery', 'core/str', 'core/templates', 'core/modal_factory', 'core/moda
 
                     form.show();
 
-                    form.addEventListener(form.events.LOADED, (e) => {
+                    form.addEventListener(form.events.LOADED, async(e) => {
+
                         e.stopImmediatePropagation();
-                        // Replace the .modal-lg class with .modal-xl.
-                        setTimeout(() => {
-                            $('.modal.show').addClass('path-mod-interactivevideo');
-                            $('.modal-dialog').removeClass('modal-lg').addClass('modal-xl');
-                        }, 1000);
-                        setTimeout(async() => {
-                            let strings = await str.get_strings([
-                                {key: 'moresettings', component: 'mod_interactivevideo'},
-                                {key: 'resettodefaults', component: 'mod_interactivevideo'},
-                            ]);
-                            $('[data-region="footer"]').css('align-items', 'unset')
-                                .prepend(`<span class="btn btn-secondary iv-mr-1 default" title="${strings[1]}">
+                        let root = form.modal.getRoot();
+                        root.find('.modal-dialog').removeClass('modal-lg').addClass('modal-xl');
+                        root.addClass('path-mod-interactivevideo');
+                        let strings = await str.get_strings([
+                            {key: 'moresettings', component: 'mod_interactivevideo'},
+                            {key: 'resettodefaults', component: 'mod_interactivevideo'},
+                        ]);
+                        root.find('[data-region="footer"]').css('align-items', 'unset')
+                            .prepend(`<span class="btn btn-secondary iv-mr-1 default" title="${strings[1]}">
                         <i class="fa fa-refresh"></i></span>
                         <a type="button" class="btn btn-secondary iv-mr-auto" target="_blank" data-dismiss="modal"
                          data-bs-dismiss="modal" title="${strings[0]}"
                             href="${M.cfg.wwwroot}/course/modedit.php?update=${formdata.cmid}"><i class="fa fa-cog"></i>
                             </a>`);
-                        }, 2000);
                     });
 
                     form.addEventListener(form.events.FORM_SUBMITTED, (e) => {
