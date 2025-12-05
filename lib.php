@@ -483,7 +483,7 @@ function interactivevideo_get_file_info($browser, $areas, $course, $cm, $context
  */
 function interactivevideo_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, $options = []) {
 
-    if ($filearea != 'public') {
+    if ($filearea != 'public' && $filearea != 'posterimage') {
         require_login($course, true, $cm);
     }
 
