@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.5.3] - 2025-12-15
+https://mod-interactive-video.canny.io/changelog/interactive-video-153
+
 ## [1.5.2] - 2025-11-27
 ### Updated
 - Improved support for SproutVideo, VioStream, and BunnyStream.
