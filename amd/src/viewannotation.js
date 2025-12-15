@@ -1746,7 +1746,11 @@ define([
                 } else {
                     player.play();
                 }
+            });
 
+            $(document).on('iv:playerStarted', async function() {
+                $('#playpause').find('i').removeClass('bi-play-fill').addClass('bi-pause-fill');
+                $('#playpause').attr('data-original-title', M.util.get_string('pausetooltip', 'mod_interactivevideo'));
             });
 
             $(document).on('click', '#playpause', async function(e) {

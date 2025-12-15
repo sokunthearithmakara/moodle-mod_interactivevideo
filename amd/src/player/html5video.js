@@ -412,6 +412,9 @@ class Html5Video {
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+            // Calculate the vertical center
+            const centerY = HEIGHT / 2;
+
             for (var i = 0; i < bufferLength; i++) {
                 barHeight = dataArray[i];
                 var r = barHeight + (25 * (i / bufferLength));
@@ -419,7 +422,8 @@ class Html5Video {
                 var b = 50;
 
                 ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
-                ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+                // Draw bars centered vertically
+                ctx.fillRect(x, centerY - barHeight / 2, barWidth, barHeight);
 
                 x += barWidth + 1;
             }

@@ -1271,10 +1271,11 @@ function interactivevideo_dndupload_register() {
 
 /**
  * Handle a file that has been uploaded
- * @param object $uploadinfo details of the file / content that has been uploaded
- * @param string $videodata
- * @param int $beforemod
- * @return int instance id of the newly created mod
+ * @param stdClass $uploadinfo Information about the uploaded file
+ * @param string|null $videodata Optional video data in csv format
+ * @param int|null $beforemod Optional course module id to insert before
+ * @return array containing information about the created interactive video(s)
+ * @throws moodle_exception
  */
 function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = null, ?int $beforemod = null) {
     global $USER, $DB, $CFG;
@@ -1881,6 +1882,9 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
                 ? $defaultsettings->completionpercentage : 0);
 
         $data['completionpercentage'] = $data['completionpercentage'] > 100 ? 100 : $data['completionpercentage'];
+        $extendedcompletion = isset($video->extendedcompletion) ? $video->extendedcompletion
+            : (isset($defaultsettings->extendedcompletion) ? $defaultsettings->extendedcompletion : '');
+        $data['extendedcompletion'] = $extendedcompletion;
         $data['grade'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ?
             $video->grade : (isset($displayoptions['grade']) ? $displayoptions['grade'] : 0);
         $data['grade[modgrade_point]'] = $video->grade && is_numeric($video->grade) && !empty($video->grade) ?
@@ -1889,13 +1893,14 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             $video->gradepass : (isset($displayoptions['gradepass']) ? $displayoptions['gradepass'] : 0);
         $data['showdescription'] = $video->showdescription ?
             $video->showdescription : (isset($displayoptions['showdescription']) ? $displayoptions['showdescription'] : 0);
+
         // For the first row, we're using the cm that was created by dndupload. The rest, we're creating new ones.
         if ($count == 0) {
             $data['first'] = true; // We need to return the id of the first video.
             $cmid = $uploadinfo->coursemodule;
             $data['coursemodule'] = $cmid;
             // If the completion percentage is greater than 0, set the completion to 2 (tracking_automatic).
-            if ($data['completionpercentage'] > 0) {
+            if ($data['completionpercentage'] > 0 || !empty($extendedcompletion)) {
                 $data['completion'] = 2;
             }
             $DB->update_record(
@@ -1917,7 +1922,7 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             );
 
             // Here we want to add completion to $d so that it is added to the course_modules table.
-            if ($data['completionpercentage'] > 0) {
+            if ($data['completionpercentage'] > 0 || !empty($extendedcompletion)) {
                 $data['completion'] = 2;
             }
 
