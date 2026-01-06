@@ -21,7 +21,7 @@ Example context (json):
 {{#showposterimage}}
 <div class="image-container position-relative {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
     <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}">
-        <img src="{{interactivevideo.posterimage}}" loading="lazy">
+        <img src="{{interactivevideo.posterimage}}" loading="lazy" alt="{{{formattedname}}}">
         {{#cm.uservisible}}
         <a href="{{#cm.visible}}{{^launchinpopup}}{{baseurl}}/mod/interactivevideo/view.php?id={{cm.id}}{{/launchinpopup}}{{/cm.visible}}{{#launchinpopup}}javascript:void(0){{/launchinpopup}}"
            class="{{#launchinpopup}}launch-interactivevideo{{/launchinpopup}} overlay"
@@ -56,6 +56,7 @@ Example context (json):
      aria-label="{{#str}}progress,interactivevideo{{/str}}">
     <div class="progress-bar"
          role="progressbar"
+         aria-label="Video analytics progress"
          style="width: {{analytics}}%"
          aria-valuenow="{{analytics}}"
          aria-valuemin="0"

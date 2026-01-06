@@ -153,9 +153,7 @@ function interactivevideo_add_instance($moduleinstance, $mform = null, $batch = 
 
     $moduleinstance->text = $moduleinstance->endscreentext;
 
-    if (!$batch) {
-        $moduleinstance->endscreentext = json_encode($moduleinstance->endscreentext);
-    }
+    $moduleinstance->endscreentext = json_encode($moduleinstance->endscreentext);
 
     $moduleinstance->displayoptions = json_encode(interactivevideo_display_options($moduleinstance));
 

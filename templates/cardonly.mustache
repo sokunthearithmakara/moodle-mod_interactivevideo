@@ -27,8 +27,7 @@
 {{#cardonly}}
 <div class="image-container card-only {{#hasanalytics}}hasanalytics{{/hasanalytics}}">
     <div class="poster position-relative {{#posterimagesquare}}square{{/posterimagesquare}}">
-        <img src="{{interactivevideo.posterimage}}" loading="lazy">
-
+        <img src="{{interactivevideo.posterimage}}" loading="lazy" alt="{{{formattedname}}}">
         {{#new}}
         <span class="badge iv-badge-primary new-badge" aria-label="{{#str}}new,interactivevideo{{/str}}">
             {{#str}}new,interactivevideo{{/str}}
@@ -66,6 +65,7 @@
         <div class="analytics iv-rounded-0 progress" aria-label="Video analytics progress">
             <div class="progress-bar bg-danger"
                  role="progressbar"
+                 aria-label="Video analytics progress"
                  style="width: {{analytics}}%"
                  aria-valuenow="{{analytics}}"
                  aria-valuemin="0"
@@ -89,6 +89,7 @@
         <div class="analytics progress position-relative mt-2" aria-label="Video analytics progress">
             <div class="progress-bar bg-danger"
                  role="progressbar"
+                 aria-label="Video analytics progress"
                  style="width: {{analytics}}%"
                  aria-valuenow="{{analytics}}"
                  aria-valuemin="0"

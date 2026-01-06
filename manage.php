@@ -130,101 +130,103 @@ if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesetti
     $cminstances = array_map(function ($cm) {
         return $cm->instance;
     }, $cms);
-
-    [$inparams, $inparamsvalues] = $DB->get_in_or_equal($cminstances);
-    // Get all interaction_completion in the course.
-    $completion = $DB->get_records_sql(
-        "SELECT id, cmid FROM {interactivevideo_completion} WHERE cmid $inparams",
-        $inparamsvalues
-    );
-    $fs = get_file_storage();
     $list = [];
-    foreach ($cms as $cm) {
-        $compl = 0;
-        $compls = array_filter($completion, function ($c) use ($cm) {
-            return $c->cmid == $cm->instance;
-        });
-        $compl = count($compls);
-        $item = [
-            'id' => $cm->id,
-            'instance' => $cm->instance,
-            'contextid' => $cm->context->id,
-            'title' => format_string($cm->name),
-            'type' => $cm->customdata['type'] == '' ? get_string('html5video', 'mod_interactivevideo')
-                : get_string($cm->customdata['type'], 'mod_interactivevideo'),
-            'url' => $cm->customdata['videourl'],
-            'sectionnum' => $cm->sectionnum,
-            'sectionname' => $cm->sectionnum . '. ' . $format->get_section_name($cm->sectionnum),
-            'view' => $compl,
-            'courseid' => $courseid,
-        ];
-        $item['posterimage'] = $cm->customdata['posterimage'];
-        $displayoptions = $cm->customdata['displayoptions'];
-        $displayoptions = json_decode($displayoptions, true);
-        $item['squareposter'] = isset($displayoptions['squareposterimage']) && $displayoptions['squareposterimage'] == 1 ?
-            'square' : '';
-        if ($displayoptions['usecustomposterimage']) {
+
+    if (!empty($cminstances)) {
+        [$inparams, $inparamsvalues] = $DB->get_in_or_equal($cminstances);
+        // Get all interaction_completion in the course.
+        $completion = $DB->get_records_sql(
+            "SELECT id, cmid FROM {interactivevideo_completion} WHERE cmid $inparams",
+            $inparamsvalues
+        );
+        $fs = get_file_storage();
+        foreach ($cms as $cm) {
+            $compl = 0;
+            $compls = array_filter($completion, function ($c) use ($cm) {
+                return $c->cmid == $cm->instance;
+            });
+            $compl = count($compls);
+            $item = [
+                'id' => $cm->id,
+                'instance' => $cm->instance,
+                'contextid' => $cm->context->id,
+                'title' => format_string($cm->name),
+                'type' => $cm->customdata['type'] == '' ? get_string('html5video', 'mod_interactivevideo')
+                    : get_string($cm->customdata['type'], 'mod_interactivevideo'),
+                'url' => $cm->customdata['videourl'],
+                'sectionnum' => $cm->sectionnum,
+                'sectionname' => $cm->sectionnum . '. ' . $format->get_section_name($cm->sectionnum),
+                'view' => $compl,
+                'courseid' => $courseid,
+            ];
+            $item['posterimage'] = $cm->customdata['posterimage'];
+            $displayoptions = $cm->customdata['displayoptions'];
+            $displayoptions = json_decode($displayoptions, true);
+            $item['squareposter'] = isset($displayoptions['squareposterimage']) && $displayoptions['squareposterimage'] == 1 ?
+                'square' : '';
             if ($displayoptions['usecustomposterimage']) {
-                $file = $fs->get_area_files(
-                    $cm->context->id,
-                    'mod_interactivevideo',
-                    'posterimage',
-                    0,
-                    'filesize DESC',
-                );
-                $file = reset($file);
-                if ($file) {
-                    $posterimage = moodle_url::make_pluginfile_url(
-                        $file->get_contextid(),
-                        $file->get_component(),
-                        $file->get_filearea(),
-                        $file->get_itemid(),
-                        $file->get_filepath(),
-                        $file->get_filename()
+                if ($displayoptions['usecustomposterimage']) {
+                    $file = $fs->get_area_files(
+                        $cm->context->id,
+                        'mod_interactivevideo',
+                        'posterimage',
+                        0,
+                        'filesize DESC',
                     );
-                    $item['posterimage'] = $posterimage->out();
+                    $file = reset($file);
+                    if ($file) {
+                        $posterimage = moodle_url::make_pluginfile_url(
+                            $file->get_contextid(),
+                            $file->get_component(),
+                            $file->get_filearea(),
+                            $file->get_itemid(),
+                            $file->get_filepath(),
+                            $file->get_filename()
+                        );
+                        $item['posterimage'] = $posterimage->out();
+                    }
                 }
             }
-        }
-        $item['posterimage'] = $item['posterimage'] == '' ?
-            $OUTPUT->get_generated_image_for_id($cm->id) : $item['posterimage']; // Fallback to default image.
-        $items = $cache->get($cm->instance);
-        if (empty($items)) {
-            $items = $DB->get_records(
-                'interactivevideo_items',
-                ['annotationid' => $cm->instance]
-            );
-            $cache->set($cm->instance, $items);
-        }
-        [$starttime, $endtime] = explode('-', $cm->customdata['startendtime']);
-        $items = array_values($items);
+            $item['posterimage'] = $item['posterimage'] == '' ?
+                $OUTPUT->get_generated_image_for_id($cm->id) : $item['posterimage']; // Fallback to default image.
+            $items = $cache->get($cm->instance);
+            if (empty($items)) {
+                $items = $DB->get_records(
+                    'interactivevideo_items',
+                    ['annotationid' => $cm->instance]
+                );
+                $cache->set($cm->instance, $items);
+            }
+            [$starttime, $endtime] = explode('-', $cm->customdata['startendtime']);
+            $items = array_values($items);
 
-        $activitycount = $activitytypes;
-        $activitycount = array_map(function ($activity) use ($items) {
-            $activity = (array) $activity;
-            $activity['count'] = count(array_filter($items, function ($item) use ($activity) {
-                $item = (array) $item;
-                return $item['type'] == $activity['name'];
-            }));
-            return $activity;
-        }, $activitycount);
-        $item['activitycount'] = $activitycount;
+            $activitycount = $activitytypes;
+            $activitycount = array_map(function ($activity) use ($items) {
+                $activity = (array) $activity;
+                $activity['count'] = count(array_filter($items, function ($item) use ($activity) {
+                    $item = (array) $item;
+                    return $item['type'] == $activity['name'];
+                }));
+                return $activity;
+            }, $activitycount);
+            $item['activitycount'] = $activitycount;
 
-        $item['items'] = $items;
-        $item['xp'] = array_sum(array_column($items, 'xp'));
-        $item['count'] = count($items);
-        $item['duration'] = $endtime - $starttime;
-        $afterlink = '';
-        $context = \context_module::instance($cm->id);
-        if (has_capability('mod/interactivevideo:edit', $context)) {
-            $item['edit'] = true;
-            $item['editinteraction'] = true;
-        }
-        if (has_capability('mod/interactivevideo:viewreport', $context)) {
-            $item['report'] = true;
-        }
+            $item['items'] = $items;
+            $item['xp'] = array_sum(array_column($items, 'xp'));
+            $item['count'] = count($items);
+            $item['duration'] = $endtime - $starttime;
+            $afterlink = '';
+            $context = \context_module::instance($cm->id);
+            if (has_capability('mod/interactivevideo:edit', $context)) {
+                $item['edit'] = true;
+                $item['editinteraction'] = true;
+            }
+            if (has_capability('mod/interactivevideo:viewreport', $context)) {
+                $item['report'] = true;
+            }
 
-        $list[] = $item;
+            $list[] = $item;
+        }
     }
     echo '<textarea id="listdata" style="display: none;">' . json_encode($list) . '</textarea>';
     echo '<div id="list">';
