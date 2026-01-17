@@ -34,7 +34,6 @@ import './libraries/dataTables.select';
 import './libraries/select.bootstrap4';
 import './libraries/select2';
 import quickform from './quickform';
-import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
 
 /**
@@ -55,13 +54,19 @@ import ModalEvents from 'core/modal_events';
  * @param {string} name - The name of the activity.
  * @param {Object} access - The access object.
  */
-const init = (cmid, groupid, grademax, itemids, completionpercentage, videourl, videotype, cm, courseid, start, end,
+const init = async(cmid, groupid, grademax, itemids, completionpercentage, videourl, videotype, cm, courseid, start, end,
     posterimage, name, access) => {
     window.JSZip = JSZip;
     let DataTable = $.fn.dataTable;
     let player;
     const isBS5 = $('body').hasClass('bs-5');
     // Const bsAffix = isBS5 ? '-bs' : '';
+    let ModalFactory;
+    try {
+        ModalFactory = await import('core/modal_factory');
+    } catch (error) {
+        ModalFactory = await import('core/modal');
+    }
 
     quickform();
 

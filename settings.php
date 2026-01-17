@@ -58,7 +58,7 @@ $ADMIN->add('modsettings', $modfolder);
 $plugins = '{}';
 if (
     $PAGE->bodyid == 'page-admin-setting-modivfolder' ||
-    $PAGE->bodyid == 'page-admin-setting-mod_interactivevideo_generalsettings'
+    $PAGE->bodyid == 'page-admin-setting-modsettinginteractivevideo'
 ) {
     // Get file content from GitHub.
     $file = 'https://raw.githubusercontent.com/sokunthearithmakara/moodle-mod_interactivevideo/refs/heads/main/plugins.json';
@@ -73,7 +73,7 @@ if (
 $plugins = json_decode($plugins, true);
 
 // General settings page.
-$gsettings = new admin_settingpage('mod_interactivevideo_generalsettings', get_string('generalsettings', 'mod_interactivevideo'));
+$gsettings = new admin_settingpage('modsettinginteractivevideo', get_string('generalsettings', 'mod_interactivevideo'));
 
 // Checkboxes for enabling the content types.
 $subplugins = array_keys(core_component::get_plugin_list('ivplugin'));
@@ -300,7 +300,6 @@ $asettings->add(new admin_setting_configmulticheckbox(
         'showname' => get_string('showname', 'mod_interactivevideo'),
         'distractionfreemode' => get_string('distractionfreemode', 'mod_interactivevideo'),
         'darkmode' => get_string('darkmode', 'mod_interactivevideo'),
-        'alignindicator' => get_string('alignindicatorcenter', 'mod_interactivevideo'),
     ],
     [
         'courseindex' => get_string('courseindex', 'mod_interactivevideo'),

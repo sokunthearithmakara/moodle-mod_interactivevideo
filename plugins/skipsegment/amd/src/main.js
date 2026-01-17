@@ -23,6 +23,8 @@
 import $ from 'jquery';
 import Base from 'mod_interactivevideo/type/base';
 import Ajax from 'core/ajax';
+import {get_string as getString} from 'core/str';
+
 export default class SkipSegment extends Base {
     /**
      * Initializes the skip segment plugin.
@@ -287,7 +289,7 @@ export default class SkipSegment extends Base {
             $('#wrapper').append(`<div id="skipsegment" class="d-flex align-items-center cursor-pointer
                  position-absolute btn btn-lg btn-rounded pulse-sm hide shadow" data-timestamp="${annotation.title}"
                  style="bottom: 2rem;right: 1rem; text-shadow: none;">
-                    ${M.util.get_string('skip', 'mod_interactivevideo')}
+                    ${await getString('skip', 'mod_interactivevideo')}
                     <i class="bi bi-chevron-bar-right iv-ml-1 fs-unset"></i>
                 </div>`);
             $('#skipsegment').fadeIn(300);

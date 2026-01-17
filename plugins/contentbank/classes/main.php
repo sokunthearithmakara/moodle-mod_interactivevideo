@@ -43,6 +43,7 @@ class main extends \ivplugin_richtext\main {
             'description' => get_string('contentbankdescription', 'ivplugin_contentbank'),
             'author' => 'tsmakara',
             'tutorial' => get_string('tutorialurl', 'ivplugin_contentbank'),
+            'preloadstrings' => false,
         ];
     }
 

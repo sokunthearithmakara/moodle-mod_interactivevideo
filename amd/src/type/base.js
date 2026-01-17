@@ -27,6 +27,7 @@ import {dispatchEvent} from 'core/event_dispatcher';
 import {add as addToast} from 'core/toast';
 import ModalForm from 'core_form/modalform';
 import 'mod_interactivevideo/libraries/jquery-ui';
+import {get_string as getString} from 'core/str';
 
 class Base {
     /**
@@ -904,7 +905,7 @@ class Base {
      * Render the container for the annotation
      * @param  {Object} annotation The annotation object
      */
-    renderContainer(annotation) {
+    async renderContainer(annotation) {
         if (annotation.hascompletion == 0) {
             return;
         }
@@ -912,11 +913,10 @@ class Base {
         if (annotation.completiontracking != 'manual') {
             let $completiontoggle = $message.find('#completiontoggle');
             $completiontoggle.prop('disabled', true);
-            $completiontoggle.find('span').text(
-                annotation.completed
-                    ? `${M.util.get_string('completioncompleted', 'mod_interactivevideo')}`
-                    : `${M.util.get_string('completionincomplete', 'mod_interactivevideo')}`
-            );
+            let string = annotation.completed
+                ? await getString('completioncompleted', 'mod_interactivevideo')
+                : await getString('completionincomplete', 'mod_interactivevideo');
+            $completiontoggle.find('span').text(string);
         }
         if (annotation.completed) {
             return;
@@ -928,7 +928,7 @@ class Base {
                 data${self.isBS5 ? '-bs' : ''}-html="true"
                 data${self.isBS5 ? '-bs' : ''}-placement="auto"
                 data${self.isBS5 ? '-bs' : ''}-container="#message"
-                title="${M.util.get_string("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`;
+                title="${await getString("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`;
 
             let $completiontoggle = $message.find('#completiontoggle');
             $message.find('#title .info').remove();
@@ -989,7 +989,7 @@ class Base {
      * @param {string} action The action performed (e.g. mark-done, mark-undone)
      * @param {string} type The type of completion (e.g. manual, automatic)
      */
-    completionCallback(annotations, thisItem, action, type) {
+    async completionCallback(annotations, thisItem, action, type) {
         const $message = $(`#message[data-id='${thisItem.id}']`);
         const $toggleButton = $message.find(`#completiontoggle`);
         if (type == 'manual') {
@@ -1003,14 +1003,12 @@ class Base {
                 .addClass(action == 'mark-done' ? 'bi-check2' : 'bi-circle');
         }
 
-        let audio;
         if (action == 'mark-done') {
             $toggleButton
                 .removeClass('btn-secondary mark-done')
                 .addClass('btn-success mark-undone');
             // Play a popup sound.
-            audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/point-awarded.mp3');
-            audio.play();
+            window.IVAudio.point.play();
             $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('iv-badge-secondary').addClass('alert-success');
             if (thisItem.xp > 0) {
                 $(`#message[data-id='${thisItem.id}'] #title .badge`).text(thisItem.earned == thisItem.xp ?
@@ -1022,8 +1020,7 @@ class Base {
             $toggleButton
                 .removeClass('btn-success mark-undone').addClass('btn-secondary mark-done');
             // Play a popup sound.
-            audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
-            audio.play();
+            window.IVAudio.pop.play();
             $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('alert-success').addClass('iv-badge-secondary');
         }
 
@@ -1031,28 +1028,22 @@ class Base {
         $toggleButton.find(`span`).text('');
         if (thisItem.earned > 0) {
             if (action == 'mark-undone') {
-                this.addNotification(M.util.get_string('xplost', 'mod_interactivevideo', Number(thisItem.earned)), 'info');
+                this.addNotification(await getString('xplost', 'mod_interactivevideo', Number(thisItem.earned)), 'info');
             } else if (action == 'mark-done') {
-                this.addNotification(M.util.get_string('xpearned', 'mod_interactivevideo', Number(thisItem.earned)), 'success');
+                this.addNotification(await getString('xpearned', 'mod_interactivevideo', Number(thisItem.earned)), 'success');
             }
         }
 
         if (type == 'manual') {
-            if (action == 'mark-done') {
-                $toggleButton.find(`span`)
-                    .text(`${M.util.get_string('completionmarkincomplete', 'mod_interactivevideo')}`);
-            } else if (action == 'mark-undone') {
-                $toggleButton.find(`span`)
-                    .text(`${M.util.get_string('completionmarkcomplete', 'mod_interactivevideo')}`);
-            }
+            let string = action == 'mark-done'
+                ? await getString('completionmarkincomplete', 'mod_interactivevideo')
+                : await getString('completionmarkcomplete', 'mod_interactivevideo');
+            $toggleButton.find(`span`).text(string);
         } else if (type == 'automatic') {
-            if (action == 'mark-done') {
-                $toggleButton.find(`span`)
-                    .text(`${M.util.get_string('completioncompleted', 'mod_interactivevideo')}`);
-            } else if (action == 'mark-undone') {
-                $toggleButton.find(`span`)
-                    .text(`${M.util.get_string('completionincomplete', 'mod_interactivevideo')}`);
-            }
+            let string = action == 'mark-done'
+                ? await getString('completioncompleted', 'mod_interactivevideo')
+                : await getString('completionincomplete', 'mod_interactivevideo');
+            $toggleButton.find(`span`).text(string);
         }
         return 'done';
     }
@@ -1065,13 +1056,13 @@ class Base {
      * @param {{}} [details={}] Completion details
      * @returns {Promise}
      */
-    toggleCompletion(id, action, type = 'manual', details = {}) {
+    async toggleCompletion(id, action, type = 'manual', details = {}) {
         // Skip if the page is the interactions page or in preview-mode.
         if (this.isEditMode()) {
             return Promise.resolve(); // Return a resolved promise for consistency
         }
         if (this.isPreviewMode()) {
-            this.addNotification(M.util.get_string('completionnotrecordedinpreviewmode', 'mod_interactivevideo'));
+            this.addNotification(await getString('completionnotrecordedinpreviewmode', 'mod_interactivevideo'));
             return Promise.resolve(); // Return a resolved promise for consistency
         }
         // Gradable items (hascompletion)
@@ -1192,7 +1183,7 @@ class Base {
     enableManualCompletion(annotation) {
         let self = this;
         const $message = $(`#message[data-id='${annotation.id}']`);
-        $message.off('click', 'button#completiontoggle').on('click', 'button#completiontoggle', function(e) {
+        $message.off('click', 'button#completiontoggle').on('click', 'button#completiontoggle', async function(e) {
             e.preventDefault();
             e.stopImmediatePropagation();
             // Implement required min minutes.
@@ -1202,7 +1193,7 @@ class Base {
                 const duration = (windowAnno.duration + (new Date().getTime() - windowAnno.newstarttime)) / 1000 / 60; // Minutes.
                 if (duration < annotation.requiremintime) {
                     self.addNotification(
-                        M.util.get_string('youmustspendatleastminutesbeforemarkingcomplete', 'mod_interactivevideo',
+                        await getString('youmustspendatleastminutesbeforemarkingcomplete', 'mod_interactivevideo',
                             {
                                 timerequire: annotation.requiremintime,
                                 timespent: duration.toFixed(2)

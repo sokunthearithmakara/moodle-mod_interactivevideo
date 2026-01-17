@@ -21,13 +21,19 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/modal_factory', 'core/modal_events'],
-    function($, modalFactory, modalEvents) {
+define(['jquery', 'core/modal_events'],
+    function($, modalEvents) {
 
-        var init = function() {
+        var init = async function() {
+            let ModalFactory;
+            try {
+                ModalFactory = await import('core/modal_factory');
+            } catch (error) {
+                ModalFactory = await import('core/modal');
+            }
             $('#ivplugin_checkupdate').off('click').on('click', async function(e) {
                 e.preventDefault();
-                const modal = await modalFactory.create({
+                const modal = await ModalFactory.create({
                     body: '<div class="spinner"></div>',
                     title: 'Available interaction types',
                     show: false,

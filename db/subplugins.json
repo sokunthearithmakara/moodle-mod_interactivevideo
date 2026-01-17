@@ -1,8 +1,8 @@
 {
     "subplugintypes": {
-        "ivplugin":"plugins"
+        "ivplugin": "plugins"
     },
     "plugintypes": {
-      "ivplugin": "mod\/interactivevideo\/plugins"
+        "ivplugin": "mod\/interactivevideo\/plugins"
     }
-  }
+}

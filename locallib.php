@@ -453,6 +453,9 @@ class interactivevideo_util {
                 if (!isset($properties['initonreport'])) {
                     $properties['initonreport'] = false;
                 }
+                if (!isset($properties['preloadstrings'])) {
+                    $properties['preloadstrings'] = true;
+                }
                 $contentoptions[] = $properties;
             }
         }
@@ -460,6 +463,24 @@ class interactivevideo_util {
         // Make sure contentTypes do not have the same name key.
         $contentoptions = array_values(array_column($contentoptions, null, 'name'));
         return $contentoptions;
+    }
+
+    /**
+     * Get activity types that have a specific property.
+     *
+     * @param string $propertyname The property to filter activity types by.
+     * @param string $propertyvalue The value of the property.
+     * @return array The filtered activity types.
+     */
+    public static function get_activitytypes_by_property($propertyname, $propertyvalue = true) {
+        $alltypes = self::get_all_activitytypes();
+        $activitytypes = [];
+        foreach ($alltypes as $type) {
+            if (isset($type[$propertyname]) && $type[$propertyname] == $propertyvalue) {
+                $activitytypes[] = $type;
+            }
+        }
+        return $activitytypes;
     }
 
     /**

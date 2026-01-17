@@ -28,6 +28,7 @@ import ModalForm from 'core_form/modalform';
 import Base from 'mod_interactivevideo/type/base';
 import {notifyFilterContentUpdated as notifyFilter} from 'core_filters/events';
 import Notification from 'core/notification';
+import {get_string as getString} from 'core/str';
 
 export default class ContentBank extends Base {
     /**
@@ -54,7 +55,7 @@ export default class ContentBank extends Base {
         });
 
         // Upload a new content.
-        body.off('click', '#uploadcontentbank').on('click', '#uploadcontentbank', function(e) {
+        body.off('click', '#uploadcontentbank').on('click', '#uploadcontentbank', async function(e) {
             e.preventDefault();
             const uploadForm = new ModalForm({
                 formClass: "core_contentbank\\form\\upload_files",
@@ -62,12 +63,12 @@ export default class ContentBank extends Base {
                     contextid: M.cfg.courseContextId,
                 },
                 modalConfig: {
-                    title: M.util.get_string('uploadcontent', 'ivplugin_contentbank')
+                    title: await getString('uploadcontent', 'ivplugin_contentbank')
                 }
             });
 
-            uploadForm.addEventListener(uploadForm.events.FORM_SUBMITTED, (e) => {
-                self.addNotification(M.util.get_string('contentuploaded', 'ivplugin_contentbank'), 'success');
+            uploadForm.addEventListener(uploadForm.events.FORM_SUBMITTED, async(e) => {
+                self.addNotification(await getString('contentuploaded', 'ivplugin_contentbank'), 'success');
                 const returnurl = e.detail.returnurl;
                 const contentid = returnurl.match(/id=(\d+)/)[1];
                 $('[name=contentid]').val(contentid);
@@ -76,8 +77,8 @@ export default class ContentBank extends Base {
                 }, 1000);
             });
 
-            uploadForm.addEventListener(uploadForm.events.ERROR, () => {
-                self.addNotification(M.util.get_string('contentuploaderror', 'ivplugin_contentbank'));
+            uploadForm.addEventListener(uploadForm.events.ERROR, async() => {
+                self.addNotification(await getString('contentuploaderror', 'ivplugin_contentbank'));
             });
 
             uploadForm.show();
@@ -100,7 +101,7 @@ export default class ContentBank extends Base {
      * @returns {boolean|Function} - Returns true if the annotation does not meet the conditions for completion tracking,
      *                               otherwise returns the callback function.
      */
-    postContentRender(annotation, callback) {
+    async postContentRender(annotation, callback) {
         let self = this;
         const $message = $(`#message[data-id='${annotation.id}']`);
         $message.addClass('hascontentbank');
@@ -114,7 +115,7 @@ export default class ContentBank extends Base {
                     ${tooltipAttr}-placement="auto"
                     ${tooltipAttr}-container="#message"
                     ${tooltipAttr}-trigger="hover"
-                    title="${M.util.get_string("completionon" + annotation.completiontracking, "mod_interactivevideo")}">
+                    title="${await getString("completionon" + annotation.completiontracking, "mod_interactivevideo")}">
                 </i>`
             );
 
@@ -188,7 +189,7 @@ export default class ContentBank extends Base {
             $message.find('#content')
                 .append(`<button class="btn btn-${passed ? 'success' : 'danger'} mt-2 btn-rounded"
                     id="passfail" data-timestamp="${time}"><i class="fa fa-${passed ? 'play' : 'redo'} iv-mr-2"></i>
-                ${M.util.get_string(label, 'ivplugin_contentbank')}
+                ${await getString(label, 'ivplugin_contentbank')}
                 </button>`);
             $message.find('iframe').addClass('no-pointer-events');
         };
@@ -214,7 +215,7 @@ export default class ContentBank extends Base {
 
         const afterLog = async(log) => {
             const xAPICheck = (annotation) => {
-                const detectH5P = () => {
+                const detectH5P = async() => {
                     let H5P;
                     try { // Try to get the H5P object.
                         H5P = document.querySelector(`#message[data-id='${annoid}'] iframe`).contentWindow.H5P;
@@ -236,7 +237,7 @@ export default class ContentBank extends Base {
                             $message.find(`#title .btns .xapi`).remove();
                             $message.find(`#title .btns`)
                                 .prepend(`<div class="xapi alert-secondary px-2
-                         iv-rounded-pill">${M.util.get_string('xapicheck', 'ivplugin_contentbank')}</div>`);
+                         iv-rounded-pill">${await getString('xapicheck', 'ivplugin_contentbank')}</div>`);
                         }
 
                         window.H5PIntegration = document.querySelector(`#message[data-id='${annoid}'] iframe`)
@@ -264,10 +265,9 @@ export default class ContentBank extends Base {
                                         $(`#message[data-id='${annotation.id}'] #title .btns`)
                                             .prepend(`<div class="xapi alert-success d-inline px-2 iv-rounded-pill">
                                                     <i class="fa fa-check iv-mr-2"></i>
-                                                    ${M.util.get_string('xapieventdetected', 'ivplugin_contentbank')}
+                                                    ${await getString('xapieventdetected', 'ivplugin_contentbank')}
                                                     </div>`);
-                                        const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
-                                        audio.play();
+                                        window.IVAudio.pop.play();
                                         return;
                                     }
                                     let complete = false;
@@ -443,9 +443,9 @@ export default class ContentBank extends Base {
             // Show a confirmation message if the state is not empty.
             if (log !== '' && log !== null) {
                 Notification.saveCancel(
-                    M.util.get_string('resume', 'ivplugin_contentbank'),
-                    M.util.get_string('resumeconfirm', 'ivplugin_contentbank'),
-                    M.util.get_string('resume', 'ivplugin_contentbank'),
+                    await getString('resume', 'ivplugin_contentbank'),
+                    await getString('resumeconfirm', 'ivplugin_contentbank'),
+                    await getString('resume', 'ivplugin_contentbank'),
                     function() {
                         // Do nothing.
                         afterLog(log);

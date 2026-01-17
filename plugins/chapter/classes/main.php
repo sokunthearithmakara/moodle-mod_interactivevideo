@@ -41,6 +41,7 @@ class main extends \ivplugin_richtext\main {
             'description' => get_string('chapterdescription', 'ivplugin_chapter'),
             'author' => 'tsmakara',
             'tutorial' => get_string('tutorialurl', 'ivplugin_chapter'),
+            'preloadstrings' => false,
         ];
     }
 

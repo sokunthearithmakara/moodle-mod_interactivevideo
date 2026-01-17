@@ -23,13 +23,14 @@
  */
 import $ from 'jquery';
 import Base from 'mod_interactivevideo/type/base';
+import {get_string} from 'core/str';
 
 export default class Chapter extends Base {
     /**
      * Initialize the interaction type
      * @returns {void}
      */
-    init() {
+    async init() {
         if (this.isEditMode()) {
             return;
         }
@@ -43,8 +44,8 @@ export default class Chapter extends Base {
         if (chapters[0].timestamp > this.start) {
             chapters.unshift({
                 id: 0,
-                title: M.util.get_string('startchapter', 'ivplugin_chapter'),
-                formattedtitle: M.util.get_string('startchapter', 'ivplugin_chapter'),
+                title: await get_string('startchapter', 'ivplugin_chapter'),
+                formattedtitle: await get_string('startchapter', 'ivplugin_chapter'),
                 timestamp: this.start
             });
         }
@@ -135,8 +136,8 @@ export default class Chapter extends Base {
                 }
 
                 if (locked) {
-                    let lockstring = M.util.get_string(settings.lock, 'ivplugin_chapter');
-                    self.addNotification(M.util.get_string('chapterlocked', 'ivplugin_chapter', lockstring), 'danger');
+                    let lockstring = await get_string(settings.lock, 'ivplugin_chapter');
+                    self.addNotification(await get_string('chapterlocked', 'ivplugin_chapter', lockstring), 'danger');
                     $('body').addClass('chapter-locked');
                     // Go to the next chapter.
                     self.player.pause();
@@ -159,7 +160,7 @@ export default class Chapter extends Base {
             $(document).on('chapterrendered', (e) => {
                 let annotations = e.originalEvent.detail.annotations;
                 // If the first chapter doesn't start at the beginning, add a chapter at the beginning.
-                chapters.forEach((chapter) => {
+                chapters.forEach(async(chapter) => {
                     let settings = JSON.parse(chapter.advanced || '{}');
                     let locked = false;
                     if (settings.lock && settings.lock != '') {
@@ -210,7 +211,7 @@ export default class Chapter extends Base {
                     data${self.isBS5 ? '-bs' : ''}-trigger="hover"
                     data${self.isBS5 ? '-bs' : ''}-html="true"
                     data${self.isBS5 ? '-bs' : ''}-title='<i class="fa fa-lock iv-mr-1"></i>
-                    ${M.util.get_string(settings.lock, 'ivplugin_chapter')}'>
+                    ${await get_string(settings.lock, 'ivplugin_chapter')}'>
                         <i class="fa fa-lock"></i></div>`);
                         // Remove the annos within the chapter.
                         const annotationsInChapter = annotations.filter((annotation) => {

@@ -529,11 +529,18 @@ define(['jquery', 'core/templates'], function($, Templates) {
             });
 
             // Launch report modal when clicking on the report icon.
+            let ModalFactory;
             $(document).on('click', '.launch-report', async function(e) {
                 e.preventDefault();
                 const href = $(this).data('href');
                 let $this = $(this);
-                let ModalFactory = await import('core/modal_factory');
+                if (!ModalFactory) {
+                    try {
+                        ModalFactory = await import('core/modal_factory');
+                    } catch (error) {
+                        ModalFactory = await import('core/modal');
+                    }
+                }
                 let ModalEvents = await import('core/modal_events');
                 let str = await import('core/str');
                 const reportModal = await ModalFactory.create({
@@ -561,12 +568,18 @@ define(['jquery', 'core/templates'], function($, Templates) {
             // Launch video when clicking on the poster.
             $(document).on('click', '.poster-wrapper', async function(e) {
                 e.preventDefault();
-                let ModalFactory = await import('core/modal_factory');
+                if (!ModalFactory) {
+                    try {
+                        ModalFactory = await import('core/modal_factory');
+                    } catch (error) {
+                        ModalFactory = await import('core/modal');
+                    }
+                }
                 let ModalEvents = await import('core/modal_events');
                 const reportModal = await ModalFactory.create({
                     body: await Templates.render('mod_interactivevideo/backgroundloading', {show: true}) +
                         `<iframe src="${M.cfg.wwwroot}/mod/interactivevideo/view.php?id=${$(this)
-                        .data('id')}&embed=1&dm=1&df=1&preview=1"
+                            .data('id')}&embed=1&dm=1&df=1&preview=1"
                          class="w-100 position-absolute h-100 border-0"
                          allow="autoplay" style="z-index:1050"></iframe>`,
                     large: true,

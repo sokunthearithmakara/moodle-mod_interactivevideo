@@ -41,6 +41,7 @@ class main extends \ivplugin_richtext\main {
             'description' => get_string('skipsegmentdescription', 'ivplugin_skipsegment'),
             'author' => 'tsmakara',
             'tutorial' => get_string('tutorialurl', 'ivplugin_skipsegment'),
+            'preloadstrings' => false,
         ];
     }
 

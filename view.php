@@ -114,40 +114,40 @@ if (optional_param('mobileapp', 0, PARAM_INT)) {
     $PAGE->add_body_class('mobiletheme mobileapp');
 }
 
-// Prepare strings for js files using string manager.
-$subplugins = explode(',', get_config('mod_interactivevideo', 'enablecontenttypes'));
-// Add chapter to the list of subplugins.
-if (!in_array('ivplugin_chapter', $subplugins)) {
-    $subplugins[] = 'ivplugin_chapter';
+$preloadsubplugins = interactivevideo_util::get_activitytypes_by_property('preloadstrings', true);
+if (count($preloadsubplugins) > 0) { // Subplugins that have preloadstrings set to true.
+    // Prepare strings for js files using string manager.
+    $subplugins = explode(',', get_config('mod_interactivevideo', 'enablecontenttypes'));
+    // Add chapter to the list of subplugins.
+    if (!in_array('ivplugin_chapter', $subplugins)) {
+        $subplugins[] = 'ivplugin_chapter';
+    }
+
+    // Get interaction types used in the interactive video.
+    $interactions = interactivevideo_util::get_items($cm->instance, $modulecontext->id);
+    $interactions = array_map(function ($interaction) {
+        return $interaction->type;
+    }, $interactions);
+    $interactions = array_unique($interactions);
+    $preloadsubplugins = array_map(function ($s) {
+        return $s['name'];
+    }, $preloadsubplugins);
+    $stringman = get_string_manager();
+    foreach ($subplugins as $subplugin) {
+        $name = explode('_', $subplugin)[1];
+        if (substr($name, 0, 2) == 'iv') {
+            $name = substr($name, 2);
+        }
+        if (!in_array($name, $interactions) && $name != 'chapter') {
+            continue;
+        }
+        if (!in_array($name, $preloadsubplugins)) {
+            continue;
+        }
+        $strings = $stringman->load_component_strings($subplugin, current_language());
+        $PAGE->requires->strings_for_js(array_keys($strings), $subplugin);
+    }
 }
-// Get interaction types used in the interactive video.
-$interactions = interactivevideo_util::get_items($cm->instance, $modulecontext->id);
-$interactions = array_map(function ($interaction) {
-    return $interaction->type;
-}, $interactions);
-$interactions = array_unique($interactions);
-$sub = array_map(function ($s) {
-    $s = explode('_', $s)[1];
-    // Remove 'iv' prefix (prefix only).
-    if (substr($s, 0, 2) == 'iv') {
-        $s = substr($s, 2);
-    }
-    return $s;
-}, $subplugins);
-$stringman = get_string_manager();
-foreach ($subplugins as $subplugin) {
-    $name = explode('_', $subplugin)[1];
-    if (substr($name, 0, 2) == 'iv') {
-        $name = substr($name, 2);
-    }
-    if (!in_array($name, $interactions) && $name != 'chapter') {
-        continue;
-    }
-    $strings = $stringman->load_component_strings($subplugin, current_language());
-    $PAGE->requires->strings_for_js(array_keys($strings), $subplugin);
-}
-$strings = $stringman->load_component_strings('mod_interactivevideo', current_language());
-$PAGE->requires->strings_for_js(array_keys($strings), 'mod_interactivevideo');
 
 // Enable jQuery UI.
 $PAGE->requires->jquery_plugin('ui-css');
@@ -516,7 +516,8 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $gradeitem ? $gradeitem->iteminstance : 0, // Grade item instance from grade_items table.
     $gradeitem ? $gradeitem->grademax : 0, // Grade item maximum grade, which is set in mod_form.
     $moduleinstance->type, // Interactive video type (e.g. vimeo, wistia, etc.).
-    $moduleinstance->displayoptions['preventskipping'] && !has_capability('mod/interactivevideo:edit', $modulecontext)
+    isset($moduleinstance->displayoptions['preventskipping']) && $moduleinstance->displayoptions['preventskipping']
+        && !has_capability('mod/interactivevideo:edit', $modulecontext)
         ? true : false, // Prevent skipping, applicable to student only.
     $moment, // Current time in seconds.
     null, // Display options array set in mod_form.

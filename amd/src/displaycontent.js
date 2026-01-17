@@ -24,10 +24,11 @@
 import $ from 'jquery';
 import Fragment from 'core/fragment';
 import {dispatchEvent} from 'core/event_dispatcher';
-import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
 import Templates from 'core/templates';
+import {get_string as getString} from 'core/str';
 
+let ModalFactory;
 /**
  * Return main formatted content of the annotation
  * @param {Object} annotation - The annotation object
@@ -107,10 +108,6 @@ const defaultDisplayContent = async function(annotation, player) {
     const isPreviewMode = annotation.previewMode || false;
     const advanced = JSON.parse(annotation.advanced);
     const isDarkMode = $body.hasClass('darkmode');
-
-    // Play pop sound
-    const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
-    audio.play();
 
     let displayoptions = annotation.displayoptions;
 
@@ -201,7 +198,7 @@ const defaultDisplayContent = async function(annotation, player) {
                 if (!toast) {
                     toast = await import('core/toast');
                 }
-                toast.add(M.util.get_string('dismissnotallowedbeforecompletion', 'mod_interactivevideo'), {
+                toast.add(await getString('dismissnotallowedbeforecompletion', 'mod_interactivevideo'), {
                     type: 'warning',
                     delay: 3000
                 });
@@ -243,8 +240,17 @@ const defaultDisplayContent = async function(annotation, player) {
         }
     });
 
-    const handlePopupDisplay = (annotation, messageTitle) => {
+    const handlePopupDisplay = async(annotation, messageTitle) => {
         $('#annotation-modal').remove();
+        if (!ModalFactory) {
+            try {
+                ModalFactory = await import('core/modal_factory');
+            } catch (error) {
+                ModalFactory = await import('core/modal');
+            }
+        }
+        // Play pop sound
+        window.IVAudio.pop.play();
         return new Promise((resolve, reject) => {
             ModalFactory.create({
                 body: `<div class="modal-body loader"></div>`,
@@ -319,6 +325,8 @@ const defaultDisplayContent = async function(annotation, player) {
     };
 
     const handleInlineDisplay = (annotation, messageTitle) => {
+        // Play pop sound
+        window.IVAudio.pop.play();
         return new Promise((resolve) => {
             $('#video-wrapper').append(`<div id="message" style="z-index:105;top:100%" data-placement="inline"
          data-id="${annotation.id}" class="${annotation.type} active modal" tabindex="0">
@@ -334,6 +342,8 @@ const defaultDisplayContent = async function(annotation, player) {
     };
 
     const handleBottomDisplay = (annotation, messageTitle, isDarkMode) => {
+        // Play pop sound
+        window.IVAudio.pop.play();
         return new Promise((resolve) => {
             $('#annotation-content').html(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
                  iv-rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}" tabindex="0">
@@ -348,6 +358,8 @@ const defaultDisplayContent = async function(annotation, player) {
     };
 
     const handleSideDisplay = (annotation, messageTitle) => {
+        // Play pop sound
+        window.IVAudio.pop.play();
         const rtl = $body.hasClass('dir-rtl');
         $body.addClass('hassidebar');
         // Make sure all sidebar are hidden.
