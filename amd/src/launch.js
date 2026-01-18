@@ -631,7 +631,7 @@ export default {
             });
 
             let DynamicForm;
-            $(document).off('click', '.default').on('click', '.default', async function(e) {
+            $(document).off('click', '.modal-footer .btn.default').on('click', '.modal-footer .btn.default', async function(e) {
                 e.preventDefault();
                 formdata.action = 'reset';
                 if (!DynamicForm) {
