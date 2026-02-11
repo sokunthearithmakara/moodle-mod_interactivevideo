@@ -23,7 +23,7 @@
  */
 import $ from 'jquery';
 import Base from 'mod_interactivevideo/type/base';
-import {get_string} from 'core/str';
+import {get_string as getString} from 'core/str';
 
 export default class Chapter extends Base {
     /**
@@ -44,8 +44,8 @@ export default class Chapter extends Base {
         if (chapters[0].timestamp > this.start) {
             chapters.unshift({
                 id: 0,
-                title: await get_string('startchapter', 'ivplugin_chapter'),
-                formattedtitle: await get_string('startchapter', 'ivplugin_chapter'),
+                title: await getString('startchapter', 'ivplugin_chapter'),
+                formattedtitle: await getString('startchapter', 'ivplugin_chapter'),
                 timestamp: this.start
             });
         }
@@ -136,8 +136,8 @@ export default class Chapter extends Base {
                 }
 
                 if (locked) {
-                    let lockstring = await get_string(settings.lock, 'ivplugin_chapter');
-                    self.addNotification(await get_string('chapterlocked', 'ivplugin_chapter', lockstring), 'danger');
+                    let lockstring = await getString(settings.lock, 'ivplugin_chapter');
+                    self.addNotification(await getString('chapterlocked', 'ivplugin_chapter', lockstring), 'danger');
                     $('body').addClass('chapter-locked');
                     // Go to the next chapter.
                     self.player.pause();
@@ -211,7 +211,7 @@ export default class Chapter extends Base {
                     data${self.isBS5 ? '-bs' : ''}-trigger="hover"
                     data${self.isBS5 ? '-bs' : ''}-html="true"
                     data${self.isBS5 ? '-bs' : ''}-title='<i class="fa fa-lock iv-mr-1"></i>
-                    ${await get_string(settings.lock, 'ivplugin_chapter')}'>
+                    ${await getString(settings.lock, 'ivplugin_chapter')}'>
                         <i class="fa fa-lock"></i></div>`);
                         // Remove the annos within the chapter.
                         const annotationsInChapter = annotations.filter((annotation) => {

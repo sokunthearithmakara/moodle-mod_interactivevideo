@@ -331,6 +331,7 @@ class Dyntube {
         player[this.node].seek(Number(time));
         this.currentTime = time;
         dispatchEvent('iv:playerSeek', {time});
+        return true;
     }
     /**
      * Get the current time of the video
