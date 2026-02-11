@@ -1008,7 +1008,7 @@ class Base {
                 .removeClass('btn-secondary mark-done')
                 .addClass('btn-success mark-undone');
             // Play a popup sound.
-            window.IVAudio.point.play();
+            window.IVAudio?.point.play();
             $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('iv-badge-secondary').addClass('alert-success');
             if (thisItem.xp > 0) {
                 $(`#message[data-id='${thisItem.id}'] #title .badge`).text(thisItem.earned == thisItem.xp ?
@@ -1020,7 +1020,7 @@ class Base {
             $toggleButton
                 .removeClass('btn-success mark-undone').addClass('btn-secondary mark-done');
             // Play a popup sound.
-            window.IVAudio.pop.play();
+            window.IVAudio?.pop.play();
             $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('alert-success').addClass('iv-badge-secondary');
         }
 
@@ -1056,6 +1056,7 @@ class Base {
      * @param {{}} [details={}] Completion details
      * @returns {Promise}
      */
+    // eslint-disable-next-line complexity
     async toggleCompletion(id, action, type = 'manual', details = {}) {
         // Skip if the page is the interactions page or in preview-mode.
         if (this.isEditMode()) {
@@ -1082,12 +1083,14 @@ class Base {
             if (details.hasDetails) {
                 completionDetails.hasDetails = true;
             }
-            completionDetails.xp = details.xp || thisItem.xp;
-            completionDetails.percent = details.percent || 1;
+            completionDetails.xp = (details.xp !== undefined && details.xp !== null) ? details.xp : thisItem.xp;
+            completionDetails.percent = (details.percent !== undefined && details.percent !== null) ? details.percent : 1;
             let windowAnno = window.ANNOS.find(x => x.id == id);
-            completionDetails.duration = details.duration
-                || (windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime));
-            completionDetails.timecompleted = details.timecompleted || completeTime.getTime();
+            completionDetails.duration = (details.duration !== undefined && details.duration !== null)
+                ? details.duration
+                : (windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime));
+            completionDetails.timecompleted = (details.timecompleted !== undefined && details.timecompleted !== null)
+                ? details.timecompleted : completeTime.getTime();
             const completiontime = completeTime.toLocaleString();
             let duration = this.formatTime(completionDetails.duration / 1000);
             completionDetails.reportView = details.reportView ||
@@ -1431,7 +1434,6 @@ class Base {
         options.disablelist = options.disablelist || false;
         options.required = options.required || false;
         let self = this;
-        $(document).off('click', '#confirmtime');
         // Pick a time button.
         $(document).off('click', `.pickatime button`).on('click', `.pickatime button`, async function(e) {
             e.preventDefault();
@@ -1458,7 +1460,7 @@ class Base {
                      title="${M.util.get_string('confirmtime', 'ivplugin_contentbank')}">
                      <i class="fa fa-check"></i></button></div>`);
 
-            $(document).on('click', '#confirmtime', async function(e) {
+            $(document).off('click', '#confirmtime').on('click', '#confirmtime', async function(e) {
                 e.preventDefault();
                 // Show the modal.
                 if (options.modal) {

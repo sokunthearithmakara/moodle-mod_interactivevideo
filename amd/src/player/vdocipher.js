@@ -15,7 +15,7 @@
 
 /**
  * VdoCipher Player class
- *
+ * Doc: https://www.vdocipher.com/docs/player/v2/
  * @module     mod_interactivevideo/player/vdocipher
  * @copyright  2025 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

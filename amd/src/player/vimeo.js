@@ -15,7 +15,7 @@
 
 /**
  * Vimeo Player class
- *
+ * Documented at https://developer.vimeo.com/player/sdk/reference or https://github.com/vimeo/player.js
  * @module     mod_interactivevideo/player/vimeo
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -106,7 +106,6 @@ class Vimeo {
             dispatchEvent('iv:autoplayBlocked');
         }
         this.start = start;
-        // Documented at https://developer.vimeo.com/player/sdk/reference or https://github.com/vimeo/player.js
         let VimeoPlayer;
         this.aspectratio = 16 / 9;
         // Get poster image using oEmbed.

@@ -72,6 +72,8 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
 
     require(['theme_boost/bootstrap/tooltip']);
 
+    $('#background-loading').show();
+
     const getReportData = $.ajax({
         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
         method: 'POST',
@@ -590,20 +592,21 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
             },
             // Modified initComplete to add a tfoot if missing
             "initComplete": function() {
+                let $reportTable = $('#reporttable');
                 if (hasCompletion) {
-                    $("#completiontable th .controls").removeClass("d-none");
+                    $reportTable.find('th .controls').removeClass("d-none");
                 }
                 if (itemids.length == 0) {
-                    $("#completiontable th .controls").addClass("d-none");
+                    $reportTable.find('th .controls').addClass("d-none");
                 }
-                $("table#completiontable")
+                $reportTable.find("table#completiontable")
                     .wrap("<div style='overflow:auto;position:relative' class='completiontablewrapper my-2'></div>");
-                $("#reporttable .dataTables_length ").addClass("d-inline iv-ml-1");
-                $("#reporttable .dataTables_filter").addClass("d-inline iv-float-right");
-                $("#reporttable .table-responsive").addClass("p-1");
-                $("#reporttable .spinner-grow").remove();
-                $("table#completiontable").removeClass("d-none");
-                $("#background-loading").fadeOut(300);
+                $reportTable.find('.dataTables_length').addClass("d-inline iv-ml-1");
+                $reportTable.find(".dataTables_filter").addClass("d-inline iv-float-right");
+                $reportTable.find(".table-responsive").addClass("p-1");
+                $reportTable.find(".spinner-grow").remove();
+                $reportTable.find("table#completiontable").removeClass("invisible");
+                $reportTable.find("#background-loading").fadeOut(300);
 
                 $(`<a class="btn btn-sm btn-secondary iv-font-weight-bold iv-ml-1 d-inline-block"
                     href="javascript:void(0)" id="filters"
@@ -612,7 +615,7 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
                     $('#filterregion').slideToggle('fast', 'swing');
                     $(this).find('i').toggleClass('bi-funnel bi-funnel-fill');
                 });
-                $('#filterregion').css('display', 'none');
+                $reportTable.find('#filterregion').hide();
 
                 profileFields.forEach((element) => {
                     $(renderFilterBox(element)).appendTo("#filterregion");
@@ -633,7 +636,7 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
                     });
 
                 // Date range for timecreated.
-                $("#filterregion").append(`<div class="col-sm-6 col-md-4 col-lg-3 col-xl-4 iv-pl-0 iv-pr-2 mb-2">
+                $reportTable.find("#filterregion").append(`<div class="col-sm-6 col-md-4 col-lg-3 col-xl-4 iv-pl-0 iv-pr-2 mb-2">
                     <div class="iv-form-group mb-1" id="timecreatedrange">
                     <label for="timecreatedrange">${M.util.get_string('timecreatedrange', 'mod_interactivevideo')}</label>
                     <div class="input-group input-group-sm">
@@ -653,10 +656,10 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
                 </div>
                 `);
 
-                $("#filterregion").append(`<div class="col-12 p-0 mx-0">
+                $reportTable.find("#filterregion").append(`<div class="col-12 p-0 mx-0">
                     <span class="text-muted small">${M.util.get_string('separatesearchtermsbyslash', 'mod_interactivevideo')}</span>
                     </div>`);
-                $(`table [data${isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip();
+                $reportTable.find(`table [data${isBS5 ? '-bs' : ''}-toggle="tooltip"]`).tooltip();
                 if (isBS5) {
                     $('.custom-select').toggleClass('custom-select form-select');
                 }

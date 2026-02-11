@@ -15,7 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Bunny Stream Player class
+ * Viostream Player class
+ * Documented at https://help.viostream.com/media-players/using-the-player-api#include-the-javascript
  *
  * @module     mod_interactivevideo/player/viostream
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>

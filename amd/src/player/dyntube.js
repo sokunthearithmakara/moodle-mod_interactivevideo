@@ -15,7 +15,7 @@
 
 /**
  * Dyntube Player class
- *
+ * Doc: https://www.dyntube.com/dev/javascript-events-methods/plain-javascript-events-and-methods
  * @module     mod_interactivevideo/player/dyntube
  * @copyright  2025 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

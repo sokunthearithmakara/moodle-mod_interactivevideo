@@ -244,20 +244,32 @@ class Yt {
                                 e.target.unMute();
                                 return;
                             }
-                            if (e.target.getCurrentTime() > 0 || count > 6) {
+                            let currentTime = e.target.getCurrentTime();
+                            if (currentTime > 0 || count > 6) {
                                 clearInterval(interval);
                                 if (hasError) {
                                     return;
                                 }
                                 if (self.live) {
-                                    self.start = e.target.getCurrentTime();
-                                    self.end = e.target.getCurrentTime() + 1;
+                                    self.start = currentTime;
+                                    self.end = currentTime + 1;
                                 }
-                                e.target.seekTo(self.start);
-                                e.target.pauseVideo();
-                                e.target.unMute();
-                                ready = true;
-                                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                                if (Math.abs(currentTime - self.start) > self.frequency) {
+                                    e.target.seekTo(self.start);
+                                }
+
+                                if (e.target.getPlayerState() === YT.PlayerState.BUFFERING) {
+                                    e.target.playVideo();
+                                    setTimeout(() => {
+                                        e.target.unMute();
+                                        ready = true;
+                                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                                    }, 1000);
+                                } else {
+                                    e.target.unMute();
+                                    ready = true;
+                                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                                }
                                 $(`#video-wrapper`).removeClass('invisible');
                             }
                         }, 1000);
@@ -278,13 +290,14 @@ class Yt {
                     if (ready === false) {
                         return;
                     }
+                    let currentTime = player[self.node].getCurrentTime();
                     // For non-live videos, enforce start/end boundaries
                     if (!self.live) {
-                        if (player[self.node].getCurrentTime() < self.start) {
+                        if (currentTime < self.start) {
                             player[self.node].seekTo(self.start);
                             player[self.node].playVideo();
                         }
-                        if (player[self.node].getCurrentTime() >= self.end + self.frequency) {
+                        if (currentTime >= self.end + self.frequency) {
                             player[self.node].seekTo(self.end - self.frequency);
                             player[self.node].playVideo();
                         }
@@ -299,15 +312,15 @@ class Yt {
                             self.paused = false;
                             if (self.ended) {
                                 self.ended = false;
-                                if (player[self.node].getCurrentTime() < self.start) {
+                                if (currentTime < self.start) {
                                     player[self.node].seekTo(self.start);
-                                } else if (player[self.node].getCurrentTime() >= self.end) {
+                                } else if (currentTime >= self.end) {
                                     player[self.node].seekTo(self.start);
                                 }
                             }
                             dispatchEvent('iv:playerPlay');
                             dispatchEvent('iv:playerPlaying');
-                            if (!self.live && player[self.node].getCurrentTime() >= self.end) {
+                            if (!self.live && currentTime >= self.end) {
                                 self.ended = true;
                                 self.paused = true;
                                 dispatchEvent('iv:playerEnded');
@@ -318,7 +331,7 @@ class Yt {
                             dispatchEvent('iv:playerPaused');
                             break;
                         case YT.PlayerState.CUED:
-                            if (!self.live && player[self.node].getCurrentTime() >= self.end) {
+                            if (!self.live && currentTime >= self.end) {
                                 player[self.node].seekTo(self.start);
                             }
                             break;
@@ -403,6 +416,9 @@ class Yt {
         if (!player[this.node]) {
             return;
         }
+        if (this.paused) {
+            return;
+        }
         player[this.node].pauseVideo();
         this.paused = true;
     }
@@ -428,6 +444,9 @@ class Yt {
             return false;
         }
         let currentTime = this.getCurrentTime();
+        if (currentTime === time) {
+            return true;
+        }
         dispatchEvent('iv:playerSeekStart', {time: currentTime});
         this.ended = false;
         return new Promise((resolve) => {

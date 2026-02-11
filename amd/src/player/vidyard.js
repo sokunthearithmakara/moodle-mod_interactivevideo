@@ -16,7 +16,7 @@
 
 /**
  * Vidyard Player class
- *
+ * Doc: https://knowledge.vidyard.com/hc/en-us/articles/360019034753-Using-the-Vidyard-Player-API
  * @module     mod_interactivevideo/player/vidyard
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

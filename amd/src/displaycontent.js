@@ -98,7 +98,7 @@ const formatText = async function(text, shorttext = false) {
  *   formattedtitle: 'Sample Annotation',
  *   prop: '{"icon": "bi bi-info-circle"}'
  * };
- * const player = videojs('my-video');
+ *
  * defaultDisplayContent(annotation, player);
  */
 const defaultDisplayContent = async function(annotation, player) {

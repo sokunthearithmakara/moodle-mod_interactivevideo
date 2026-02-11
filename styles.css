@@ -1458,6 +1458,7 @@ html:has(.path-mod-interactivevideo) {
 .path-mod-interactivevideo #message[data-placement=side] #title {
     height: 70px;
     align-items: center;
+    padding: 0 0.75rem;
 }
 
 .path-mod-interactivevideo #message[data-placement=side] #content {
@@ -4077,4 +4078,8 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     height: 25px;
     padding: 0;
     line-height: 25px;
+}
+
+#admin-enablecontenttypes .form-defaultinfo {
+    display: none;
 }

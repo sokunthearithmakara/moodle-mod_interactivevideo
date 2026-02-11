@@ -186,13 +186,13 @@ class base_form extends \core_form\dynamic_form {
      */
     public function process_advanced_settings($data) {
         $advancedsettings = new \stdClass();
-        $advancedsettings->visiblebeforecompleted = $data->visiblebeforecompleted;
-        $advancedsettings->visibleaftercompleted = $data->visibleaftercompleted;
-        $advancedsettings->clickablebeforecompleted = $data->clickablebeforecompleted;
-        $advancedsettings->clickableaftercompleted = $data->clickableaftercompleted;
-        $advancedsettings->replaybehavior = $data->replaybehavior;
-        $advancedsettings->advdismissible = $data->advdismissible;
-        $advancedsettings->advskippable = $data->advskippable;
+        $advancedsettings->visiblebeforecompleted = isset($data->visiblebeforecompleted) ? $data->visiblebeforecompleted : 1;
+        $advancedsettings->visibleaftercompleted = isset($data->visibleaftercompleted) ? $data->visibleaftercompleted : 1;
+        $advancedsettings->clickablebeforecompleted = isset($data->clickablebeforecompleted) ? $data->clickablebeforecompleted : 1;
+        $advancedsettings->clickableaftercompleted = isset($data->clickableaftercompleted) ? $data->clickableaftercompleted : 1;
+        $advancedsettings->replaybehavior = isset($data->replaybehavior) ? $data->replaybehavior : 1;
+        $advancedsettings->advdismissible = isset($data->advdismissible) ? $data->advdismissible : 1;
+        $advancedsettings->advskippable = isset($data->advskippable) ? $data->advskippable : 1;
         return json_encode($advancedsettings);
     }
 

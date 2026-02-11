@@ -25,12 +25,12 @@ Example context (json):
 <div id="wrapper" class="position-relative"></div>
 <div id="toolbar" class="bg-transparent pt-5 position-fixed"></div>
 
-<div id="reporttable" class="p-3 position-relative" style="margin-top: 70px">
+<div id="reporttable" class="p-3 position-relative" style="margin-top: 70px; min-height: 400px;">
     {{{groupselector}}}
 
     {{> mod_interactivevideo/backgroundloading}}
 
-    <table id="completiontable" class="table table-sm table-bordered table-striped w-100 m-0 border">
+    <table id="completiontable" class="table table-sm table-bordered table-striped w-100 m-0 border invisible">
         <thead class="sticky-top bg-white">
             <tr>
                 <th id="id" scope="col" class="exportable inv">

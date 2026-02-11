@@ -16,7 +16,7 @@
 
 /**
  * Bunny Stream Player class
- *
+ * Doc: https://docs.bunny.net/stream/playback-api#methods
  * @module     mod_interactivevideo/player/bunnystream
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
