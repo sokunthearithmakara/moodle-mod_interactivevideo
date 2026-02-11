@@ -4024,12 +4024,19 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     filter: invert(1);
 }
 
-.path-mod-interactivevideo .fitem[data-groupname]:is([data-groupname="beforecompletion"], [data-groupname="aftercompletion"], [data-groupname="beforecompletionbehavior"], [data-groupname="aftercompletionbehavior"], [data-groupname="activitycardgroup"], [data-groupname="cardoptiongroup"], [data-groupname="behaviorgroup"]) .form-check-inline {
+.path-mod-interactivevideo .fitem[data-groupname]:is([data-groupname="beforecompletion"],
+[data-groupname="aftercompletion"],
+[data-groupname="beforecompletionbehavior"],
+[data-groupname="aftercompletionbehavior"],
+[data-groupname="activitycardgroup"],
+[data-groupname="cardoptiongroup"],
+[data-groupname="behaviorgroup"]) .form-check-inline {
     width: 100%;
     justify-content: flex-start;
 }
 
-.path-mod-interactivevideo .fitem:is([data-groupname="beforecompletion"], [data-groupname="aftercompletion"]) [data-fieldtype="group"] > * {
+.path-mod-interactivevideo .fitem:is([data-groupname="beforecompletion"],
+[data-groupname="aftercompletion"]) [data-fieldtype="group"] > * {
     column-count: 2;
 }
 
@@ -4046,7 +4053,8 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     right: 0 !important;
 }
 
-.path-mod-interactivevideo.dir-rtl:not(.bs-5) .dropdown div.dropdown-menu.dropdown-menu-right:not(#user-action-menu,#courseindexdrawercontrolsmenu) {
+.path-mod-interactivevideo.dir-rtl:not(.bs-5) .dropdown div.dropdown-menu-right:not(#user-action-menu,
+#courseindexdrawercontrolsmenu) {
     left: unset !important;
 }
 
