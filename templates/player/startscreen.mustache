@@ -81,9 +81,11 @@
          aria-label="{{#str}}videoinformation, mod_interactivevideo{{/str}}">
         <div class="justify-content-between w-100 h-100 d-flex flex-column">
             <div class="metadata d-block d-md-none text-shadow" aria-live="polite"></div>
-            <h1 class="h1 text-white iv-font-weight-bold line-height-100 m-1 m-sm-2 p-sm-2 p-1">
-                {{{title}}}
-            </h1>
+            {{#title}}
+                <h1 class="h1 text-white iv-font-weight-bold line-height-100 m-1 m-sm-2 p-sm-2 p-1">
+                    {{{title}}}
+                </h1>
+            {{/title}}
         </div>
 
         <div id="spinner"
