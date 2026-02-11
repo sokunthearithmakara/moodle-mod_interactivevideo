@@ -1,6 +1,18 @@
 {
     "subplugins": [
         {
+            "name": "question",
+            "title": "Question",
+            "component": "local_ivquestion",
+            "description": "Add a single MCQ to the video.",
+            "icon": "bi bi-question",
+            "version": "2026021101",
+            "type": "paid",
+            "description_url": "",
+            "download_url": "https://buymeacoffee.com/tsmakara/e/509257",
+            "git": "https://github.com/sokunthearithmakara/local_ivquestion/archive/refs/heads/master.zip"
+        },
+        {
             "name": "videotrack",
             "title": "Video Track",
             "component": "local_ivvideotrack",
