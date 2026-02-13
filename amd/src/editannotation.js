@@ -225,7 +225,11 @@ export default {
 
             annotations.forEach(function(item) {
                 let listItem = $('#annotation-template').clone();
-                ctRenderer[item.type].renderEditItem(annotations, listItem, item);
+                try {
+                    ctRenderer[item.type].renderEditItem(annotations, listItem, item);
+                } catch (e) {
+                    window.console.error(e, item);
+                }
             });
 
             let xp = annotations.filter(x => x.xp).map(x => Number(x.xp)).reduce((a, b) => a + b, 0);
