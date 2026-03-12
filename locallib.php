@@ -84,14 +84,21 @@ class interactivevideo_util {
         }
         $record->title = $record->title . ' (' . get_string('copynoun', 'mod_interactivevideo') . ')';
         $record->id = $DB->insert_record('interactivevideo_items', $record);
-        // Handle related files "content" field.
+        // Handle related files in content, text1, text2, text3.
         require_once($CFG->libdir . '/filelib.php');
         $fs = get_file_storage();
-        $files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'content', $id, 'id ASC', false);
+        $contentfiles = $fs->get_area_files($contextid, 'mod_interactivevideo', 'content', $id, 'id ASC', false);
+        $text1files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text1', $id, 'id ASC', false);
+        $text2files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text2', $id, 'id ASC', false);
+        $text3files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text3', $id, 'id ASC', false);
+
+        // Merge the files.
+        $files = array_merge($contentfiles, $text1files, $text2files, $text3files);
         foreach ($files as $file) {
             $filerecord = ['itemid' => $record->id];
             $fs->create_file_from_storedfile($filerecord, $file);
         }
+
         return self::get_item($record->id, $contextid);
     }
 
@@ -107,7 +114,12 @@ class interactivevideo_util {
         global $PAGE;
         $context = context::instance_by_id($contextid);
         $PAGE->set_context($context);
-        return format_text($content, $format, ['noclean' => true, 'overflowdiv' => false, 'context' => $context]);
+        return format_text($content, $format, [
+            'noclean' => true,
+            'overflowdiv' => false,
+            'context' => $context,
+            'trusttext' => true,
+        ]);
     }
 
     /**
@@ -244,23 +256,36 @@ class interactivevideo_util {
         $DB->update_record('interactivevideo_completion', $record);
 
         // Add/delete details to interactivevideo_log table.
-        if (!$markdone) {
-            $DB->delete_records_select('interactivevideo_log', "annotationid = :annotationid AND userid = :userid", [
-                'annotationid' => $completion->id,
-                'userid' => $userid,
-            ]);
-        } else {
-            if ($completion->hasDetails) {
-                $log = new stdClass();
-                $log->userid = $userid;
-                $log->cmid = $interactivevideo;
-                $log->char1 = $type;
-                $log->annotationid = $completion->id;
-                $log->timecreated = time();
-                $log->text1 = $details;
-                $log->timemodified = time();
-                $log->completionid = $record->id;  // Store the completion id.
-                $DB->insert_record('interactivevideo_log', $log);
+        if ($completion->hasDetails) { // We don't want to query the database if there is no details.
+            if (!$markdone) {
+                $DB->delete_records_select('interactivevideo_log', "annotationid = :annotationid AND userid = :userid", [
+                    'annotationid' => $completion->id,
+                    'userid' => $userid,
+                ]);
+            } else {
+                // Check if the log already exists.
+                $existing = $DB->get_record('interactivevideo_log', [
+                    'annotationid' => $completion->id,
+                    'userid' => $userid,
+                    'completionid' => $record->id,
+                ]);
+                if (!$existing) {
+                    $log = new stdClass();
+                    $log->userid = $userid;
+                    $log->cmid = $interactivevideo;
+                    $log->char1 = $type;
+                    $log->annotationid = $completion->id;
+                    $log->timecreated = time();
+                    $log->text1 = $details;
+                    $log->timemodified = time();
+                    $log->completionid = $record->id;  // Store the completion id.
+                    $DB->insert_record('interactivevideo_log', $log);
+                } else {
+                    $existing->text1 = $details;
+                    $existing->timemodified = time();
+                    $existing->completionid = $record->id;  // Store the completion id.
+                    $DB->update_record('interactivevideo_log', $existing);
+                }
             }
         }
 
@@ -1038,10 +1063,56 @@ class interactivevideo_util {
                     'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
                     'itemid' => $file->get_itemid(),
                     'file' => $file,
+                    'area' => 'content',
                 ];
             }
+
+            $text1files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text1', $annotation->id, 'id ASC', false);
+            foreach ($text1files as $file) {
+                if ($file->get_filename() == '.') {
+                    continue;
+                }
+                $annotation->files[] = [
+                    'filename' => $file->get_filename(),
+                    'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
+                    'itemid' => $file->get_itemid(),
+                    'file' => $file,
+                    'area' => 'text1',
+                ];
+            }
+
+            $text2files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text2', $annotation->id, 'id ASC', false);
+            foreach ($text2files as $file) {
+                if ($file->get_filename() == '.') {
+                    continue;
+                }
+                $annotation->files[] = [
+                    'filename' => $file->get_filename(),
+                    'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
+                    'itemid' => $file->get_itemid(),
+                    'file' => $file,
+                    'area' => 'text2',
+                ];
+            }
+
+            $text3files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text3', $annotation->id, 'id ASC', false);
+            foreach ($text3files as $file) {
+                if ($file->get_filename() == '.') {
+                    continue;
+                }
+                $annotation->files[] = [
+                    'filename' => $file->get_filename(),
+                    'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
+                    'itemid' => $file->get_itemid(),
+                    'file' => $file,
+                    'area' => 'text3',
+                ];
+            }
+
+            // Handle contentbank items.
             if ($annotation->type == 'contentbank') {
                 $contentid = $annotation->contentid;
+                // File is in contentbank.
                 $contentbankfiles = $fs->get_area_files($coursecontextid, 'contentbank', 'public', $contentid);
                 foreach ($contentbankfiles as $file) {
                     if ($file->get_filename() == '.') {
@@ -1058,6 +1129,7 @@ class interactivevideo_util {
             return $annotation;
         }, $annotations);
 
+        // Prep files for packaging.
         $files = array_map(function ($annotation) {
             $array = $annotation->files;
             $array = array_map(function ($file) {
@@ -1157,5 +1229,58 @@ class interactivevideo_util {
         }
         // Return the last saved default.
         return $saved;
+    }
+
+    /**
+     * Delete completion data for a given itemid and userid.
+     *
+     * @param int $id The completion id.
+     * @param int $itemid The item id.
+     * @param int $userid The user id.
+     * @param int $contextid The context id.
+     * @return string
+     */
+    public static function delete_completion_data($id, $itemid, $userid, $contextid) {
+        global $DB;
+        $completion = $DB->get_record('interactivevideo_completion', ['id' => $id]);
+        if ($completion) {
+            $completeditems = json_decode($completion->completeditems);
+            $key = array_search($itemid, $completeditems);
+            if ($key !== false) {
+                unset($completeditems[$key]);
+                $completion->completeditems = json_encode(array_values($completeditems));
+            }
+            $completiondetails = json_decode($completion->completiondetails);
+            // Update the item with id = $itemid to mark its detail as "deleted".
+            $completiondetails = array_map(function ($item) use ($itemid) {
+                $decoded = json_decode($item);
+                if ($decoded->id == $itemid) {
+                    $new = [
+                        'id' => $decoded->id,
+                        'deleted' => true,
+                    ];
+                    return json_encode($new);
+                }
+                return json_encode($decoded);
+            }, $completiondetails);
+            $completion->completiondetails = json_encode(array_values($completiondetails));
+            $DB->update_record('interactivevideo_completion', $completion);
+
+            // Delete associated logs.
+            $logs = $DB->get_records('interactivevideo_log', ['userid' => $userid, 'annotationid' => $itemid]);
+            $fs = get_file_storage();
+            if ($logs) {
+                foreach ($logs as $log) {
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments', $log->id);
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text1', $log->id);
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2', $log->id);
+                    $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3', $log->id);
+                }
+                $DB->delete_records('interactivevideo_log', ['userid' => $userid, 'annotationid' => $itemid]);
+            }
+            return json_encode(['id' => $id, 'itemid' => $itemid]);
+        } else {
+            return json_encode(['error' => 'Completion record not found']);
+        }
     }
 }

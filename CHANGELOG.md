@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7] - 2026-03-13
+https://buymeacoffee.com/tsmakara/interactive-video-release-1-7-2026031300
+
 ## [1.6.2] - 2026-02-22
 https://mod-interactive-video.canny.io/changelog/interactive-video-v162
 

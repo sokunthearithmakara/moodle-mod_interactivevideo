@@ -97,7 +97,11 @@ define([
         const completedAnnos = completableAnno
             .filter(x => x.completed == true);
 
-        const xpEarned = completableAnno.map(x => Number(x.earned)).reduce((a, b) => a + b, 0) || 0;
+        let xpEarned = completableAnno.map(x => Number(x.earned)).reduce((a, b) => a + b, 0) || 0;
+
+        if (xpEarned % 1 != 0) {
+            xpEarned = Math.round(xpEarned * 100) / 100;
+        }
 
         if (actualAnnotationCounts > 0) {
             $meta.append(`<span class="d-inline-block iv-mr-3">
@@ -629,6 +633,7 @@ define([
                 if (subvideo) {
                     return;
                 }
+
                 // First making sure the player is paused.
                 player.pause();
                 let isPaused = await player.isPaused();
@@ -636,6 +641,11 @@ define([
                     runInteraction(annotation);
                     return;
                 }
+
+                if (['side', 'popup', 'inline', 'bottom'].includes(annotation.displayoptions) && annotation.hascompletion == 1) {
+                    window.IVAudio.pop.play();
+                }
+
                 // Continue with the interaction. Take notes of the earlier interactions to avoid accidental re-runs.
                 lastrun = annotation.id;
                 viewedAnno = [];
@@ -1732,6 +1742,7 @@ define([
                 viewedAnno = [];
                 lastrun = null;
                 $loader.fadeIn(300);
+                player.play();
                 await player.seek(start);
                 replaceProgressBars(0);
                 $endscreen.fadeOut(300);
@@ -2284,6 +2295,114 @@ define([
                         e.preventDefault();
                         $forwardbutton.trigger('click');
                         break;
+                }
+            });
+
+            // Implement delete progress button.
+            if (displayoptions.allowdeleteprogress == 1
+                && (displayoptions.distractionfreemode == 0 || $("body").hasClass('embed-mode'))) {
+                // Add button to the toolbar.
+                const renderDeleteProgressButton = async() => {
+                    $videowrapper.find('#toolbar')
+                        .append(`<button id="deleteprogress" class="rotatex-360 shadow-sm btn"
+                         title="${await getString('resetprogress', 'mod_interactivevideo')}">
+                         <i class="bi bi-arrow-repeat"></i></button>`);
+                };
+                renderDeleteProgressButton();
+            }
+            $(document).on('click', '#deleteprogress', async function(e) {
+                e.preventDefault();
+                let notification = await import('core/notification');
+                const deleteProgress = async() => {
+                    let deleteprogress = await $.ajax({
+                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                        method: "POST",
+                        dataType: "text",
+                        data: {
+                            action: 'delete_own_progress_by_id',
+                            cmid,
+                            userid,
+                            contextid: M.cfg.contextid,
+                            courseid: M.cfg.courseId,
+                            recordid: completionid,
+                            sesskey: M.cfg.sesskey,
+                        },
+                        context: M.cfg.contextid,
+                    });
+
+                    if (deleteprogress == 'deleted') {
+                        window.location.reload();
+                    } else {
+                        Toast.add(await getString('errordeletingprogress', 'mod_interactivevideo'), {
+                            type: 'danger',
+                        });
+                    }
+                };
+                const strings = await str.get_strings([
+                    {key: 'resetprogress', component: 'mod_interactivevideo'},
+                    {key: 'deleteownprogress', component: 'mod_interactivevideo'},
+                    {key: 'delete', component: 'mod_interactivevideo'},
+                ]);
+                try {
+                    notification.deleteCancelPromise(
+                        strings[0],
+                        strings[1],
+                        strings[2],
+                    ).then(() => {
+                        deleteProgress();
+                        return;
+                    }).catch(() => {
+                        return;
+                    });
+                } catch {
+                    notification.saveCancel(
+                        strings[0],
+                        strings[1],
+                        strings[2],
+                        function() {
+                            deleteProgress();
+                        }
+                    );
+                }
+
+            });
+
+            $(document).on('click', '#delete-completiondata', async function(e) {
+                e.preventDefault();
+                const id = $(this).attr('data-id');
+                const notification = await import('core/notification');
+
+                const deleteCompletionData = async() => {
+                    const annotation = releventAnnotations.find(x => x.id == id);
+                    ctRenderer[annotation.type].deleteProgress(annotation);
+                };
+
+                // Confirm first.
+                const strings = await str.get_strings([
+                    {key: 'deletethiscompletion', component: 'mod_interactivevideo'},
+                    {key: 'deletethiscompletiondesc', component: 'mod_interactivevideo'},
+                    {key: 'delete', component: 'mod_interactivevideo'},
+                ]);
+                try {
+                    notification.deleteCancelPromise(
+                        strings[0],
+                        strings[1],
+                        strings[2],
+                    ).then(() => {
+                        deleteCompletionData();
+                        return;
+                    }).catch(() => {
+                        return;
+                    });
+                } catch {
+                    notification.saveCancel(
+                        strings[0],
+                        strings[1],
+                        strings[2],
+                        function() {
+                            deleteCompletionData();
+                        }
+                    );
                 }
             });
         }

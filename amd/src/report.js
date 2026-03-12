@@ -62,9 +62,10 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
     const isBS5 = $('body').hasClass('bs-5');
     // Const bsAffix = isBS5 ? '-bs' : '';
     let ModalFactory;
-    try {
+
+    if (window.M.version < 403) {
         ModalFactory = await import('core/modal_factory');
-    } catch (error) {
+    } else {
         ModalFactory = await import('core/modal');
     }
 

@@ -23,22 +23,40 @@
     {
     }
 }}
-
 {{#title}}
 <h5 class="modal-title text-truncate mb-0 d-flex align-items-center"
-    id="modal-title-{{id}}" role="heading" aria-level="5">
-    <i class="{{icon}} iv-mr-2 d-none d-md-inline fs-25px" aria-hidden="true"></i>
+    id="modal-title-{{id}}"
+    role="heading"
+    aria-level="5">
+    <i class="{{icon}} iv-mr-2 d-none d-md-inline fs-25px"
+       aria-hidden="true"></i>
     <span class="text-truncate">{{{title}}}</span>
 </h5>
 {{/title}}
-
 <div class="btns d-flex align-items-center">
     {{{completionbutton}}}
+    {{#completionbutton}}
+    {{#showdelete}}
     <button data-id="{{id}}"
-            class="btn btn-flex iv-ml-2 p-0 border-0 interaction-dismiss bg-transparent"
+            class="btn btn-flex iv-ml-3 p-0 border-0 bg-transparent {{^candelete}}d-none{{/candelete}}"
+            id="delete-completiondata"
+            type="button"
+            data{{bs}}-toggle="tooltip"
+            data{{bs}}-container="#wrapper"
+            data{{bs}}-trigger="hover"
+            aria-label="{{#str}}deletecompletion, mod_interactivevideo{{/str}}"
+            title="{{#str}}deletecompletion, mod_interactivevideo{{/str}}">
+        <i class="bi bi-trash3 text-danger fs-25px" aria-hidden="true"></i>
+    </button>
+    {{/showdelete}}
+    {{/completionbutton}}
+    <button data-id="{{id}}"
+            class="btn btn-flex iv-ml-3 p-0 border-0 interaction-dismiss bg-transparent"
             id="close-{{id}}"
             type="button"
             data{{bs}}-toggle="tooltip"
+            data{{bs}}-container="#wrapper"
+            data{{bs}}-trigger="hover"
             aria-label="{{#str}}close, mod_interactivevideo{{/str}}"
             title="{{#str}}close, mod_interactivevideo{{/str}}">
         <i class="bi bi-x-lg fs-25px" aria-hidden="true"></i>

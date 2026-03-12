@@ -235,6 +235,9 @@ if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesetti
         'bs' => $CFG->branch >= 500 ? '-bs' : '',
     ]);
     echo '</div>';
+
+    $PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+
     $PAGE->requires->js_call_amd('mod_interactivevideo/manage', $tab, [
         $courseid,
         $coursecontext->id,

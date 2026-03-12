@@ -111,6 +111,7 @@ function interactivevideo_display_options($moduleinstance) {
         'squareposterimage',
         'showname',
         'autoplay',
+        'allowdeleteprogress',
         'columnlayout',
         'showdescriptiononheader',
         'passwordprotected',
@@ -1033,10 +1034,11 @@ if ($CFG->branch <= 403) {
      * when the page is a course view.
      */
     function interactivevideo_before_footer() {
-        global $PAGE;
+        global $PAGE, $CFG;
         if (strpos($PAGE->bodyclasses, 'path-course-view') === false) {
             return;
         }
+        $PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
         $PAGE->requires->js_call_amd('mod_interactivevideo/launch', 'init');
     }
 }
@@ -2438,6 +2440,17 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             ['group' => 1],
             [0, 1]
         );
+
+        // Allow deleting own progress until.
+        $group[] = $mform->createElement(
+            'advcheckbox',
+            'allowdeleteprogress',
+            '',
+            get_string('allowdeleteprogress', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->setDefault('allowdeleteprogress', 0);
 
         $mform->addGroup($group, 'behaviorgroup', '', '', false);
 

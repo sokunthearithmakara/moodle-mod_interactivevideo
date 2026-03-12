@@ -102,6 +102,11 @@ const formatText = async function(text, shorttext = false) {
  * defaultDisplayContent(annotation, player);
  */
 const defaultDisplayContent = async function(annotation, player) {
+    if (window.M.version < 403) {
+        ModalFactory = await import('core/modal_factory');
+    } else {
+        ModalFactory = await import('core/modal');
+    }
     let $body = $('body');
     const isBS5 = $body.hasClass('bs-5');
     const isPlayerMode = $body.attr('id') == 'page-mod-interactivevideo-view';
@@ -154,7 +159,12 @@ const defaultDisplayContent = async function(annotation, player) {
     let completionbutton = "";
     // Display the xp badge conditionally.
     if (annotation.hascompletion == 1 && annotation.xp > 0) {
-        const earned = annotation.earned == annotation.xp ? annotation.earned : annotation.earned + '/' + annotation.xp;
+        if (Number(annotation.earned) % 1 != 0) {
+            annotation.earned = Math.round(Number(annotation.earned) * 100) / 100;
+        } else {
+            annotation.earned = Number(annotation.earned);
+        }
+        let earned = annotation.earned == annotation.xp ? annotation.xp : annotation.earned + '/' + annotation.xp;
         completionbutton += `<span class="badge ${annotation.completed ? 'alert-success' : 'iv-badge-secondary'} iv-mr-2">
         ${annotation.completed ? earned : Number(annotation.xp)} XP</span>`;
     }
@@ -173,12 +183,25 @@ const defaultDisplayContent = async function(annotation, player) {
     }
 
     // Message title.
+    let showdelete = false;
+    let settings = JSON.parse(annotation.advanced || '{}');
+    if (settings.deletebeforecomplete == 1 || settings.deleteaftercomplete == 1) {
+        showdelete = true;
+    }
+
+    if (annotation.hascompletion == 0 || annotation.completiontracking == 'manual' || annotation.completiontracking == 'none') {
+        showdelete = false;
+    }
+
     let prop = JSON.parse(annotation.prop);
     let messageTitle = await Templates.render('mod_interactivevideo/player/messagetitle', {
         icon: prop.icon || 'bi bi-info-circle',
         title: annotation.formattedtitle || '',
         completionbutton: completionbutton,
         id: annotation.id,
+        showdelete,
+        candelete: annotation.completed == true && ((annotation.activitycomplete == 1 && settings.deleteaftercomplete == 1) ||
+            (annotation.activitycomplete == 0 && settings.deletebeforecomplete == 1)),
     });
 
     // Hide existing modal if it shows.
@@ -194,7 +217,8 @@ const defaultDisplayContent = async function(annotation, player) {
         const anno = window.IVANNO ? window.IVANNO.find(anno => anno.id == annotation.id) : null;
         // Check if dimiss allowed.
         if (isPlayerMode && !isPreviewMode) {
-            if (advanced.advdismissible == 0 && anno.completed == false && anno.hascompletion == 1) {
+            if (advanced.advdismissible == 0 && anno.completed == false && anno.hascompletion == 1
+                && !$(this).hasClass('force-dismiss')) {
                 if (!toast) {
                     toast = await import('core/toast');
                 }
@@ -205,6 +229,8 @@ const defaultDisplayContent = async function(annotation, player) {
                 return;
             }
 
+            $('#controller.completion-required, #video-wrapper.completion-required, .sidebar-nav-item.completion-required')
+                .removeClass('completion-required');
             const isEnded = await player.isEnded();
             const currentTime = await player.getCurrentTime();
             if (!isEnded || currentTime < annotation.end) {
@@ -242,15 +268,6 @@ const defaultDisplayContent = async function(annotation, player) {
 
     const handlePopupDisplay = async(annotation, messageTitle) => {
         $('#annotation-modal').remove();
-        if (!ModalFactory) {
-            try {
-                ModalFactory = await import('core/modal_factory');
-            } catch (error) {
-                ModalFactory = await import('core/modal');
-            }
-        }
-        // Play pop sound
-        window.IVAudio.pop.play();
         return new Promise((resolve, reject) => {
             ModalFactory.create({
                 body: `<div class="modal-body loader"></div>`,
@@ -325,8 +342,6 @@ const defaultDisplayContent = async function(annotation, player) {
     };
 
     const handleInlineDisplay = (annotation, messageTitle) => {
-        // Play pop sound
-        window.IVAudio.pop.play();
         return new Promise((resolve) => {
             $('#video-wrapper').append(`<div id="message" style="z-index:105;top:100%" data-placement="inline"
          data-id="${annotation.id}" class="${annotation.type} active modal" tabindex="0">
@@ -342,8 +357,6 @@ const defaultDisplayContent = async function(annotation, player) {
     };
 
     const handleBottomDisplay = (annotation, messageTitle, isDarkMode) => {
-        // Play pop sound
-        window.IVAudio.pop.play();
         return new Promise((resolve) => {
             $('#annotation-content').html(`<div id="message" class="active fade show mt-3 ${!isDarkMode ? 'border' : ''}
                  iv-rounded-lg bg-white ${annotation.type}" data-placement="bottom" data-id="${annotation.id}" tabindex="0">
@@ -359,7 +372,6 @@ const defaultDisplayContent = async function(annotation, player) {
 
     const handleSideDisplay = (annotation, messageTitle) => {
         // Play pop sound
-        window.IVAudio.pop.play();
         const rtl = $body.hasClass('dir-rtl');
         $body.addClass('hassidebar');
         // Make sure all sidebar are hidden.

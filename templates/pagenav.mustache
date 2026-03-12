@@ -73,6 +73,15 @@ Example context (json):
     </div>
 
     <div class="navigation d-flex align-items-center">
+        {{#allowdeleteprogress}}
+        <button id="deleteprogress"
+                title="{{#str}}resetprogress,mod_interactivevideo{{/str}}"
+                aria-label="{{#str}}resetprogress,mod_interactivevideo{{/str}}"
+                data{{bs}}-toggle="tooltip" data{{bs}}-placement="bottom"
+                class="btn px-1 btn-sm iv-mr-2 border-0 btn-hover">
+                    <i class="bi bi-arrow-repeat fs-25px {{#darkmode}}text-white{{/darkmode}}" aria-hidden="true"></i>
+        </button>
+        {{/allowdeleteprogress}}
         {{#viewurl}}
         <a href="{{{viewurl}}}"
            title="{{#str}}play,mod_interactivevideo{{/str}}"

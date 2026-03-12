@@ -60,3 +60,7 @@
 .path-mod-interactivevideo #skipsegment i {
     font-size: xxx-large;
 }
+
+.path-mod-interactivevideo #annotation-list .timestamp.skipend {
+    width: auto;
+}

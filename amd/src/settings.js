@@ -26,11 +26,12 @@ define(['jquery', 'core/modal_events'],
 
         var init = async function() {
             let ModalFactory;
-            try {
-                ModalFactory = await import('core/modal_factory');
-            } catch (error) {
+            if (window.M.version >= 403) {
                 ModalFactory = await import('core/modal');
+            } else {
+                ModalFactory = await import('core/modal_factory');
             }
+
             $('#ivplugin_checkupdate').off('click').on('click', async function(e) {
                 e.preventDefault();
                 const modal = await ModalFactory.create({

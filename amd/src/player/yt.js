@@ -74,6 +74,7 @@ class Yt {
             var match = regex.exec(url);
             var videoId = match[1];
             videoId = videoId.split("&")[0];
+            videoId = videoId.split("?")[0];
             var options = {
                 videoId: videoId,
                 width: 1080,
@@ -165,6 +166,7 @@ class Yt {
         var match = regex.exec(url);
         var videoId = match[1];
         videoId = videoId.split("&")[0];
+        videoId = videoId.split("?")[0];
         this.videoId = videoId;
         this.posterImage = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
         // If the img size is 90x120, it means the maxresdefault.jpg is not available. So we use hqdefault.jpg instead.

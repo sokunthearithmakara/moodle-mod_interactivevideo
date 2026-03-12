@@ -31,10 +31,10 @@ let ModalFactory;
 export default {
     init: async function() {
         if (!ModalFactory) {
-            try {
-                ModalFactory = await import('core/modal_factory');
-            } catch (error) {
+            if (window.M.version >= 403) {
                 ModalFactory = await import('core/modal');
+            } else {
+                ModalFactory = await import('core/modal_factory');
             }
         }
         const launchVideo = async($card, course, contextid, id) => {

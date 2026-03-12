@@ -151,7 +151,7 @@ class bulk_upload_form extends \core_form\dynamic_form {
                         [
                             'contextid' => $fromform->contextid,
                             'component' => 'mod_interactivevideo',
-                            'filearea' => 'content',
+                            'filearea' => isset($file->area) ? $file->area : 'content',
                             'itemid' => $newannotation->id,
                             'filepath' => '/',
                             'filename' => $file->filename,
@@ -174,9 +174,9 @@ class bulk_upload_form extends \core_form\dynamic_form {
                     '/',
                     $file->formattedfilename
                 );
-                // Rename the file.
 
                 if ($contentbankfile) {
+                    // Rename the file.
                     $contentbankfile->rename($contentbankfile->get_filepath(), $file->filename);
                     $content = $contentbank->create_content_from_file($coursecontext, $USER->id, $contentbankfile);
                     if ($content) {

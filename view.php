@@ -238,12 +238,6 @@ if ($moduleinstance->displayoptions['distractionfreemode'] == 1) {
 
 $PAGE->set_url('/mod/interactivevideo/view.php', [
     'id' => $cm->id,
-    't' => $moment,
-    'i' => $moduleinstance->id,
-    'iframe' => $iframe,
-    'token' => $token ?? '',
-    'embed' => $embed,
-    'preview' => $preview,
 ]);
 
 $PAGE->set_title(format_string($moduleinstance->name));
@@ -355,6 +349,8 @@ if ($rendernav) {
     $primary = new core\navigation\output\primary($PAGE);
     $primarymenu = $primary->export_for_template();
 
+    $allowdeleteprogress = $moduleinstance->displayoptions['allowdeleteprogress'] ?? 0;
+
     $datafortemplate = [
         "cmid" => $cm->id,
         "instance" => $cm->instance,
@@ -390,6 +386,7 @@ if ($rendernav) {
         ) : '',
         "bs" => $CFG->branch >= 500 ? '-bs' : '',
         "hascourseindex" => !empty($courseindex),
+        "allowdeleteprogress" => $allowdeleteprogress && !is_guest($modulecontext),
     ];
     echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $datafortemplate);
 }
@@ -503,6 +500,8 @@ $datafortemplate = [
     "hascourseindex" => !empty($courseindex) && $rendernav,
 ];
 echo $OUTPUT->render_from_template('mod_interactivevideo/player/player', $datafortemplate);
+
+$PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
 
 $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $url, // Video URL.

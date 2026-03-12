@@ -102,12 +102,13 @@ export default {
         type = 'yt', displayoptions, userid, posterimage, extendedcompletion) {
 
         if (!ModalFactory) {
-            try {
-                ModalFactory = await import('core/modal_factory');
-            } catch (error) {
+            if (window.M.version >= 403) {
                 ModalFactory = await import('core/modal');
+            } else {
+                ModalFactory = await import('core/modal_factory');
             }
         }
+
         displayoptions = $('#doptions').length > 0 ? JSON.parse($('#doptions').text()) : displayoptions;
 
         let $videonav = $('#video-nav');

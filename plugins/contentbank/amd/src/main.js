@@ -93,14 +93,7 @@ export default class ContentBank extends Base {
         return {form, event};
     }
 
-    /**
-     * Handles the rendering of content annotations and applies specific classes and conditions.
-     *
-     * @param {Object} annotation - The annotation object containing details about the content.
-     * @param {Function} callback - The callback function to be executed if certain conditions are met.
-     * @returns {boolean|Function} - Returns true if the annotation does not meet the conditions for completion tracking,
-     *                               otherwise returns the callback function.
-     */
+    /** @override */
     async postContentRender(annotation, callback) {
         let self = this;
         const $message = $(`#message[data-id='${annotation.id}']`);
@@ -169,13 +162,7 @@ export default class ContentBank extends Base {
         resizeObserver.observe(modalbody);
     }
 
-    /**
-     * Apply the content to the annotation
-     * @param {Object} annotation The annotation object
-     * @param {Object} existingstate The existing state of the annotation
-     * @returns {Promise<void>} - Returns a promise that resolves when the content is applied.
-     * @override
-     */
+    /** @override */
     async applyContent(annotation, existingstate) {
         let self = this;
         let $message = $(`#message[data-id='${annotation.id}']`);
@@ -197,7 +184,9 @@ export default class ContentBank extends Base {
         $(document).off('click', '#passfail').on('click', '#passfail', function(e) {
             e.preventDefault();
             let time = $(this).data('timestamp');
-            $message.find('.interaction-dismiss').trigger('click');
+            $message.find('.interaction-dismiss')
+                .addClass('force-dismiss')
+                .trigger('click');
             self.player.seek(time);
             self.player.play();
             $(this).remove();
@@ -250,10 +239,11 @@ export default class ContentBank extends Base {
                         }
                         window.H5PIntegration.contents[id].contentUserData[0].state = log;
                         window.H5P = H5P;
-                        if (annotation.completed) {
+                        if (annotation.completed && !condition) {
                             return;
                         }
                         try {
+                            H5P.externalDispatcher.off('xAPI');
                             H5P.externalDispatcher.on('xAPI', async function(event) {
                                 let statement = event.data.statement;
                                 if ((statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
@@ -302,12 +292,11 @@ export default class ContentBank extends Base {
                                         details.timecompleted = completeTime.getTime();
                                         const completiontime = completeTime.toLocaleString();
                                         let duration = self.formatTime(details.duration / 1000);
-                                        details.reportView = `<span data-toggle="tooltip" data-html="true"
-                     data-title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar iv-mr-2"></i>
-                     ${completiontime}</span><span><i class="bi bi-stopwatch iv-mr-2"></i>${duration}</span>
-                     <span><i class="bi bi-list-check iv-mr-2"></i>
-                     ${result.score.raw}/${result.score.max}</span></span>'>
-                     <i class="${textclass}"></i><br><span>${Number(details.xp)}</span></span>`;
+                                        details.reportView = '##' + completiontime + "|"
+                                            + duration + "|"
+                                            + result.score.raw + "/" + result.score.max + "|"
+                                            + textclass + "|"
+                                            + Number(details.xp);
                                         details.details = saveState == 1 ? window.H5PIntegration.contents[id]
                                             .contentUserData[0].state : '';
                                         // Must wait 1.5 seconds or so to let the saveState finish.
@@ -324,7 +313,9 @@ export default class ContentBank extends Base {
                                             } else if (condition.gotoonfailed == 1 && condition.forceonfailed == 1) {
                                                 setTimeout(function() {
                                                     // Close the annotation.
-                                                    $message.find('.interaction-dismiss').trigger('click');
+                                                    $message.find('.interaction-dismiss')
+                                                        .addClass('force-dismiss')
+                                                        .trigger('click');
                                                     self.player.seek(condition.timeonfailed);
                                                     self.player.play();
                                                 }, 1000);
@@ -342,7 +333,9 @@ export default class ContentBank extends Base {
                                                 onPassFail(true, condition.timeonpassing);
                                             } else if (condition.gotoonpassing == 1 && condition.forceonpassing == 1) {
                                                 setTimeout(function() {
-                                                    $message.find('.interaction-dismiss').trigger('click');
+                                                    $message.find('.interaction-dismiss')
+                                                        .addClass('force-dismiss')
+                                                        .trigger('click');
                                                     self.player.seek(condition.timeonpassing);
                                                     self.player.play();
                                                 }, 1000);
@@ -460,6 +453,7 @@ export default class ContentBank extends Base {
         }
     }
 
+    /** @override */
     async getCompletionData(annotation, userid) {
         let logs = await this.getLogs(annotation, [userid]);
         let log = '';
@@ -473,5 +467,31 @@ export default class ContentBank extends Base {
         this.renderContainer(annotation);
         this.applyContent(annotation, log);
         return log;
+    }
+
+    /** @override */
+    renderReportView(annotation, details, data) {
+        if (!details.reportView.startsWith('##')) {
+            return super.renderReportView(annotation, details, data);
+        }
+        let rdata = details.reportView.split('|');
+        rdata[0] = rdata[0].replace('##', '');
+        let bsAffix = window.M.version > 405 ? '-bs' : '';
+        let reportview = `<span data${bsAffix}-toggle="tooltip" data${bsAffix}-html="true"
+                     data${bsAffix}-title='<span class="d-flex flex-column align-items-start">
+                     <span><i class="bi bi-calendar iv-mr-2"></i>${rdata[0]}</span>
+                     <span><i class="bi bi-stopwatch iv-mr-2"></i>${rdata[1]}</span>
+                     <span><i class="bi bi-list-check iv-mr-2"></i>${rdata[2]}</span>
+                     </span>'>
+                     <i class="${rdata[3]}"></i>
+                     <br><span>${rdata[4]}</span>
+                     </span>`;
+        let res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"` +
+            ` data-id="${data.itemid}" data-userid="${data.row.id}" data-type="${data.ctype}">${reportview}</span>`;
+        if (data.access.canedit == 1) {
+            res += `<i class="bi bi-trash3 fs-unset text-danger cursor-pointer position-absolute delete-cell"
+                                  title="${M.util.get_string('delete', 'mod_interactivevideo')}"></i>`;
+        }
+        return res;
     }
 }

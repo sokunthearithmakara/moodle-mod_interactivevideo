@@ -110,7 +110,41 @@ class main {
         // Handle related files "content" field.
         require_once($CFG->libdir . '/filelib.php');
         $fs = get_file_storage();
-        $files = $fs->get_area_files($oldcontextid, 'mod_interactivevideo', 'content', (int) $annotation->oldid, 'id ASC', false);
+        $contentfiles = $fs->get_area_files(
+            $oldcontextid,
+            'mod_interactivevideo',
+            'content',
+            (int) $annotation->oldid,
+            'id ASC',
+            false
+        );
+        $text1files = $fs->get_area_files(
+            $oldcontextid,
+            'mod_interactivevideo',
+            'text1',
+            (int) $annotation->oldid,
+            'id ASC',
+            false
+        );
+        $text2files = $fs->get_area_files(
+            $oldcontextid,
+            'mod_interactivevideo',
+            'text2',
+            (int) $annotation->oldid,
+            'id ASC',
+            false
+        );
+        $text3files = $fs->get_area_files(
+            $oldcontextid,
+            'mod_interactivevideo',
+            'text3',
+            (int) $annotation->oldid,
+            'id ASC',
+            false
+        );
+
+        // Merge the files.
+        $files = array_merge($contentfiles, $text1files, $text2files, $text3files);
         foreach ($files as $file) {
             $filerecord = [
                 'itemid' => $annotation->id,

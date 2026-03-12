@@ -69,11 +69,6 @@ $PAGE->activityheader->disable();
 $stringman = get_string_manager();
 // Get all enabled content types.
 $contenttypes = interactivevideo_util::get_all_activitytypes();
-foreach ($contenttypes as $subplugin) {
-    $stringcomponent = $subplugin['stringcomponent'];
-    $strings = $stringman->load_component_strings($stringcomponent, current_language());
-    $PAGE->requires->strings_for_js(array_keys($strings), $stringcomponent);
-}
 
 $strings = $stringman->load_component_strings('mod_interactivevideo', current_language());
 $PAGE->requires->strings_for_js(array_keys($strings), 'mod_interactivevideo');
@@ -86,6 +81,20 @@ $items = array_filter($items, function ($item) use ($contenttypes) {
         return $contenttype["name"];
     }, $contenttypes));
 });
+
+// Remove the contenttypes that are not involved in the items.
+$contenttypes = array_filter($contenttypes, function ($contenttype) use ($items) {
+    return in_array($contenttype["name"], array_map(function ($item) {
+        return $item->type;
+    }, $items));
+});
+
+// Strings for js.
+foreach ($contenttypes as $subplugin) {
+    $stringcomponent = $subplugin['stringcomponent'];
+    $strings = $stringman->load_component_strings($stringcomponent, current_language());
+    $PAGE->requires->strings_for_js(array_keys($strings), $stringcomponent);
+}
 
 // Order the items by timestamp.
 usort($items, function ($a, $b) {
@@ -127,10 +136,15 @@ $reportables = array_values($reportables);
 $contenttypenames = array_map(function ($contenttype) {
     return $contenttype["name"];
 }, $contenttypes);
+
 $items = array_filter($items, function ($item) use ($moduleinstance, $skip, $contenttypenames, $reportables) {
     // Remove items that has no completion or hasreport = false.
     if (!in_array($item->type, $reportables)) {
         return false;
+    }
+
+    if ($item->timestamp < 0) {
+        return true;
     }
 
     if ($item->hascompletion == 0 && $item->timestamp >= 0) {
@@ -295,6 +309,8 @@ if ($moduleinstance->source == 'url') {
     }
     $moduleinstance->type = 'html5video';
 }
+
+$PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
 
 $PAGE->requires->js_call_amd('mod_interactivevideo/report', "init", [
     $cm->instance,

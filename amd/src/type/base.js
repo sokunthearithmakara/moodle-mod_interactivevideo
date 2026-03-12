@@ -898,6 +898,9 @@ class Base {
      * @returns {Promise}
      */
     async renderViewer(annotation) {
+        if (!this.isEditMode()) {
+            annotation.activitycomplete = this.options.isCompleted ? 1 : 0;
+        }
         return defaultDisplayContent(annotation, this.player, this.start, this.end);
     }
 
@@ -923,12 +926,14 @@ class Base {
         }
         if ((annotation.completiontracking == 'view' || annotation.completiontracking == 'manual')
             && annotation.requiremintime > 0) {
+            let todo = await getString('todo', 'mod_interactivevideo') + ': ';
+            todo += await getString("spendatleast", "mod_interactivevideo", annotation.requiremintime);
             const infoIcon = `<i class="bi bi-info-circle-fill iv-mr-2 info"
                 data${self.isBS5 ? '-bs' : ''}-toggle="tooltip"
                 data${self.isBS5 ? '-bs' : ''}-html="true"
                 data${self.isBS5 ? '-bs' : ''}-placement="auto"
                 data${self.isBS5 ? '-bs' : ''}-container="#message"
-                title="${await getString("spendatleast", "mod_interactivevideo", annotation.requiremintime)}"></i>`;
+                title="${todo}"></i>`;
 
             let $completiontoggle = $message.find('#completiontoggle');
             $message.find('#title .info').remove();
@@ -989,6 +994,7 @@ class Base {
      * @param {string} action The action performed (e.g. mark-done, mark-undone)
      * @param {string} type The type of completion (e.g. manual, automatic)
      */
+    // eslint-disable-next-line complexity
     async completionCallback(annotations, thisItem, action, type) {
         const $message = $(`#message[data-id='${thisItem.id}']`);
         const $toggleButton = $message.find(`#completiontoggle`);
@@ -1003,34 +1009,51 @@ class Base {
                 .addClass(action == 'mark-done' ? 'bi-check2' : 'bi-circle');
         }
 
+        let earned = Number(thisItem.earned);
+        // Rounded to 2 decimal places if earned is not an integer.
+        if (earned % 1 != 0) {
+            earned = Math.round(earned * 100) / 100;
+        }
+
+        const $badge = $message.find(`#title .badge`);
+        const $delete = $message.find(`#delete-completiondata`);
         if (action == 'mark-done') {
             $toggleButton
                 .removeClass('btn-secondary mark-done')
                 .addClass('btn-success mark-undone');
             // Play a popup sound.
             window.IVAudio?.point.play();
-            $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('iv-badge-secondary').addClass('alert-success');
+            $badge.removeClass('iv-badge-secondary').addClass('alert-success');
             if (thisItem.xp > 0) {
-                $(`#message[data-id='${thisItem.id}'] #title .badge`).text(thisItem.earned == thisItem.xp ?
-                    Number(thisItem.earned) + ' XP' : `${Number(thisItem.earned)}/${thisItem.xp} XP`);
+                $badge.text(thisItem.earned == thisItem.xp ?
+                    thisItem.xp + ' XP' : `${earned}/${thisItem.xp} XP`);
             } else {
-                $(`#message[data-id='${thisItem.id}'] #title .badge`).hide();
+                $badge.hide();
+            }
+            let settings = JSON.parse(thisItem.advanced || '{}');
+
+            if ((this.options.isCompleted && settings.deleteaftercomplete == 1)
+                || (!this.options.isCompleted && settings.deletebeforecomplete == 1)) {
+                $delete.removeClass('d-none');
+            } else {
+                $delete.addClass('d-none');
             }
         } else if (action == 'mark-undone') {
             $toggleButton
                 .removeClass('btn-success mark-undone').addClass('btn-secondary mark-done');
             // Play a popup sound.
             window.IVAudio?.pop.play();
-            $(`#message[data-id='${thisItem.id}'] #title .badge`).removeClass('alert-success').addClass('iv-badge-secondary');
+            $badge.removeClass('alert-success').addClass('iv-badge-secondary');
+            $delete.addClass('d-none');
         }
 
         // Update the completion button.
         $toggleButton.find(`span`).text('');
         if (thisItem.earned > 0) {
             if (action == 'mark-undone') {
-                this.addNotification(await getString('xplost', 'mod_interactivevideo', Number(thisItem.earned)), 'info');
+                this.addNotification(await getString('xplost', 'mod_interactivevideo', earned), 'info');
             } else if (action == 'mark-done') {
-                this.addNotification(await getString('xpearned', 'mod_interactivevideo', Number(thisItem.earned)), 'success');
+                this.addNotification(await getString('xpearned', 'mod_interactivevideo', earned), 'success');
             }
         }
 
@@ -1054,10 +1077,11 @@ class Base {
      * @param {string} action The action to perform (mark-done, mark-undone)
      * @param {string} type The type of completion (manual, automatic)
      * @param {{}} [details={}] Completion details
+     * @param {boolean} [callback=true] Whether to trigger the completion callback
      * @returns {Promise}
      */
     // eslint-disable-next-line complexity
-    async toggleCompletion(id, action, type = 'manual', details = {}) {
+    async toggleCompletion(id, action, type = 'manual', details = {}, callback = true) {
         // Skip if the page is the interactions page or in preview-mode.
         if (this.isEditMode()) {
             return Promise.resolve(); // Return a resolved promise for consistency
@@ -1094,10 +1118,7 @@ class Base {
             const completiontime = completeTime.toLocaleString();
             let duration = this.formatTime(completionDetails.duration / 1000);
             completionDetails.reportView = details.reportView ||
-                `<span data${self.isBS5 ? '-bs' : ''}-toggle="tooltip" data${self.isBS5 ? '-bs' : ''}-html="true"
-                 title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar iv-mr-2"></i>
-                 ${completiontime}</span><span><i class="bi bi-stopwatch iv-mr-2"></i>${duration}</span></span>'>
-                 <i class="fa fa-check text-success"></i><br><span>${Number(completionDetails.xp)}</span></span>`;
+                `##${completiontime}|${duration}|${Number(completionDetails.xp)}`; // ## indicates new format.
         }
         if (action == 'mark-done') {
             completedItems.push(id.toString());
@@ -1159,7 +1180,12 @@ class Base {
 
                     renderAnnotationItems(annotations, this.start, this.totaltime);
                     thisItem.earned = completionDetails.xp || 0;
-                    this.completionCallback(annotations, thisItem, action, type);
+                    if (callback == true) {
+                        this.completionCallback(annotations, thisItem, action, type);
+                    }
+                    let completion = JSON.parse(res).overallcomplete;
+                    this.options.isCompleted = completion && completion > 0;
+
                     dispatchEvent('completionupdated', {
                         annotations,
                         completionpercentage: (completedItems.length / gradableitems.length) * 100,
@@ -1536,14 +1562,59 @@ class Base {
     }
 
     renderReportView(annotation, details, data) {
-        let res = '';
-        res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"` +
-            ` data-id="${data.itemid}" data-userid="${data.row.id}" data-type="${data.ctype}">${details.reportView}</span>`;
+        let res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"` +
+                ` data-id="${data.itemid}" data-userid="${data.row.id}" data-type="${data.ctype}">`;
+        if (!details.reportView.startsWith('##')) {
+            res += `${details.reportView}</span>`;
+        } else {
+            let rdata = details.reportView.split('|');
+            rdata[0] = rdata[0].replace('##', '');
+            let bsAffix = window.M.version > 405 ? '-bs' : '';
+            res += `<span data${bsAffix}-toggle="tooltip" data${bsAffix}-html="true"
+                 title='<span class="d-flex flex-column align-items-start"><span><i class="bi bi-calendar iv-mr-2"></i>
+                 ${rdata[0]?.trim()}</span><span><i class="bi bi-stopwatch iv-mr-2"></i>${rdata[1]?.trim()}</span></span>'>
+                 <i class="fa fa-check text-success"></i><br><span>${rdata[2]?.trim()}</span></span></span>`;
+        }
         if (data.access.canedit == 1) {
             res += `<i class="bi bi-trash3 fs-unset text-danger cursor-pointer position-absolute delete-cell" `
                 + `title="${M.util.get_string('delete', 'mod_interactivevideo')}"></i>`;
         }
         return res;
+    }
+
+    async deleteProgress(annotation) {
+        const self = this;
+        let $message = $('#message[data-id=' + annotation.id + '].active');
+        $message.find('#refresh').find('i').addClass('fa-spin');
+
+        self.toggleCompletion(annotation.id, 'mark-undone', 'automatic', {}, false);
+
+        $(document).off('completionupdated.deleteprogress');
+        $(document).one('completionupdated.deleteprogress', async function() {
+            await $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                method: "POST",
+                dataType: "text",
+                data: {
+                    action: 'delete_own_completion_data',
+                    id: self.completionid,
+                    itemid: annotation.id,
+                    userid: self.userid,
+                    sesskey: M.cfg.sesskey,
+                    contextid: M.cfg.contextid,
+                },
+            });
+
+
+            // Refresh the annotation.
+            setTimeout(async function() {
+                self.addNotification(await getString('completiondatadeleted', 'mod_interactivevideo'), 'success');
+                $message.find('#refresh').find('i').removeClass('fa-spin');
+                $message.find('#refresh').trigger('click');
+            }, 1000);
+        });
+
+
     }
 }
 

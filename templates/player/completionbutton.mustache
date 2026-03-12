@@ -27,7 +27,7 @@
 {{^refreshonly}}
 <button
     id="completiontoggle"
-    class="btn btn-flex text-truncate mark-{{#iscompleted}}undone btn-success{{/iscompleted}}{{^iscompleted}}done btn-secondary{{/iscompleted}} btn-sm border-0"
+    class="btn-rounded btn btn-flex text-truncate mark-{{#iscompleted}}undone btn-success{{/iscompleted}}{{^iscompleted}}done btn-secondary{{/iscompleted}} btn-sm border-0"
     data-id="{{id}}"
     title="{{#str}}togglecompletion, mod_interactivevideo{{/str}}"
     aria-label="{{#str}}togglecompletion, mod_interactivevideo{{/str}}"
@@ -52,7 +52,7 @@
 {{#isPlayerMode}}
     <button
         id="refresh"
-        class="btn btn-flex btn-secondary btn-sm iv-ml-2 rotatez-360 border-0"
+        class="btn btn-flex iv-ml-3 border-0 p-0"
         type="button"
         data{{bs}}-toggle="tooltip"
         data{{bs}}-container="#wrapper"
@@ -61,7 +61,7 @@
         aria-label="{{#str}}refresh, mod_interactivevideo{{/str}}"
         data-id="{{id}}"
     >
-        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+        <i class="bi bi-arrow-repeat fs-25px" aria-hidden="true"></i>
         <span class="sr-only">
             {{#str}}refresh, mod_interactivevideo{{/str}}
         </span>

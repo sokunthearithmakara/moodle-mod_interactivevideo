@@ -252,6 +252,8 @@ unset(
     $moduleinstance->displayoptions['aftercompletionbehavior']
 );
 
+$PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+
 $PAGE->requires->js_call_amd(
     'mod_interactivevideo/editannotation',
     'init',

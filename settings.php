@@ -361,6 +361,7 @@ $bsettings->add(new admin_setting_configmulticheckbox(
     [
         'autoplay' => get_string('autoplay', 'mod_interactivevideo'),
         'pauseonblur' => get_string('pauseonblur', 'mod_interactivevideo'),
+        'allowdeleteprogress' => get_string('allowdeleteprogress', 'mod_interactivevideo'),
         'preventskipping' => get_string('preventskipping', 'mod_interactivevideo'),
         'preventseeking' => get_string('preventseeking', 'mod_interactivevideo'),
         'disableinteractionclick' => get_string('disableinteractionclick', 'mod_interactivevideo'),

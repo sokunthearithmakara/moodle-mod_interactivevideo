@@ -30,10 +30,13 @@ class hook_callbacks {
      * @param \core\hook\output\after_standard_main_region_html_generation $hook
      */
     public static function launch_player_modal(\core\hook\output\after_standard_main_region_html_generation $hook): void {
-        global $PAGE;
+        global $PAGE, $CFG;
         if (strpos($PAGE->bodyclasses, 'path-course-view') === false) {
             return;
         }
+
+        $PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+
         $PAGE->requires->js_call_amd('mod_interactivevideo/launch', 'init');
     }
 }

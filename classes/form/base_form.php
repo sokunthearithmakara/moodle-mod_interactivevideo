@@ -186,6 +186,8 @@ class base_form extends \core_form\dynamic_form {
      */
     public function process_advanced_settings($data) {
         $advancedsettings = new \stdClass();
+        $advancedsettings->deletebeforecomplete = isset($data->deletebeforecomplete) ? $data->deletebeforecomplete : 0;
+        $advancedsettings->deleteaftercomplete = isset($data->deleteaftercomplete) ? $data->deleteaftercomplete : 0;
         $advancedsettings->visiblebeforecompleted = isset($data->visiblebeforecompleted) ? $data->visiblebeforecompleted : 1;
         $advancedsettings->visibleaftercompleted = isset($data->visibleaftercompleted) ? $data->visibleaftercompleted : 1;
         $advancedsettings->clickablebeforecompleted = isset($data->clickablebeforecompleted) ? $data->clickablebeforecompleted : 1;
@@ -364,6 +366,36 @@ class base_form extends \core_form\dynamic_form {
         $mform->addElement('header', 'advanced', get_string('advanced', 'mod_interactivevideo'));
         // Collapse the advanced fields by default.
         $mform->setExpanded('advanced', false);
+
+        // Delete completion data.
+        if ($options['hascompletion']) {
+            $elementarray = [];
+            $elementarray[] = $mform->createElement(
+                'advcheckbox',
+                'deletebeforecomplete',
+                '',
+                get_string('beforecompletion', 'mod_interactivevideo'),
+                ["group" => 1],
+                [0, 1]
+            );
+            $elementarray[] = $mform->createElement(
+                'advcheckbox',
+                'deleteaftercomplete',
+                '',
+                get_string('aftercompletion', 'mod_interactivevideo'),
+                ["group" => 1],
+                [0, 1]
+            );
+            $elementarray[] = $mform->createElement(
+                'static',
+                'deletecompletion',
+                '',
+                '<span class="text-muted small w-100 d-block">'
+                    . get_string('deletecompletiondesc', 'mod_interactivevideo') . '</span>'
+            );
+            $mform->addGroup($elementarray, '', get_string('deletecompletion', 'mod_interactivevideo'));
+        }
+
         if ($options['visibility']) {
             $elementarray = [];
 
@@ -525,8 +557,8 @@ class base_form extends \core_form\dynamic_form {
             'maxfiles' => EDITOR_UNLIMITED_FILES,
             'maxbytes' => 0,
             'changeformat' => 1,
-            'noclean' => true,
-            'trusttext' => false,
+            'noclean' => 1,
+            'trusttext' => 0,
             'context' => $this->get_context_for_dynamic_submission(),
         ];
     }

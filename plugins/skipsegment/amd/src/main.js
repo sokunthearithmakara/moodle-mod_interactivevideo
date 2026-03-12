@@ -276,8 +276,6 @@ export default class SkipSegment extends Base {
             this.player.pause();
             if (annotation.title >= this.end) {
                 self.dispatchEvent('iv:playerEnded', {});
-            }
-            if (this.isEditMode()) {
                 return;
             }
             setTimeout(() => {
@@ -293,6 +291,10 @@ export default class SkipSegment extends Base {
                     <i class="bi bi-chevron-bar-right iv-ml-1 fs-unset"></i>
                 </div>`);
             $('#skipsegment').fadeIn(300);
+            if (annotation.title >= this.end) {
+                self.dispatchEvent('iv:playerEnded', {});
+                return;
+            }
             self.player.play();
         }
     }

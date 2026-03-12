@@ -456,6 +456,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
         // Add standard buttons.
         $this->add_action_buttons();
 
+        $PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+
         // Add the js.
         $PAGE->requires->js_call_amd('mod_interactivevideo/mod_form', 'init', [
             $current->id ?? 0,
@@ -667,6 +669,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'showname',
                 'pauseonblur',
                 'autoplay',
+                'allowdeleteprogress',
                 'columnlayout',
                 'squareposterimage',
                 'passwordprotected',
@@ -690,10 +693,10 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 }
                 if (
                     in_array($option, [
-                    'beforecompletion',
-                    'aftercompletion',
-                    'beforecompletionbehavior',
-                    'aftercompletionbehavior',
+                        'beforecompletion',
+                        'aftercompletion',
+                        'beforecompletionbehavior',
+                        'aftercompletionbehavior',
                     ]) && $defaultvalues[$option] == 0
                 ) {
                     $defaultvalues[$option] = [];
