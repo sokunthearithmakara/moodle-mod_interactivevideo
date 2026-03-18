@@ -190,7 +190,6 @@ class BunnyStream {
                 setTimeout(() => {
 
                     player[node].getDuration(duration => {
-                        window.console.log(duration);
                         self.seek(self.start);
                         player[node].pause();
                         let totaltime = Number(duration.toFixed(2)) - self.frequency;

@@ -266,7 +266,6 @@ class Panopto {
                     player[node].pauseVideo(); // If the autoplay is blocked by the browser, we'll get the error event. See onError.
                 },
                 onStateChange: function(state) {
-                    window.console.log(state);
                     if (ready === false) {
                         player[node].pauseVideo();
                         return;
