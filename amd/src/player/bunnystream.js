@@ -35,6 +35,7 @@ class BunnyStream {
         this.type = 'bunnystream';
         this.frequency = 0.25;
         this.support = {
+            hideControls: false,
             playbackrate: false,
             quality: false,
         };
@@ -93,13 +94,15 @@ class BunnyStream {
         // eslint-disable-next-line consistent-return
         return new Promise((resolve) => {
             player[node].on('ready', () => {
-                player[node].getDuration(duration => {
-                    resolve({
-                        duration: duration,
-                        title: self.title,
-                        posterImage: self.posterImage,
+                setTimeout(() => {
+                    player[node].getDuration(duration => {
+                        resolve({
+                            duration: duration,
+                            title: self.title,
+                            posterImage: self.posterImage,
+                        });
                     });
-                });
+                }, 1000);
 
             });
         });
@@ -177,22 +180,39 @@ class BunnyStream {
 
         player[node].on('ready', () => {
             self.start = start || 0;
+            if (player[node].supports("method", "mute")) {
+                player[node].mute();
+            }
+
             player[node].play(); // We need to play the video to get the duration.
-            player[node].getDuration(duration => {
-                self.seek(self.start);
-                let totaltime = Number(duration.toFixed(2)) - self.frequency;
-                end = !end ? totaltime : Math.min(end, totaltime);
-                end = Number(end.toFixed(2));
-                self.end = end;
-                self.totaltime = Number(totaltime.toFixed(2));
-                self.duration = self.end - self.start;
-                dispatchEvent('iv:playerReady', null, document.getElementById(node));
-            });
 
             player[node].on('play', () => {
-                self.paused = false;
-                self.ended = false;
-                dispatchEvent('iv:playerPlay');
+                setTimeout(() => {
+
+                    player[node].getDuration(duration => {
+                        window.console.log(duration);
+                        self.seek(self.start);
+                        player[node].pause();
+                        let totaltime = Number(duration.toFixed(2)) - self.frequency;
+                        end = !end ? totaltime : Math.min(end, totaltime);
+                        end = Number(end.toFixed(2));
+                        self.end = end;
+                        self.totaltime = Number(totaltime.toFixed(2));
+                        self.duration = self.end - self.start;
+                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        if (player[node].supports("method", "mute")) {
+                            player[node].unmute();
+                        }
+
+                        player[node].off('play');
+
+                        player[node].on('play', () => {
+                            self.paused = false;
+                            self.ended = false;
+                            dispatchEvent('iv:playerPlay');
+                        });
+                    });
+                }, 3000);
             });
 
             player[node].on('pause', () => {

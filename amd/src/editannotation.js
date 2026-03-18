@@ -490,6 +490,15 @@ export default {
                 $('#video-block').addClass('no-pointer');
             }
 
+            if (player.support.hideControls == false) {
+                $('#showcontrols').remove();
+            }
+
+            const controls = new URLSearchParams(window.location.search).get('controls') == '1';
+            if (controls) {
+                $('#video-block').addClass('no-pointer');
+            }
+
             if (player.support.playbackrate == false) {
                 $('#changerate').remove();
             } else {
@@ -732,6 +741,7 @@ export default {
                 $('#video-block').addClass('no-pointer bg-transparent');
                 $annotationcanvas.removeClass('d-none w-0');
             }
+            const showcontrol = new URLSearchParams(window.location.search).get('controls') == '1';
             player = new VideoPlayer();
             player.load(
                 url,
@@ -740,7 +750,7 @@ export default {
                 {
                     'customStart': true,
                     'passwordprotected': displayoptions.passwordprotected == 1,
-                    'showControls': false,
+                    'showControls': showcontrol || false,
                     'keyboard': true,
                 }
             );
@@ -1878,6 +1888,10 @@ export default {
             if (!playerReady) {
                 return;
             }
+            let t = await player.getCurrentTime();
+            // Trigger a timeupdate event to update the progress bar.
+            dispatchEvent('timeupdate', {'time': t});
+
             if (contentTypeModal) {
                 contentTypeModal.show();
                 return;
@@ -2749,6 +2763,20 @@ export default {
                 // Save content.
                 $('#savedraft').trigger('click');
             }
+        });
+
+        // Show controls.
+        $('#showcontrols').on('click', function(e) {
+            e.preventDefault();
+            // Get the url.
+            let url = new URL(window.location.href);
+            let controls = url.searchParams.get('controls');
+            if (controls == '1') {
+                url.searchParams.set('controls', '0');
+            } else {
+                url.searchParams.set('controls', '1');
+            }
+            window.location.href = url.toString();
         });
     }
 };

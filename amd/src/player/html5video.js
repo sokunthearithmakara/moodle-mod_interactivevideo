@@ -35,6 +35,7 @@ class Html5Video {
         this.frequency = 0.4;
         this.useAnimationFrame = false;
         this.support = {
+            hideControls: false,
             playbackrate: true,
             quality: true,
         };

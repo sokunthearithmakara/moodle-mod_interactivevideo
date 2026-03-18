@@ -30,6 +30,7 @@ class Spotify {
         this.type = 'spotify';
         this.frequency = 1.2; // Spotify emits playback_update very very slowly (0.5 - 1 s).
         this.support = {
+            hideControls: false,
             playbackrate: false,
             quality: false,
             password: false,

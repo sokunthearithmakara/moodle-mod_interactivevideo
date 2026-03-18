@@ -37,6 +37,7 @@ class Dyntube {
         this.frequency = 0.25;
         this.useAnimationFrame = false;
         this.support = {
+            hideControls: false,
             playbackrate: false,
             quality: false,
             password: false,
@@ -63,7 +64,7 @@ class Dyntube {
         // Get oembed data.
         let oembedUrl = `https://videos.dyntube.com/oembed/oembed.json?url=${encodeURIComponent(url)}`;
 
-        const getData = async() => {
+        const getData = async () => {
             try {
                 const data = await $.ajax({
                     url: oembedUrl,
@@ -169,7 +170,7 @@ class Dyntube {
         // Get oembed data.
         let oembedUrl = `https://videos.dyntube.com/oembed/oembed.json?url=${encodeURIComponent(url)}`;
 
-        const getData = async() => {
+        const getData = async () => {
             try {
                 const data = await $.ajax({
                     url: oembedUrl,

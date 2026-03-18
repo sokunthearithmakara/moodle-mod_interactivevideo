@@ -47,6 +47,7 @@ class Panopto {
          */
         this.frequency = 0.25;
         this.support = {
+            hideControls: false,
             playbackrate: true,
             quality: false,
         };
@@ -265,17 +266,19 @@ class Panopto {
                     player[node].pauseVideo(); // If the autoplay is blocked by the browser, we'll get the error event. See onError.
                 },
                 onStateChange: function(state) {
+                    window.console.log(state);
                     if (ready === false) {
                         player[node].pauseVideo();
                         return;
                     }
+                    let currentTime = player[node].getCurrentTime();
                     switch (state) {
                         case PlayerState.Ended:
                             self.ended = true;
                             dispatchEvent('iv:playerEnded');
                             break;
                         case PlayerState.Playing:
-                            if (player[node].getCurrentTime() >= self.end || player[node].getCurrentTime() < self.start) {
+                            if (currentTime >= self.end || currentTime < self.start) {
                                 player[node].seekTo(self.start);
                             }
                             dispatchEvent('iv:playerPlay');
@@ -285,7 +288,7 @@ class Panopto {
                             break;
                         case PlayerState.Paused:
                             this.paused = true;
-                            if (!self.ended && player[node].getCurrentTime() >= self.end - self.frequency) {
+                            if (!self.ended && currentTime >= self.end - self.frequency) {
                                 dispatchEvent('iv:playerEnded');
                                 self.ended = true;
                                 return;

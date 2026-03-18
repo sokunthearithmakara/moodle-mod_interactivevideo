@@ -754,7 +754,7 @@ function interactivevideo_displayinline(cm_info $cm) {
 
     $interactivevideo->posterimage = $interactivevideo->posterimage == '' ?
         $OUTPUT->get_generated_image_for_id($cm->id) : $interactivevideo->posterimage; // Fallback to default image.
-    $duration = $interactivevideo->endtime - $interactivevideo->starttime;
+    $duration = (int)$interactivevideo->endtime - (int)$interactivevideo->starttime;
     // Convert to hh:mm:ss format.
     $duration = gmdate($duration > 3600 ? 'H:i:s' : 'i:s', (int) $duration);
 

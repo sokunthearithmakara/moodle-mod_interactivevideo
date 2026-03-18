@@ -31,6 +31,7 @@ class SoundCloud {
         this.type = 'soundcloud';
         this.frequency = 0.25;
         this.support = {
+            hideControls: false,
             playbackrate: false,
             quality: false,
             password: false,

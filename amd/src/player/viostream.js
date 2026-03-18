@@ -36,6 +36,7 @@ class Viostream {
         this.type = 'viostream';
         this.frequency = 0.25;
         this.support = {
+            hideControls: false,
             playbackrate: false,
             quality: false,
         };

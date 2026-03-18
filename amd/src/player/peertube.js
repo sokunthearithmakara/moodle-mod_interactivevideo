@@ -50,6 +50,7 @@ class PeerTube {
          */
         this.frequency = 0.7;
         this.support = {
+            hideControls: false,
             playbackrate: true,
             quality: true,
             password: true,

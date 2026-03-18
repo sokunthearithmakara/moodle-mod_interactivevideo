@@ -37,15 +37,16 @@ Example context (json):
                         <div id="video-block"
                              class="position-absolute w-100 h-100"
                              style="z-index: 1"></div>
-                        {{#html5}}
+                    {{#html5}}
                         <video id="player" class="w-100 bg-black">
                         </video>
                     {{/html5}}
                     {{^html5}}
-                    <div id="player" class="w-100 p-0"></div>
-                {{/html5}}
-            </div>
-        </div>
+                        <div id="player" class="w-100 p-0"></div>
+                    {{/html5}}
+                    </div>
+                </div>
+
         <div id="annotation-content" class="w-100 position-relative"></div>
     </div>
     <div id="separator"
