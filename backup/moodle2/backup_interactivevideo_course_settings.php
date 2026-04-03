@@ -58,12 +58,12 @@ class backup_interactivevideo_course_settings extends backup_activity_structure_
 
         // 5. Define sources.
         $interactivevideosetting->set_source_table('interactivevideo_settings', [
-            'courseid' => backup::VAR_COURSEID
+            'courseid' => backup::VAR_COURSEID,
         ]);
 
         // This will now execute independently of whether settings were found.
         $default->set_source_table('interactivevideo_defaults', [
-            'courseid' => backup::VAR_COURSEID
+            'courseid' => backup::VAR_COURSEID,
         ]);
 
         // 6. Return the container as the root.

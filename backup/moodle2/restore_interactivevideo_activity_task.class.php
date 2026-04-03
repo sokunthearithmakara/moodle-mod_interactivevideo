@@ -40,7 +40,6 @@ class restore_interactivevideo_activity_task extends restore_activity_task {
     protected function define_my_steps() {
         static $processed = false;
 
-
         $this->add_step(new restore_interactivevideo_activity_structure_step('interactivevideo_structure', 'interactivevideo.xml'));
 
         if ($processed) {

@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.7.2] - 2026-04-03
+https://buymeacoffee.com/tsmakara/interactive-video-1-7-2
+
 ## [1.7.1] - 2026-03-18
 - Fixed an issue on BunnyStream player where the getDuration method returned 0 (caused by recent changes to their API).
 - Added an option to display the video controls on the editor page.
