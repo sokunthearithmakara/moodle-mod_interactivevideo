@@ -443,7 +443,7 @@ const defaultDisplayContent = async function(annotation, player) {
                 }
                 const target = $(this).data('id');
                 $(this).addClass('active').siblings().removeClass('active');
-                $sidebarcontent.find('#message').fadeOut(300);
+                $sidebarcontent.find('[data-placement="side"]').fadeOut(300);
                 $sidebarcontent.find(`#message[data-id='${target}']`).fadeIn(300).addClass('active');
                 const isPaused = await player.isPaused();
                 if (isPaused) {
@@ -468,7 +468,7 @@ const defaultDisplayContent = async function(annotation, player) {
         // Show the sidebar.
         $sidebar.removeClass('hide');
         // Replace the navigation item if it exists.
-        if ($(`#sidebar-nav .sidebar-nav-item[data-id='${annotation.id}']`).length == 0) {
+        if ($sidebar.find(`.sidebar-nav-item[data-id='${annotation.id}']`).length == 0) {
             // Add a navigation item.
             let clss = '';
             if (annotation.hascompletion == 1 && annotation.completed == true) {
@@ -484,30 +484,36 @@ const defaultDisplayContent = async function(annotation, player) {
             data-id="${annotation.id}" data-timestamp="${annotation.timestamp}"></div>`);
 
             // Set the tooltip.
-            $(`#sidebar-nav .sidebar-nav-item[data-id='${annotation.id}']`).tooltip();
+            $sidebar.find(`.sidebar-nav-item[data-id='${annotation.id}']`).tooltip();
 
             // Sort the navigation items.
             $sidebar.find('#sidebar-nav .sidebar-nav-item').sort(function(a, b) {
                 return $(a).data('timestamp') - $(b).data('timestamp');
             }).appendTo('#annotation-sidebar #sidebar-nav');
+        } else {
+            $sidebar.find(`.sidebar-nav-item[data-id='${annotation.id}']`).addClass('active');
         }
         // Hide other messages on the sidebar.
-        $sidebar.find('#message').fadeOut(300);
+        $sidebar.find('[data-placement="side"]').fadeOut(300);
         $sidebar.find('#sidebar-nav .sidebar-nav-item:not([data-id="' + annotation.id + '"])').removeClass('active');
         if ($sidebar.find('#message.active').length > 0) {
             dispatchEvent('interactionclose', {
                 annotation: {
-                    id: $(`#annotation-sidebar #message.active`).data('id')
+                    id: $sidebar.find(`#message.active`).data('id')
                 }
             });
         }
         $sidebar.find(`#message:not([data-id='${annotation.id}'])`).removeClass('active');
         // Append the message to the sidebar.
-        $sidebar.find('#sidebar-content').append(`<div id="message" data-placement="side"
+        if ($sidebar.find(`#message[data-id='${annotation.id}']`).length > 0) {
+            $sidebar.find(`#message[data-id='${annotation.id}']`).addClass('active');
+        } else {
+            $sidebar.find('#sidebar-content').append(`<div id="message" data-placement="side"
                     data-id="${annotation.id}" class="${annotation.type} sticky active" tabindex="0">
                     <div id="title" class="modal-header shadow-sm border-bottom">${messageTitle}</div>
                     <div class="modal-body" id="content"></div>
                     </div>`);
+        }
         return new Promise((resolve) => {
             $sidebar.find('#message.active').fadeIn(300, function() {
                 resolve();

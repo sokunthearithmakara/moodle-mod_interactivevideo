@@ -141,7 +141,7 @@ define([
             && x.hascompletion == 1);
         chapteritems.sort((a, b) => a.timestamp - b.timestamp);
         chapteritems.forEach((x) => {
-            const advanced = JSON.parse(x.advanced);
+            const advanced = JSON.parse(x.advanced || '{}');
             if ((advanced.visiblebeforecompleted == "1" && !x.completed)
                 || (advanced.visibleaftercompleted == "1" && x.completed)) {
                 $('[data-region="chapterlists"] li').each(function() {
@@ -498,12 +498,7 @@ define([
                         annotation.prop = JSON.stringify(contentTypeMap.get(annotation.type));
                         annotation.completed = completedItems.indexOf(annotation.id) > -1;
 
-                        let advanced;
-                        try {
-                            advanced = JSON.parse(annotation.advanced);
-                        } catch (e) {
-                            advanced = null;
-                        }
+                        let advanced = JSON.parse(annotation.advanced || '{}');
                         annotation.rerunnable = advanced && advanced.replaybehavior === '1';
 
                         return annotation;
@@ -1235,6 +1230,7 @@ define([
                     dispatchEvent('iv:playerStarted');
                 }
 
+                // eslint-disable-next-line complexity
                 const intervalFunction = async function() {
                     const isPlaying = await player.isPlaying();
                     const isEnded = await player.isEnded();
@@ -1317,7 +1313,12 @@ define([
                             if (time < theAnnotation.timestamp - player.frequency) {
                                 await player.seek(theAnnotation.timestamp);
                             }
-                            runInteraction(theAnnotation);
+                            const advancedsettings = JSON.parse(theAnnotation.advanced || '{}');
+                            if (advancedsettings.autolaunch != 0) { // For backward support, we're not using autolaunch == 1;
+                                runInteraction(theAnnotation);
+                            } else { // If not autolaunch, we're putting it in the viewedAnno to avoid running it again.
+                                viewedAnno.push(Number(theAnnotation.id));
+                            }
                         } else {
                             if (theAnnotation.completed) {
                                 if (time < theAnnotation.timestamp - player.frequency) {
@@ -1443,7 +1444,7 @@ define([
                 }
                 if (releventAnnotations) {
                     const theAnnotation = releventAnnotations.find(x => Number(x.timestamp) < Number(t.toFixed(2))
-                        && x.completed == false && JSON.parse(x.advanced).advskippable == 0 && x.hascompletion == 1);
+                        && x.completed == false && JSON.parse(x.advanced || '{}').advskippable == 0 && x.hascompletion == 1);
                     if (theAnnotation) {
                         await player.pause();
                         await player.seek(theAnnotation.timestamp);
@@ -2149,8 +2150,7 @@ define([
                 // Handle the dismissible setting.
                 $('#message[data-id=' + annotation.id + ']').addClass('active'); // Make sure the message is active.
                 let anno = releventAnnotations.find(x => x.id == annotation.id);
-                let advanced = anno.advanced;
-                advanced = advanced ? JSON.parse(advanced) : {};
+                let advanced = JSON.parse(anno.advanced || '{}');
                 if (advanced.advdismissible == 0 && anno.completed) {
                     $('#controller, #video-wrapper, .sidebar-nav-item')
                         .removeClass('completion-required');

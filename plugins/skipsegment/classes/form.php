@@ -71,6 +71,7 @@ class form extends \mod_interactivevideo\form\base_form {
         );
         $this->advanced_form_fields([
             'hascompletion' => false,
+            'autolaunch' => false,
         ]);
         // Open the form.
         $mform->setExpanded('advanced', true);

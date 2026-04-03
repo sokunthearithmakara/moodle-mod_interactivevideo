@@ -65,6 +65,7 @@ class form extends \mod_interactivevideo\form\base_form {
 
         $this->advanced_form_fields([
             'hascompletion' => false,
+            'autolaunch' => false,
         ]);
 
         $group = [];
@@ -84,7 +85,7 @@ class form extends \mod_interactivevideo\form\base_form {
             'lockdesc',
             '',
             '<span class="text-muted small w-100 d-block">'
-            . get_string('lockdesc', 'ivplugin_chapter') . '</span>'
+                . get_string('lockdesc', 'ivplugin_chapter') . '</span>'
         );
         $mform->addGroup($group, 'lockgroup', get_string('lockchapter', 'ivplugin_chapter'), null, false);
 

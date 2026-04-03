@@ -27,7 +27,12 @@ class backup_interactivevideo_course_settings extends backup_activity_structure_
      */
     protected function define_structure() {
         global $DB;
-        // Define each element separated.
+
+        // 1. Create a "wrapper" root element.
+        // This element doesn't map to a table and always exists.
+        $container = new backup_nested_element('interactivevideo_container');
+
+        // 2. Define the settings element.
         $interactivevideosetting = new backup_nested_element('interactivevideosetting', ["id"], [
             'courseid',
             'endscreentext',
@@ -36,29 +41,32 @@ class backup_interactivevideo_course_settings extends backup_activity_structure_
             'displayoptions',
             'extendedcompletion',
             'completion',
-            'defaults',
         ]);
 
-        // Nest the defaults from the interactivevideo_defaults table.
+        // 3. Define the defaults elements.
         $defaultinfos = new backup_nested_element('defaultinfos');
-        // Get the columns from the interactivevideo_items table.
-        $columns = $DB->get_columns('interactivevideo_defaults');
-        // Convert the columns to an array of column names.
-        $columns = array_keys($columns);
-        // Remove the id column.
+
+        $columns = array_keys($DB->get_columns('interactivevideo_defaults'));
         $columns = array_diff($columns, ['id']);
 
         $default = new backup_nested_element('defaultinfo', ['id'], $columns);
 
-        $interactivevideosetting->add_child($defaultinfos);
+        // 4. Build the hierarchy under the container.
+        $container->add_child($interactivevideosetting);
+        $container->add_child($defaultinfos);
         $defaultinfos->add_child($default);
 
-        // Define sources.
-        $interactivevideosetting->set_source_table('interactivevideo_settings', ['courseid' => backup::VAR_COURSEID]);
+        // 5. Define sources.
+        $interactivevideosetting->set_source_table('interactivevideo_settings', [
+            'courseid' => backup::VAR_COURSEID
+        ]);
 
-        // Set the source for the defaults.
-        $default->set_source_table('interactivevideo_defaults', ['courseid' => backup::VAR_COURSEID]);
+        // This will now execute independently of whether settings were found.
+        $default->set_source_table('interactivevideo_defaults', [
+            'courseid' => backup::VAR_COURSEID
+        ]);
 
-        return $this->prepare_activity_structure($interactivevideosetting);
+        // 6. Return the container as the root.
+        return $this->prepare_activity_structure($container);
     }
 }

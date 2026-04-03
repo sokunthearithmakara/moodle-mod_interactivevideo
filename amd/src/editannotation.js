@@ -486,6 +486,7 @@ export default {
                 && player.type != 'panopto'
                 && player.type != "peertube"
                 && player.type != "dyntube"
+                && player.type != "yt"
                 && player.type != "rutube") { // Vimeo/HTML5 does not pause/play on click.
                 $('#video-block').addClass('no-pointer');
             }

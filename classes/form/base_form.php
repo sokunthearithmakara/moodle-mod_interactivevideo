@@ -188,6 +188,7 @@ class base_form extends \core_form\dynamic_form {
         $advancedsettings = new \stdClass();
         $advancedsettings->deletebeforecomplete = isset($data->deletebeforecomplete) ? $data->deletebeforecomplete : 0;
         $advancedsettings->deleteaftercomplete = isset($data->deleteaftercomplete) ? $data->deleteaftercomplete : 0;
+        $advancedsettings->autolaunch = isset($data->autolaunch) ? $data->autolaunch : 1;
         $advancedsettings->visiblebeforecompleted = isset($data->visiblebeforecompleted) ? $data->visiblebeforecompleted : 1;
         $advancedsettings->visibleaftercompleted = isset($data->visibleaftercompleted) ? $data->visibleaftercompleted : 1;
         $advancedsettings->clickablebeforecompleted = isset($data->clickablebeforecompleted) ? $data->clickablebeforecompleted : 1;
@@ -359,6 +360,7 @@ class base_form extends \core_form\dynamic_form {
             'visibility' => true, // Whether to show visibility options.
             'click' => true, // Whether to show clickability options.
             'rerun' => true, // Whether to show replay behavior options.
+            'autolaunch' => true, // Whether to show autolaunch options.
         ];
 
         $mform = &$this->_form;
@@ -394,6 +396,30 @@ class base_form extends \core_form\dynamic_form {
                     . get_string('deletecompletiondesc', 'mod_interactivevideo') . '</span>'
             );
             $mform->addGroup($elementarray, '', get_string('deletecompletion', 'mod_interactivevideo'));
+        }
+
+        if ($options['autolaunch']) {
+            $elementarray = [];
+
+            $elementarray[] = $mform->createElement(
+                'advcheckbox',
+                'autolaunch',
+                '',
+                get_string('autolaunch', 'mod_interactivevideo'),
+                ["group" => 1],
+                [0, 1]
+            );
+            $elementarray[] = $mform->createElement(
+                'static',
+                'autolaunchdesc',
+                '',
+                '<span class="text-muted small w-100 d-block">'
+                    . get_string('autolaunch_desc', 'mod_interactivevideo') . '</span>'
+            );
+
+            $mform->addGroup($elementarray);
+            $mform->setType('autolaunch', PARAM_INT);
+            $mform->setDefault('autolaunch', 1);
         }
 
         if ($options['visibility']) {

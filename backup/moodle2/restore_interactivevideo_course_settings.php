@@ -39,9 +39,16 @@ class restore_interactivevideo_course_settings extends restore_activity_structur
         }
 
         // Restore course settings.
-        $paths[] = new restore_path_element('interactivevideosetting', '/activity/interactivevideosetting');
+        $paths[] = new restore_path_element(
+            'interactivevideosetting',
+            '/activity/interactivevideo_container/interactivevideosetting'
+        );
 
-        $paths[] = new restore_path_element('defaultinfos', '/activity/interactivevideosetting/defaultinfos/defaultinfo');
+        $paths[] = new restore_path_element(
+            'defaultinfos',
+            '/activity/interactivevideo_container/defaultinfos/defaultinfo'
+        );
+
         // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
     }
@@ -53,10 +60,16 @@ class restore_interactivevideo_course_settings extends restore_activity_structur
      * @return void
      */
     protected function process_interactivevideosetting($data) {
+        static $process = false;
 
         if (empty($data)) {
             return;
         }
+
+        if ($process) {
+            return;
+        }
+        $process = true;
 
         // If the courseid is the same as the current course, we don't need to restore it.
         if ($data['courseid'] == $this->get_courseid()) {
@@ -90,6 +103,7 @@ class restore_interactivevideo_course_settings extends restore_activity_structur
      * @return void
      */
     protected function process_defaultinfos($data) {
+        static $processestype = [];
 
         if (empty($data)) {
             return;
@@ -100,12 +114,17 @@ class restore_interactivevideo_course_settings extends restore_activity_structur
             return;
         }
 
+        if (in_array($data['type'], $processestype)) {
+            return;
+        }
+        $processestype[] = $data['type'];
+
         global $DB;
         // If the current course already has the defaults for this type, we don't need to restore it.
         if (
             $DB->record_exists('interactivevideo_defaults', [
-            'courseid' => $this->get_courseid(),
-            'type' => $data['type'],
+                'courseid' => $this->get_courseid(),
+                'type' => $data['type'],
             ])
         ) {
             return;

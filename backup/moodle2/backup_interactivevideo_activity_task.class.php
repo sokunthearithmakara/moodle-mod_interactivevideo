@@ -39,14 +39,23 @@ class backup_interactivevideo_activity_task extends backup_activity_task {
         global $DB;
         $this->add_step(new backup_interactivevideo_activity_structure_step('interactivevideo_structure', 'interactivevideo.xml'));
 
-        $backupid = $this->get_backupid();
-        $type = $DB->get_field('backup_controllers', 'type', ['backupid' => $backupid]);
+        static $type = null;
+        static $processed = false;
+        if ($processed) {
+            return;
+        }
+
+        if ($type === null) {
+            $backupid = $this->get_backupid();
+            $type = $DB->get_field('backup_controllers', 'type', ['backupid' => $backupid]);
+        }
         if ($type === 'course') {
             // If this is a course backup, we need to add the course settings step.
             $this->add_step(new backup_interactivevideo_course_settings(
                 'interactivevideosettings_structure',
                 'interactivevideo_settings.xml'
             ));
+            $processed = true;
         }
     }
 
