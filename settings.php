@@ -62,8 +62,12 @@ if (
 ) {
     // Get file content from GitHub.
     $file = 'https://raw.githubusercontent.com/sokunthearithmakara/moodle-mod_interactivevideo/refs/heads/main/plugins.json';
-    $plugins = @file_get_contents($file);
-    if ($plugins === false) {
+    try {
+        $plugins = @file_get_contents($file);
+        if ($plugins === false) {
+            $plugins = '{}';
+        }
+    } catch (Exception $e) {
         $plugins = '{}';
     }
     // Launch popup modal when the button is clicked.

@@ -279,8 +279,6 @@ function interactivevideo_update_instance($moduleinstance, $mform = null) {
     $draftitemid = $moduleinstance->endscreentext['itemid'];
     $text = $moduleinstance->endscreentext['text'];
 
-    $moduleinstance->timemodified = time();
-
     // Put the endscreentext stdClass into a single field.
     $moduleinstance->endscreentext = json_encode($moduleinstance->endscreentext);
     // Put all the display options into a single field.
@@ -1255,6 +1253,7 @@ function interactivevideo_output_fragment_getcontent($arg) {
     if (!class_exists($class)) {
         return json_encode($arg);
     }
+    $arg['plugin'] = 'interactivevideo';
     $contenttype = new $class($arg);
     return $contenttype->get_content($arg);
 }
@@ -2580,13 +2579,6 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
     $mform->setDefaults($defaultarray);
 }
 
-/**
- * Form elements for completion settings.
- *
- * @param mixed $mform
- * @param mixed $current
- * @return void
- */
 /**
  * This function receives a calendar event and returns the action associated with it, or null if there is none.
  *

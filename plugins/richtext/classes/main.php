@@ -68,6 +68,10 @@ class main {
             'author' => 'tsmakara',
             'tutorial' => get_string('tutorialurl', 'ivplugin_richtext'),
             'preloadstrings' => false,
+            'flexbook' => true,
+            'fbdescription' => get_string('richtextdescription', 'ivplugin_richtext'),
+            'fbamdmodule' => 'ivplugin_richtext/fbmain',
+            'fbform' => 'ivplugin_richtext\\fbform',
         ];
     }
 
@@ -84,7 +88,14 @@ class main {
         $format = FORMAT_HTML;
         // Process the content from editor for displaying.
         require_once($CFG->libdir . '/filelib.php');
-        $content = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $contextid, 'mod_interactivevideo', 'content', $id);
+        $content = file_rewrite_pluginfile_urls(
+            $content,
+            'pluginfile.php',
+            $contextid,
+            'mod_' . (isset($arg['plugin']) ? $arg['plugin'] : 'interactivevideo'),
+            'content',
+            $id
+        );
         $options = new \stdClass();
         $options->para = false;
         $options->overflowdiv = true;

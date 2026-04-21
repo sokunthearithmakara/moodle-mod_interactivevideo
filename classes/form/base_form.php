@@ -118,7 +118,7 @@ class base_form extends \core_form\dynamic_form {
         }
 
         $data->timestamp = $this->optional_param('timestamp', 1, PARAM_FLOAT);
-        $data->title = $this->optional_param('title', get_string('defaulttitle', 'mod_interactivevideo'), PARAM_TEXT);
+        $data->title = $this->optional_param('title', '', PARAM_TEXT);
 
         // Advanced settings: is a single field that contains all the advanced settings.
         if (is_object($advancedsettings)) {

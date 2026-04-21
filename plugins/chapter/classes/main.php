@@ -42,6 +42,10 @@ class main extends \ivplugin_richtext\main {
             'author' => 'tsmakara',
             'tutorial' => get_string('tutorialurl', 'ivplugin_chapter'),
             'preloadstrings' => false,
+            'flexbook' => true,
+            'fbdescription' => get_string('fbdescription', 'ivplugin_chapter'),
+            'fbamdmodule' => 'ivplugin_chapter/fbmain',
+            'fbform' => 'ivplugin_chapter\\fbform',
         ];
     }
 

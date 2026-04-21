@@ -258,7 +258,8 @@ export default {
                     sesskey: M.cfg.sesskey,
                     id: interaction,
                     contextid: M.cfg.contextid,
-                    coursecontextid: M.cfg.courseContextId
+                    coursecontextid: M.cfg.courseContextId,
+                    cmid: coursemodule
                 }
             });
 
@@ -2107,7 +2108,8 @@ export default {
                         sesskey: M.cfg.sesskey,
                         id: $(this).val(),
                         contextid: M.cfg.contextid,
-                        coursecontextid: M.cfg.courseContextId
+                        coursecontextid: M.cfg.courseContextId,
+                        cmid: coursemodule
                     }
                 });
                 interactions = JSON.parse(interactions);

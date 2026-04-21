@@ -851,7 +851,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
             $suffix = $this->get_suffix();
         }
         // Default completion.
-        if (!isset($data['completionpercentageenabled' . $suffix]) && $data['completionpercentage' . $suffix] > 0) {
+        if (isset($data['completionpercentageenabled' . $suffix]) && $data['completionpercentage' . $suffix] > 0) {
             $hascompletion = true;
         }
 

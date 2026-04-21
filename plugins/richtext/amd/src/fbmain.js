@@ -1,4 +1,3 @@
-<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,18 +14,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Interactivevideo
+ * Main module for the richtext plugin.
  *
- * @package    mod_interactivevideo
+ * @module     ivplugin_richtext/fbmain
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'mod_interactivevideo';
-$plugin->release = '1.7.3';
-$plugin->version = 2026042200;
-$plugin->requires = 2021112800;
-$plugin->supported = [400, 502];
-$plugin->maturity = MATURITY_STABLE;
+import Base from 'mod_flexbook/type/base';
+import $ from 'jquery';
+import {notifyFilterContentUpdated as notifyFilter} from 'core_filters/events';
+export default class RichText extends Base {
+    /**
+     * Post-processes the content after rendering an annotation.
+     *
+     * @param {Object} annotation - The annotation object.
+     * @param {number} annotation.id - The ID of the annotation.
+     */
+    postContentRender(annotation) {
+        let $body = $(`#message[data-id='${annotation.id}'] .modal-body`);
+        notifyFilter($body);
+        $body.addClass('bg-white p-0');
+    }
+}

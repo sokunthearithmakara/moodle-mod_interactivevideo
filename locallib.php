@@ -72,9 +72,9 @@ class interactivevideo_util {
      * @param int $id
      * @param int $contextid
      * @param float $timestamp
-     * @return stdClass
+     * @return mixed
      */
-    public static function copy_item($id, $contextid, $timestamp) {
+    public static function copy_item($id, $contextid, $timestamp): mixed {
         global $DB, $CFG;
         $record = $DB->get_record('interactivevideo_items', ['id' => $id]);
         if ($timestamp == $record->timestamp) {

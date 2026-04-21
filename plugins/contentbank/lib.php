@@ -15,18 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Interactivevideo
+ * Callback implementations for Contentbank Item
  *
- * @package    mod_interactivevideo
- * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
+ * @package    ivplugin_contentbank
+ * @copyright  2026 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'mod_interactivevideo';
-$plugin->release = '1.7.3';
-$plugin->version = 2026042200;
-$plugin->requires = 2021112800;
-$plugin->supported = [400, 502];
-$plugin->maturity = MATURITY_STABLE;
+/**
+ * Return the plugin type and the class name.
+ *
+ * @return array
+ */
+function ivplugin_contentbank_fbplugin() {
+    return [
+        'class' => 'ivplugin_contentbank\main',
+        'name' => 'contentbank',
+    ];
+}

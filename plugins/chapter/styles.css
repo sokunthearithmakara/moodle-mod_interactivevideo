@@ -41,3 +41,7 @@
 .path-mod-interactivevideo #video-nav ul li.chapter .item i {
     font-size: xx-small;
 }
+
+.path-mod-interactivevideo li.anno.active {
+    background: var(--ivprimary);
+}

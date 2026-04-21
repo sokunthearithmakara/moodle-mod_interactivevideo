@@ -663,12 +663,14 @@ define([
                 if (preventskip) {
                     const theAnnotations = releventAnnotations
                         .filter(x => Number(x.timestamp) < Number(annotation.timestamp)
-                            && x.completed == false && x.hascompletion == 1);
+                            && x.completed == false && x.hascompletion == 1 && x.timestamp >= start);
                     if (theAnnotations.length > 0) {
+                        // Sort by timestamp.
+                        theAnnotations.sort((a, b) => a.timestamp - b.timestamp); // Sort by timestamp.
                         const theAnnotation = theAnnotations[0];
-                        await player.pause();
-                        await player.seek(theAnnotation.timestamp);
-                        runInteraction(theAnnotation);
+                        // Remove theAnnotation.id from the viewedAnno and run the interaction.
+                        viewedAnno = viewedAnno.filter(x => x != theAnnotation.id);
+                        await player.seek(theAnnotation.timestamp - 1);
                         Toast.add(await getString('youmustcompletethistaskfirst', 'mod_interactivevideo'), {
                             type: 'danger'
                         });
@@ -1443,12 +1445,16 @@ define([
                     return false;
                 }
                 if (releventAnnotations) {
-                    const theAnnotation = releventAnnotations.find(x => Number(x.timestamp) < Number(t.toFixed(2))
-                        && x.completed == false && JSON.parse(x.advanced || '{}').advskippable == 0 && x.hascompletion == 1);
-                    if (theAnnotation) {
-                        await player.pause();
-                        await player.seek(theAnnotation.timestamp);
-                        runInteraction(theAnnotation);
+                    const theAnnotations = releventAnnotations.filter(x => Number(x.timestamp) < Number(t.toFixed(2))
+                        && x.completed == false && JSON.parse(x.advanced || '{}').advskippable == 0 && x.hascompletion == 1
+                        && x.timestamp >= start);
+                    if (theAnnotations.length > 0) {
+                        // Sort by timestamp.
+                        theAnnotations.sort((a, b) => a.timestamp - b.timestamp);
+                        const theAnnotation = theAnnotations[0];
+                        // Remove theAnnotation.id from the viewedAnno and run the interaction.
+                        viewedAnno = viewedAnno.filter(x => x != theAnnotation.id);
+                        await player.seek(theAnnotation.timestamp - 1);
                         Toast.add(await getString('youmustcompletethistaskfirst', 'mod_interactivevideo'), {
                             type: 'danger'
                         });
@@ -1464,19 +1470,24 @@ define([
                     return;
                 }
                 const t = e.originalEvent.detail.time;
+                window.console.log(t);
                 if (preventskip && releventAnnotations) {
                     // Check if there is any uncompleted activity before the current time.
                     const theAnnotations = releventAnnotations.filter(x => Number(x.timestamp) < Number(t.toFixed(2))
-                        && x.completed == false && x.hascompletion == 1);
+                        && x.completed == false && x.hascompletion == 1 && x.timestamp >= start);
                     if (theAnnotations.length > 0) {
+                        window.console.log('previous');
+                        // Sort by timestamp.
+                        theAnnotations.sort((a, b) => a.timestamp - b.timestamp);
                         const theAnnotation = theAnnotations[0];
-                        await player.pause();
-                        await player.seek(theAnnotation.timestamp);
-                        runInteraction(theAnnotation);
+                        // Remove theAnnotation.id from the viewedAnno and run the interaction.
+                        viewedAnno = viewedAnno.filter(x => x != theAnnotation.id);
+                        await player.seek(theAnnotation.timestamp - 1);
                         Toast.add(await getString('youmustcompletethistaskfirst', 'mod_interactivevideo'), {
                             type: 'danger'
                         });
                         replaceProgressBars((theAnnotation.timestamp - start) / totaltime * 100);
+                        return;
                     }
                 }
                 handleUnskippable(t);

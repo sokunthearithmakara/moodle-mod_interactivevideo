@@ -15,18 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Interactivevideo
+ * Callback implementations for External content
  *
- * @package    mod_interactivevideo
- * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
+ * @package    ivplugin_iframe
+ * @copyright  2026 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'mod_interactivevideo';
-$plugin->release = '1.7.3';
-$plugin->version = 2026042200;
-$plugin->requires = 2021112800;
-$plugin->supported = [400, 502];
-$plugin->maturity = MATURITY_STABLE;
+/**
+ * Return the plugin type and the class name.
+ *
+ * @return array
+ */
+function ivplugin_iframe_fbplugin() {
+    return [
+        'class' => 'ivplugin_iframe\main',
+        'name' => 'iframe',
+    ];
+}
