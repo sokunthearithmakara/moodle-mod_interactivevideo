@@ -1470,13 +1470,11 @@ define([
                     return;
                 }
                 const t = e.originalEvent.detail.time;
-                window.console.log(t);
                 if (preventskip && releventAnnotations) {
                     // Check if there is any uncompleted activity before the current time.
                     const theAnnotations = releventAnnotations.filter(x => Number(x.timestamp) < Number(t.toFixed(2))
                         && x.completed == false && x.hascompletion == 1 && x.timestamp >= start);
                     if (theAnnotations.length > 0) {
-                        window.console.log('previous');
                         // Sort by timestamp.
                         theAnnotations.sort((a, b) => a.timestamp - b.timestamp);
                         const theAnnotation = theAnnotations[0];

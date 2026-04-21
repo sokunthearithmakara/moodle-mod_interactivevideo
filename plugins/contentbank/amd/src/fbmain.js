@@ -452,7 +452,6 @@ export default class ContentBank extends Base {
 
     /** @override */
     async getCompletionData(annotation, userid) {
-        window.console.log(annotation, userid);
         let logs = await this.getLogs(annotation, [userid]);
         let log = '';
         if (logs.length > 0) {
