@@ -238,47 +238,71 @@ export default class Chapter extends Base {
         return locked;
     }
 
+    async applyContent(annotation, $message) {
+        const self = this;
+        // We don't need to run the render method every time the content is applied. We can cache the content.
+        if (!self.cache[annotation.id] || self.isEditMode()) {
+            self.cache[annotation.id] = await self.render(annotation);
+        }
+        const data = self.cache[annotation.id];
+        if ($message) {
+            const $body = $message.find('.modal-body');
+            let html = `<h2 class="iv-pl-2 border-3 border-start border-danger text-dark m-3">${annotation.formattedtitle}</h2>`;
+            html += data;
+            $body.html(html);
+            $body.attr('id', 'content');
+            await self.postContentRender(annotation, $message);
+        }
+    }
+
     /**
      * Run the interaction
      * @param {object} annotation The annotation object
+     * @param {jQuery} $wrapper The wrapper element
      */
-    async runInteraction(annotation) {
-        if (annotation.intg1 != 1) {
-            const index = state.sequence.indexOf(annotation.id.toString());
-            const advanced = JSON.parse(annotation.advanced || '{}');
-            if (state.direction == 'next') {
-                if (!advanced.jumpto || advanced.jumpto == '') {
-                    const nextid = state.sequence[index + 1];
-                    if (nextid) {
-                        state.navigateToAnnotation(nextid);
-                    } else {
-                        // Show endscreen.
-                    }
+    async runInteraction(annotation, $wrapper) {
+        if (annotation.intg1 == 1) {
+            // Render as cover.
+        let $annotationcontent = $wrapper.find('#annotation-canvas');
+            const $message = await this.handleInlineDisplay(annotation, '', $annotationcontent);
+            await this.applyContent(annotation, $message);
+            return;
+        }
+
+        const index = state.sequence.indexOf(annotation.id.toString());
+        const advanced = JSON.parse(annotation.advanced || '{}');
+        if (state.direction == 'next') {
+            if (!advanced.jumpto || advanced.jumpto == '') {
+                const nextid = state.sequence[index + 1];
+                if (nextid) {
+                    state.navigateToAnnotation(nextid);
                 } else {
-                    const jumpto = advanced.jumpto;
-                    const nextid = state.sequence.find(id => id == jumpto);
-                    if (nextid) {
-                        state.navigateToAnnotation(nextid);
-                    } else {
-                        // Show endscreen.
-                    }
+                    // Show endscreen.
                 }
-            } else if (state.direction == 'prev') {
-                if (!advanced.backto || advanced.backto == '') {
-                    const backto = state.sequence[index - 1];
-                    if (backto) {
-                        state.navigateToAnnotation(backto);
-                    } else { // No previous annotation.
-                        state.navigateToAnnotation(state.sequence[index + 1]);
-                    }
+            } else {
+                const jumpto = advanced.jumpto;
+                const nextid = state.sequence.find(id => id == jumpto);
+                if (nextid) {
+                    state.navigateToAnnotation(nextid);
                 } else {
-                    const backto = advanced.backto;
-                    const nextid = state.sequence.find(id => id == backto);
-                    if (nextid) {
-                        state.navigateToAnnotation(nextid);
-                    } else {
-                        // Show endscreen.
-                    }
+                    // Show endscreen.
+                }
+            }
+        } else if (state.direction == 'prev') {
+            if (!advanced.backto || advanced.backto == '') {
+                const backto = state.sequence[index - 1];
+                if (backto) {
+                    state.navigateToAnnotation(backto);
+                } else { // No previous annotation.
+                    state.navigateToAnnotation(state.sequence[index + 1]);
+                }
+            } else {
+                const backto = advanced.backto;
+                const nextid = state.sequence.find(id => id == backto);
+                if (nextid) {
+                    state.navigateToAnnotation(nextid);
+                } else {
+                    // Show endscreen.
                 }
             }
         }

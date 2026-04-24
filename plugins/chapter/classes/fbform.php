@@ -30,6 +30,23 @@ class fbform extends \mod_flexbook\form\base_form {
      */
     public function set_data_for_dynamic_submission(): void {
         $data = $this->set_data_default();
+
+        if (!empty($data->contentform)) {
+            $draftideditor = file_get_submitted_draft_itemid('content');
+            $data->content = [];
+            $data->content["text"] = file_prepare_draft_area(
+                $draftideditor,
+                $data->contextid,
+                'mod_flexbook',
+                'content',
+                $data->id,
+                $this->editor_options(),
+                $data->contentform ?? ''
+            );
+            $data->content["format"] = FORMAT_HTML;
+            $data->content["itemid"] = $data->id;
+        }
+
         $this->set_data($data);
     }
 
@@ -106,5 +123,44 @@ class fbform extends \mod_flexbook\form\base_form {
         $this->jump_section_fields();
 
         $this->close_form();
+    }
+
+    /**
+     * Process dynamic submission
+     *
+     * @return void
+     */
+    public function process_dynamic_submission() {
+        global $DB;
+        // We're going to submit the data to database. If id is not 0, we're updating an existing record.
+        $fromform = $this->get_data();
+        $fromform = $this->pre_processing_data($fromform);
+        $fromform->advanced = $this->process_advanced_settings($fromform);
+        if ($fromform->id > 0) {
+            $fromform->timemodified = time();
+            $fromform->content = $fromform->content["text"];
+            $DB->update_record('flexbook_items', $fromform);
+        } else {
+            $fromform->timecreated = time();
+            $fromform->timemodified = $fromform->timecreated;
+            $fromform->content = $fromform->content["text"];
+            $fromform->id = $DB->insert_record('flexbook_items', $fromform);
+        }
+
+        $draftitemid = file_get_submitted_draft_itemid('content');
+        $fromform->content = file_save_draft_area_files(
+            $draftitemid,
+            $fromform->contextid,
+            'mod_flexbook',
+            'content',
+            $fromform->id,
+            $this->editor_options(),
+            $fromform->content
+        );
+        $DB->update_record('flexbook_items', $fromform);
+
+        $fromform = $this->data_post_processing($fromform);
+
+        return $fromform;
     }
 }

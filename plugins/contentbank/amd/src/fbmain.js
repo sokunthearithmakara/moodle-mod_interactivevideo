@@ -33,6 +33,27 @@ import state from 'mod_flexbook/state';
 
 export default class ContentBank extends Base {
     /**
+     * Creates an instance of the content bank class.
+     * @param {Array} annotations The annotations object
+     * @param {Object} properties Properties of the interaction type
+     */
+    constructor(annotations, properties) {
+        super(annotations, properties);
+        $(document).on('interactionrun', (e) => {
+            const annotation = e.originalEvent.detail.annotation;
+            if (annotation.type === 'contentbank') {
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                    const iframe = document.querySelector(`#message[data-id='${annotation.id}'] iframe`);
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.dispatchEvent(new Event('resize'));
+                    }
+                }, 1000);
+            }
+        });
+    }
+
+    /**
      * Called when the edit form is loaded.
      * @param {Object} form The form object
      * @param {Event} event The event object
@@ -96,25 +117,28 @@ export default class ContentBank extends Base {
 
     /** @override */
     async postContentRender(annotation, $message, callback) {
-        let self = this;
         $message.addClass('hascontentbank');
         if (annotation.completiontracking !== 'view') {
-            const tooltipAttr = self.isBS5 ? 'data-bs' : 'data';
             $message.find('#title .info').remove();
             $message.find('#completiontoggle').before(
                 `<i class="bi bi-info-circle-fill iv-mr-2 info"
-                    ${tooltipAttr}-toggle="tooltip"
-                    ${tooltipAttr}-placement="auto"
-                    ${tooltipAttr}-container="#message"
-                    ${tooltipAttr}-trigger="hover"
                     title="${await getString("completionon" + annotation.completiontracking, "mod_interactivevideo")}">
                 </i>`
             );
 
             if (!annotation.completed) {
-                const tooltip = $message.find(`#title .info[${tooltipAttr}-toggle="tooltip"]`);
-                setTimeout(() => tooltip.tooltip('show'), 1000);
-                setTimeout(() => tooltip.tooltip('hide'), 3000);
+                const $tooltip = $message.find('#title .info');
+                $tooltip.tooltip('dispose');
+                setTimeout(function() {
+                    $tooltip.tooltip({
+                        container: $message,
+                        html: true,
+                        trigger: 'hover',
+                        placement: 'auto'
+                    });
+                    $tooltip.tooltip('show');
+                    setTimeout(() => $tooltip.tooltip('hide'), 3000);
+                }, 1000);
             }
         }
         if (annotation.hascompletion == 1

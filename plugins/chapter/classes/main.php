@@ -48,14 +48,4 @@ class main extends \ivplugin_richtext\main {
             'fbform' => 'ivplugin_chapter\\fbform',
         ];
     }
-
-    /**
-     * Get the content.
-     *
-     * @param array $arg The arguments.
-     * @return string The content.
-     */
-    public function get_content($arg) {
-        return null;
-    }
 }
