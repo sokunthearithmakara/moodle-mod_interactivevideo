@@ -72,7 +72,21 @@ class main {
             'fbdescription' => get_string('richtextdescription', 'ivplugin_richtext'),
             'fbamdmodule' => 'ivplugin_richtext/fbmain',
             'fbform' => 'ivplugin_richtext\\fbform',
+            'dndextensions' => ['txt'],
         ];
+    }
+
+    /**
+     * Create a new interaction instance.
+     *
+     * @param array $data The data for the new instance.
+     * @return \stdClass The newly created interaction record.
+     */
+    public function create_instance($data) {
+        global $DB;
+        $data = (object) $data;
+        $data->id = $DB->insert_record('flexbook_items', $data);
+        return \mod_flexbook\util::get_item($data->id, $data->contextid);
     }
 
     /**

@@ -61,6 +61,7 @@ class fbform extends \mod_flexbook\form\base_form {
         $fromform = $this->get_data();
         $fromform = $this->pre_processing_data($fromform);
         $fromform->advanced = $this->process_advanced_settings($fromform);
+        $draftitemid = $fromform->content["itemid"];
         if ($fromform->id > 0) {
             $fromform->timemodified = time();
             $fromform->content = $fromform->content["text"];
@@ -72,18 +73,18 @@ class fbform extends \mod_flexbook\form\base_form {
             $fromform->id = $DB->insert_record('flexbook_items', $fromform);
         }
 
-        $draftitemid = file_get_submitted_draft_itemid('content');
-        $fromform->content = file_save_draft_area_files(
-            $draftitemid,
-            $fromform->contextid,
-            'mod_flexbook',
-            'content',
-            $fromform->id,
-            $this->editor_options(),
-            $fromform->content
-        );
-        $DB->update_record('flexbook_items', $fromform);
-
+        if ($draftitemid) {
+            $fromform->content = file_save_draft_area_files(
+                $draftitemid,
+                $fromform->contextid,
+                'mod_flexbook',
+                'content',
+                $fromform->id,
+                $this->editor_options(),
+                $fromform->content
+            );
+            $DB->update_record('flexbook_items', $fromform);
+        }
         $fromform = $this->data_post_processing($fromform);
 
         return $fromform;

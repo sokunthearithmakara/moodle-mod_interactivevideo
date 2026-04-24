@@ -23,6 +23,8 @@
 import Base from 'mod_flexbook/type/base';
 import $ from 'jquery';
 import {notifyFilterContentUpdated as notifyFilter} from 'core_filters/events';
+import Ajax from 'core/ajax';
+import {safeParse} from 'mod_flexbook/utils';
 export default class RichText extends Base {
     /**
      * Post-processes the content after rendering an annotation.
@@ -34,5 +36,37 @@ export default class RichText extends Base {
         let $body = $(`#message[data-id='${annotation.id}'] .modal-body`);
         notifyFilter($body);
         $body.addClass('bg-white p-0');
+    }
+
+    /**
+     * Handle drag and drop creation.
+     *
+     * @param {Array} annotations
+     * @param {File} file
+     * @param {Object} response
+     * @param {number} anchorid
+     */
+    async dnd(annotations, file, response, anchorid = 0) {
+        const result = await Ajax.call([{
+            methodname: 'mod_flexbook_create_interaction',
+            args: {
+                contextid: M.cfg.contextid,
+                courseid: this.course,
+                cmid: this.cm,
+                annotationid: this.flexbook,
+                type: this.prop.name,
+                title: file.name.replace(/\.[^/.]+$/, ""),
+                content: response.content || '',
+                anchorid: anchorid
+            }
+        }])[0];
+
+        const newItem = safeParse(result.data, {});
+        this.dispatchEvent('annotationupdated', {
+            annotation: newItem,
+            action: 'add',
+            anchorid: anchorid,
+            isDnD: true
+        });
     }
 }
