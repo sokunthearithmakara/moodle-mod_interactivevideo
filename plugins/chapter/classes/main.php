@@ -46,6 +46,7 @@ class main extends \ivplugin_richtext\main {
             'fbdescription' => get_string('fbdescription', 'ivplugin_chapter'),
             'fbamdmodule' => 'ivplugin_chapter/fbmain',
             'fbform' => 'ivplugin_chapter\\fbform',
+            'component' => 'ivplugin_chapter',
         ];
     }
 }

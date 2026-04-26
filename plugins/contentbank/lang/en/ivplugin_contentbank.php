@@ -65,3 +65,4 @@ $string['upload'] = 'Upload';
 $string['uploadcontent'] = 'Upload content';
 $string['xapicheck'] = 'xAPI check';
 $string['xapieventdetected'] = 'xAPI complete event detected';
+$string['invalidcontentid'] = 'The selected Content Bank item is invalid or not found.';

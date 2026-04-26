@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Duolingo Purple Palette -->
+  <!-- Monitor Base/Shadow -->
+  <path d="M8 20H16C16 20 16 22 12 22C8 22 8 20 8 20Z" fill="#AF67E6"/>
+  <!-- Monitor Body Shadow -->
+  <rect x="2" y="6" width="20" height="14" rx="4" fill="#AF67E6"/>
+  <!-- Monitor Body Face -->
+  <rect x="2" y="4" width="20" height="14" rx="4" fill="#CE82FF"/>
+  <!-- White Screen -->
+  <rect x="4" y="6" width="16" height="10" rx="2.5" fill="white"/>
+  <!-- Play Symbol (Purple) -->
+  <path d="M10 8.5L14.5 11L10 13.5V8.5Z" fill="#CE82FF"/>
+</svg>

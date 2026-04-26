@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Duolingo Green Palette -->
+  
+  <!-- Chunky Button Shadow -->
+  <circle cx="12" cy="14" r="10" fill="#46A302"/>
+  <!-- Chunky Button Face -->
+  <circle cx="12" cy="12" r="10" fill="#58CC02"/>
+  
+  <!-- Bullseye Target (White) -->
+  <!-- Outer Ring -->
+  <circle cx="12" cy="12" r="6.5" stroke="white" stroke-width="2.5" fill="none"/>
+  <!-- Inner Dot -->
+  <circle cx="12" cy="12" r="2.5" fill="white"/>
+</svg>

@@ -48,6 +48,8 @@ class main extends \ivplugin_richtext\main {
             'fbdescription' => get_string('contentbankdescription', 'ivplugin_contentbank'),
             'fbamdmodule' => 'ivplugin_contentbank/fbmain',
             'fbform' => 'ivplugin_contentbank\\fbform',
+            'component' => 'ivplugin_contentbank',
+            'dndextensions' => ['h5p'],
         ];
     }
 
@@ -190,5 +192,67 @@ class main extends \ivplugin_richtext\main {
             ];
         }
         return $annotation;
+    }
+
+    /**
+     * Create a new interaction instance.
+     *
+     * @param array $data The data for the new instance.
+     * @return \stdClass The newly created interaction record.
+     */
+    public function create_instance($data) {
+        global $DB, $USER;
+        $draftitemid = isset($data['draftitemid']) ? (int) $data['draftitemid'] : 0;
+        unset($data['draftitemid']);
+
+        if ($draftitemid > 0) {
+            $fs = get_file_storage();
+            $usercontext = \context_user::instance($USER->id);
+            $files = $fs->get_area_files($usercontext->id, 'user', 'draft', $draftitemid, 'itemid, filepath, filename', false);
+            if (!empty($files)) {
+                $file = reset($files);
+                $coursecontext = \context_course::instance($data['courseid']);
+
+                // Import file to content bank.
+                $cb = new contentbank();
+                $content = $cb->create_content_from_file($coursecontext, $USER->id, $file);
+                if ($content) {
+                    $contentid = $content->get_id();
+                    $data['contentid'] = $contentid;
+                    $data['content'] = json_encode(['contentid' => $contentid]);
+                }
+            }
+        }
+
+        $data = (object) $data;
+
+        $data->completiontracking = 'complete';
+
+        // Form a default advanced settings.
+        if (empty($data->advanced)) {
+            $data->advanced = $this->flexbook_advanced();
+            $data->advanced['savecurrentstate'] = 0;
+
+            $data->advanced = json_encode($data->advanced);
+        }
+
+        // Final check: if contentid is missing or doesn't correspond to a valid contentbank record, throw an error.
+        if (empty($data->contentid) || !$DB->record_exists('contentbank_content', ['id' => $data->contentid])) {
+            throw new \moodle_exception('invalidcontentid', 'ivplugin_contentbank');
+        }
+
+        // Detect if we are in mod_flexbook or mod_interactivevideo.
+        $table = 'flexbook_items';
+        if (!$DB->get_manager()->table_exists($table)) {
+            $table = 'interactivevideo_items';
+        }
+
+        $data->id = $DB->insert_record($table, $data);
+
+        if ($table === 'flexbook_items') {
+            return \mod_flexbook\util::get_item($data->id, $data->contextid);
+        } else {
+            return \interactivevideo_util::get_item($data->id, $data->contextid);
+        }
     }
 }

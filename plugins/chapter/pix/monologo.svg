@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Duolingo Gold Palette -->
+  <!-- Base/Shadow -->
+  <path d="M5 4H19C20.1 4 21 4.9 21 6V22L12 18.5L3 22V6C3 4.9 3.9 4 5 4Z" fill="#E5A500"/>
+  <!-- Main Face -->
+  <path d="M5 2H19C20.1 2 21 2.9 21 4V20L12 16.5L3 20V4C3 2.9 3.9 2 5 2Z" fill="#FFC800"/>
+  <!-- Star with gloss stroke -->
+  <path d="M12 5.5L13.2 8.5H16.5L14 10.5L15 14L12 12.5L9 14L10 10.5L7.5 8.5H10.8L12 5.5Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+</svg>
