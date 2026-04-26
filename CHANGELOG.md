@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [1.7.4] - 2026-04-26
+- Fixed an issue with the "content" text editor where images/media with the same name were not saved correctly.
+- Integrated with Flexbook.
+
 ## [1.7.3] - 2026-04-22
 - Fixed an issue where runInteraction is fired twice when preventskipping is enabled.
 - Updated ivplugin_chapter, ivplugin_contentbank, and ivplugin_iframe for Flexbook compatibility.
