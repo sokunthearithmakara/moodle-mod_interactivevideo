@@ -127,16 +127,29 @@ export default class Chapter extends Base {
             if (!this.isVisible(annotation)) {
                 classes += ' d-none ';
             }
+            let logourl = null;
+            let prop = JSON.parse(annotation.prop || '{}');
+            if ($('body').hasClass('kidtheme') && prop.component) {
+                logourl = M.util.image_url('monologo', prop.component);
+            }
+
+            let iconHtml = `<i class="fs-unset ${annotation.locked ? 'fa fa-lock' : prop.icon} iv-mr-2"></i>`;
+            if (logourl && !annotation.locked) {
+                iconHtml = `<img src="${logourl}" class="iv-mr-2" height="24" loading="lazy" ` +
+                           `onerror="this.remove(); this.nextElementSibling.classList.remove('d-none');">` +
+                           `<i class="fs-unset ${prop.icon} iv-mr-2 d-none"></i>`;
+            }
+
             let html = `<li class="anno d-flex align-items-center justify-content-between small
                          p-2 ${annotation.completed ? "completed" : ""} ${classes}" data-id="${annotation.id}">
                          <span class="text-nowrap">
                          <i class="fs-unset bi ${annotation.completed ? "bi-check-circle-fill text-success" : 'bi-circle'}
                           iv-mr-2 ${annotation.hascompletion == 0 ? "invisible" : ""}"></i>
-                         <i class="fs-unset ${annotation.locked ? 'fa fa-lock' : JSON.parse(annotation.prop).icon} iv-mr-2"></i>
+                         ${iconHtml}
                          </span>
                          <span class="flex-grow-1 text-truncate">${annotation.formattedtitle}</span>
                          <span class="text-nowrap ${annotation.hascompletion == 0 ? "invisible" : ""}">
-                         ${annotation.xp}<i class="bi bi-star iv-ml-1 fs-unset"></i></span></li>`;
+                         ${annotation.xp > 0 ? annotation.xp + '<i class="bi bi-star iv-ml-1 fs-unset"></i>' : ''}</span></li>`;
             return html;
         };
 

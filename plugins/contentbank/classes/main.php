@@ -227,12 +227,12 @@ class main extends \ivplugin_richtext\main {
         $data = (object) $data;
 
         $data->completiontracking = 'complete';
+        $data->hascompletion = 1;
 
         // Form a default advanced settings.
         if (empty($data->advanced)) {
             $data->advanced = $this->flexbook_advanced();
             $data->advanced['savecurrentstate'] = 0;
-
             $data->advanced = json_encode($data->advanced);
         }
 

@@ -228,13 +228,26 @@ export default class ContentBank extends Base {
                         }
                         window.H5PIntegration.contents[id].contentUserData[0].state = log;
                         window.H5P = H5P;
-                        if (annotation.completed) {
-                            return;
-                        }
                         try {
                             H5P.externalDispatcher.off('xAPI');
                             H5P.externalDispatcher.on('xAPI', async function(event) {
                                 let statement = event.data.statement;
+                                if (!self.isEditMode() && state.isMascotActive
+                                    && statement.verb.id == 'http://adlnet.gov/expapi/verbs/answered') {
+                                    // Get the score result
+                                    let result = statement.result;
+                                    // Check if the score is greater than or equal to 0.5
+                                    if (result && result.success === true) {
+                                        // Dispatch iv:correct
+                                        self.dispatchEvent('iv:correct');
+                                    } else if (result && result.success === false) {
+                                        // Dispatch iv:incorrect
+                                        self.dispatchEvent('iv:incorrect');
+                                    }
+                                }
+                                if (annotation.completed) {
+                                    return;
+                                }
                                 if ((statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
                                     || statement.verb.id == 'http://adlnet.gov/expapi/verbs/answered')
                                     && statement.object.id.indexOf('subContentId') < 0
@@ -309,6 +322,7 @@ export default class ContentBank extends Base {
                                         }
                                     }
                                 }
+
                             });
                         } catch (e) {
                             requestAnimationFrame(detectH5P);
