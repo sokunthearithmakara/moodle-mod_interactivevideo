@@ -42,6 +42,7 @@ class Html5Video {
     }
     async getInfo(url, node) {
         this.node = node;
+
         let self = this;
 
         const loadVideo = async(player) => {
@@ -109,13 +110,14 @@ class Html5Video {
         const node = opts.node || 'player';
         const autoplay = opts.autoplay || false;
         this.node = node;
+        const _this = this;
         this.start = start;
         this.end = end;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked', {
+            _this.sendEvent('iv:autoplayBlocked', {
                 requireVideoBlock: true
-            });
+            }, _this.node);
         }
         var player = document.getElementById(node);
         playerids[node] = player;
@@ -127,7 +129,7 @@ class Html5Video {
             // Change the player to an audio player.
             this.audio = true;
             // Append a canvas element to the video.
-            const canvas = '<canvas id="visualizer"></canvas>';
+            const canvas = `<canvas id="visualizer" data-nodeid="${node}"></canvas>`;
             player.insertAdjacentHTML('afterend', canvas);
             player.style.visibility = 'hidden';
         }
@@ -150,12 +152,12 @@ class Html5Video {
 
                 // Handle quality change.
                 hls.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
-                    dispatchEvent('iv:playerQualityChange', {quality: data.level});
+                    this.sendEvent('iv:playerQualityChange', {quality: data.level}, this.node);
                 });
 
                 hls.on(Hls.Events.ERROR, function(event, data) {
                     if (data.fatal) {
-                        dispatchEvent('iv:playerError', {error: data});
+                        this.sendEvent('iv:playerError', {error: data}, this.node);
                     }
                 });
             } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
@@ -178,10 +180,10 @@ class Html5Video {
                     if (!current) {
                         return;
                     }
-                    dispatchEvent('iv:playerQualityChange', {quality: current.absoluteIndex});
+                    this.sendEvent('iv:playerQualityChange', {quality: current.absoluteIndex}, this.node);
                 });
                 dashPlayer.on(dashjs.MediaPlayer.events.ERROR, function() {
-                    dispatchEvent('iv:playerError');
+                    this.sendEvent('iv:playerError', null, this.node);
                 });
                 this.support.quality = true;
             } else {
@@ -269,11 +271,11 @@ class Html5Video {
                         });
                         self.captions = tracks;
                     }
-                    dispatchEvent('iv:playerLoaded', {
+                    self.sendEvent('iv:playerLoaded', {
                         tracks: self.captions || null,
                         reloaded: reloaded,
-                    });
-                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                    }, self.node);
+                    self.sendEvent('iv:playerReady', null, self.node);
                 });
             } else if (self.hls) {
                 // Turn off the tracks.
@@ -302,28 +304,28 @@ class Html5Video {
                     });
                     self.captions = tracks;
                 }
-                dispatchEvent('iv:playerLoaded', {
+                _this.sendEvent('iv:playerLoaded', {
                     tracks: self.captions || null,
                     reloaded: reloaded,
-                });
-                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                }, _this.node);
+                _this.sendEvent('iv:playerReady', null, _this.node);
             } else { // Standard video source.
-                dispatchEvent('iv:playerLoaded', {
+                _this.sendEvent('iv:playerLoaded', {
                     tracks: null,
                     reloaded: reloaded,
-                });
-                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                }, _this.node);
+                _this.sendEvent('iv:playerReady', null, _this.node);
             }
         });
 
         player.addEventListener('pause', function() {
             self.paused = true;
-            dispatchEvent('iv:playerPaused');
+            _this.sendEvent('iv:playerPaused', null, _this.node);
         });
 
         player.addEventListener('play', function() {
             self.paused = false;
-            dispatchEvent('iv:playerPlay');
+            _this.sendEvent('iv:playerPlay', null, _this.node);
         });
 
         player.addEventListener('timeupdate', function() {
@@ -336,7 +338,7 @@ class Html5Video {
             if (player.currentTime >= self.end + self.frequency && !self.live) {
                 player.currentTime = self.end - self.frequency;
             }
-            dispatchEvent('iv:playerPlaying');
+            _this.sendEvent('iv:playerPlaying', null, _this.node);
             if (self.live) {
                 return;
             }
@@ -347,26 +349,26 @@ class Html5Video {
                     self.ended = true;
                     self.paused = true;
                     player.pause();
-                    dispatchEvent('iv:playerEnded');
+                    _this.sendEvent('iv:playerEnded', null, _this.node);
                 }
             }
         });
 
         player.addEventListener('error', function(e) {
-            dispatchEvent('iv:playerError', {error: e});
+            _this.sendEvent('iv:playerError', {error: e}, _this.node);
         });
 
         player.addEventListener('ratechange', function() {
-            dispatchEvent('iv:playerRateChange', {rate: player.playbackRate});
+            _this.sendEvent('iv:playerRateChange', {rate: player.playbackRate}, _this.node);
         });
 
         player.addEventListener('waiting', function() {
-            dispatchEvent('iv:playerBuffering');
+            _this.sendEvent('iv:playerBuffering', null, _this.node);
         });
 
         // Volume change event.
         player.addEventListener('volumechange', function() {
-            dispatchEvent('iv:playerVolumeChange', {volume: player.volume});
+            _this.sendEvent('iv:playerVolumeChange', {volume: player.volume}, _this.node);
         });
 
         this.player = player;
@@ -387,7 +389,10 @@ class Html5Video {
         var context = new AudioContext();
         var src = context.createMediaElementSource(this.player);
         var analyser = context.createAnalyser();
-        var canvas = document.getElementById("visualizer");
+        var canvas = document.querySelector(`canvas[data-nodeid="${this.node}"]`);
+        if (!canvas) {
+            return;
+        }
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         var ctx = canvas.getContext("2d");
@@ -491,10 +496,10 @@ class Html5Video {
             return time;
         }
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         this.player.currentTime = time;
-        dispatchEvent('iv:playerSeek', {time});
+        this.sendEvent('iv:playerSeek', {time}, this.node);
         return true;
     }
     /**
@@ -593,7 +598,7 @@ class Html5Video {
             this.dash.destroy();
         }
         playerids[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Retrieves the current state of the video player.
@@ -628,7 +633,7 @@ class Html5Video {
         }
         this.player.muted = true;
         this.player.volume = 0;
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmutes the video player.
@@ -639,7 +644,7 @@ class Html5Video {
         }
         this.player.muted = false;
         this.player.volume = 1;
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -778,6 +783,23 @@ class Html5Video {
         }
         return track;
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Html5Video;

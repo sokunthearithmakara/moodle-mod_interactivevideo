@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Duolingo Blue Palette -->
+  <!-- Case Shadow -->
+  <path d="M2 4Q2 2 4 2H20Q22 2 22 4V16C22 18 20 19 18 19H6C4 19 2 18 2 16V4Z" fill="#1899D6" transform="translate(0, 2)"/>
+  <!-- Case Face -->
+  <path d="M2 4Q2 2 4 2H20Q22 2 22 4V16C22 18 20 19 18 19H6C4 19 2 18 2 16V4Z" fill="#1CB0F6"/>
+  
+  <!-- Film Strip Holes (Whiter) -->
+  <g fill="white" opacity="0.7">
+    <!-- Top Row -->
+    <rect x="4" y="4" width="3" height="2" rx="0.5"/>
+    <rect x="10.5" y="4" width="3" height="2" rx="0.5"/>
+    <rect x="17" y="4" width="3" height="2" rx="0.5"/>
+    <!-- Bottom Row -->
+    <rect x="4" y="14" width="3" height="2" rx="0.5"/>
+    <rect x="10.5" y="14" width="3" height="2" rx="0.5"/>
+    <rect x="17" y="14" width="3" height="2" rx="0.5"/>
+  </g>
+  
+  <!-- Play Symbol (Larger) -->
+  <path d="M9.5 6L16.5 10L9.5 14V6Z" fill="white"/>
+</svg>

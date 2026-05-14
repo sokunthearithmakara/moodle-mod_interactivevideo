@@ -59,6 +59,7 @@ class PeerTube {
 
     async getInfo(url, node) {
         this.node = node;
+
         let self = this;
         // Get the id and domain of the video.
         // Sample Url: https://video.hardlimit.com/w/hFwjKHQa3ixivePeqGc4KR
@@ -123,10 +124,11 @@ class PeerTube {
         const node = opts.node || 'player';
         this.start = start;
         this.node = node;
+        const _this = this;
 
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
             $('#video-block, .video-block').remove();
         }
 
@@ -213,10 +215,10 @@ class PeerTube {
                 };
             });
         }
-        dispatchEvent('iv:playerLoaded', {
+        this.sendEvent('iv:playerLoaded', {
             tracks: captions, qualities: self.getQualities(),
             reloaded: reloaded,
-        });
+        }, this.node);
 
         let listener = (status) => {
             let currentTime = status.position;
@@ -228,17 +230,17 @@ class PeerTube {
                     if (currentTime < self.start) {
                         self.seek(self.start);
                     }
-                    dispatchEvent('iv:playerPlaying');
+                    self.sendEvent('iv:playerPlaying', null, self.node);
                     if (currentTime >= self.end) {
                         self.ended = true;
-                        dispatchEvent('iv:playerEnded');
+                        self.sendEvent('iv:playerEnded', null, self.node);
                     }
                     break;
 
                 case 'ended':
                     if (!self.ended) {
                         self.ended = true;
-                        dispatchEvent('iv:playerEnded');
+                        self.sendEvent('iv:playerEnded', null, self.node);
                     }
                     self.paused = true;
                     break;
@@ -252,10 +254,10 @@ class PeerTube {
             }
             if (status === 'paused') {
                 self.paused = true;
-                dispatchEvent('iv:playerPaused');
+                self.sendEvent('iv:playerPaused', null, self.node);
             } else if (status === 'playing') {
                 self.paused = false;
-                dispatchEvent('iv:playerPlay');
+                self.sendEvent('iv:playerPlay', null, self.node);
             }
         });
 
@@ -275,7 +277,7 @@ class PeerTube {
                         player[node].seek(self.start);
                         player[node].pause();
                         ready = true;
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        self.sendEvent('iv:playerReady', null, self.node);
                         player[node].setVolume(1);
                     }
                 }, 100);
@@ -285,7 +287,7 @@ class PeerTube {
         });
 
         player[node].addEventListener('volumeChange', function(e) {
-            dispatchEvent('iv:playerVolumeChange', {volume: e});
+            self.sendEvent('iv:playerVolumeChange', {volume: e}, self.node);
         });
 
         return true;
@@ -367,10 +369,10 @@ class PeerTube {
             return time;
         }
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         await player[this.node].seek(time);
-        dispatchEvent('iv:playerSeek', {time: time});
+        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return true;
     }
     /**
@@ -444,7 +446,7 @@ class PeerTube {
         $(`#${this.node}`).remove(); // Remove the iframe.
         player[this.node].removeEventListener();
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -510,6 +512,23 @@ class PeerTube {
         }
         await player[this.node].setCaption(track);
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default PeerTube;

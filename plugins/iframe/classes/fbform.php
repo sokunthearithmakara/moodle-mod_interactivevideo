@@ -63,40 +63,7 @@ class fbform extends \mod_flexbook\form\base_form {
         $mform = &$this->_form;
 
         $this->standard_elements();
-
-        $mform->addElement('text', 'title', '<i class="bi bi-quote iv-mr-2"></i>' . get_string('title', 'mod_interactivevideo'));
-        $mform->setType('title', PARAM_TEXT);
-        $mform->setDefault('title', get_string('defaulttitle', 'mod_interactivevideo'));
-        $mform->addRule('title', get_string('required'), 'required', null, 'client');
-
-        $mform->addElement(
-            'text',
-            'iframeurl',
-            '<i class="bi bi-link-45deg iv-mr-2"></i>' . get_string('iframeurl', 'ivplugin_iframe')
-        );
-        $mform->setType('iframeurl', PARAM_TEXT);
-
-        $mform->addElement('hidden', 'char1');
-        $mform->setType('char1', PARAM_TEXT);
-
-        $mform->addElement(
-            'textarea',
-            'content',
-            '<i class="bi bi-code-slash iv-mr-2"></i>' . get_string('embedcode', 'ivplugin_iframe'),
-            ['rows' => 5]
-        );
-        $mform->setType('content', PARAM_RAW);
-        $mform->addRule('content', get_string('required'), 'required', null, 'client');
-
-        if ($this->optional_param('content', '', PARAM_RAW) !== '') {
-            $iframe = $this->optional_param('content', '', PARAM_RAW);
-            $padding = 'style="padding-bottom: ' . $this->optional_param('char1', 0, PARAM_TEXT) . ';"';
-        } else {
-            $iframe = '';
-            $padding = '';
-        }
-
-        $mform->addElement('html', '<div class="preview-iframe w-100 my-3 " ' . $padding . '>' . $iframe . '</div>');
+        \ivplugin_iframe\helper::add_iframe_elements($mform, $this);
 
         $this->completion_tracking_field('none', [
             'none' => get_string('completionnone', 'mod_interactivevideo'),

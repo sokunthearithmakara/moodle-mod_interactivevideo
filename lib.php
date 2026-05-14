@@ -1036,7 +1036,7 @@ if ($CFG->branch <= 403) {
         if (strpos($PAGE->bodyclasses, 'path-course-view') === false) {
             return;
         }
-        $PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+        echo '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>';
         $PAGE->requires->js_call_amd('mod_interactivevideo/launch', 'init');
     }
 }
@@ -2855,4 +2855,16 @@ function interactivevideo_user_complete($course, $user, $mod, $iv) {
     echo '</tr>';
     echo '</tbody>';
     echo '</table>';
+}
+
+/**
+ * Return the plugin type and the class name for flexbook content type.
+ *
+ * @return array
+ */
+function mod_interactivevideo_fbplugin() {
+    return [
+        'class' => 'mod_interactivevideo\main',
+        'name' => 'interactivevideo',
+    ];
 }

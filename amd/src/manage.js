@@ -23,6 +23,8 @@
 
 define(['jquery', 'core/templates'], function($, Templates) {
     const bsAffix = $('body').hasClass('bs-5') ? '-bs' : '';
+    window.M.version = $('#iv-m-version').data('value');
+
     return {
         settings: async function(courseid, coursecontextid, userid) {
             let addToast = await import('core/toast');

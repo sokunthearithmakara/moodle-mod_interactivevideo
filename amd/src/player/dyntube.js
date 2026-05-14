@@ -52,6 +52,7 @@ class Dyntube {
      */
     async getInfo(url, node) {
         this.node = node;
+        const _this = this;
         let self = this;
         // URL: https://videos.dyntube.com/videos/rbUeUuHky0qQhOIbsPNrzQ
         // URL: https://videos.dyntube.com/iframes/rbUeUuHky0qQhOIbsPNrzQ
@@ -64,7 +65,7 @@ class Dyntube {
         // Get oembed data.
         let oembedUrl = `https://videos.dyntube.com/oembed/oembed.json?url=${encodeURIComponent(url)}`;
 
-        const getData = async () => {
+        const getData = async() => {
             try {
                 const data = await $.ajax({
                     url: oembedUrl,
@@ -79,7 +80,7 @@ class Dyntube {
 
         let data = await getData();
         if (data.error) {
-            dispatchEvent('iv:playerError', {error: data});
+            _this.sendEvent('iv:playerError', {error: data}, _this.node);
             return;
         }
 
@@ -146,12 +147,13 @@ class Dyntube {
         const node = opts.node || 'player';
         this.node = node;
 
+
         // Hide the player first.
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked', {
+            this.sendEvent('iv:autoplayBlocked', {
                 requireVideoBlock: !showControls,
-            });
+            }, this.node);
         }
 
         var self = this;
@@ -170,7 +172,7 @@ class Dyntube {
         // Get oembed data.
         let oembedUrl = `https://videos.dyntube.com/oembed/oembed.json?url=${encodeURIComponent(url)}`;
 
-        const getData = async () => {
+        const getData = async() => {
             try {
                 const data = await $.ajax({
                     url: oembedUrl,
@@ -185,7 +187,7 @@ class Dyntube {
 
         let data = await getData();
         if (data.error) {
-            dispatchEvent('iv:playerError', {error: data});
+            this.sendEvent('iv:playerError', {error: data}, this.node);
             return;
         }
 
@@ -239,20 +241,20 @@ class Dyntube {
             self.totaltime = self.duration;
             self.duration = self.end - self.start;
 
-            dispatchEvent('iv:playerReady', null, document.getElementById(node));
+            self.sendEvent('iv:playerReady', null, self.node);
 
             player[node].on("play", function() {
                 self.paused = false;
-                dispatchEvent('iv:playerPlay');
+                self.sendEvent('iv:playerPlay', null, self.node);
             });
 
             player[node].on("pause", function() {
                 self.paused = true;
-                dispatchEvent('iv:playerPaused');
+                self.sendEvent('iv:playerPaused', null, self.node);
             });
 
             player[node].on("volumechange", function(volumeLevel) {
-                dispatchEvent('iv:playerVolumeChange', {volume: volumeLevel});
+                self.sendEvent('iv:playerVolumeChange', {volume: volumeLevel}, self.node);
             });
 
             player[node].on("timeupdate", function(currentTime) {
@@ -260,21 +262,21 @@ class Dyntube {
                     self.ended = true;
                     self.paused = true;
                     player[self.node].pause();
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                     return;
                 }
                 if (currentTime < self.start) {
                     currentTime = Math.ceil(self.start);
                     self.seek(currentTime);
                 }
-                dispatchEvent('iv:playerPlaying');
+                self.sendEvent('iv:playerPlaying', null, self.node);
                 self.currentTime = currentTime;
             });
 
             player[node].on("ended", function() {
                 self.ended = true;
                 self.paused = true;
-                dispatchEvent('iv:playerEnded');
+                self.sendEvent('iv:playerEnded', null, self.node);
             });
         });
     }
@@ -327,11 +329,11 @@ class Dyntube {
         if (time > this.end) {
             time = this.end;
         }
-        dispatchEvent('iv:playerSeekStart', {time: this.currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: this.currentTime}, this.node);
         this.ended = false;
         player[this.node].seek(Number(time));
         this.currentTime = time;
-        dispatchEvent('iv:playerSeek', {time});
+        this.sendEvent('iv:playerSeek', {time}, this.node);
         return true;
     }
     /**
@@ -401,7 +403,7 @@ class Dyntube {
         }
         player[this.node] = null;
         $(`#${this.node}`).remove();
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -432,7 +434,7 @@ class Dyntube {
         }
         player[this.node].mute();
         this.volume = 0;
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmute the video
@@ -444,7 +446,7 @@ class Dyntube {
         player[this.node].unmute();
         player[this.node].setVolume(1.0);
         this.volume = 1;
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -467,6 +469,23 @@ class Dyntube {
     setCaption(track) {
         return track;
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Dyntube;

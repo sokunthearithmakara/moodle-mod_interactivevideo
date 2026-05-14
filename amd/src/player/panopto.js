@@ -55,6 +55,7 @@ class Panopto {
 
     async getInfo(url, node) {
         this.node = node;
+
         var EmbedApi;
         const matches = url.match(/^[^/]+:\/\/([^/]*panopto\.[^/]+)\/Panopto\/.+\?id=(.+)$/);
         const serverName = matches[1];
@@ -142,11 +143,12 @@ class Panopto {
         let showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked', {
+            _this.sendEvent('iv:autoplayBlocked', {
                 requireVideoBlock: true,
-            });
+            }, _this.node);
             // ShowControls = true;
         }
         /**
@@ -204,7 +206,7 @@ class Panopto {
                             ready = true;
                             if (!autoplayBlocked) {
                                 autoplayBlocked = true;
-                                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                                self.sendEvent('iv:playerReady', null, self.node);
                             }
                             if (!showControls) {
                                 $('.video-block, #video-block').removeClass('no-pointer');
@@ -222,13 +224,13 @@ class Panopto {
                             code: 'code-' + i,
                         };
                     });
-                    dispatchEvent('iv:playerLoaded', {tracks, reloaded: reloaded});
+                    _this.sendEvent('iv:playerLoaded', {tracks, reloaded: reloaded}, _this.node);
                 }
                 if (!ready) {
                     ready = true;
                     if (!autoplayBlocked) {
                         autoplayBlocked = true;
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        _this.sendEvent('iv:playerReady', null, _this.node);
                     }
                     if (!showControls) {
                         $('.video-block, #video-block').removeClass('no-pointer');
@@ -274,31 +276,30 @@ class Panopto {
                     switch (state) {
                         case PlayerState.Ended:
                             self.ended = true;
-                            dispatchEvent('iv:playerEnded');
+                            _this.sendEvent('iv:playerEnded', null, _this.node);
                             break;
                         case PlayerState.Playing:
                             if (currentTime >= self.end || currentTime < self.start) {
                                 player[node].seekTo(self.start);
                             }
-                            dispatchEvent('iv:playerPlay');
-                            dispatchEvent('iv:playerPlaying');
+                            _this.sendEvent('iv:playerPlay', null, _this.node);
+                            _this.sendEvent('iv:playerPlaying', null, _this.node);
                             self.ended = false;
                             this.paused = false;
                             break;
                         case PlayerState.Paused:
                             this.paused = true;
                             if (!self.ended && currentTime >= self.end - self.frequency) {
-                                dispatchEvent('iv:playerEnded');
+                                _this.sendEvent('iv:playerEnded', null, _this.node);
                                 self.ended = true;
                                 return;
                             }
-                            dispatchEvent('iv:playerPaused');
+                            _this.sendEvent('iv:playerPaused', null, _this.node);
                             self.ended = false;
                             break;
                     }
-                },
-                onPlaybackRateChange: function(e) {
-                    dispatchEvent('iv:playerRateChange', {rate: e});
+                }, onPlaybackRateChange: function(e) {
+                    _this.sendEvent('iv:playerRateChange', {rate: e}, _this.node);
                 },
                 onError: async function(error) {
                     if (error === 'playNotAllowed') {
@@ -317,7 +318,7 @@ class Panopto {
                         } else {
                             if (!autoplayBlocked) {
                                 autoplayBlocked = true;
-                                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                                this.sendEvent('iv:playerReady', null, this.node);
                             }
                         }
                         return;
@@ -327,7 +328,7 @@ class Panopto {
                         }
                         return;
                     }
-                    dispatchEvent('iv:playerError', {error});
+                    this.sendEvent('iv:playerError', {error}, this.node);
                 },
                 onLoginShown: function() {
                     $('#start-screen').addClass('d-none');
@@ -397,11 +398,11 @@ class Panopto {
             return time;
         }
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         return new Promise((resolve) => {
             player[this.node].seekTo(time, true);
-            dispatchEvent('iv:playerSeek', {time: time});
+            this.sendEvent('iv:playerSeek', {time: time}, this.node);
             resolve(true);
         });
     }
@@ -478,7 +479,7 @@ class Panopto {
     destroy() {
         $(`#${this.node}`).remove();
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -510,7 +511,7 @@ class Panopto {
             return;
         }
         player[this.node].muteVideo();
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmute the video
@@ -521,7 +522,7 @@ class Panopto {
         }
         player[this.node].unmuteVideo();
         player[this.node].setVolume(1);
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -555,6 +556,23 @@ class Panopto {
         track = track.replace('code-', '');
         player[this.node].enableCaptions(track);
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Panopto;

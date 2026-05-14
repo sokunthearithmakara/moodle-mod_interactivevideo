@@ -43,6 +43,7 @@ class Rumble {
     }
     async getInfo(url, node) {
         this.node = node;
+
         let self = this;
         return new Promise((resolve) => {
             let oEmbed = 'https://rumble.com/api/Media/oembed.json?url=' + encodeURIComponent(url);
@@ -120,10 +121,11 @@ class Rumble {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.start = start;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         $('#start-screen, .video-block').addClass('no-pointer');
         let ready = false;
@@ -195,7 +197,7 @@ class Rumble {
                             player[node].setCurrentTime(start);
                             ready = true;
                             firstAPIrun = true;
-                            dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                            this.sendEvent('iv:playerReady', null, this.node);
                         }
                         $(document).off('timeupdate.Rumble').on('timeupdate.Rumble', function() {
                             if (!ready) {
@@ -226,8 +228,8 @@ class Rumble {
                                 self.ended = false;
                             }
                             self.ended = false;
-                            dispatchEvent('iv:playerPlay');
-                            dispatchEvent('iv:playerPlaying');
+                            self.sendEvent('iv:playerPlay', null, self.node);
+                            self.sendEvent('iv:playerPlaying', null, self.node);
                             if (!showControls && !$('body').hasClass('no-original-controls')) {
                                 $('body').addClass('no-original-controls');
                             }
@@ -242,10 +244,10 @@ class Rumble {
                             self.paused = true;
                             if (player[node].getCurrentTime() >= end) {
                                 self.ended = true;
-                                dispatchEvent('iv:playerEnded');
+                                self.sendEvent('iv:playerEnded', null, self.node);
                                 return;
                             } else {
-                                dispatchEvent('iv:playerPaused');
+                                self.sendEvent('iv:playerPaused', null, self.node);
                             }
                         });
                         api.on("videoEnd", () => {
@@ -254,7 +256,7 @@ class Rumble {
                             }
                             self.ended = true;
                             self.paused = true;
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                         });
                     }
                 });
@@ -311,7 +313,7 @@ class Rumble {
             return time;
         }
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         time = parseFloat(time);
         return new Promise((resolve) => {
             if (time < 0) {
@@ -319,7 +321,7 @@ class Rumble {
             }
             this.ended = false;
             player[this.node].setCurrentTime(time);
-            dispatchEvent('iv:playerSeek', {time: time});
+            this.sendEvent('iv:playerSeek', {time: time}, this.node);
             resolve(time);
         });
     }
@@ -403,7 +405,7 @@ class Rumble {
         }
         $(document).off('timeupdate.Rumble');
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Retrieves the current state of the player.
@@ -427,7 +429,7 @@ class Rumble {
     mute() {
         player[this.node].mute();
         this.muted = true;
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmutes the video player.
@@ -436,7 +438,7 @@ class Rumble {
         player[this.node].unmute();
         player[this.node].setVolume(1);
         this.muted = false;
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -477,6 +479,23 @@ class Rumble {
         // Rumble does not support captions.
         return track;
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Rumble;

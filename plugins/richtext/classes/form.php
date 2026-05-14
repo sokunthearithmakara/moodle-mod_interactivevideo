@@ -30,23 +30,7 @@ class form extends \mod_interactivevideo\form\base_form {
      */
     public function set_data_for_dynamic_submission(): void {
         $data = $this->set_data_default();
-
-        if (!empty($data->contentform)) {
-            $draftideditor = file_get_submitted_draft_itemid('content');
-            $data->content = [];
-            $data->content["text"] = file_prepare_draft_area(
-                $draftideditor,
-                $data->contextid,
-                'mod_interactivevideo',
-                'content',
-                $data->id,
-                $this->editor_options(),
-                $data->contentform ?? ''
-            );
-            $data->content["format"] = FORMAT_HTML;
-            $data->content["itemid"] = $data->id;
-        }
-
+        $data = \ivplugin_richtext\helper::prepare_editor_data($data, 'mod_interactivevideo', $this);
         $this->set_data($data);
     }
 
@@ -56,36 +40,11 @@ class form extends \mod_interactivevideo\form\base_form {
      * @return void
      */
     public function process_dynamic_submission() {
-        global $DB;
         // We're going to submit the data to database. If id is not 0, we're updating an existing record.
         $fromform = $this->get_data();
         $fromform = $this->pre_processing_data($fromform);
         $fromform->advanced = $this->process_advanced_settings($fromform);
-        $draftitemid = $fromform->content["itemid"];
-        if ($fromform->id > 0) {
-            $fromform->timemodified = time();
-            $fromform->content = $fromform->content["text"];
-            $DB->update_record('interactivevideo_items', $fromform);
-        } else {
-            $fromform->timecreated = time();
-            $fromform->timemodified = $fromform->timecreated;
-            $fromform->content = $fromform->content["text"];
-            $fromform->id = $DB->insert_record('interactivevideo_items', $fromform);
-        }
-
-        if ($draftitemid) {
-            $fromform->content = file_save_draft_area_files(
-                $draftitemid,
-                $fromform->contextid,
-                'mod_interactivevideo',
-                'content',
-                $fromform->id,
-                $this->editor_options(),
-                $fromform->content
-            );
-            $DB->update_record('interactivevideo_items', $fromform);
-        }
-        return $fromform;
+        return \ivplugin_richtext\helper::save_editor_data($fromform, 'mod_interactivevideo', 'interactivevideo_items', $this);
     }
 
     /**
@@ -98,20 +57,7 @@ class form extends \mod_interactivevideo\form\base_form {
 
         $this->standard_elements();
 
-        $mform->addElement('text', 'title', '<i class="bi bi-quote iv-mr-2"></i>' . get_string('title', 'mod_interactivevideo'));
-        $mform->setType('title', PARAM_TEXT);
-        $mform->setDefault('title', get_string('defaulttitle', 'mod_interactivevideo'));
-        $mform->addRule('title', get_string('required'), 'required', null, 'client');
-
-        $mform->addElement(
-            'editor',
-            'content',
-            '<i class="bi bi-file-earmark-richtext iv-mr-2"></i>' . get_string('content', 'ivplugin_richtext'),
-            null,
-            $this->editor_options()
-        );
-        $mform->setType('content', PARAM_RAW);
-        $mform->addRule('content', get_string('required'), 'required', null, 'client');
+        \ivplugin_richtext\helper::add_richtext_elements($mform, $this);
 
         $this->completion_tracking_field('none', [
             'none' => get_string('completionnone', 'mod_interactivevideo'),

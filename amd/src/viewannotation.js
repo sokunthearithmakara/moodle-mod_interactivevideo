@@ -43,6 +43,8 @@ define([
         lastrun, // Last run annotation.
         subvideo; // For multiple videos.
 
+    window.M.version = $('#iv-m-version').data('value');
+
     const $videoNav = $('#video-nav');
     const $interactionNav = $('#interactions-nav');
     const $loader = $('#background-loading');

@@ -42,6 +42,7 @@ class Vidyard {
 
     async getInfo(url, node) {
         this.node = node;
+
         let self = this;
         // URL: https://share.vidyard.com/watch/6xY4kDZfFJw8nmfHitJzdJ
         let regex = /(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i;
@@ -104,11 +105,12 @@ class Vidyard {
         let showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked', {
+            _this.sendEvent('iv:autoplayBlocked', {
                 requireVideoBlock: true,
-            });
+            }, _this.node);
         }
 
         let self = this;
@@ -169,7 +171,7 @@ class Vidyard {
                             code: track.language
                         });
                     });
-                    dispatchEvent('iv:playerLoaded', {'tracks': tracks, 'reloaded': reloaded});
+                    self.sendEvent('iv:playerLoaded', {'tracks': tracks, 'reloaded': reloaded}, self.node);
                 }
                 player[node].on('ready', function() {
                     let $div = $(pl.container).find('.vidyard-div-' + videoId + '[role="region"]');
@@ -177,7 +179,7 @@ class Vidyard {
                     self.aspectratio = 1 / self.aspectratio;
 
                     ready = true;
-                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                    self.sendEvent('iv:playerReady', null, self.node);
 
                     setTimeout(() => {
                         $('.video-block, #video-block').addClass('no-pointer bg-transparent');
@@ -186,12 +188,12 @@ class Vidyard {
 
                 player[node].on('play', function() {
                     self.paused = false;
-                    dispatchEvent('iv:playerPlay');
+                    self.sendEvent('iv:playerPlay', null, self.node);
                 });
 
                 player[node].on('pause', function() {
                     self.paused = true;
-                    dispatchEvent('iv:playerPaused');
+                    self.sendEvent('iv:playerPaused', null, self.node);
                 });
 
                 player[node].on('videoComplete', async function() {
@@ -201,7 +203,7 @@ class Vidyard {
                         player[node].pause();
                     }
                     player[node].seek(self.start);
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                 });
 
                 player[node].on('timeupdate', function(e) {
@@ -213,7 +215,7 @@ class Vidyard {
                         self.paused = true;
                         player[node].seek(self.start);
                         player[node].pause();
-                        dispatchEvent('iv:playerEnded');
+                        self.sendEvent('iv:playerEnded', null, self.node);
                         return;
                     }
                     if (e < self.start) {
@@ -221,11 +223,11 @@ class Vidyard {
                     }
                     self.paused = false;
                     self.ended = false;
-                    dispatchEvent('iv:playerPlaying');
+                    self.sendEvent('iv:playerPlaying', null, self.node);
                 });
 
                 player[node].on('volumechange', function(e) {
-                    dispatchEvent('iv:playerVolumeChange', {volume: e.volume});
+                    self.sendEvent('iv:playerVolumeChange', {volume: e.volume}, self.node);
                 });
             }, videoId);
         };
@@ -275,11 +277,11 @@ class Vidyard {
             return time;
         }
         let currentTime = player[this.node].currentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         return new Promise((resolve) => {
             player[this.node].seek(time, true);
-            dispatchEvent('iv:playerSeek', {time: time});
+            this.sendEvent('iv:playerSeek', {time: time}, this.node);
             resolve(true);
         });
     }
@@ -350,7 +352,7 @@ class Vidyard {
     destroy() {
         $(`#${this.node}`).remove();
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -383,7 +385,7 @@ class Vidyard {
         }
         player[this.node].setVolume(0);
         this.muted = true;
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmute the video
@@ -394,7 +396,7 @@ class Vidyard {
         }
         player[this.node].setVolume(1);
         this.muted = false;
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -424,6 +426,23 @@ class Vidyard {
         }
         player[this.node].enableCaption(track);
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Vidyard;

@@ -101,6 +101,8 @@ export default {
     init: async function(url, coursemodule, interaction, course, start, end, coursecontextid,
         type = 'yt', displayoptions, userid, posterimage, extendedcompletion) {
 
+        window.M.version = $('#iv-m-version').data('value');
+
         if (!ModalFactory) {
             if (window.M.version >= 403) {
                 ModalFactory = await import('core/modal');

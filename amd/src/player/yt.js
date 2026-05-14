@@ -62,6 +62,7 @@ class Yt {
      */
     async getInfo(url, node) {
         this.node = node;
+
         return new Promise((resolve) => {
             var YT;
             let regex = new RegExp(
@@ -136,13 +137,14 @@ class Yt {
         const preload = opts.preload || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
 
         // Hide the player first.
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked', {
+            _this.sendEvent('iv:autoplayBlocked', {
                 requireVideoBlock: true,
-            });
+            }, _this.node);
         }
         /**
          * The start time of the video
@@ -205,13 +207,15 @@ class Yt {
             events: {
                 onError: function(e) {
                     hasError = true;
-                    dispatchEvent('iv:playerError', {error: e.data});
+                    this.sendEvent('iv:playerError', {error: e.data}, this.node);
                 },
-                onReady: function(e) {
+                onReady: async function(e) {
                     self.title = e.target.videoTitle;
-                    // We don't want to use the end time from the player, just to avoid any issue restarting the video.
+                    // Wait for 1 second.
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
                     if (e.target.getDuration() <= 0 && e.target.videoTitle == '') {
-                        dispatchEvent('iv:playerError', {error: 'Video not found'});
+                        self.sendEvent('iv:playerError', {error: 'Video not found'}, self.node);
                         return;
                     }
                     let totaltime = Number(e.target.getDuration().toFixed(2)) - self.frequency;
@@ -232,7 +236,8 @@ class Yt {
                     // Otherwise, if user seek before start, they're gonna get blackscreen.
                     if (preload == true && customStart == false) { // For editing form
                         ready = true;
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        self.paused = true;
+                        self.sendEvent('iv:playerReady', null, self.node);
                         $(`#video-wrapper`).removeClass('invisible');
                     } else {
                         e.target.mute();
@@ -265,12 +270,12 @@ class Yt {
                                     setTimeout(() => {
                                         e.target.unMute();
                                         ready = true;
-                                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                                        _this.sendEvent('iv:playerReady', null, _this.node);
                                     }, 1000);
                                 } else {
                                     e.target.unMute();
                                     ready = true;
-                                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                                    _this.sendEvent('iv:playerReady', null, _this.node);
                                 }
                                 $(`#video-wrapper`).removeClass('invisible');
                             }
@@ -283,7 +288,7 @@ class Yt {
                     if (ready === false) {
                         e.target.unMute();
                         ready = true;
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        _this.sendEvent('iv:playerReady', null, _this.node);
                         $(`#video-wrapper`).removeClass('invisible');
                     }
                 },
@@ -308,7 +313,7 @@ class Yt {
                         case YT.PlayerState.ENDED:
                             self.ended = true;
                             self.paused = true;
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                             break;
                         case YT.PlayerState.PLAYING:
                             self.paused = false;
@@ -320,17 +325,17 @@ class Yt {
                                     player[self.node].seekTo(self.start);
                                 }
                             }
-                            dispatchEvent('iv:playerPlay');
-                            dispatchEvent('iv:playerPlaying');
+                            self.sendEvent('iv:playerPlay', null, self.node);
+                            self.sendEvent('iv:playerPlaying', null, self.node);
                             if (!self.live && currentTime >= self.end) {
                                 self.ended = true;
                                 self.paused = true;
-                                dispatchEvent('iv:playerEnded');
+                                self.sendEvent('iv:playerEnded', null, self.node);
                             }
                             break;
                         case YT.PlayerState.PAUSED:
                             self.paused = true;
-                            dispatchEvent('iv:playerPaused');
+                            self.sendEvent('iv:playerPaused', null, self.node);
                             break;
                         case YT.PlayerState.CUED:
                             if (!self.live && currentTime >= self.end) {
@@ -341,7 +346,7 @@ class Yt {
                 },
 
                 onPlaybackRateChange: function(e) {
-                    dispatchEvent('iv:playerRateChange', {rate: e.data});
+                    self.sendEvent('iv:playerRateChange', {rate: e.data}, self.node);
                 },
 
                 onApiChange: function() {
@@ -369,7 +374,7 @@ class Yt {
                         self.captions = tracks;
                     }
                     loadedcaption = true;
-                    dispatchEvent('iv:playerLoaded', {tracks, reloaded: reloaded});
+                    self.sendEvent('iv:playerLoaded', {tracks, reloaded: reloaded}, self.node);
                 },
             }
         };
@@ -449,11 +454,11 @@ class Yt {
         if (currentTime === time) {
             return true;
         }
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         return new Promise((resolve) => {
             player[this.node].seekTo(time, true);
-            dispatchEvent('iv:playerSeek', {time: time});
+            this.sendEvent('iv:playerSeek', {time: time}, this.node);
             resolve(true);
         });
     }
@@ -536,7 +541,7 @@ class Yt {
             return;
         }
         player[this.node].destroy();
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -567,7 +572,7 @@ class Yt {
             return;
         }
         player[this.node].mute();
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmute the video
@@ -578,7 +583,7 @@ class Yt {
         }
         player[this.node].unMute();
         player[this.node].setVolume(100);
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -604,6 +609,23 @@ class Yt {
         }
         player[this.node].setOption('captions', 'track', track ? {languageCode: track} : {});
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Yt;

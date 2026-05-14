@@ -44,6 +44,7 @@ class Kinescope {
 
     async getInfo(url, node) {
         this.node = node;
+
         // Sample video: https://kinescope.io/{token}
         let regex = /kinescope\.io\/(.*)/;
         let match = regex.exec(url);
@@ -122,10 +123,11 @@ class Kinescope {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.start = start;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         // Sample video: https://kinescope.io/{token}
         let regex = /kinescope\.io\/(.*)/;
@@ -174,11 +176,11 @@ class Kinescope {
                             self.captions = tracks;
                         }
 
-                        dispatchEvent('iv:playerLoaded', {
+                        self.sendEvent('iv:playerLoaded', {
                             tracks: tracks,
                             qualities: self.getQualities(),
                             reloaded: reloaded,
-                        });
+                        }, self.node);
 
                         // Scrap the video url to get the video title and poster image in the head.
                         if (opts.editform) {
@@ -195,7 +197,7 @@ class Kinescope {
                         await player[node].seekTo(start);
                         await player[node].pause();
                         ready = true;
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        self.sendEvent('iv:playerReady', null, self.node);
                     });
                     pl.on(pl.Events.Play, async function(event) {
                         if (!ready) {
@@ -203,12 +205,12 @@ class Kinescope {
                         }
                         self.paused = false;
                         self.ended = false;
-                        dispatchEvent('iv:playerPlay');
+                        self.sendEvent('iv:playerPlay', null, self.node);
                         const time = await player[node].getCurrentTime();
                         if (time >= end) {
                             self.ended = true;
                             self.paused = true;
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                         }
                     });
                     pl.on(pl.Events.Pause, async function(event) {
@@ -216,7 +218,7 @@ class Kinescope {
                             return;
                         }
                         self.paused = true;
-                        dispatchEvent('iv:playerPaused');
+                        self.sendEvent('iv:playerPaused', null, self.node);
                     });
                     pl.on(pl.Events.Ended, function(event) {
                         if (!ready) {
@@ -224,7 +226,7 @@ class Kinescope {
                         }
                         self.ended = true;
                         self.paused = true;
-                        dispatchEvent('iv:playerEnded');
+                        self.sendEvent('iv:playerEnded', null, self.node);
                     });
                     pl.on(pl.Events.TimeUpdate, async function(event) {
                         if (!ready) {
@@ -242,35 +244,35 @@ class Kinescope {
                         if (currentTime >= end) {
                             self.ended = true;
                             await player[node].seekTo(end);
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                         } else if (!self.paused) {
                             self.paused = false;
-                            dispatchEvent('iv:playerPlaying');
+                            self.sendEvent('iv:playerPlaying', null, self.node);
                         };
                     });
                     pl.on(pl.Events.QualityChanged, async function(event) {
                         if (!ready) {
                             return;
                         }
-                        dispatchEvent('iv:playerQualityChange', {quality: event.quality});
+                        self.sendEvent('iv:playerQualityChange', {quality: event.quality}, self.node);
                     })
                     pl.on(pl.Events.PlaybackRateChange, async function(event) {
                         if (!ready) {
                             return;
                         }
-                        dispatchEvent('iv:playerSpeedChange', {rate: event.playbackRate});
+                        self.sendEvent('iv:playerSpeedChange', {rate: event.playbackRate}, self.node);
                     });
                     pl.on(pl.Events.Waiting, async function(event) {
                         if (!ready) {
                             return;
                         }
-                        dispatchEvent('iv:playerBuffering');
+                        self.sendEvent('iv:playerBuffering', null, self.node);
                     });
                     pl.on(pl.Events.VolumeChange, async function(event) {
                         if (!ready) {
                             return;
                         }
-                        dispatchEvent('iv:playerVolumeChange', {volume: event.data.muted ? 0 : 1});
+                        self.sendEvent('iv:playerVolumeChange', {volume: event.data.muted ? 0 : 1}, self.node);
                     });
                 });
         };
@@ -344,10 +346,10 @@ class Kinescope {
             time = 0;
         }
         let currentTime = await this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         player[this.node].seekTo(parseFloat(time));
-        dispatchEvent('iv:playerSeek', {time: time});
+        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return time;
     }
     /**
@@ -445,7 +447,7 @@ class Kinescope {
             $(`#${this.node}`).remove();
         }
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -551,6 +553,22 @@ class Kinescope {
     originalPlayer() {
         return player[this.node];
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Kinescope;

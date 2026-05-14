@@ -2,153 +2,214 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.5] - 2026-05-15
+
+- Standardize event dispatcher for player classes and set node as target element.
+- Add iframe and richtext plugins with utility functions and form elements
+- Introduced iframe plugin with utility functions for handling iframe URLs and embedding.
+- Added helper class for iframe plugin to manage form elements and preview functionality.
+- Created SVG icons for iframe and richtext plugins.
+- Implemented richtext plugin with editor support and helper functions for form integration.
+- Added Mustache template for flexbook add form to handle video URL input and preview.
+
 ## [1.7.4] - 2026-04-26
+
 - Fixed an issue with the "content" text editor where images/media with the same name were not saved correctly.
 - Integrated with Flexbook.
 
 ## [1.7.3] - 2026-04-22
+
 - Fixed an issue where runInteraction is fired twice when preventskipping is enabled.
 - Updated ivplugin_chapter, ivplugin_contentbank, and ivplugin_iframe for Flexbook compatibility.
 
 ## [1.7.2] - 2026-04-03
+
 https://buymeacoffee.com/tsmakara/interactive-video-1-7-2
 
 ## [1.7.1] - 2026-03-18
+
 - Fixed an issue on BunnyStream player where the getDuration method returned 0 (caused by recent changes to their API).
 - Added an option to display the video controls on the editor page.
 
 ## [1.7] - 2026-03-13
+
 https://buymeacoffee.com/tsmakara/interactive-video-release-1-7-2026031300
 
 ## [1.6.2] - 2026-02-22
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-v162
 
 ## [1.6.1] - 2026-02-11
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-16-1
 
 ## [1.6.0] - 2026-01-18
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-16-1
 
 ## [1.5.4] - 2026-01-06
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-154
 
 ## [1.5.3] - 2025-12-15
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-153
 
 ## [1.5.2] - 2025-11-27
+
 ### Updated
+
 - Improved support for SproutVideo, VioStream, and BunnyStream.
 
 ## [1.5.1] - 2025-11-02
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-16
 
 ## [1.5.0+] - 2025-10-13
+
 ### Fixed
+
 - In Moodle 4.3 and lower, the section parameter takes the section number instead of the section id.
 
 ## [1.5.0] - 2025-10-12
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-150
 
 ## [1.4.5] - 2025-09-29
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-145
 
 ## [1.4.4] - 2025-09-18
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-144
 
 ## [1.4.3] - 2025-07-16
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-143
 
 ## [1.4.2] - 2025-07-12
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-142
 
 ## [1.4.1] - 2025-06-29
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-141
 
 ## [1.4.0+] - 2025-06-18
+
 ## Fixed
+
 - Minor UI fixes
 - Issue when duplicate an interactive video activity
 
 ## [1.4.0] - 2025-06-15
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-140
 
 ## [1.3.2] - 2025-05-28
+
 ## Fixed
+
 - Active interaction on the drawer did not show.
 - Content bank item popup was not correctly dismissed.
 - Minor UI fixes
 
 ## Updated
+
 - Add `setCaption` method to all player types.
 - UI and performance/memory improvement.
 
 ## [1.3.0] - 2025-05-10
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-130
 
 ## [1.2.4] - 2025-04-28
+
 - Minor UI improvements
 - Installed interaction types can be downloaded directly from GitHub repos.
 - New interaction types: Poll and Form
 
 ## [1.2.3] - 2025-04-27
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-123
 
 ## [1.2.2] - 2025-04-18
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-v122
 
 ## [1.2.1] - 2025-04-12
+
 ## Added
+
 - Backward support for Moodle 4.0 for the main plugin and all interaction plugins.
 
 ## [1.2.0] - 2025-04-11
+
 ## Added
+
 - Support for Moodle 5.0 for main plugin and all interaction plugins.
 - Bulk-delete interactions from the editor page.
 - PDF Viewer: Ability to set specific pages to display in the viewer, and ability to resume from the last viewed page.
 - H5P Upload: Ability to set text direction for H5P content (LTR/RTL). It is still up to the H5P content type to support RTL. The H5P Upload interaction plugin supports custom CSS file in the site settings. Administrators can add custom CSS to target RTL mode. For example: [dir=rtl] .h5p-content {margin-right: 1rem;}.
 
 ## Fixed
+
 - When Moodle is installed in subdirectory, the stylesheets are not loaded correctly.
 
 ## [1.1.6] - 2025-04-03
+
 ### Added
+
 - Implemented `State Saving` for H5P contents. The state will be saved in the database and restored when the user reopens the content.
 - Chapters can now be locked.
-See more details in https://mod-interactive-video.canny.io/changelog/interactive-video-v116
+  See more details in https://mod-interactive-video.canny.io/changelog/interactive-video-v116
 
 ### Updated
+
 - Dropping usermodified column from interactivevideo_settings table. This column is not used anymore.
 
 ## [1.1.5] - 2025-03-30
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-v115
 
 ## [1.1.4] - 2025-03-11
+
 ### Updated
+
 - Initial support for RTL.
 - Generalize advanced field for interactivevideo_items, allowing plugins to add any field to the advanced object.
 
 ## [1.1.3] - 2025-03-07
+
 ### Fixed
+
 - Content bank item form missed fields for setting actions after passing grade.
 
 ## [1.1.2] - 2025-03-01
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-v112
 
 ## [1.1.1] - 2025-02-15
+
 ### Fixed
+
 - The action menu was hidden on the activity card in Moodle 4.1.
 - Update thirdpartylibs.xml
 
 ## [1.1.0] - 2025-02-15
+
 https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 
 ## [1.0.3] - 2025-01-25
+
 ### Fixed
+
 - Player didn't fire `ivplayerReady` event if the browser blocked autoplay.
 - Share-moment link included `embed=1` if the link was created from the modal.
 - `onPaused` method was not implemented on `beforeunload` event, resulting in the watched time not being saved.
 
 ### Updated
+
 - Spotify player sometimes shows the preview version of the music tracks depending on the browser and user login. In this case, the interactions might be cut off. So, when the player is in preview mode, users will now get an error message before the player is destroyed.
 - Kill all client-side background processes and event listener if the video is invisible and paused for 30 minutes on view page and 10 minutes on interactions page. If the video already ends, the processes will be killed after 5 minutes of inactivity.
 - Get processed data from server only once for each interaction. Processed data will be saved to this.cache object with the annotation id. When the interaction is relaunched in the same session, the cached version will be used; therefore, releasing some burden from the server. This applies to view page only. One interaction page, a new data is fetched everytime the interaction is launched.
@@ -160,6 +221,7 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - Minor accessiblity/UI/UX improvements
 
 ### Added
+
 - Two url parameters to control the player appearance: `dm` for dark mode and `df` for distraction-free mode. Example: `https://yourmoodlesite.com/mod/interactivevideo/view.php?id=1&dm=1&df=1`;
 - Allow extension plugins to include js methods on the mod_form. To enable this, the plugin must add an element on the mod_form with the class '.requirejs' and the data attribute `data-plugin` value as the amd module name. Example: `<div class="requirejs" data-plugin="local_ivanalytics/main"></div>`. The plugin must implement the method `mform` to add the required js code.
 - `convertHMSToSeconds` in the base class to convert HH:MM:SS/MM:SS/SS to seconds.
@@ -169,7 +231,9 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - `active` class to `#message` element of the current/visible interaction.
 
 ## [1.0.2] - 2025-01-17
+
 ### Fixed
+
 - Custom start time for Spotify episode
 - Timestamp column width is not respected on Safari.
 - `Totaltime` is undefined in some circumstances.
@@ -178,6 +242,7 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - Rumble's `isPlaying` method always returns true.
 
 ### Updated
+
 - Improve error handling: remove/hide elements above the video to show the error screen (e.g. YouTube video no longer available)
 - Only get `posterImage` and title when on editing form (`opts.editform`)
 - If the video is already paused, do not pause again if not necessary.
@@ -188,19 +253,24 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - Wistia: get annotation data from the database only after the password is validated.
 
 ## [1.0.1] - 2025-01-14
+
 ### Fixed
+
 - Dailymotion video and SoundCloud audio played from the start after ended.
 - iv:playerReady fired twice for Wistia video when password-protected.
 - Destroy method didn't work correctly on SoundCloud/Spotify.
 
 ### Updated
+
 - Resize player iframe for SoundCloud/Spotify.
 - Add player type to body class.
 - Add a key icon to the poster image on the card if video is password-protected
 - Only auto update the video end time if it is 0 or undefined.
 
 ## [1.0] - 2025-01-13 - First Stable
+
 ### Added
+
 - Support for Panopto, Spotify, PeerTube, Kinescope, SproutVideo, Rutube, and Rumble (Site admin must select them in the site settings to enable them.)
 - Support for different video visibility options including unlisted, private, and password protected (subject to video providers).
 - New appearance setting: Square poster image. If your poster image is a square, check this option to display it nicely on the activity card.
@@ -212,6 +282,7 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - New site settings: defaulttheme, disablecustomtime and videosharinginstructions
 
 ### Fixed
+
 - Column names "start" and "end" are reserved keywords in mySQL, Oracle, and postgreSQL. Changed to "starttime" and "endtime" respectively.
 - Fixed SQL in backup API for postgreSQL support.
 - Skipped segment at the end of the video prevents displaying end screen and onEnded event.
@@ -222,6 +293,7 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - Many minor fixes
 
 ### Updated
+
 - Add title attribute to buttons for accessibility improvement
 - Use "gradebookroles" for report. Previously, it was set to roleid=5.
 - Update query for group report to include only users in "gradebookroles".
@@ -237,7 +309,9 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - Change vimeo regex to allow more URL variations such as custom URL (e.g. vimeo.com/{username}/{customtext}).
 
 ## [RC0.2] - 2024-11-12
+
 ### Added
+
 - Closed caption/subtitle for Vimeo, Dailymotion, and YouTube.
 - Set video quality for Vimeo (only works with videos from PRO+).
 - Bulk create interactive video activities by drag-n-dropping a CSV file on course page. CSV file must contain at least the videourl column.
@@ -245,11 +319,13 @@ https://mod-interactive-video.canny.io/changelog/interactive-video-v11
 - New language (PT_BR) contributed by @eduardokraus
 
 ### Fixed
+
 - If grade set to 0, update_grade method will create an endless loop until memory runs out.
 - Dailymotion autoplay behavior.
 - Other bugs fix.
 
 ### Update
+
 - When saving progress, only update grade if grademax isn't 0 and gradeinstance exists.
 - When video start and end time are incorrect for some reason (e.g. < 0, > duration, start >= end, end == 0), update start and end columns in the interactivevideo table on first access.
 - Styling improvements.

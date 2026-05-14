@@ -40,6 +40,7 @@ class DailyMotion {
     }
     async getInfo(url, node) {
         this.node = node;
+
         return new Promise((resolve) => {
             let dailymotion = window.dailymotion;
             const reg = /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/g;
@@ -100,11 +101,12 @@ class DailyMotion {
         const customStart = opts.customStart || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.start = start;
 
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         const reg = /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/g;
         const match = reg.exec(url);
@@ -126,8 +128,7 @@ class DailyMotion {
         }
         var ready = false;
         var dmOptions = {
-            video: videoId,
-            params: {
+            video: videoId, params: {
                 startTime: start,
                 mute: true,
             },
@@ -136,7 +137,7 @@ class DailyMotion {
         const dailymotionEvents = async(player) => {
             const state = await player.getState();
             if (state.playerIsViewable === false && state.videoDuration == 0) {
-                dispatchEvent('iv:playerError', {error: 'Video is not viewable.'});
+                this.sendEvent('iv:playerError', {error: 'Video is not viewable.'}, this.node);
                 return;
             }
 
@@ -185,15 +186,15 @@ class DailyMotion {
             }
 
             // Fire iv:playerLoaded event
-            dispatchEvent('iv:playerLoaded', {
+            self.sendEvent('iv:playerLoaded', {
                 tracks: tracks, qualities: self.getQualities(),
                 reloaded: reloaded,
-            });
+            }, self.node);
 
             // If the browser blocks autoplay, we need to show the play button.
             if (!state.playerIsPlaybackAllowed && !ready) {
                 self.paused = false;
-                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                self.sendEvent('iv:playerReady', null, self.node);
                 $('#start-screen #play').removeClass('d-none');
                 $('#start-screen #spinner').remove();
                 $('.video-block, #video-block').addClass('no-pointer bg-transparent');
@@ -208,7 +209,7 @@ class DailyMotion {
             const playerEvents = () => {
                 player.on(dailymotion.events.VIDEO_END, function() {
                     self.ended = true;
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                 });
 
                 player.off(dailymotion.events.VIDEO_TIMECHANGE);
@@ -223,16 +224,16 @@ class DailyMotion {
                         player.seek(end - 1);
                     }
                     if (self.ended) {
-                        dispatchEvent('iv:playerEnded');
+                        self.sendEvent('iv:playerEnded', null, self.node);
                         self.ended = false;
                     } else {
                         if (e.playerIsPlaying === true) {
-                            dispatchEvent('iv:playerPlaying');
+                            self.sendEvent('iv:playerPlaying', null, self.node);
                             self.ended = false;
                             self.paused = false;
                         }
                         if (e.videoTime >= end) {
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                             self.ended = true;
                         }
                     }
@@ -248,7 +249,7 @@ class DailyMotion {
                         player.seek(start);
                     }
                     self.paused = false;
-                    dispatchEvent('iv:playerPlay');
+                    self.sendEvent('iv:playerPlay', null, self.node);
                 });
 
                 player.on(dailymotion.events.VIDEO_PAUSE, async function() {
@@ -258,22 +259,22 @@ class DailyMotion {
                     self.paused = true;
                     if (player.getState().videoTime >= end) {
                         self.ended = true;
-                        dispatchEvent('iv:playerEnded');
+                        self.sendEvent('iv:playerEnded', null, self.node);
                     } else {
-                        dispatchEvent('iv:playerPaused');
+                        self.sendEvent('iv:playerPaused', null, self.node);
                     }
                 });
 
                 player.on(dailymotion.events.PLAYER_ERROR, function(e) {
-                    dispatchEvent('iv:playerError', {error: e});
+                    self.sendEvent('iv:playerError', {error: e}, self.node);
                 });
 
                 player.on(dailymotion.events.PLAYER_PLAYBACKSPEEDCHANGE, function(e) {
-                    dispatchEvent('iv:playerRateChange', {rate: e.playerPlaybackSpeed});
+                    self.sendEvent('iv:playerRateChange', {rate: e.playerPlaybackSpeed}, self.node);
                 });
 
                 player.on(dailymotion.events.VIDEO_QUALITYCHANGE, function(e) {
-                    dispatchEvent('iv:playerQualityChange', {quality: e.videoQuality});
+                    self.sendEvent('iv:playerQualityChange', {quality: e.videoQuality}, self.node);
                 });
             };
 
@@ -282,7 +283,7 @@ class DailyMotion {
                 player.play(); // Start the video to get the ad out of the way.
                 self.paused = false;
                 player.on(dailymotion.events.VIDEO_PLAY, function() {
-                    dispatchEvent('iv:playerPlay');
+                    self.sendEvent('iv:playerPlay', null, self.node);
                 });
                 player.on(dailymotion.events.VIDEO_TIMECHANGE, function() {
                     $("#start-screen").removeClass('bg-transparent');
@@ -299,7 +300,7 @@ class DailyMotion {
                             playerEvents();
                             ready = true;
                             if (state.playerIsPlaybackAllowed) {
-                                dispatchEvent('iv:playerReady');
+                                this.sendEvent('iv:playerReady', null, this.node);
                             }
                         }
                     }, state.playerIsPlaybackAllowed ? 1000 : 0);
@@ -308,7 +309,7 @@ class DailyMotion {
                 playerEvents();
                 ready = true;
                 if (state.playerIsPlaybackAllowed) {
-                    dispatchEvent('iv:playerReady');
+                    this.sendEvent('iv:playerReady', null, this.node);
                 }
             }
 
@@ -404,10 +405,10 @@ class DailyMotion {
             return;
         }
         let currentTime = await this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         await player[this.node].seek(time);
         this.ended = false;
-        dispatchEvent('iv:playerSeek', {time: time});
+        this.sendEvent('iv:playerSeek', {time: time}, this.node);
     }
     /**
      * Retrieves the current playback time of the video.
@@ -509,7 +510,7 @@ class DailyMotion {
         player[this.node].off();
         player[this.node].destroy();
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Asynchronously retrieves the current state of the player.
@@ -544,7 +545,7 @@ class DailyMotion {
             return;
         }
         player[this.node].setMute(true);
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmutes the Dailymotion player.
@@ -555,7 +556,7 @@ class DailyMotion {
         }
         player[this.node].setMute(false);
         player[this.node].setVolume(1);
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     async isMuted() {
@@ -614,6 +615,23 @@ class DailyMotion {
         }
         player[this.node].setSubtitles(track);
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default DailyMotion;

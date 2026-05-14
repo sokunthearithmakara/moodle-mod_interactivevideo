@@ -44,6 +44,7 @@ class Wistia {
 
     async getInfo(url, node) {
         this.node = node;
+
         return new Promise((resolve) => {
             const regex = /(?:https?:\/\/)?(?:www\.)?(?:wistia\.com)\/medias\/([^/]+)/g;
             const match = regex.exec(url);
@@ -99,9 +100,10 @@ class Wistia {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         this.start = start;
         if (opts.passwordprotected) {
@@ -165,9 +167,9 @@ class Wistia {
                         }
                         if (video.time() >= end) {
                             self.ended = true;
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                         } else {
-                            dispatchEvent('iv:playerPaused');
+                            self.sendEvent('iv:playerPaused', null, self.node);
                         }
                     });
 
@@ -175,7 +177,7 @@ class Wistia {
                         if ($(document).find('.w-password-protected').length > 0) {
                             return;
                         }
-                        dispatchEvent('iv:playerSeek', {time: e});
+                        self.sendEvent('iv:playerSeek', {time: e}, self.node);
                     });
 
                     video.bind('play', async() => {
@@ -183,8 +185,8 @@ class Wistia {
                             await video.time(start);
                         }
                         self.paused = false;
-                        dispatchEvent('iv:playerPlay');
-                        dispatchEvent('iv:playerPlaying');
+                        self.sendEvent('iv:playerPlay', null, self.node);
+                        self.sendEvent('iv:playerPlaying', null, self.node);
                     });
 
                     video.on('timechange', (s) => {
@@ -197,20 +199,20 @@ class Wistia {
                         }
                         if (s >= end) {
                             self.ended = true;
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                         }
                     });
 
                     video.on("error", (e) => {
-                        dispatchEvent('iv:playerError', {error: e});
+                        self.sendEvent('iv:playerError', {error: e}, self.node);
                     });
 
                     video.on("playbackratechange", (e) => {
-                        dispatchEvent('iv:playerRateChange', {rate: e});
+                        self.sendEvent('iv:playerRateChange', {rate: e}, self.node);
                     });
 
                     video.on("volumechange", (e) => {
-                        dispatchEvent('iv:playerVolumeChange', {volume: e});
+                        self.sendEvent('iv:playerVolumeChange', {volume: e}, self.node);
                     });
                 };
 
@@ -223,13 +225,13 @@ class Wistia {
                 } else {
                     if (!ready) {
                         ready = true;
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        self.sendEvent('iv:playerReady', null, self.node);
                         eventListeners();
                     }
                 }
             },
             onError: function(e) {
-                dispatchEvent('iv:playerError', {error: e});
+                self.sendEvent('iv:playerError', {error: e}, self.node);
             }
         };
 
@@ -300,10 +302,10 @@ class Wistia {
             return time;
         }
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         player[this.node].time(time);
         this.ended = false;
-        dispatchEvent('iv:playerSeek', {time: time});
+        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return time;
     }
     /**
@@ -390,7 +392,7 @@ class Wistia {
         }
         player[this.node].remove();
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Retrieves the current state of the player.
@@ -459,7 +461,7 @@ class Wistia {
             return 0;
         }
         player[this.node].videoQuality(quality);
-        dispatchEvent('iv:playerQualityChange', {quality: quality});
+        this.sendEvent('iv:playerQualityChange', {quality: quality}, this.node);
         return quality;
     }
     /**
@@ -491,6 +493,23 @@ class Wistia {
         }
         return track;
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Wistia;

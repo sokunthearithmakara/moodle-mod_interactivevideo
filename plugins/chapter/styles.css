@@ -1,11 +1,15 @@
-.path-mod-interactivevideo #message.chapter {
+.path-mod-interactivevideo #video-wrapper #message.chapter {
     background: linear-gradient(180deg, black, transparent);
     z-index: 5;
     color: #fff;
     top: 0;
 }
 
-.path-mod-interactivevideo #message.chapter span {
+.path-mod-interactivevideo #video-wrapper.fb #message.chapter {
+    color: unset;
+}
+
+.path-mod-interactivevideo #video-wrapper #message.chapter span {
     border-left: 5px solid var(--ivdanger);
     padding-left: 0.45em;
     left: 0.75em;

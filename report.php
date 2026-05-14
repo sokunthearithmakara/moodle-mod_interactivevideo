@@ -26,279 +26,66 @@ require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/locallib.php');
 
 $id = required_param('id', PARAM_INT); // Course_module ID.
-
 $cm = get_coursemodule_from_id('interactivevideo', $id, 0, false, MUST_EXIST);
-$moduleinstance = $DB->get_record('interactivevideo', ['id' => $cm->instance], '*', MUST_EXIST);
-$group = optional_param('group', 0, PARAM_INT);
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 
-$context = context_module::instance($cm->id);
+require_login($course, false, $cm);
 
-if (!has_capability('mod/interactivevideo:viewreport', $context)) {
-    // Redirect to course view.
-    redirect(
-        new moodle_url('/course/view.php', ['id' => $course->id]),
-        get_string('notaccessreport', 'mod_interactivevideo'),
-        5,
-        \core\output\notification::NOTIFY_ERROR
-    );
-}
+$group = optional_param('group', 0, PARAM_INT);
+$moduleinstance = $DB->get_record('interactivevideo', ['id' => $cm->instance], '*', MUST_EXIST);
+$context = \context_module::instance($cm->id);
 
-require_login($course, true, $cm);
-if ($moduleinstance->displayoptions) {
-    $moduleinstance->displayoptions = json_decode($moduleinstance->displayoptions, true);
-} else {
-    $moduleinstance->displayoptions = [];
-}
-if (isset($moduleinstance->displayoptions['theme']) && $moduleinstance->displayoptions['theme'] != '') {
-    $PAGE->force_theme($moduleinstance->displayoptions['theme']);
-}
-// External css.
-$PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/interactivevideo/libraries/DataTables/datatables.min.css'));
-if ($embed = optional_param('embed', 0, PARAM_INT) == 1) {
-    $PAGE->add_body_class('embed-mode');
-}
-$PAGE->add_body_class($CFG->branch >= 500 ? ' bs-5' : '');
-$PAGE->set_url('/mod/interactivevideo/report.php', ['id' => $cm->id, 'embed' => $embed]);
-$PAGE->set_title(get_string('reportfor', 'interactivevideo', format_string($moduleinstance->name)));
-$PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_context($context);
-$PAGE->set_pagelayout('embedded');
-$PAGE->activityheader->disable();
+// 1. Access and Page Setup.
+\mod_interactivevideo\report_helper::validate_access('mod_interactivevideo', $context, $course, $cm);
 
-$stringman = get_string_manager();
-// Get all enabled content types.
-$contenttypes = interactivevideo_util::get_all_activitytypes();
+// Get content types for requirements setup.
+$contenttypes = \interactivevideo_util::get_all_activitytypes();
+\mod_interactivevideo\report_helper::setup_page_requirements(
+    $moduleinstance,
+    'mod_interactivevideo',
+    $cm,
+    $course,
+    $context,
+    $contenttypes
+);
 
-$strings = $stringman->load_component_strings('mod_interactivevideo', current_language());
-$PAGE->requires->strings_for_js(array_keys($strings), 'mod_interactivevideo');
-
-// Get all interactions for moduleid.
-$items = interactivevideo_util::get_items($moduleinstance->id, $context->id, false);
-// Remove items that are not in the enabled content types.
-$items = array_filter($items, function ($item) use ($contenttypes) {
-    return in_array($item->type, array_map(function ($contenttype) {
-        return $contenttype["name"];
-    }, $contenttypes));
-});
-
-// Remove the contenttypes that are not involved in the items.
-$contenttypes = array_filter($contenttypes, function ($contenttype) use ($items) {
-    return in_array($contenttype["name"], array_map(function ($item) {
-        return $item->type;
-    }, $items));
-});
-
-// Strings for js.
-foreach ($contenttypes as $subplugin) {
-    $stringcomponent = $subplugin['stringcomponent'];
-    $strings = $stringman->load_component_strings($stringcomponent, current_language());
-    $PAGE->requires->strings_for_js(array_keys($strings), $stringcomponent);
-}
-
-// Order the items by timestamp.
-usort($items, function ($a, $b) {
-    return $a->timestamp - $b->timestamp;
-});
-
-// Get skip segments.
-$skip = array_filter($items, function ($item) {
-    return $item->type === 'skipsegment';
-});
-
-$items = array_map(function ($item) use ($contenttypes) {
-    $relatedcontenttype = array_filter($contenttypes, function ($contenttype) use ($item) {
-        return $contenttype["name"] == $item->type;
-    });
-    $relatedcontenttype = array_values($relatedcontenttype)[0];
-
-    $item->prop = json_encode($relatedcontenttype);
-    $item->typetitle = $relatedcontenttype["title"];
-    $item->icon = $relatedcontenttype["icon"];
-
-    return $item;
-}, $items);
-
-$allitems = $items;
-
-// Get content types that hasreport = true.
-$reportables = array_filter($contenttypes, function ($contenttype) {
-    return $contenttype["hasreport"];
-});
-
-$reportables = array_map(function ($reportable) {
-    return $reportable["name"];
-}, $reportables);
-
-$reportables = array_values($reportables);
-
-// Filter items that are within the time limit start and end (if end time is set).
-$contenttypenames = array_map(function ($contenttype) {
-    return $contenttype["name"];
-}, $contenttypes);
-
-$items = array_filter($items, function ($item) use ($moduleinstance, $skip, $contenttypenames, $reportables) {
-    // Remove items that has no completion or hasreport = false.
-    if (!in_array($item->type, $reportables)) {
-        return false;
-    }
-
-    if ($item->timestamp < 0) {
-        return true;
-    }
-
-    if ($item->hascompletion == 0 && $item->timestamp >= 0) {
-        return false;
-    }
-
-    if ($item->hascompletion == 0 && $item->completiontracking == 'none') {
-        return false;
-    }
-
-    // Remove items that are not within the time limit.
-    if (($item->timestamp < $moduleinstance->starttime || $item->timestamp > $moduleinstance->endtime) && $item->timestamp >= 0) {
-        return false;
-    }
-
-    // Remove items that are within the skip segment.
-    foreach ($skip as $ss) {
-        if ($item->timestamp > $ss->timestamp && $item->timestamp < $ss->title) {
-            return false;
-        }
-    }
-
-    return true;
-});
-
-$itemids = array_map(function ($item) {
-    return $item->id;
-}, $items);
-
-// Use Bootstrap icons instead of fontawesome icons to avoid issues fontawesome icons support in Moodle 4.1.
-$PAGE->requires->css(new moodle_url('/mod/interactivevideo/libraries/bootstrap-icons/bootstrap-icons.min.css'));
-$PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/interactivevideo/libraries/select2/select2.min.css'));
+// 2. Data Preparation.
+$reportdata = \mod_interactivevideo\report_helper::get_standard_report_items(
+    'mod_interactivevideo',
+    $moduleinstance,
+    '\\interactivevideo_util',
+    $context,
+    $cm
+);
+$items = $reportdata['items'];
+$allitems = $reportdata['allitems'];
+$data = \mod_interactivevideo\report_helper::prepare_template_data(
+    'mod_interactivevideo',
+    $cm,
+    $moduleinstance,
+    $course,
+    $context,
+    $items
+);
 
 echo $OUTPUT->header();
-$primary = new core\navigation\output\primary($PAGE);
-$renderer = $PAGE->get_renderer('core');
-$primarymenu = $primary->export_for_template($renderer);
-// Understanding the course format: singlepage or multiplepages.
-$format = course_get_format($course);
-if (
-    $format->get_course_display() == COURSE_DISPLAY_MULTIPAGE &&
-    !$format->show_editor()
-) {
-    if ($CFG->branch >= 404) { // Section.php started to exist in Moodle 4.4.
-        $returnurl = new moodle_url('/course/section.php', [
-            'id' => $cm->section,
-        ]);
-    } else {
-        $modinfo = get_fast_modinfo($course);
-        $returnurl = new moodle_url('/course/view.php', [
-            'id' => $course->id,
-            'section' => $modinfo->get_cm($cm->id)->sectionnum,
-        ]);
-    }
-} else {
-    $returnurl = new moodle_url('/course/view.php', ['id' => $course->id]);
-}
-
-$courseindex = isset($moduleinstance->displayoptions['courseindex']) && $moduleinstance->displayoptions['courseindex']
-    ? core_course_drawer() : '';
-$hascourseindex = !empty($courseindex);
-$datafortemplate = [
-    "cmid" => $cm->id,
-    "instance" => $cm->instance,
-    "contextid" => $context->id,
-    "courseid" => $course->id,
-    "returnurl" => $returnurl,
-    "completion" => '<h4 class="mb-0 iv-border-left border-danger iv-pl-3 clamp-1 iv-ml-2">'
-        . format_string($moduleinstance->name) . '</h4>',
-    "manualcompletion" => 1,
-    "settingurl" => has_capability('mod/interactivevideo:edit', $context)
-        ? new moodle_url('/course/modedit.php', ['update' => $cm->id]) : '',
-    "reporturl" => '',
-    "interactionsurl" => has_capability('mod/interactivevideo:edit', $context)
-        ? new moodle_url('/mod/interactivevideo/interactions.php', ['id' => $cm->id]) : '',
-    "useravatar" => $primarymenu['user'],
-    "viewurl" => new moodle_url('/mod/interactivevideo/view.php', ['id' => $cm->id]),
-    "backupurl" => has_capability('moodle/backup:backupactivity', $context) ? new moodle_url(
-        '/backup/backup.php',
-        ['cm' => $cm->id, 'id' => $course->id]
-    ) : '',
-    "restoreurl" => has_capability('moodle/restore:restoreactivity', $context) ? new moodle_url(
-        '/backup/restorefile.php',
-        ['contextid' => $context->id]
-    ) : '',
-    "bs" => $CFG->branch >= 500 ? '-bs' : '',
-    "hascourseindex" => $hascourseindex,
-];
-
-echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $datafortemplate);
-
+echo $OUTPUT->render_from_template('mod_interactivevideo/pagenav', $data['pagenav']);
 echo $OUTPUT->render_from_template('mod_interactivevideo/blocksettingshack', []);
 
-echo '<textarea class="d-none" id="itemsdata">' . json_encode(array_values($allitems)) . '</textarea>';
-// Get total xp from $items.
-$totalxp = array_reduce($items, function ($carry, $item) {
-    return $carry + $item->xp;
-}, 0);
+echo '<textarea class="d-none" id="itemsdata">' . json_encode($allitems) . '</textarea>';
 
-$items = array_values($items);
+echo $OUTPUT->render_from_template('mod_interactivevideo/reporttable', $data['reporttable']);
 
-$identity = get_config('mod_interactivevideo', 'reportfields');
-$identity = explode(',', $identity);
-$identity = array_filter($identity);
-// Map the identity to ['name' => 'field', 'label' => 'label'].
-$identity = array_map(function ($field) {
-    if (strpos($field, 'profile_field_') !== false) {
-        $label = \core_user\fields::get_display_name($field);
-    } else {
-        $label = get_string($field, 'moodle');
-    }
-    return [
-        'name' => $field,
-        'label' => $label,
-    ];
-}, $identity);
-$reporttabledata = [
-    'groupselector' => groups_print_activity_menu($cm, $PAGE->url, true),
-    'totalxp' => $totalxp,
-    'identity' => $identity,
-    'completionpercentage' => $moduleinstance->completionpercentage,
-    'completionfilter' => $moduleinstance->completionpercentage > 0,
-    'items' => array_map(function ($item) {
-        return [
-            'id' => $item->id,
-            'type' => $item->type,
-            'title' => format_string($item->title),
-            'icon' => $item->icon,
-            'typetitle' => $item->typetitle,
-        ];
-    }, $items),
-    'bs' => $CFG->branch >= 500 ? '-bs' : '',
-    'hascourseindex' => $hascourseindex,
-    'courseindex' => $courseindex,
-];
-
-echo $OUTPUT->render_from_template('mod_interactivevideo/reporttable', $reporttabledata);
-
+// Module specific video URL logic.
 $url = '';
-
 if ($moduleinstance->source == 'url') {
     $url = $moduleinstance->videourl;
 } else {
     $fs = get_file_storage();
-    $files = $fs->get_area_files(
-        $context->id,
-        'mod_interactivevideo',
-        'video',
-        0,
-        'filesize DESC',
-    );
+    $files = $fs->get_area_files($context->id, 'mod_interactivevideo', 'video', 0, 'filesize DESC', false);
     $file = reset($files);
     if ($file) {
-        $url = moodle_url::make_pluginfile_url(
+        $url = \moodle_url::make_pluginfile_url(
             $file->get_contextid(),
             $file->get_component(),
             $file->get_filearea(),
@@ -310,13 +97,13 @@ if ($moduleinstance->source == 'url') {
     $moduleinstance->type = 'html5video';
 }
 
-$PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+echo '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>';
 
 $PAGE->requires->js_call_amd('mod_interactivevideo/report', "init", [
     $cm->instance,
     $group,
     $moduleinstance->grade,
-    $itemids,
+    array_column($items, 'id'),
     $moduleinstance->completionpercentage,
     $url,
     $moduleinstance->type,

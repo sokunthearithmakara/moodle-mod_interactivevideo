@@ -42,6 +42,7 @@ class Spotify {
 
     async getInfo(url, node) {
         this.node = node;
+
         let regex = /(?:https?:\/\/)?(?:open\.spotify\.com)\/(episode|track)\/([^/]+)/;
         let match = regex.exec(url);
         let videoId = match[2];
@@ -136,9 +137,10 @@ class Spotify {
     async load(url, start, end, opts = {}) {
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         /**
          * The start time of the video
@@ -214,7 +216,7 @@ class Spotify {
                         // We don't want to play the preview version.
                         EmbedController.pause();
                         EmbedController.destroy();
-                        dispatchEvent('iv:playerError', {message: 'The video is too short.'});
+                        this.sendEvent('iv:playerError', {message: 'The video is too short.'}, this.node);
                         return;
                     }
 
@@ -231,7 +233,7 @@ class Spotify {
                     self.totaltime = totaltime;
                     self.duration = self.end - self.start;
                     ready = true;
-                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                    self.sendEvent('iv:playerReady', null, self.node);
                 } else {
 
                     if (self.ended && e.data.isPaused === false) {
@@ -251,17 +253,17 @@ class Spotify {
                     switch (isPaused) {
                         case true:
                             self.paused = true;
-                            dispatchEvent('iv:playerPaused');
+                            self.sendEvent('iv:playerPaused', null, self.node);
                             break;
                         case false:
                             if (self.paused) {
-                                dispatchEvent('iv:playerPlay');
+                                self.sendEvent('iv:playerPlay', null, self.node);
                             }
                             self.paused = false;
-                            dispatchEvent('iv:playerPlaying');
+                            self.sendEvent('iv:playerPlaying', null, self.node);
                             if (self.currentTime >= self.end - self.frequency) {
                                 self.ended = true;
-                                dispatchEvent('iv:playerEnded');
+                                self.sendEvent('iv:playerEnded', null, self.node);
                             }
                             break;
                     }
@@ -298,7 +300,7 @@ class Spotify {
      */
     play() {
         window.EmbedController.resume();
-        dispatchEvent('iv:playerPlay');
+        this.sendEvent('iv:playerPlay', null, this.node);
         this.paused = false;
     }
     /**
@@ -327,11 +329,11 @@ class Spotify {
     seek(time) {
         this.ended = false;
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         return new Promise((resolve) => {
             window.EmbedController.seek(time);
             this.currentTime = time;
-            dispatchEvent('iv:playerSeek', {time: time});
+            this.sendEvent('iv:playerSeek', {time: time}, this.node);
             resolve(true);
         });
     }
@@ -383,7 +385,7 @@ class Spotify {
      */
     destroy() {
         window.EmbedController.destroy();
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -423,6 +425,23 @@ class Spotify {
     setCaption() {
         // Spotify does not support captions
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Spotify;

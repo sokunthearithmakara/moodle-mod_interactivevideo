@@ -42,6 +42,7 @@ class SproutVideo {
     }
     async getInfo(url, node) {
         this.node = node;
+
         let regex = /(?:https?:\/\/)?(?:[^.]+\.)*(?:sproutvideo\.com\/(?:videos|embed)|vids\.io\/videos)\/(.+)/;
         let match = regex.exec(url);
         if (!match) {
@@ -152,9 +153,10 @@ class SproutVideo {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         this.start = start;
         this.end = end;
@@ -180,7 +182,7 @@ class SproutVideo {
                 self.totaltime = totaltime;
                 self.duration = self.end - self.start;
                 ready = true;
-                dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                self.sendEvent('iv:playerReady', null, self.node);
                 player.setVolume(1.0);
             });
 
@@ -189,11 +191,11 @@ class SproutVideo {
             });
 
             player.bind('qualityLevelChange', function(event) {
-                dispatchEvent('iv:playerQualityChange', {quality: event.data.height});
+                self.sendEvent('iv:playerQualityChange', {quality: event.data.height}, self.node);
             });
 
             player.bind('rateChange', function(event) {
-                dispatchEvent('iv:playerRateChange', {rate: event.data});
+                self.sendEvent('iv:playerRateChange', {rate: event.data}, self.node);
             });
 
             player.bind('progress', function(event) {
@@ -207,7 +209,7 @@ class SproutVideo {
                 }
                 if (currentTime >= end) {
                     player.seek(start);
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                     self.ended = true;
                 }
             });
@@ -223,8 +225,8 @@ class SproutVideo {
                 }
                 self.paused = false;
                 self.ended = false;
-                dispatchEvent('iv:playerPlay');
-                dispatchEvent('iv:playerPlaying');
+                self.sendEvent('iv:playerPlay', null, self.node);
+                self.sendEvent('iv:playerPlaying', null, self.node);
             });
 
             player.bind('pause', function() {
@@ -233,20 +235,20 @@ class SproutVideo {
                 }
                 self.paused = true;
                 if (player.getCurrentTime() >= end) {
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                     self.ended = true;
                 } else {
-                    dispatchEvent('iv:playerPaused');
+                    self.sendEvent('iv:playerPaused', null, self.node);
                 }
             });
 
             player.bind('completed', function() {
                 self.ended = true;
-                dispatchEvent('iv:playerEnded');
+                self.sendEvent('iv:playerEnded', null, self.node);
             });
 
             player.bind('volume', function(e) {
-                dispatchEvent('iv:playerVolumeChange', {volume: e.data});
+                self.sendEvent('iv:playerVolumeChange', {volume: e.data}, self.node);
             });
         };
 
@@ -271,7 +273,7 @@ class SproutVideo {
             self.title = 'Private Video';
             self.aspectratio = 16 / 9;
             if (!url.includes('embed')) {
-                dispatchEvent('iv:playerError', {message: 'Video not found'});
+                self.sendEvent('iv:playerError', {message: 'Video not found'}, self.node);
             }
         } else {
             self.title = data.title;
@@ -291,7 +293,7 @@ class SproutVideo {
         }
 
         $.get(iframeurl).catch(() => {
-            dispatchEvent('iv:playerError', {message: 'Video not found'});
+            self.sendEvent('iv:playerError', {message: 'Video not found'}, self.node);
         });
 
         $('.video-block').remove();
@@ -369,9 +371,9 @@ class SproutVideo {
         }
         this.ended = false;
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         player[this.node].seek(time);
-        dispatchEvent('iv:playerSeek', {time: time});
+        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return true;
     }
     /**
@@ -457,7 +459,7 @@ class SproutVideo {
             window.console.error('Player is not initialized.');
         }
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -562,6 +564,23 @@ class SproutVideo {
     originalPlayer() {
         return player[this.node];
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default SproutVideo;

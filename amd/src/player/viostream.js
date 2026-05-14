@@ -134,11 +134,12 @@ class Viostream {
     async load(url, start, end, opts = {}) {
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked', {
+            _this.sendEvent('iv:autoplayBlocked', {
                 requireVideoBlock: true,
-            });
+            }, _this.node);
         }
 
         let self = this;
@@ -222,7 +223,7 @@ class Viostream {
                     self.end = end;
                     self.totaltime = Number(totaltime.toFixed(2));
                     self.duration = self.end - self.start;
-                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                    self.sendEvent('iv:playerReady', null, self.node);
                     clearInterval(interval);
                 });
             }, 500);
@@ -230,25 +231,25 @@ class Viostream {
             player[node].on('play', () => {
                 self.paused = false;
                 self.ended = false;
-                dispatchEvent('iv:playerPlay');
+                self.sendEvent('iv:playerPlay', null, self.node);
             });
 
             player[node].on('pause', () => {
                 self.paused = true;
-                dispatchEvent('iv:playerPaused');
+                self.sendEvent('iv:playerPaused', null, self.node);
             });
 
             player[node].on('ended', () => {
                 self.ended = true;
-                dispatchEvent('iv:playerEnded');
+                self.sendEvent('iv:playerEnded', null, self.node);
             });
 
             player[node].on('timeupdate', (data) => {
-                dispatchEvent('iv:playerPlaying');
+                self.sendEvent('iv:playerPlaying', null, self.node);
                 if (data.seconds >= self.end) {
                     self.ended = true;
                     player[node].pause();
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                 }
                 if (data.seconds < self.start) {
                     self.seek(self.start);
@@ -257,7 +258,7 @@ class Viostream {
 
             player[node].on('seeked', () => {
                 player[node].getCurrentTime(value => {
-                    dispatchEvent('iv:playerSeek', {time: value});
+                    self.sendEvent('iv:playerSeek', {time: value}, self.node);
                 });
 
             });
@@ -311,7 +312,7 @@ class Viostream {
         return new Promise((resolve) => {
             player[this.node].getCurrentTime(value => {
                 let currentTime = value;
-                dispatchEvent('iv:playerSeekStart', {time: currentTime});
+                this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
                 this.ended = false;
                 player[this.node].setCurrentTime(time, true);
                 resolve(true);
@@ -393,7 +394,7 @@ class Viostream {
     destroy() {
         $(`#${this.node}`).remove();
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -427,7 +428,7 @@ class Viostream {
         player[this.node].mute();
         player[this.node].setVolume(0);
         this.muted = true;
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmute the video
@@ -439,7 +440,7 @@ class Viostream {
         player[this.node].unmute();
         player[this.node].setVolume(100);
         this.muted = false;
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -467,6 +468,23 @@ class Viostream {
         }
         return track;
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Viostream;

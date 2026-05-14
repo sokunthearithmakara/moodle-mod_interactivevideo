@@ -40,6 +40,7 @@ class SoundCloud {
     }
     async getInfo(url, node) {
         this.node = node;
+
         let self = this;
         const getData = function() {
             return $.ajax({
@@ -126,9 +127,10 @@ class SoundCloud {
     async load(url, start, end, opts = {}) {
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         /**
          * The start time of the video
@@ -150,8 +152,7 @@ class SoundCloud {
 
         const getData = function() {
             return $.ajax({
-                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                type: 'POST',
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php', type: 'POST',
                 dataType: 'text',
                 data: {
                     action: 'get_from_url',
@@ -190,7 +191,7 @@ class SoundCloud {
                     self.player.seekTo(start * 1000);
                     self.player.pause();
                     ready = true;
-                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                    self.sendEvent('iv:playerReady', null, self.node);
                 });
             });
 
@@ -206,14 +207,14 @@ class SoundCloud {
                 }
                 if (!self.ended && currentTime >= self.end) {
                     self.ended = true;
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                     return;
                 }
                 if (self.ended || self.currentTime < self.start) {
                     self.ended = false;
                     self.player.seekTo(self.start * 1000);
                 }
-                dispatchEvent('iv:playerPlaying');
+                self.sendEvent('iv:playerPlaying', null, self.node);
             });
 
             self.player.bind(window.SC.Widget.Events.PLAY, function() {
@@ -221,7 +222,7 @@ class SoundCloud {
                     return;
                 }
                 self.paused = false;
-                dispatchEvent('iv:playerPlay');
+                self.sendEvent('iv:playerPlay', null, self.node);
             });
 
             self.player.bind(window.SC.Widget.Events.PAUSE, function() {
@@ -232,7 +233,7 @@ class SoundCloud {
                 if (self.ended) {
                     return;
                 }
-                dispatchEvent('iv:playerPaused');
+                self.sendEvent('iv:playerPaused', null, self.node);
             });
 
             self.player.bind(window.SC.Widget.Events.FINISH, function() {
@@ -241,11 +242,11 @@ class SoundCloud {
                 }
                 self.ended = true;
                 self.paused = true;
-                dispatchEvent('iv:playerEnded');
+                self.sendEvent('iv:playerEnded', null, self.node);
             });
 
             self.player.bind(window.SC.Widget.Events.ERROR, function(data) {
-                dispatchEvent('iv:playerError', {error: data});
+                self.sendEvent('iv:playerError', {error: data}, self.node);
             });
         };
 
@@ -308,11 +309,11 @@ class SoundCloud {
         time = Math.max(time, this.start);
         this.ended = false;
         let currentTime = await this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         return new Promise((resolve) => {
             this.player.seekTo(time * 1000);
             this.currentTime = time;
-            dispatchEvent('iv:playerSeek', {time: time});
+            this.sendEvent('iv:playerSeek', {time: time}, this.node);
             resolve(true);
         });
     }
@@ -388,7 +389,7 @@ class SoundCloud {
             // Do nothing
         }
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -408,14 +409,14 @@ class SoundCloud {
      */
     mute() {
         this.player.setVolume(0);
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmute the video
      */
     unMute() {
         this.player.setVolume(100);
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     async isMuted() {
@@ -438,6 +439,23 @@ class SoundCloud {
     setCaption() {
         // SoundCloud does not support captions
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default SoundCloud;

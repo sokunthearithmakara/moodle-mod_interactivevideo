@@ -63,6 +63,8 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
 
         $mform = $this->_form;
 
+        $mform->addElement('html', '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>');
+
         $videotypes = get_config('mod_interactivevideo', 'videosources');
         $videotypes = explode(',', $videotypes);
         $allowupload = in_array('html5video', $videotypes);
@@ -455,8 +457,6 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
 
         // Add standard buttons.
         $this->add_action_buttons();
-
-        $PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
 
         // Add the js.
         $PAGE->requires->js_call_amd('mod_interactivevideo/mod_form', 'init', [

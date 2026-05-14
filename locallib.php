@@ -334,53 +334,112 @@ class interactivevideo_util {
         global $DB, $OUTPUT, $PAGE, $CFG;
         require_once($CFG->dirroot . '/user/profile/lib.php');
         require_once($CFG->dirroot . '/user/lib.php');
-        $context = context::instance_by_id($contextid);
+        $context = \context::instance_by_id($contextid);
         $PAGE->set_context($context);
-        // Get fields for userpicture.
-        $fields = \core_user\fields::get_picture_fields();
-        $identityfields = get_config('mod_interactivevideo', 'reportfields');
-        if (!empty($identityfields)) {
-            $fields = array_merge($fields, explode(',', $identityfields));
+
+        if (!$courseid) {
+            $cm = get_coursemodule_from_instance('interactivevideo', $interactivevideo);
+            $courseid = $cm->course;
         }
-        $customfields = array_filter($fields, function ($field) {
-            return strpos($field, 'profile_field_') !== false;
-        });
-        $corefields = array_filter($fields, function ($field) {
-            return strpos($field, 'profile_field_') === false;
-        });
-        $dbfields = 'u.' . implode(', u.', $corefields);
+        $coursecontext = \context_course::instance($courseid);
+
+        // Prepare user fields using the modern Moodle API.
+        $identityfields = get_config('mod_interactivevideo', 'reportfields');
+        $extrafields = !empty($identityfields) ? explode(',', $identityfields) : [];
+        $extrafields = array_map('strtolower', $extrafields);
+
+        // Fetch custom field metadata once to avoid N+1 queries.
+        $customfieldmetadata = [];
+        if (!empty($extrafields)) {
+            $customfieldshortnames = [];
+            foreach ($extrafields as $field) {
+                if (strpos($field, 'profile_field_') === 0) {
+                    $customfieldshortnames[] = str_replace('profile_field_', '', $field);
+                }
+            }
+            if (!empty($customfieldshortnames)) {
+                [$insql, $inparams] = $DB->get_in_or_equal($customfieldshortnames, SQL_PARAMS_NAMED);
+                $customfieldmetadata = $DB->get_records_select(
+                    'user_info_field',
+                    "shortname $insql",
+                    $inparams,
+                    '',
+                    'shortname, datatype as type, id'
+                );
+                $customfieldmetadata = array_change_key_case($customfieldmetadata, CASE_LOWER);
+            }
+        }
+
+        // Pre-instantiate field objects and prepare mapping to avoid overhead inside the student loop.
+        $fieldobjects = [];
+        $customfieldmap = [];
+        foreach ($extrafields as $field) {
+            if (strpos($field, 'profile_field_') === 0) {
+                $shortname = str_replace('profile_field_', '', $field);
+                $metadata = $customfieldmetadata[$shortname] ?? null;
+                if ($metadata) {
+                    if (!isset($fieldobjects[$metadata->id])) {
+                        require_once($CFG->dirroot . '/user/profile/field/' . $metadata->type . '/field.class.php');
+                        $classname = 'profile_field_' . $metadata->type;
+                        $fieldobjects[$metadata->id] = new $classname($metadata->id);
+                    }
+                    $customfieldmap[$field] = [
+                        'shortname' => $shortname,
+                        'type' => $metadata->type,
+                        'id' => $metadata->id,
+                        'lowercased' => strtolower($field),
+                    ];
+                }
+            }
+        }
+
+        // We use for_userpic() as a base and add identity fields.
+        $userfields = \core_user\fields::for_userpic()->with_identity($context)->including(...$extrafields);
+        $fieldsql = $userfields->get_sql('u', true, '', '', false);
+
         // Graded roles.
         $roles = get_config('core', 'gradebookroles');
         if (empty($roles)) {
             return [];
         }
-        [$inparams, $inparamsvalues] = $DB->get_in_or_equal(explode(',', $roles));
+        [$inparams, $inparamsvalues] = $DB->get_in_or_equal(explode(',', $roles), SQL_PARAMS_NAMED);
+
         if ($group == 0) {
             // Get all enrolled users (student only).
-            $sql = "SELECT " . $dbfields . ", ac.timecompleted, ac.timecreated,
-             ac.completionpercentage, ac.completeditems, ac.xp, ac.completiondetails, ac.id as completionid
+            $sql = "SELECT {$fieldsql->selects}, ac.timecompleted, ac.timecreated,
+                           ac.completionpercentage, ac.completeditems, ac.xp, ac.completiondetails, ac.id as completionid
                     FROM {user} u
-                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = ?
-                    WHERE u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = ? AND roleid $inparams)
+                    {$fieldsql->joins}
+                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = :cmid
+                    WHERE u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = :coursecontextid AND roleid $inparams)
                     ORDER BY u.lastname, u.firstname";
-            $params = array_merge([$interactivevideo, $contextid], $inparamsvalues);
-            $records = $DB->get_records_sql($sql, $params);
+            $params = array_merge(
+                $fieldsql->params,
+                ['cmid' => $interactivevideo, 'coursecontextid' => $coursecontext->id],
+                $inparamsvalues
+            );
         } else {
             // Get users in group (student only).
-            $sql = "SELECT " . $dbfields . ", ac.timecompleted, ac.timecreated,
-             ac.completionpercentage, ac.completeditems, ac.xp, ac.completiondetails, ac.id as completionid
+            $sql = "SELECT {$fieldsql->selects}, ac.timecompleted, ac.timecreated,
+                           ac.completionpercentage, ac.completeditems, ac.xp, ac.completiondetails, ac.id as completionid
                     FROM {user} u
-                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = ?
-                    WHERE u.id IN (SELECT userid FROM {groups_members} WHERE groupid = ?)
-                    AND u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = ? AND roleid $inparams)
+                    {$fieldsql->joins}
+                    LEFT JOIN {interactivevideo_completion} ac ON ac.userid = u.id AND ac.cmid = :cmid
+                    WHERE u.id IN (SELECT userid FROM {groups_members} WHERE groupid = :groupid)
+                    AND u.id IN (SELECT userid FROM {role_assignments} WHERE contextid = :coursecontextid AND roleid $inparams)
                     ORDER BY u.lastname, u.firstname";
-            $params = array_merge([$interactivevideo, $group, $contextid], $inparamsvalues);
-            $records = $DB->get_records_sql($sql, $params);
+            $params = array_merge(
+                $fieldsql->params,
+                ['cmid' => $interactivevideo, 'groupid' => $group, 'coursecontextid' => $coursecontext->id],
+                $inparamsvalues
+            );
         }
 
-        // Render the photo of the user.
-        foreach ($records as $record) {
-            $userpic = new user_picture($record);
+        $records = [];
+        $rs = $DB->get_recordset_sql($sql, $params);
+        foreach ($rs as $record) {
+            // Render the photo of the user.
+            $userpic = new \user_picture($record);
             $userpic->link = false;
             $userpic->includefullname = true;
             $record->pictureonly = $OUTPUT->render($userpic);
@@ -390,28 +449,30 @@ class interactivevideo_util {
             $record->picture = $OUTPUT->render($userpic);
             $record->fullname = fullname($record);
 
-            // Handle custom fields.
-            if (!empty($customfields)) {
-                foreach ($customfields as $field) {
+            // Handle custom fields efficiently using the pre-calculated map.
+            $record->customfields = [];
+            foreach ($customfieldmap as $info) {
+                $field = $info['lowercased'];
+                if (isset($record->{$field})) {
+                    $fieldobj = $fieldobjects[$info['id']];
+                    $fieldobj->data = $record->{$field};
+                    $formatted = $fieldobj->display_data();
+
+                    $record->customfields[] = [
+                        'shortname' => $info['shortname'],
+                        'type' => $info['type'],
+                        'value' => $record->{$field}, // Raw value.
+                        'formatted' => $formatted,
+                    ];
+                } else {
                     $record->{$field} = '';
                 }
-                $profile = user_get_user_details($record, null, ['customfields']);
-                $customfieldarray = (array)$profile['customfields'];
-                foreach ($customfieldarray as $key => $value) {
-                    $field = (object)$value;
-                    // We don't want to attach the fields that isn't in the list.
-                    if (in_array('profile_field_' . $field->shortname, $customfields)) {
-                        $record->{'profile_field_' . $field->shortname} = $field->displayvalue;
-                        unset($customfieldarray[$key]['displayvalue']);
-                        unset($customfieldarray[$key]['name']);
-                    } else {
-                        // Remove the field from $customfieldarray.
-                        unset($customfieldarray[$key]);
-                    }
-                }
-                $record->customfields = $customfieldarray;
             }
+
+            $records[$record->id] = $record;
         }
+        $rs->close();
+
         return $records;
     }
 

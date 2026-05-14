@@ -561,6 +561,10 @@ html:has(.path-mod-interactivevideo) {
     background-color: var(--ivblack) !important;
 }
 
+.path-mod-interactivevideo .bg-black-75 {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
 .path-mod-interactivevideo .bg-transparent {
     background: transparent !important;
 }
@@ -2410,20 +2414,20 @@ html:has(.path-mod-interactivevideo) {
     padding: 0;
 }
 
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input),
-.path-mod-interactivevideo [type="radio"]:not(.custom-control-input) {
+.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]),
+.path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]) {
     appearance: none;
 }
 
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input):disabled,
-.path-mod-interactivevideo [type="radio"]:not(.custom-control-input):disabled {
+.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):disabled,
+.path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):disabled {
     opacity: 0.5;
 }
 
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input):checked:before,
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input):not(:checked):before,
-.path-mod-interactivevideo [type="radio"]:not(.custom-control-input):checked:before,
-.path-mod-interactivevideo [type="radio"]:not(.custom-control-input):not(:checked):before {
+.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):checked:before,
+.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):not(:checked):before,
+.path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):checked:before,
+.path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):not(:checked):before {
     content: "";
     background-repeat: no-repeat;
     background-size: contain;
@@ -2823,12 +2827,12 @@ html:has(.path-mod-interactivevideo) {
     background: var(--ivdark);
 }
 
-.path-mod-interactivevideo #video-wrapper.audio #player {
-    height: 30px;
-    bottom: 1rem;
-    top: unset;
-    max-width: calc(100% - 2rem);
-    left: 1rem;
+.path-mod-interactivevideo #video-wrapper.audio :is(#player, video, audio) {
+    height: 30px !important;
+    bottom: 1rem !important;
+    top: unset !important;
+    max-width: calc(100% - 2rem) !important;
+    left: 1rem !important;
 }
 
 .path-mod-interactivevideo #visualizer {
@@ -3941,30 +3945,30 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     min-height: 15px;
 }
 
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input):not(:checked):before {
+.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):not(:checked):before {
     background-image: url([[pix:mod_interactivevideo|checkbox-unchecked]]);
 }
 
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input):checked:before {
+.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):checked:before {
     background-image: url([[pix:mod_interactivevideo|checkbox-checked]]);
 }
 
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input):not(:checked):before {
+.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):not(:checked):before {
     background-image: url([[pix:mod_interactivevideo|checkbox-unchecked]]);
 }
 
-.path-mod-interactivevideo [type="radio"]:not(.custom-control-input):checked:before {
+.path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):checked:before {
     background-image: url([[pix:mod_interactivevideo|radio-checked]]);
 }
 
-.path-mod-interactivevideo [type="radio"]:not(.custom-control-input):not(:checked):before {
+.path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):not(:checked):before {
     background-image: url([[pix:mod_interactivevideo|radio-unchecked]]);
 }
 
-.path-mod-interactivevideo .form-check-input:checked[type="checkbox"],
-.path-mod-interactivevideo .form-check-input[type="checkbox"],
-.path-mod-interactivevideo .form-check-input:checked[type="radio"],
-.path-mod-interactivevideo .form-check-input[type="radio"] {
+.path-mod-interactivevideo .form-check-input:checked[type="checkbox"]:not([role="switch"]),
+.path-mod-interactivevideo .form-check-input[type="checkbox"]:not([role="switch"]),
+.path-mod-interactivevideo .form-check-input:checked[type="radio"]:not([role="switch"]),
+.path-mod-interactivevideo .form-check-input[type="radio"]:not([role="switch"]) {
     background: none;
     border: 0;
     border-radius: 0;
@@ -4126,4 +4130,45 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     [dir="rtl"] .path-mod-interactivevideo #message[data-placement] #completiontoggle span {
         display: none !important;
     }
+}
+
+.path-mod-flexbook #video-wrapper.fb-interaction div.video-player iframe {
+    width: 100%;
+    height: 100%;
+}
+
+.path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper {
+    position: relative;
+    height: 0;
+    padding-bottom: 56.25%;
+    overflow: hidden;
+}
+
+.path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper:empty {
+    display: none;
+}
+
+.path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper [id^="video-info-"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper [id^="video-info-"] iframe {
+    width: 100%;
+    height: 100%;
+}
+
+.path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper iframe,
+.path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper video,
+.path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper audio {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.path-mod-interactivevideo.path-mod-flexbook .video-player[controls] {
+    visibility: visible !important;
+    z-index: 10 !important;
 }

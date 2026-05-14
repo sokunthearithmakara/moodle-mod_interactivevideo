@@ -252,7 +252,7 @@ unset(
     $moduleinstance->displayoptions['aftercompletionbehavior']
 );
 
-$PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+echo '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>';
 
 $PAGE->requires->js_call_amd(
     'mod_interactivevideo/editannotation',

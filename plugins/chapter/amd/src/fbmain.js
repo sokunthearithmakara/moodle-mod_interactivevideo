@@ -110,49 +110,6 @@ export default class Chapter extends Base {
             });
         }
 
-        const renderItem = (annotation) => {
-            let classes = annotation.type + ' annotation ';
-            if (annotation.completed) {
-                classes += ' completed ';
-            }
-            if (!this.isClickable(annotation)) {
-                classes += ' no-pointer-events ';
-            }
-            if (annotation.hascompletion == 0) {
-                classes += ' no-completion ';
-            }
-            if (annotation.locked) {
-                classes += ' lock ';
-            }
-            if (!this.isVisible(annotation)) {
-                classes += ' d-none ';
-            }
-            let logourl = null;
-            let prop = JSON.parse(annotation.prop || '{}');
-            if ($('body').hasClass('kidtheme') && prop.component) {
-                logourl = M.util.image_url('monologo', prop.component);
-            }
-
-            let iconHtml = `<i class="fs-unset ${annotation.locked ? 'fa fa-lock' : prop.icon} iv-mr-2"></i>`;
-            if (logourl && !annotation.locked) {
-                iconHtml = `<img src="${logourl}" class="iv-mr-2" height="24" loading="lazy" ` +
-                           `onerror="this.remove(); this.nextElementSibling.classList.remove('d-none');">` +
-                           `<i class="fs-unset ${prop.icon} iv-mr-2 d-none"></i>`;
-            }
-
-            let html = `<li class="anno d-flex align-items-center justify-content-between small
-                         p-2 ${annotation.completed ? "completed" : ""} ${classes}" data-id="${annotation.id}">
-                         <span class="text-nowrap">
-                         <i class="fs-unset bi ${annotation.completed ? "bi-check-circle-fill text-success" : 'bi-circle'}
-                          iv-mr-2 ${annotation.hascompletion == 0 ? "invisible" : ""}"></i>
-                         ${iconHtml}
-                         </span>
-                         <span class="flex-grow-1 text-truncate">${annotation.formattedtitle}</span>
-                         <span class="text-nowrap ${annotation.hascompletion == 0 ? "invisible" : ""}">
-                         ${annotation.xp > 0 ? annotation.xp + '<i class="bi bi-star iv-ml-1 fs-unset"></i>' : ''}</span></li>`;
-            return html;
-        };
-
         const $chapterlists = $('[data-region=chapterlists]');
         $chapterlists.empty();
         chapters.forEach((chapter, index, arr) => {
@@ -167,7 +124,7 @@ export default class Chapter extends Base {
 
             let chapteritemshtml = '';
             chapteritems.forEach((item) => {
-                chapteritemshtml += renderItem(item);
+                chapteritemshtml += state.ctRenderer[item.type].renderChapterItem(item);
             });
             $chapterlists.append(`<li class="p-0 flex-column border-${self.isBS5 ? 'start' : 'left'}-0
                  border-${self.isBS5 ? 'end' : 'start'}-0 chapter

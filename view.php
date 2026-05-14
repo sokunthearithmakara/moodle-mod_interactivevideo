@@ -134,7 +134,12 @@ if (count($preloadsubplugins) > 0) { // Subplugins that have preloadstrings set 
     }, $preloadsubplugins);
     $stringman = get_string_manager();
     foreach ($subplugins as $subplugin) {
-        $name = explode('_', $subplugin)[1];
+        $name = explode('_', $subplugin);
+        if (isset($name[1])) {
+            $name = $name[1];
+        } else {
+            $name = $name[0];
+        }
         if (substr($name, 0, 2) == 'iv') {
             $name = substr($name, 2);
         }
@@ -501,7 +506,7 @@ $datafortemplate = [
 ];
 echo $OUTPUT->render_from_template('mod_interactivevideo/player/player', $datafortemplate);
 
-$PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+echo '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>';
 
 $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
     $url, // Video URL.

@@ -41,6 +41,7 @@ class Vimeo {
     }
     async getInfo(url, node) {
         this.node = node;
+        const _this = this;
         return new Promise((resolve) => {
             let VimeoPlayer;
             const option = {
@@ -79,7 +80,7 @@ class Vimeo {
                         vimeoEvents(player[node]);
                     });
                 } catch (e) {
-                    dispatchEvent('iv:playerError', {error: e.message});
+                    _this.sendEvent('iv:playerError', {error: e.message}, _this.node);
                     return;
                 }
             } else {
@@ -101,9 +102,10 @@ class Vimeo {
         let showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+        const _this = this;
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            _this.sendEvent('iv:autoplayBlocked', null, _this.node);
         }
         this.start = start;
         let VimeoPlayer;
@@ -112,13 +114,13 @@ class Vimeo {
         var posterUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url);
         const oEmbed = await fetch(posterUrl);
         if (!oEmbed.ok) {
-            dispatchEvent('iv:playerError', {error: 'Video not found'});
+            _this.sendEvent('iv:playerError', {error: 'Video not found'}, _this.node);
             return;
         }
         document.getElementById('video-wrapper').style.display = 'block';
         const oEmbedData = await oEmbed.json();
         if (oEmbedData.domain_status_code === 403 || oEmbedData.error) {
-            dispatchEvent('iv:playerError', {error: 'Video not found'});
+            _this.sendEvent('iv:playerError', {error: 'Video not found'}, _this.node);
         }
         this.posterImage = oEmbedData.thumbnail_url || '';
         this.title = oEmbedData.title;
@@ -190,15 +192,15 @@ class Vimeo {
                     }
 
                     if (!opts.passwordprotected) {
-                        dispatchEvent('iv:playerLoaded', {
+                        _this.sendEvent('iv:playerLoaded', {
                             tracks: tracks,
                             qualities: self.getQualities(),
                             reloaded: reloaded,
-                        });
+                        }, _this.node);
                     }
 
                     ready = true;
-                    dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                    self.sendEvent('iv:playerReady', null, self.node);
                     // Unmute the video
                     player.setVolume(1);
                 } else {
@@ -229,7 +231,7 @@ class Vimeo {
                         // Unmute the video.
                         player.setVolume(1);
                         ready = true;
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        _this.sendEvent('iv:playerReady', null, _this.node);
                     }
                 });
             }
@@ -241,7 +243,7 @@ class Vimeo {
                 }
                 self.paused = false;
                 self.ended = false;
-                dispatchEvent('iv:playerPlay');
+                _this.sendEvent('iv:playerPlay', null, _this.node);
             });
 
             player.on('pause', function(e) {
@@ -251,10 +253,10 @@ class Vimeo {
                 self.paused = true;
                 if (e.seconds >= end) {
                     self.ended = true;
-                    dispatchEvent('iv:playerEnded');
+                    _this.sendEvent('iv:playerEnded', null, _this.node);
                 } else {
                     self.ended = false;
-                    dispatchEvent('iv:playerPaused');
+                    _this.sendEvent('iv:playerPaused', null, _this.node);
                 }
             });
 
@@ -265,14 +267,14 @@ class Vimeo {
                 if (e.seconds >= end) {
                     self.ended = true;
                     self.paused = true;
-                    dispatchEvent('iv:playerEnded');
+                    _this.sendEvent('iv:playerEnded', null, _this.node);
                 } else if (await player.getPaused()) {
                     self.paused = true;
-                    dispatchEvent('iv:playerPaused');
+                    _this.sendEvent('iv:playerPaused', null, _this.node);
                 } else {
                     self.paused = false;
                     self.ended = false;
-                    dispatchEvent('iv:playerPlaying');
+                    _this.sendEvent('iv:playerPlaying', null, _this.node);
                 }
             });
 
@@ -280,7 +282,7 @@ class Vimeo {
                 if (!ready) {
                     return;
                 }
-                dispatchEvent('iv:playerRateChange', {rate: e.playbackRate});
+                _this.sendEvent('iv:playerRateChange', {rate: e.playbackRate}, _this.node);
             });
 
             player.on('ended', function() {
@@ -289,14 +291,14 @@ class Vimeo {
                 }
                 self.ended = true;
                 self.paused = true;
-                dispatchEvent('iv:playerEnded');
+                _this.sendEvent('iv:playerEnded', null, _this.node);
             });
 
             player.on('qualitychange', function(e) {
                 if (!ready) {
                     return;
                 }
-                dispatchEvent('iv:playerQualityChange', {quality: e.quality});
+                _this.sendEvent('iv:playerQualityChange', {quality: e.quality}, _this.node);
             });
 
             player.on('error', function(e) {
@@ -306,7 +308,7 @@ class Vimeo {
                 if (e.method === 'appendVideoMetadata') {
                     return;
                 }
-                dispatchEvent('iv:playerError', {error: e.message});
+                _this.sendEvent('iv:playerError', {error: e.message}, _this.node);
                 if (!showControls) {
                     const $videoblock = document.querySelector('.video-block');
                     if ($videoblock) {
@@ -316,7 +318,7 @@ class Vimeo {
             });
 
             player.on('volumechange', function(e) {
-                dispatchEvent('iv:playerVolumeChange', {volume: e.volume});
+                _this.sendEvent('iv:playerVolumeChange', {volume: e.volume}, _this.node);
             });
         };
 
@@ -328,7 +330,7 @@ class Vimeo {
                     vimeoEvents(player[node]);
                 });
             } catch (e) {
-                dispatchEvent('iv:playerError', {error: e.message});
+                _this.sendEvent('iv:playerError', {error: e.message}, _this.node);
                 return;
             }
         } else {
@@ -387,9 +389,9 @@ class Vimeo {
         }
         this.ended = false;
         let currentTime = await this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         await player[this.node].setCurrentTime(time);
-        dispatchEvent('iv:playerSeek', {time: time});
+        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return time;
     }
     /**
@@ -487,7 +489,7 @@ class Vimeo {
             player[this.node].destroy();
         }
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -594,6 +596,23 @@ class Vimeo {
     originalPlayer() {
         return player[this.node];
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Vimeo;

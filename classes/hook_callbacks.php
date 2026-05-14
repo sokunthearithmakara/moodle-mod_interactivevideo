@@ -35,7 +35,7 @@ class hook_callbacks {
             return;
         }
 
-        $PAGE->requires->js_init_code('window.M.version = ' . $CFG->branch . ';', true);
+        $hook->add_html('<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>');
 
         $PAGE->requires->js_call_amd('mod_interactivevideo/launch', 'init');
     }

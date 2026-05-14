@@ -43,6 +43,7 @@ class Rutube {
     }
     async getInfo(url, node) {
         this.node = node;
+        const _this = this;
         let self = this;
         let regex = /(?:https?:\/\/)?(?:www\.)?(?:rutube\.ru\/video\/(?:private\/)?)(.+)/;
         let match = regex.exec(url);
@@ -67,7 +68,7 @@ class Rutube {
                 },
             }).done(function(data) {
                 if (data.html === undefined) {
-                    dispatchEvent('iv:playerError', {error: data});
+                    _this.sendEvent('iv:playerError', {error: data}, _this.node);
                 }
                 self.posterImage = data.thumbnail_url;
                 self.totaltime = data.duration / 1000;
@@ -114,9 +115,10 @@ class Rutube {
         this.showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked');
+            this.sendEvent('iv:autoplayBlocked', null, this.node);
         }
         this.start = start;
         this.aspectratio = 16 / 9;
@@ -146,7 +148,7 @@ class Rutube {
             },
         }).done(function(data) {
             if (data.html === undefined) {
-                dispatchEvent('iv:playerError', {error: data});
+                self.sendEvent('iv:playerError', {error: data}, self.node);
             }
             self.posterImage = data.thumbnail_url;
             let totaltime = data.duration / 1000 - self.frequency;
@@ -183,34 +185,34 @@ class Rutube {
                     case 'player:changeState':
                         if (message.data.state === 'playing') {
                             let currentTime = self.currentTime;
-                            dispatchEvent('iv:playerPlay');
+                            self.sendEvent('iv:playerPlay', null, self.node);
                             if (currentTime < self.start) {
                                 self.seek(self.start);
                                 self.ended = false;
                                 self.paused = false;
-                                dispatchEvent('iv:playerPlaying');
+                                self.sendEvent('iv:playerPlaying', null, self.node);
                                 return;
                             }
                             if (!self.ended && currentTime >= self.end) {
                                 self.ended = true;
                                 self.paused = true;
-                                dispatchEvent('iv:playerEnded');
+                                self.sendEvent('iv:playerEnded', null, self.node);
                                 return;
                             }
                             self.paused = false;
                             self.ended = false;
-                            dispatchEvent('iv:playerPlaying');
+                            self.sendEvent('iv:playerPlaying', null, self.node);
                         } else if (message.data.state === 'paused' || message.data.state === 'pause') {
                             self.paused = true;
-                            dispatchEvent('iv:playerPaused');
+                            self.sendEvent('iv:playerPaused', null, self.node);
                         } else if (message.data.state === 'ended' || message.data.state === 'stopped') {
                             self.ended = true;
                             self.paused = true;
-                            dispatchEvent('iv:playerEnded');
+                            self.sendEvent('iv:playerEnded', null, self.node);
                         }
                         break;
                     case 'player:ready':
-                        dispatchEvent('iv:playerReady', null, document.getElementById(node));
+                        self.sendEvent('iv:playerReady', null, self.node);
                         break;
                     case 'player:currentTime':
                         self.currentTime = message.data.time;
@@ -222,7 +224,7 @@ class Rutube {
                             self.seek(self.end - self.frequency);
                         }
                         if (self.state === 'paused') {
-                            dispatchEvent('iv:playerSeek', {time: self.currentTime});
+                            self.sendEvent('iv:playerSeek', {time: self.currentTime}, self.node);
                         }
                         break;
                     case 'player:rollState':
@@ -236,12 +238,12 @@ class Rutube {
                         }
                         break;
                     case 'player:error':
-                        dispatchEvent('iv:playerError', {error: message.data});
+                        this.sendEvent('iv:playerError', {error: message.data}, this.node);
                         break;
                 };
             });
         }).catch(function(error) {
-            dispatchEvent('iv:playerError', {error: error});
+            this.sendEvent('iv:playerError', {error: error}, this.node);
         });
     }
     doCommand(commandJSON) {
@@ -294,10 +296,10 @@ class Rutube {
             time = 0;
         }
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         this.doCommand({type: 'player:setCurrentTime', data: {time}});
-        dispatchEvent('iv:playerSeek', {time: time});
+        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return time;
     }
     /**
@@ -377,7 +379,7 @@ class Rutube {
     destroy() {
         $(this.player).remove();
         player[this.node] = null;
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Asynchronously retrieves the current state of the video player.
@@ -409,7 +411,7 @@ class Rutube {
     mute() {
         this.doCommand({type: 'player:mute', data: {}});
         this.muted = true;
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmutes the Rutube player by setting the volume to 1.
@@ -418,7 +420,7 @@ class Rutube {
         this.doCommand({type: 'player:unMute', data: {}});
         this.doCommand({type: 'player:setVolume', data: {volume: 1}});
         this.muted = false;
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -465,6 +467,23 @@ class Rutube {
     originalPlayer() {
         return player[this.node];
     }
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
+
 }
 
 export default Rutube;

@@ -51,6 +51,7 @@ class VdoCipher {
      */
     async getInfo(url, node) {
         this.node = node;
+        const _this = this;
         let self = this;
 
         url = url.split('|')[0];
@@ -84,7 +85,7 @@ class VdoCipher {
         }
 
         if (data.error) {
-            dispatchEvent('iv:playerError', {error: data});
+            _this.sendEvent('iv:playerError', {error: data}, _this.node);
             return;
         }
 
@@ -115,7 +116,7 @@ class VdoCipher {
             info = {error: true};
         }
         if (info.error) {
-            dispatchEvent('iv:playerError', {error: info});
+            this.sendEvent('iv:playerError', {error: info}, this.node);
             return;
         }
         self.title = info.title;
@@ -178,13 +179,14 @@ class VdoCipher {
         const showControls = opts.showControls || false;
         const node = opts.node || 'player';
         this.node = node;
+
         this.url = url;
         // Hide the player first.
         this.allowAutoplay = await allowAutoplay(document.getElementById(node));
         if (!this.allowAutoplay) {
-            dispatchEvent('iv:autoplayBlocked', {
+            this.sendEvent('iv:autoplayBlocked', {
                 requireVideoBlock: true,
-            });
+            }, this.node);
         }
 
         var self = this;
@@ -225,7 +227,7 @@ class VdoCipher {
             }
 
             if (data.error) {
-                dispatchEvent('iv:playerError', {error: data});
+                this.sendEvent('iv:playerError', {error: data}, this.node);
                 return;
             }
 
@@ -256,7 +258,7 @@ class VdoCipher {
                 info = {error: true};
             }
             if (info.error) {
-                dispatchEvent('iv:playerError', {error: info});
+                this.sendEvent('iv:playerError', {error: info}, this.node);
                 return;
             }
             self.title = info.title;
@@ -331,11 +333,11 @@ class VdoCipher {
             }
 
             player[node].api.hideCaptions();
-            dispatchEvent('iv:playerLoaded', {
+            self.sendEvent('iv:playerLoaded', {
                 tracks,
                 reloaded
-            });
-            dispatchEvent('iv:playerReady', null, document.getElementById(node));
+            }, self.node);
+            self.sendEvent('iv:playerReady', null, self.node);
             if (opts.editform && !self.url.includes('|')) {
                 $('#id_videourl').val(self.url + '|' + self.iframesrc);
             }
@@ -352,13 +354,13 @@ class VdoCipher {
 
         player[node].video.addEventListener('pause', function() {
             self.paused = true;
-            dispatchEvent('iv:playerPaused');
+            self.sendEvent('iv:playerPaused', null, self.node);
         });
 
         player[node].video.addEventListener('play', function() {
 
             self.paused = false;
-            dispatchEvent('iv:playerPlay');
+            self.sendEvent('iv:playerPlay', null, self.node);
             $('.video-block, #video-block').removeClass('no-pointer');
         });
 
@@ -372,7 +374,7 @@ class VdoCipher {
             if (player[node].video.currentTime >= self.end + self.frequency && !self.live) {
                 player[node].video.currentTime = self.end - self.frequency;
             }
-            dispatchEvent('iv:playerPlaying');
+            self.sendEvent('iv:playerPlaying', null, self.node);
             if (self.live) {
                 return;
             }
@@ -383,31 +385,31 @@ class VdoCipher {
                     self.ended = true;
                     self.paused = true;
                     player[node].video.pause();
-                    dispatchEvent('iv:playerEnded');
+                    self.sendEvent('iv:playerEnded', null, self.node);
                 }
             }
         });
 
         player[node].video.addEventListener('error', function(e) {
-            dispatchEvent('iv:playerError', {error: e});
+            self.sendEvent('iv:playerError', {error: e}, self.node);
         });
 
         player[node].video.addEventListener('ratechange', function() {
-            dispatchEvent('iv:playerRateChange', {rate: player[node].video.playbackRate});
+            self.sendEvent('iv:playerRateChange', {rate: player[node].video.playbackRate}, self.node);
         });
 
         player[node].video.addEventListener('waiting', function() {
-            dispatchEvent('iv:playerBuffering');
+            self.sendEvent('iv:playerBuffering', null, self.node);
         });
 
         // Volume change event.
         player[node].video.addEventListener('volumechange', function() {
-            dispatchEvent('iv:playerVolumeChange', {volume: player[node].video.volume});
+            self.sendEvent('iv:playerVolumeChange', {volume: player[node].video.volume}, self.node);
         });
 
         // Quality change event.
         player[node].api.addEventListener('videoQualityChange', function(quality) {
-            dispatchEvent('iv:playerQualityChange', {quality: quality});
+            self.sendEvent('iv:playerQualityChange', {quality: quality}, self.node);
         });
     }
     /**
@@ -461,10 +463,10 @@ class VdoCipher {
             return time;
         }
         let currentTime = this.getCurrentTime();
-        dispatchEvent('iv:playerSeekStart', {time: currentTime});
+        this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         player[this.node].video.currentTime = time;
-        dispatchEvent('iv:playerSeek', {time});
+        this.sendEvent('iv:playerSeek', {time}, this.node);
         return true;
     }
     /**
@@ -543,7 +545,7 @@ class VdoCipher {
         }
         player[this.node] = null;
         $(`#${this.node}`).remove();
-        dispatchEvent('iv:playerDestroyed');
+        this.sendEvent('iv:playerDestroyed', null, this.node);
     }
     /**
      * Get the state of the player
@@ -575,7 +577,7 @@ class VdoCipher {
         }
         player[this.node].video.muted = true;
         player[this.node].video.volume = 0;
-        dispatchEvent('iv:playerVolumeChange', {volume: 0});
+        this.sendEvent('iv:playerVolumeChange', {volume: 0}, this.node);
     }
     /**
      * Unmute the video
@@ -586,7 +588,7 @@ class VdoCipher {
         }
         player[this.node].video.muted = false;
         player[this.node].video.volume = 1;
-        dispatchEvent('iv:playerVolumeChange', {volume: 1});
+        this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
 
     isMuted() {
@@ -638,6 +640,22 @@ class VdoCipher {
         return track;
     }
 
+
+    /**
+     * Helper to dispatch events safely.
+     * @param {string} name
+     * @param {object} details
+     * @param {string} elementid
+     */
+    sendEvent(name, details = null, elementid = null) {
+        // eslint-disable-next-line no-nested-ternary
+        let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
+        if (el) {
+            dispatchEvent(name, details, el);
+        } else {
+            dispatchEvent(name, details);
+        }
+    }
 
 }
 
