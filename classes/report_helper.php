@@ -28,6 +28,12 @@ namespace mod_interactivevideo;
 class report_helper {
     /**
      * Validate access to the report page.
+     *
+     * @param string $component The component name.
+     * @param \context $context The context object.
+     * @param \stdClass $course The course object.
+     * @param \stdClass|\cm_info $cm The course module object.
+     * @return void
      */
     public static function validate_access($component, $context, $course, $cm) {
         $capabilityprefix = str_replace('_', '/', $component);
@@ -37,6 +43,14 @@ class report_helper {
 
     /**
      * Setup common page requirements.
+     *
+     * @param \stdClass $moduleinstance The module instance.
+     * @param string $component The component name.
+     * @param \stdClass|\cm_info $cm The course module object.
+     * @param \stdClass $course The course object.
+     * @param \context $context The context object.
+     * @param array $contenttypes The content types.
+     * @return void
      */
     public static function setup_page_requirements($moduleinstance, $component, $cm, $course, $context, $contenttypes = []) {
         global $CFG, $PAGE;
@@ -73,6 +87,9 @@ class report_helper {
 
     /**
      * Load strings for JS.
+     *
+     * @param array $contenttypes The content types.
+     * @return void
      */
     private static function setup_js_strings($contenttypes = []) {
         global $PAGE;
@@ -91,6 +108,13 @@ class report_helper {
 
     /**
      * Get and filter items. Returns ['items' => ..., 'allitems' => ...]
+     *
+     * @param string $component The component name.
+     * @param \stdClass $moduleinstance The module instance.
+     * @param string $utilclass The utility class name.
+     * @param \context $context The context object.
+     * @param \stdClass|\cm_info $cm The course module object.
+     * @return array
      */
     public static function get_standard_report_items($component, $moduleinstance, $utilclass, $context, $cm) {
         $contenttypes = $utilclass::get_all_activitytypes();
@@ -156,6 +180,14 @@ class report_helper {
 
     /**
      * Prepare template data.
+     *
+     * @param string $component The component name.
+     * @param \stdClass|\cm_info $cm The course module object.
+     * @param \stdClass $moduleinstance The module instance.
+     * @param \stdClass $course The course object.
+     * @param \context $context The context object.
+     * @param array $items The items.
+     * @return array
      */
     public static function prepare_template_data($component, $cm, $moduleinstance, $course, $context, $items) {
         global $PAGE, $CFG;
