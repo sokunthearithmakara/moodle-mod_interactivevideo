@@ -475,7 +475,6 @@ class Rutube {
      * @param {string} elementid
      */
     sendEvent(name, details = null, elementid = null) {
-        // eslint-disable-next-line no-nested-ternary
         let el = elementid ? document.getElementById(elementid) : (this.node ? document.getElementById(this.node) : null);
         if (el) {
             dispatchEvent(name, details, el);

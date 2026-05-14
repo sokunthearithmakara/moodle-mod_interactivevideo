@@ -214,6 +214,7 @@ export default class InteractiveVideo extends Base {
                         return;
                     }
                     player.pause();
+                    clearInterval(timeInterval);
                     $body.find(`#restart-screen-${id}`).removeClass('d-none');
                 });
                 return;

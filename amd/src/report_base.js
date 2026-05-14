@@ -189,6 +189,7 @@ export default class ReportBase {
      * @param {Array} columns The column definitions.
      */
     static registerSearchFilters(tabledata, columns) {
+        // eslint-disable-next-line complexity
         $.fn.dataTable.ext.search.push(function(settings, data) {
             if (settings.nTable.id !== 'completiontable') {
                 return true;
@@ -305,12 +306,15 @@ export default class ReportBase {
                             let cpRawValue = data[cpIndex] || "0";
                             let cpValue = parseInt(cpRawValue.toString().replace('%', '')) || 0;
                             let cpThreshold = cpInput.data('percentage') || 0;
+                            // eslint-disable-next-line max-depth
                             if (showless && !showmore && cpValue >= cpThreshold) {
                                 return false;
                             }
+                            // eslint-disable-next-line max-depth
                             if (!showless && showmore && cpValue < cpThreshold) {
                                 return false;
                             }
+                            // eslint-disable-next-line max-depth
                             if (!showless && !showmore) {
                                 return false;
                             }
@@ -726,7 +730,7 @@ export default class ReportBase {
             let selectedIds = selectedData.map(x => x.completionid);
             let selectedUsers = selectedData.map(x => x.id);
 
-            const bulkDelete = async () => {
+            const bulkDelete = async() => {
                 if (wsMethod) {
                     const Ajax = await import('core/ajax');
                     const res = await Ajax.call([{
@@ -804,7 +808,7 @@ export default class ReportBase {
                     M.util.get_string('deletecompletion', 'mod_interactivevideo'),
                     M.util.get_string('deleterecordforselectedusers', 'mod_interactivevideo', selectedUsers.length),
                     M.util.get_string('delete', 'mod_interactivevideo')
-                ).then(async () => {
+                ).then(async() => {
                     return bulkDelete();
                 }).catch(() => {
                     return;
@@ -834,7 +838,7 @@ export default class ReportBase {
             const recordid = $(this).data('record');
             let $this = $(this);
 
-            const performReset = async () => {
+            const performReset = async() => {
                 if (config.wsMethod) {
                     const res = await Ajax.call([{
                         methodname: config.wsMethod,
