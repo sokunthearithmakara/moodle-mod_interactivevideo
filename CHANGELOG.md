@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.7.6] - 2026-05-20
+- Improve report page performance.
+- Fix issue with content bank item where saved state was not restored correctly (on 1.7.5).
 
 ## [1.7.5] - 2026-05-15
 
