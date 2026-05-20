@@ -125,6 +125,14 @@ class report_helper {
         $items = array_map(fn($item) => (array)$item, (array)$items);
         if ($component === 'mod_interactivevideo') {
             usort($items, fn($a, $b) => $a['timestamp'] - $b['timestamp']);
+        } else if ($component === 'mod_flexbook' && !empty($moduleinstance->sequence)) {
+            $seqids = array_map('intval', explode(',', $moduleinstance->sequence));
+            $seqorder = array_flip($seqids);
+            usort($items, function ($a, $b) use ($seqorder) {
+                $posa = $seqorder[(int)$a['id']] ?? 999999;
+                $posb = $seqorder[(int)$b['id']] ?? 999999;
+                return $posa - $posb;
+            });
         }
 
         $skip = array_filter($items, fn($item) => $item['type'] === 'skipsegment');

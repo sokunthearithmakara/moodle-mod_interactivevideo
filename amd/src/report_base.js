@@ -786,6 +786,7 @@ export default class ReportBase {
                     tabledata.row(this.node()).data(targetdata);
                     return true;
                 });
+                tabledata.rows().deselect();
                 tabledata.draw();
                 require(['core/toast'], (Toast) => {
                     Toast.add(M.util.get_string('completionresetsuccess', 'mod_interactivevideo'), {
@@ -859,7 +860,10 @@ export default class ReportBase {
                         targetdata.completeditems = null;
                         targetdata.completiondetails = null;
                         targetdata.completionid = null;
-                        tabledata.row($this.closest('tr')).data(targetdata).draw();
+                        let row = tabledata.row($this.closest('tr'));
+                        row.data(targetdata);
+                        row.deselect();
+                        tabledata.draw();
                         addToast(M.util.get_string('completionresetsuccess', 'mod_interactivevideo'), {
                             type: 'success'
                         });
@@ -891,7 +895,10 @@ export default class ReportBase {
                                 targetdata.completeditems = null;
                                 targetdata.completiondetails = null;
                                 targetdata.completionid = null;
-                                tabledata.row($this.closest('tr')).data(targetdata).draw();
+                                let row = tabledata.row($this.closest('tr'));
+                                row.data(targetdata);
+                                row.deselect();
+                                tabledata.draw();
                                 addToast(M.util.get_string('completionresetsuccess', 'mod_interactivevideo'), {
                                     type: 'success'
                                 });

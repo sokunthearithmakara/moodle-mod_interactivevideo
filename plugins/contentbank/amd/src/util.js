@@ -104,7 +104,11 @@ export const init = (contextid) => {
                     $(`#contentbank-preview[data-contentid=${id}]`)
                         .prepend(`<div class="xapi iv-float-right alert-secondary d-inline px-2 text-center iv-rounded-pill mb-2">
                 ${xapicheck}</div>`);
+                    const initializedAt = Date.now();
                     H5P.externalDispatcher.on('xAPI', async function(event) {
+                        if (Date.now() - initializedAt < 1500) {
+                            return;
+                        }
                         if ((event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/completed'
                             || event.data.statement.verb.id == 'http://adlnet.gov/expapi/verbs/answered')
                             && event.data.statement.object.id.indexOf('subContentId') < 0) {
@@ -277,13 +281,26 @@ export const initH5PIntegration = (instance, annotation, $message, log, saveStat
             const content = H5PIntegration.contents;
             const id = Object.keys(content)[0];
 
-            H5PIntegration.contents[id].contentUserData[0].state = log;
+            if (H5PIntegration.contents[id]) {
+                if (!H5PIntegration.contents[id].contentUserData) {
+                    H5PIntegration.contents[id].contentUserData = [{}];
+                } else if (typeof H5PIntegration.contents[id].contentUserData === 'string') {
+                    H5PIntegration.contents[id].contentUserData = [{}];
+                } else if (!H5PIntegration.contents[id].contentUserData[0]) {
+                    H5PIntegration.contents[id].contentUserData[0] = {};
+                }
+                H5PIntegration.contents[id].contentUserData[0].state = log;
+            }
             window.H5P = H5P;
 
             try {
+                const initializedAt = Date.now();
                 H5P.externalDispatcher.off('xAPI');
                 H5P.externalDispatcher.on('xAPI', async function(event) {
                     const statement = event.data.statement;
+                    if (instance.isEditMode() && (Date.now() - initializedAt < 1500)) {
+                        return;
+                    }
 
                     // Call the provided statement handler.
                     if (onStatement) {

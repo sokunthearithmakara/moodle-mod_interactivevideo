@@ -59,7 +59,7 @@ class flexbook_upload extends \core_form\dynamic_form {
      * Form definition
      */
     public function definition() {
-        global $PAGE, $COURSE;
+        global $COURSE;
         $mform = $this->_form;
         $mform->addElement('hidden', 'contextid', null);
         $mform->setType('contextid', PARAM_INT);
@@ -134,6 +134,9 @@ class flexbook_upload extends \core_form\dynamic_form {
                 ) {
                     $fs->create_file_from_storedfile($filerecord, $file);
                 }
+
+                // Delete the original file to prevent two files from being saved.
+                $file->delete();
 
                 $url = \moodle_url::make_draftfile_url(
                     $filerecord['itemid'],

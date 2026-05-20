@@ -104,7 +104,7 @@ class fbform extends \mod_flexbook\form\base_form {
         );
         $mform->addGroup($groups, '', get_string('savecurrentstate', 'ivplugin_contentbank'), null, false);
 
-        $this->jump_section_fields(true);
+        $this->jump_section_fields(true, true);
 
         $this->close_form();
     }

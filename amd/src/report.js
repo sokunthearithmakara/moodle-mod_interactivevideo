@@ -407,6 +407,8 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
         tabledata.on("draw", function() {
             $('tr.selected td.checkbox input').prop("checked", true);
             $('tr:not(.selected) td.checkbox input').prop("checked", false);
+            const bsAffix = isBS5 ? '-bs' : '';
+            $(`#completiontable [data${bsAffix}-toggle="tooltip"], #reporttable [data${bsAffix}-toggle="tooltip"]`).tooltip();
         });
 
         ReportBase.registerBulkActions(tabledata, {

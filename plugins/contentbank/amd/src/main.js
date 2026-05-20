@@ -202,8 +202,11 @@ export default class ContentBank extends Base {
                                 + result.score.raw + "/" + result.score.max + "|"
                                 + textclass + "|"
                                 + Number(details.xp);
-                            details.details = saveState == 1 ? H5PIntegration.contents[id]
-                                .contentUserData[0].state : '';
+                            const hasState = saveState == 1
+                                && H5PIntegration.contents[id]
+                                && H5PIntegration.contents[id].contentUserData
+                                && H5PIntegration.contents[id].contentUserData[0];
+                            details.details = hasState ? H5PIntegration.contents[id].contentUserData[0].state : '';
                             // Must wait 1.5 seconds or so to let the saveState finish.
                             // Otherwise, the completion will be incomplete.
                             setTimeout(function() {
@@ -269,6 +272,34 @@ export default class ContentBank extends Base {
 
             $message.find(`.modal-body`).html(data).attr('id', 'content').fadeIn(300);
 
+            const iframe = $message.find('iframe')[0];
+            if (iframe && iframe.contentWindow && log !== '' && log !== null) {
+                let _h5pIntegration;
+                Object.defineProperty(iframe.contentWindow, 'H5PIntegration', {
+                    configurable: true,
+                    enumerable: true,
+                    get: function() {
+                        return _h5pIntegration;
+                    },
+                    set: function(val) {
+                        _h5pIntegration = val;
+                        if (val && val.contents) {
+                            const id = Object.keys(val.contents)[0];
+                            if (id && val.contents[id]) {
+                                if (!val.contents[id].contentUserData) {
+                                    val.contents[id].contentUserData = [{}];
+                                } else if (typeof val.contents[id].contentUserData === 'string') {
+                                    val.contents[id].contentUserData = [{}];
+                                } else if (!val.contents[id].contentUserData[0]) {
+                                    val.contents[id].contentUserData[0] = {};
+                                }
+                                val.contents[id].contentUserData[0].state = log;
+                            }
+                        }
+                    }
+                });
+            }
+
             self.postContentRender(annotation, xAPICheck(annotation));
 
             if (existingstate !== null && existingstate !== undefined) {
@@ -286,14 +317,18 @@ export default class ContentBank extends Base {
                 $(document).off(eventName).on(eventName, async function(e) {
                     if (e.detail.annotation.id == annotation.id) {
                         try {
-                            let content = window.H5PIntegration.contents;
-                            let id = Object.keys(content)[0];
-                            let contentuserData = window.H5PIntegration.contents[id].contentUserData[0];
-                            let state = contentuserData.state;
-                            await self.saveLog(annotation, {
-                                text1: JSON.stringify(state),
-                                char1: annotation.type,
-                            }, self.userid, true);
+                            const iframe = document.querySelector(`#message[data-id='${annotation.id}'] iframe`);
+                            const H5PIntegration = iframe ? iframe.contentWindow.H5PIntegration : window.H5PIntegration;
+                            if (H5PIntegration) {
+                                let content = H5PIntegration.contents;
+                                let id = Object.keys(content)[0];
+                                let contentuserData = H5PIntegration.contents[id].contentUserData[0];
+                                let state = contentuserData.state;
+                                await self.saveLog(annotation, {
+                                    text1: JSON.stringify(state),
+                                    char1: annotation.type,
+                                }, self.userid, true);
+                            }
                         } catch (e) {
                             //
                         }

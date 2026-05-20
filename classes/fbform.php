@@ -41,6 +41,7 @@ class fbform extends \mod_flexbook\form\base_form {
             null,
             $this->optional_param('content', '', PARAM_RAW)
         );
+        $data->draftitemid = $draftitemid;
         $this->set_data($data);
     }
 

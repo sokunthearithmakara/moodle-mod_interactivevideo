@@ -277,26 +277,31 @@ export default class InteractiveVideo extends Base {
 
             // Pause video on interactionclose event.
             $(document).off('interactionclose.fbreplay-' + annotation.id)
-            .on('interactionclose.fbreplay-' + annotation.id, async(e) => {
-                clearInterval(timeInterval);
-                if (e.detail.annotation.id != state.currentanno.id) {
-                    return;
-                }
-                e.stopImmediatePropagation();
-                const player = this['player_' + state.currentanno.id];
-                if (player) {
-                    try {
-                        player.pause();
-                    } catch (err) {
-                        // Ignore.
+                .on('interactionclose.fbreplay-' + annotation.id, async(e) => {
+                    clearInterval(timeInterval);
+                    if (e.detail.annotation.id != state.currentanno.id) {
+                        return;
                     }
-                }
-            });
+                    e.stopImmediatePropagation();
+                    const player = this['player_' + state.currentanno.id];
+                    if (player) {
+                        try {
+                            player.pause();
+                        } catch (err) {
+                            // Ignore.
+                        }
+                    }
+                });
 
             $(document).off('interactionrun.fbreplay-' + annotation.id)
-            .on('interactionrun.fbreplay-' + annotation.id, async() => {
-                clearInterval(timeInterval);
-            });
+                .on('interactionrun.fbreplay-' + annotation.id, async() => {
+                    clearInterval(timeInterval);
+                    try {
+                    this['player_' + state.currentanno.id]?.unMute();
+                    } catch {
+                        // Do nothing.
+                    }
+                });
 
             // Tab visibility change.
             const visibilityEvent = 'visibilitychange.fbvideo-' + annotation.id;
@@ -406,8 +411,9 @@ export default class InteractiveVideo extends Base {
 
             form.addEventListener(form.events.FORM_SUBMITTED, (e) => {
                 const response = e.detail;
+                window.console.log(response);
                 $(`#video-url`).val(response.url);
-                $('#video-info-form [name="draftitemid').val(response.videofile);
+                $('[data-name="interaction-form"] [name="draftitemid"]').val(response.videofile);
                 $('#video-info-form .play-video').trigger('click');
             });
         });
