@@ -393,7 +393,8 @@ class PeerTube {
         if (!player[this.node]) {
             return 0;
         }
-        return this.totaltime;
+        const totaltime = Number(this.totaltime);
+        return Number.isFinite(totaltime) ? totaltime : 0;
     }
     /**
      * Check if the video is paused

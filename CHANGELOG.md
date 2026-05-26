@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.8] - 2026-05-26
+- Improvement to the report page.
+- Fixed: player classes returned `totaltime` inconsistently.
+- Refactored content types for flexbook compatibility with shared utilities.
+
 ## [1.7.6] - 2026-05-20
 - Improve report page performance.
 - Fix issue with content bank item where saved state was not restored correctly (on 1.7.5).

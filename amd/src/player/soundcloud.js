@@ -333,7 +333,8 @@ class SoundCloud {
      * @return {Number}
      */
     getDuration() {
-        return this.totaltime;
+        const totaltime = Number(this.totaltime);
+        return Number.isFinite(totaltime) ? totaltime : 0;
     }
     /**
      * Check if the video is paused

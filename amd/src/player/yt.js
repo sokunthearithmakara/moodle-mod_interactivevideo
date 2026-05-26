@@ -203,23 +203,28 @@ class Yt {
                 playsinline: 1,
                 disablekb: opts.keyboard ? 0 : 1,
                 mute: 1,
-            },
-            events: {
+                },
+                events: {
                 onError: function(e) {
                     hasError = true;
-                    this.sendEvent('iv:playerError', {error: e.data}, this.node);
+                    self.sendEvent('iv:playerError', {error: e.data}, self.node);
                 },
                 onReady: async function(e) {
                     self.title = e.target.videoTitle;
                     // Wait for 1 second.
                     await new Promise(resolve => setTimeout(resolve, 1000));
 
-                    if (e.target.getDuration() <= 0 && e.target.videoTitle == '') {
+                    const duration = e.target.getDuration();
+                    if (duration <= 0 && e.target.videoTitle == '') {
                         self.sendEvent('iv:playerError', {error: 'Video not found'}, self.node);
                         return;
                     }
-                    let totaltime = Number(e.target.getDuration().toFixed(2)) - self.frequency;
-                    if (e.target.getDuration() == 0) {
+                    if (!Number.isFinite(Number(duration))) {
+                        self.sendEvent('iv:playerError', {error: 'Unable to get video duration'}, self.node);
+                        return;
+                    }
+                    let totaltime = Number(duration.toFixed(2)) - self.frequency;
+                    if (duration == 0) {
                         totaltime = 0.1;
                         self.live = true;
                     }
@@ -479,6 +484,10 @@ class Yt {
     getDuration() {
         if (!player[this.node]) {
             return 0;
+        }
+        const totaltime = Number(this.totaltime);
+        if (Number.isFinite(totaltime)) {
+            return totaltime;
         }
         return player[this.node].getDuration();
     }

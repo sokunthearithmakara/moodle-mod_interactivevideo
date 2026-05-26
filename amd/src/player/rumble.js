@@ -345,6 +345,10 @@ class Rumble {
         if (!player[this.node]) {
             return 0;
         }
+        const totaltime = Number(this.totaltime);
+        if (Number.isFinite(totaltime)) {
+            return totaltime;
+        }
         return player[this.node].getDuration();
     }
     /**

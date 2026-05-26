@@ -522,6 +522,10 @@ class Html5Video {
         if (!playerids[this.node]) {
             return 0;
         }
+        const totaltime = Number(this.totaltime);
+        if (Number.isFinite(totaltime)) {
+            return totaltime;
+        }
         return this.player.duration;
     }
     /**

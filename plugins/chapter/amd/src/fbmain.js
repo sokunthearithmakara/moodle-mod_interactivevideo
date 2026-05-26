@@ -122,6 +122,14 @@ export default class Chapter extends Base {
                 chapteritems = annotations.filter((a) => a.order > chapter.order);
             }
 
+            const gradableitems = chapteritems.filter((item) => item.hascompletion == '1');
+            const completeditems = gradableitems.filter((item) => item.completed);
+            const progress = gradableitems.length > 0 ? (completeditems.length / gradableitems.length) * 100 : 0;
+            const chapterprogress = chapter.locked ? '<i class="fa fa-lock"></i>'
+                : (gradableitems.length > 0 ? completeditems.length + '/' + gradableitems.length : '');
+            const chapterprogressbar = gradableitems.length > 0
+                ? `<span class="chapter-progressbar" aria-hidden="true"><span style="width: ${progress}%"></span></span>`
+                : '';
             let chapteritemshtml = '';
             chapteritems.forEach((item) => {
                 chapteritemshtml += state.ctRenderer[item.type].renderChapterItem(item);
@@ -129,12 +137,14 @@ export default class Chapter extends Base {
             $chapterlists.append(`<li class="p-0 flex-column border-${self.isBS5 ? 'start' : 'left'}-0
                  border-${self.isBS5 ? 'end' : 'start'}-0 chapter
             list-group-item bg-transparent d-flex justify-content-between align-items-center cursor-pointer"
-            data-id="${chapter.id}">
-            <div class="w-100 d-flex align-items-center justify-content-between p-2">
-            <span class="flex-grow-1 text-truncate iv-font-weight-bold"><i class="bi bi-chevron-down iv-mr-2 toggle"></i>
+            data-id="${chapter.id}" data-completed="${completeditems.length}" data-total="${gradableitems.length}">
+            <div class="chapter-heading w-100 d-flex align-items-center justify-content-between p-2">
+            <span class="chapter-heading-title flex-grow-1 text-truncate iv-font-weight-bold">
+            <i class="bi bi-chevron-down iv-mr-2 toggle"></i>
             <span class="chapter-title" data-id="${chapter.id}">${chapter.formattedtitle}</span></span>
-            <span class="small iv-badge-primary iv-badge-pill">
-            ${chapter.locked ? '<i class="fa fa-lock"></i>' : ''}</span></div>
+            ${chapterprogress ? '<span class="chapter-progress small iv-badge-primary iv-badge-pill">' +
+                chapterprogress + '</span>' : ''}
+            ${chapterprogressbar}</div>
             <ul class="annolistinchapter w-100 p-0">
             ${!chapter.locked || state.config.iseditor ? chapteritemshtml : ''}
             </ul></li>`);

@@ -2835,7 +2835,7 @@ function interactivevideo_user_complete($course, $user, $mod, $iv) {
     echo '<td>' . $completion->xp . '</td>';
     echo '<td>' . ($completion->timecompleted ?
         userdate($completion->timecompleted, get_string('strftimedatetime', 'langconfig'))
-        : get_string('notstarted', 'mod_interactivevideo')) . '</td>';
+        : '-') . '</td>';
     echo '<td>' . ($completion->timeended ? get_string('yes') : get_string('no')) . '</td>';
     if ($analytics) {
         echo '<td>' . $analytics->percentage . '%</td>';

@@ -405,6 +405,7 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
 
         // Handle select.
         tabledata.on("draw", function() {
+            $('.tooltip').remove();
             $('tr.selected td.checkbox input').prop("checked", true);
             $('tr:not(.selected) td.checkbox input').prop("checked", false);
             const bsAffix = isBS5 ? '-bs' : '';

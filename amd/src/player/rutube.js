@@ -322,8 +322,8 @@ class Rutube {
         if (!player[this.node]) {
             return 0;
         }
-        let duration = this.totaltime;
-        return duration;
+        const totaltime = Number(this.totaltime);
+        return Number.isFinite(totaltime) ? totaltime : 0;
     }
     /**
      * Checks if the Rutube player is paused.

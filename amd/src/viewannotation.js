@@ -732,6 +732,9 @@ define([
 
             const updateTime = async(duration) => {
                 duration = Number(duration);
+                if (!Number.isFinite(duration) || duration <= 0) {
+                    return {start, end};
+                }
                 let toUpdatetime = false;
                 if (!end || end == 0) {
                     toUpdatetime = true;
@@ -816,7 +819,10 @@ define([
                     $('#changequality').removeClass('d-none');
                 }
 
-                const duration = player.totaltime;
+                let duration = Number(player.totaltime);
+                if (!Number.isFinite(duration) && typeof player.getDuration === 'function') {
+                    duration = Number(await player.getDuration());
+                }
                 if (!reloaded) {
                     ({start, end} = await updateTime(duration));
                 }
