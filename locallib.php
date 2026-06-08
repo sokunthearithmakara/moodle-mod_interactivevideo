@@ -585,7 +585,6 @@ class interactivevideo_util {
      * @param string $field
      * @param string $value
      * @param int $contextid
-     * @param int $contextid
      * @param int $draftitemid
      * @return stdClass
      */
