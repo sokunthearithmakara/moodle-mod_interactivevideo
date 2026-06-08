@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.8.1+] - 2026-06-08
+- Fixed: duplicate `@param` in `quick_edit_field` phpdoc (CI phpdoc check).
+
 ## [1.8.1] - 2026-06-08
 - Added a fullscreen toggle for popup interactions.
 - Improved Flexbook replay screen behaviour and styling.
