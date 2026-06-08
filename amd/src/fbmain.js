@@ -12,6 +12,20 @@ import $ from 'jquery';
 import ModalForm from 'core_form/modalform';
 import {get_string as getString} from 'core/str';
 
+/**
+ * Show or hide the restart (end) screen; only one of d-flex / d-none is applied.
+ *
+ * @param {jQuery} $screen
+ * @param {boolean} show
+ */
+const toggleRestartScreen = ($screen, show) => {
+    if (show) {
+        $screen.removeClass('d-none').addClass('d-flex');
+    } else {
+        $screen.removeClass('d-flex').addClass('d-none');
+    }
+};
+
 export default class InteractiveVideo extends Base {
 
     /**
@@ -58,10 +72,12 @@ export default class InteractiveVideo extends Base {
                     id="${annotation.id}"></div>
                 <div id="restart-screen-${annotation.id}"
                     class="restart-screen position-absolute top-0 left-0 w-100 h-100 bg-black
-                        d-flex align-items-center justify-content-center d-none"
+                        align-items-center justify-content-center d-none"
                     style="z-index: 100;">
-                    <button class="btn btn-lg btn-rounded btn-danger restart-video" data-annotation="${annotation.id}">
-                        <i class="bi bi-arrow-counterclockwise iv-mr-2"></i>${await getString('restart', 'mod_interactivevideo')}
+                    <button class="btn btn-lg btn-rounded btn-danger restart-video text-uppercase"
+                     data-annotation="${annotation.id}">
+                        <i class="bi bi-arrow-counterclockwise iv-mr-2 fs-25px"></i>
+                        ${await getString('replay', 'mod_interactivevideo')}
                     </button>
                 </div>
             </div>`);
@@ -113,7 +129,7 @@ export default class InteractiveVideo extends Base {
                             player.pause();
                             player.seek(player.start);
                             clearInterval(timeInterval);
-                            $body.find(`#restart-screen-${annotation.id}`).removeClass('d-none');
+                            toggleRestartScreen($body.find(`#restart-screen-${annotation.id}`), true);
                             $(document).trigger('iv:playerEnded.' + annotation.id);
                         }
                     } catch (err) {
@@ -140,7 +156,7 @@ export default class InteractiveVideo extends Base {
                 if (player) {
                     player.seek(startTime);
                     player.play();
-                    $(this).closest('.restart-screen').addClass('d-none');
+                    toggleRestartScreen($(this).closest('.restart-screen'), false);
                 }
             });
 
@@ -215,7 +231,7 @@ export default class InteractiveVideo extends Base {
                     }
                     player.pause();
                     clearInterval(timeInterval);
-                    $body.find(`#restart-screen-${id}`).removeClass('d-none');
+                    toggleRestartScreen($body.find(`#restart-screen-${id}`), true);
                 });
                 return;
             }
@@ -248,7 +264,7 @@ export default class InteractiveVideo extends Base {
 
                 this.triggerCompletion(annotation);
 
-                $body.find(`#restart-screen-${state.currentanno.id}`).removeClass('d-none');
+                toggleRestartScreen($body.find(`#restart-screen-${state.currentanno.id}`), true);
 
                 // Reset the guard after a short delay to allow future completions if the video is replayed.
                 setTimeout(() => {
@@ -351,6 +367,7 @@ export default class InteractiveVideo extends Base {
         }
 
         let player;
+        let totaltime = 0;
         $(document).off('click', '#video-info-form .play-video')
             .on('click', '#video-info-form .play-video', async function(e) {
                 e.preventDefault();
@@ -371,6 +388,7 @@ export default class InteractiveVideo extends Base {
                         root.find('[name="char3"]').val(Math.round(info.duration));
                     }
                     player = info.player;
+                    totaltime = Math.round(info.duration);
                 } else {
                     self.addNotification(M.util.get_string('videourlinvalid', 'mod_interactivevideo'));
                 }
@@ -391,6 +409,35 @@ export default class InteractiveVideo extends Base {
                 } catch (err) {
                     // Ignore.
                 }
+            }
+        });
+
+        root.find('[name="char2"]').on('click', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                $(this).val(0);
+            }
+        });
+
+        root.find('[name="char3"]').on('click', async function(e) {
+            if (!(e.ctrlKey || e.metaKey)) {
+                return;
+            }
+            e.preventDefault();
+            if (!player) {
+                return;
+            }
+            try {
+                let duration = totaltime;
+                if (!duration && typeof player.getDuration === 'function') {
+                    duration = await player.getDuration();
+                }
+                if (!duration) {
+                    duration = player.totaltime || player.duration || 0;
+                }
+                $(this).val(Math.round(duration));
+            } catch (err) {
+                // Ignore.
             }
         });
 

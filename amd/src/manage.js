@@ -537,7 +537,7 @@ define(['jquery', 'core/templates'], function($, Templates) {
                 const href = $(this).data('href');
                 let $this = $(this);
                 if (!ModalFactory) {
-                    if (window.M.version >= 403) {
+                    if ((window.M.version && window.M.version >= 403) || $('#iv-m-version').data('value') >= 403) {
                         ModalFactory = await import('core/modal');
                     } else {
                         ModalFactory = await import('core/modal_factory');
@@ -571,7 +571,7 @@ define(['jquery', 'core/templates'], function($, Templates) {
             $(document).on('click', '.poster-wrapper', async function(e) {
                 e.preventDefault();
                 if (!ModalFactory) {
-                    if (window.M.version >= 403) {
+                    if (window.M.version >= 403 || $('#iv-m-version').data('value') >= 403) {
                         ModalFactory = await import('core/modal');
                     } else {
                         ModalFactory = await import('core/modal_factory');

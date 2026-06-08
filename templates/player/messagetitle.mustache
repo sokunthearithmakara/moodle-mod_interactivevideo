@@ -50,6 +50,18 @@
     </button>
     {{/showdelete}}
     {{/completionbutton}}
+    {{#showfullscreen}}
+    <button type="button"
+            class="btn btn-flex iv-ml-3 p-0 border-0 bg-transparent toggle-fullscreen"
+            data{{bs}}-toggle="tooltip"
+            data{{bs}}-container="#wrapper"
+            data{{bs}}-trigger="hover"
+            aria-label="{{#str}}toggleview, mod_interactivevideo{{/str}}"
+            title="{{#str}}toggleview, mod_interactivevideo{{/str}}">
+        <i class="bi bi-fullscreen fs-25px" aria-hidden="true"></i>
+        <span class="visually-hidden sr-only">{{#str}}toggleview, mod_interactivevideo{{/str}}</span>
+    </button>
+    {{/showfullscreen}}
     <button data-id="{{id}}"
             class="btn btn-flex iv-ml-3 p-0 border-0 interaction-dismiss bg-transparent"
             id="close-{{id}}"

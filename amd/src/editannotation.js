@@ -101,10 +101,11 @@ export default {
     init: async function(url, coursemodule, interaction, course, start, end, coursecontextid,
         type = 'yt', displayoptions, userid, posterimage, extendedcompletion) {
 
+        window.M = window.M || {};
         window.M.version = $('#iv-m-version').data('value');
 
         if (!ModalFactory) {
-            if (window.M.version >= 403) {
+            if (window.M?.version >= 403 || $('body').hasClass('bs-5')) {
                 ModalFactory = await import('core/modal');
             } else {
                 ModalFactory = await import('core/modal_factory');

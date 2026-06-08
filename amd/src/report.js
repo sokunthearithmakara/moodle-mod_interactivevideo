@@ -38,6 +38,21 @@ import quickform from './quickform';
 import ModalEvents from 'core/modal_events';
 
 /**
+ * Resolve the interaction type icon class from annotation prop JSON.
+ *
+ * @param {Object} annotation
+ * @returns {string}
+ */
+const getAnnotationTypeIcon = (annotation) => {
+    try {
+        const prop = JSON.parse(annotation.prop || '{}');
+        return prop.icon || 'bi bi-info-circle';
+    } catch (e) {
+        return 'bi bi-info-circle';
+    }
+};
+
+/**
  * Initializes the report functionality for the interactive video module.
  *
  * @param {number} cmid - The course module ID.
@@ -60,6 +75,7 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
     window.JSZip = JSZip;
     let player;
     const isBS5 = $('body').hasClass('bs-5');
+    window.M = window.M || {};
     window.M.version = $('#iv-m-version').data('value');
     // Const bsAffix = isBS5 ? '-bs' : '';
     let ModalFactory;
@@ -532,6 +548,7 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
             if (theAnnotation.timestamp > 0) {
                 title += " @ " + convertSecondsToHMS(theAnnotation.timestamp);
             }
+            const typeIcon = getAnnotationTypeIcon(theAnnotation);
 
             $('#annotation-modal').remove();
             let modal = await ModalFactory.create({
@@ -559,11 +576,15 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
             }).addClass('active ' + theAnnotation.type);
             root.find('#message').html(`<div class="modal-content iv-rounded-lg">
                     <div class="modal-header d-flex align-items-center shadow-sm" id="title">
-                        <h5 class="modal-title text-truncate mb-0">${title}</h5>
+                        <h5 class="modal-title text-truncate mb-0 d-flex align-items-center">
+                            <i class="${typeIcon} iv-mr-2 d-none d-md-inline fs-25px" aria-hidden="true"></i>
+                            <span class="text-truncate">${title}</span>
+                        </h5>
                         <div class="btns d-flex align-items-center">
-                            <button id="close-${theAnnotation.id}" class="btn close-modal p-0 border-0"
+                            <button id="close-${theAnnotation.id}"
+                             class="btn btn-flex iv-ml-3 p-0 border-0 bg-transparent interaction-dismiss close-modal"
                              aria-label="Close" data${isBS5 ? '-bs' : ''}-dismiss="modal">
-                            <i class="bi bi-x-lg fa-fw fs-25px"></i>
+                            <i class="bi bi-x-lg fs-25px" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>

@@ -585,10 +585,11 @@ class interactivevideo_util {
      * @param string $field
      * @param string $value
      * @param int $contextid
-     * @param int $olddraftitemid
+     * @param int $contextid
+     * @param int $draftitemid
      * @return stdClass
      */
-    public static function quick_edit_field($id, $field, $value, $contextid, $olddraftitemid = 0) {
+    public static function quick_edit_field($id, $field, $value, $contextid, $draftitemid = 0) {
         global $DB, $PAGE, $CFG;
         $context = \context::instance_by_id($contextid);
         $PAGE->set_context($context);
@@ -597,7 +598,9 @@ class interactivevideo_util {
             // Delete the old files before saving the new files.
             $fs = get_file_storage();
             $fs->delete_area_files($context->id, 'mod_interactivevideo', 'content', $id);
-            $draftitemid = file_get_submitted_draft_itemid('content');
+            if (!$draftitemid) {
+                $draftitemid = file_get_submitted_draft_itemid('content');
+            }
             $postvalue = file_save_draft_area_files(
                 $draftitemid,
                 $contextid,
@@ -616,7 +619,6 @@ class interactivevideo_util {
 
             // Remove orphaned files.
             self::file_remove_editor_orphaned_files($draftitemid, $value);
-            self::file_remove_editor_orphaned_files($olddraftitemid, $value);
             $value = $postvalue;
         }
         $DB->set_field('interactivevideo_items', $field, $value, ['id' => $id]);

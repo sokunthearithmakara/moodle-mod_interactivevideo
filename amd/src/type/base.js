@@ -1141,34 +1141,30 @@ class Base {
         } else {
             completed = gradableitems.length == completedItems.length ? 1 : 0;
         }
-        return new Promise((resolve) => {
-            $.ajax({
-                url: `${M.cfg.wwwroot}/mod/interactivevideo/ajax.php`,
-                method: "POST",
-                dataType: "text",
-                data: {
-                    action: 'save_progress',
-                    markdone: action == 'mark-done',
-                    sesskey: M.cfg.sesskey,
-                    id: this.interaction,
-                    uid: this.userid,
-                    percentage: (completedItems.length / gradableitems.length) * 100,
-                    g: parseFloat((earnedXp / totalXp) * this.grademax).toFixed(2),
-                    gradeiteminstance: this.gradeiteminstance,
-                    c: completed,
-                    xp: earnedXp,
-                    completeditems: JSON.stringify(completedItems),
-                    completiondetails: JSON.stringify(completionDetails),
-                    details: JSON.stringify(details.details || {}),
-                    annotationtype: thisItem.type,
-                    token: this.token,
-                    cmid: this.cm,
-                    completionid: this.completionid,
-                    contextid: thisItem.contextid,
-                    updatestate: this.completionpercentage > 0 || Object.keys(this.extracompletion).length != 0 ? 1 : 0,
-                    courseid: this.course,
-                },
-                success: (res) => {
+        const progressData = {
+            action: 'save_progress',
+            markdone: action == 'mark-done',
+            sesskey: M.cfg.sesskey,
+            id: this.interaction,
+            uid: this.userid,
+            percentage: (completedItems.length / gradableitems.length) * 100,
+            g: parseFloat((earnedXp / totalXp) * this.grademax).toFixed(2),
+            gradeiteminstance: this.gradeiteminstance,
+            c: completed,
+            xp: earnedXp,
+            completeditems: JSON.stringify(completedItems),
+            completiondetails: JSON.stringify(completionDetails),
+            details: JSON.stringify(details.details || {}),
+            annotationtype: thisItem.type,
+            token: this.token,
+            cmid: this.cm,
+            completionid: this.completionid,
+            contextid: thisItem.contextid,
+            updatestate: this.completionpercentage > 0 || Object.keys(this.extracompletion).length != 0 ? 1 : 0,
+            courseid: this.course,
+        };
+
+        const applyProgressSuccess = (res) => {
                     // Update the annotations array.
                     const annotations = this.annotations.map(x => {
                         if (x.id == id) {
@@ -1198,6 +1194,16 @@ class Base {
                         type,
                         response: res,
                     });
+        };
+
+        return new Promise((resolve) => {
+            $.ajax({
+                url: `${M.cfg.wwwroot}/mod/interactivevideo/ajax.php`,
+                method: "POST",
+                dataType: "text",
+                data: progressData,
+                success: (res) => {
+                    applyProgressSuccess(res);
                     resolve();
                 }
             });
@@ -1587,14 +1593,19 @@ class Base {
         let $message = $('#message[data-id=' + annotation.id + '].active');
         $message.find('#refresh').find('i').addClass('fa-spin');
 
-        self.toggleCompletion(annotation.id, 'mark-undone', 'automatic', {}, false);
+        try {
+            const modalBody = $message.find('.modal-body')[0];
+            if (modalBody?.ivScormPlayer) {
+                const {teardownScormPlayer} = await import('local_ivscorm/utils');
+                await teardownScormPlayer(annotation.id);
+            }
 
-        $(document).off('completionupdated.deleteprogress');
-        $(document).one('completionupdated.deleteprogress', async function() {
+            await self.toggleCompletion(annotation.id, 'mark-undone', 'automatic', {}, false);
+
             await $.ajax({
                 url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                method: "POST",
-                dataType: "text",
+                method: 'POST',
+                dataType: 'text',
                 data: {
                     action: 'delete_own_completion_data',
                     id: self.completionid,
@@ -1605,16 +1616,13 @@ class Base {
                 },
             });
 
-
-            // Refresh the annotation.
-            setTimeout(async function() {
-                self.addNotification(await getString('completiondatadeleted', 'mod_interactivevideo'), 'success');
-                $message.find('#refresh').find('i').removeClass('fa-spin');
-                $message.find('#refresh').trigger('click');
-            }, 1000);
-        });
-
-
+            self.addNotification(await getString('completiondatadeleted', 'mod_interactivevideo'), 'success');
+            $message.find('#refresh').trigger('click');
+        } catch (error) {
+            window.console.error(error);
+        } finally {
+            $message.find('#refresh').find('i').removeClass('fa-spin');
+        }
     }
 }
 

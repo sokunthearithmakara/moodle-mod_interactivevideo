@@ -1897,14 +1897,16 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo.mobiletheme .chapter-open #chapter-container-left,
 .path-mod-interactivevideo.default-mode .chapter-open #chapter-container-left,
-.path-mod-interactivevideo.embed-mode .chapter-open #chapter-container-left {
+.path-mod-interactivevideo.embed-mode .chapter-open #chapter-container-left,
+.path-mod-interactivevideo.distraction-free .chapter-open #chapter-container-left {
     position: fixed !important;
     z-index: 1250;
 }
 
 .path-mod-interactivevideo.mobiletheme .chapter-open #chapter-container-left #closechapter,
 .path-mod-interactivevideo.default-mode .chapter-open #chapter-container-left #closechapter,
-.path-mod-interactivevideo.embed-mode .chapter-open #chapter-container-left #closechapter {
+.path-mod-interactivevideo.embed-mode .chapter-open #chapter-container-left #closechapter,
+.path-mod-interactivevideo.distraction-free .chapter-open #chapter-container-left #closechapter {
     display: block;
     position: fixed;
     right: 1rem;
@@ -1915,7 +1917,8 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo.default-mode .chapter-open #chapter-container-left #closechapter,
-.path-mod-interactivevideo.embed-mode .chapter-open #chapter-container-left #closechapter {
+.path-mod-interactivevideo.embed-mode .chapter-open #chapter-container-left #closechapter,
+.path-mod-interactivevideo.distraction-free .chapter-open #chapter-container-left #closechapter {
     position: absolute;
 }
 
@@ -4132,6 +4135,12 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     }
 }
 
+@container message (max-width: 939px) {
+    .path-mod-interactivevideo #message[data-placement="popup"] .toggle-fullscreen {
+        display: none !important;
+    }
+}
+
 .path-mod-flexbook #video-wrapper.fb-interaction div.video-player iframe {
     width: 100%;
     height: 100%;
@@ -4175,4 +4184,8 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 .path-mod-interactivevideo.path-mod-flexbook .video-player[controls] {
     visibility: visible !important;
     z-index: 10 !important;
+}
+
+.path-mod-interactivevideo #message[data-placement="popup"] .modal-content {
+    height: var(--ivdvh);
 }

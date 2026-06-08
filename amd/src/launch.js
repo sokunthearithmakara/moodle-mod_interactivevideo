@@ -30,6 +30,7 @@ let playerModal;
 let ModalFactory;
 export default {
     init: async function() {
+        window.M = window.M || {};
         window.M.version = $('#iv-m-version').data('value');
 
         if (!ModalFactory) {

@@ -1,6 +1,16 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.8.1] - 2026-06-08
+- Added a fullscreen toggle for popup interactions.
+- Improved Flexbook replay screen behaviour and styling.
+- Added Ctrl/Cmd + click shortcuts on custom segment fields to reset start (0) and end (full duration) times.
+- Improved report modal titles with interaction type icons.
+- Fixed Bootstrap 5 modal detection when `window.M` is unavailable.
+- Fixed SCORM teardown when deleting completion data.
+- Fixed quick-edit content field draft file handling.
+- Updated `plugins.json` subplugin versions.
+
 ## [1.8] - 2026-05-26
 - Improvement to the report page.
 - Fixed: player classes returned `totaltime` inconsistently.

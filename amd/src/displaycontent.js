@@ -102,13 +102,15 @@ const formatText = async function(text, shorttext = false) {
  * defaultDisplayContent(annotation, player);
  */
 const defaultDisplayContent = async function(annotation, player) {
-    if (window.M.version < 403) {
+    let $body = $('body');
+    const isBS5 = $body.hasClass('bs-5');
+
+    if (!isBS5) {
         ModalFactory = await import('core/modal_factory');
     } else {
         ModalFactory = await import('core/modal');
     }
-    let $body = $('body');
-    const isBS5 = $body.hasClass('bs-5');
+
     const isPlayerMode = $body.attr('id') == 'page-mod-interactivevideo-view';
     const isPreviewMode = annotation.previewMode || false;
     const advanced = JSON.parse(annotation.advanced);
@@ -200,6 +202,8 @@ const defaultDisplayContent = async function(annotation, player) {
         completionbutton: completionbutton,
         id: annotation.id,
         showdelete,
+        showfullscreen: displayoptions === 'popup',
+        bs: isBS5 ? '-bs' : '',
         candelete: annotation.completed == true && ((annotation.activitycomplete == 1 && settings.deleteaftercomplete == 1) ||
             (annotation.activitycomplete == 0 && settings.deletebeforecomplete == 1)),
     });
@@ -284,8 +288,25 @@ const defaultDisplayContent = async function(annotation, player) {
 
                 // eslint-disable-next-line promise/always-return
                 if ($body.hasClass('iframe')) {
-                    root.addClass('modal-fullscreen');
+                    root.addClass('modal-fullscreen iv-rounded-0');
+                    root.find('.modal-dialog, .modal-content').addClass('iv-rounded-0');
                 }
+
+                root.off('click', '.toggle-fullscreen').on('click', '.toggle-fullscreen', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const $dialog = root.find('.modal-dialog');
+                    const goingFullscreen = !root.hasClass('modal-fullscreen');
+                    root.toggleClass('modal-fullscreen iv-rounded-0');
+                    root.find('.modal-dialog, .modal-content').toggleClass('iv-rounded-0');
+                    $(this).find('i').toggleClass('bi-fullscreen bi-fullscreen-exit');
+                    if (goingFullscreen && $dialog.data('ui-draggable')) {
+                        $dialog.draggable('destroy');
+                    } else if (!goingFullscreen && $dialog.data('ui-draggable') === undefined) {
+                        $dialog.draggable({handle: '.modal-header'});
+                    }
+                    window.dispatchEvent(new Event('resize'));
+                });
 
                 root.find('.modal-dialog')
                     .attr({
@@ -318,6 +339,9 @@ const defaultDisplayContent = async function(annotation, player) {
                 // When modal is shown, resolve the promise.
                 root.off(ModalEvents.shown).on(ModalEvents.shown, function() {
                     root.attr('data-region', 'popup'); // Must set to avoid dismissing the modal when clicking outside.
+                    if (root.hasClass('modal-fullscreen')) {
+                        root.find('.toggle-fullscreen i').removeClass('bi-fullscreen').addClass('bi-fullscreen-exit');
+                    }
                     setTimeout(() => {
                         root.addClass('jelly-anim');
                     }, 10);

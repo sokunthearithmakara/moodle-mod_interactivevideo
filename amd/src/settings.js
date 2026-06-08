@@ -25,6 +25,7 @@ define(['jquery', 'core/modal_events'],
     function($, modalEvents) {
 
         var init = async function() {
+            window.M = window.M || {};
             window.M.version = $('#iv-m-version').data('value');
             let ModalFactory;
             if (window.M.version >= 403) {
