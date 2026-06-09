@@ -210,7 +210,7 @@ export default class Chapter extends Base {
                     locked = true;
                 }
             } else if (settings.lock == 'untilcomplete') {
-                if (self.options.isCompleted == false) {
+                if (this.options.isCompleted == false) {
                     locked = true;
                 }
             }
@@ -243,7 +243,7 @@ export default class Chapter extends Base {
     async runInteraction(annotation, $wrapper) {
         if (annotation.intg1 == 1) {
             // Render as cover.
-        let $annotationcontent = $wrapper.find('#annotation-canvas');
+            let $annotationcontent = $wrapper.find('#annotation-canvas');
             const $message = await this.handleInlineDisplay(annotation, '', $annotationcontent);
             await this.applyContent(annotation, $message);
             return;
@@ -255,7 +255,8 @@ export default class Chapter extends Base {
             if (!advanced.jumpto || advanced.jumpto == '') {
                 const nextid = state.sequence[index + 1];
                 if (nextid) {
-                    state.navigateToAnnotation(nextid);
+                    await state.navigateToInteraction(nextid, false, 'next');
+                    return;
                 } else {
                     // Show endscreen.
                 }
@@ -263,7 +264,8 @@ export default class Chapter extends Base {
                 const jumpto = advanced.jumpto;
                 const nextid = state.sequence.find(id => id == jumpto);
                 if (nextid) {
-                    state.navigateToAnnotation(nextid);
+                    await state.navigateToInteraction(nextid, false, 'next');
+                    return;
                 } else {
                     // Show endscreen.
                 }
@@ -272,15 +274,18 @@ export default class Chapter extends Base {
             if (!advanced.backto || advanced.backto == '') {
                 const backto = state.sequence[index - 1];
                 if (backto) {
-                    state.navigateToAnnotation(backto);
+                    await state.navigateToInteraction(backto, false, 'prev');
+                    return;
                 } else { // No previous annotation.
-                    state.navigateToAnnotation(state.sequence[index + 1]);
+                    await state.navigateToInteraction(state.sequence[index + 1], false, 'prev');
+                    return;
                 }
             } else {
                 const backto = advanced.backto;
                 const nextid = state.sequence.find(id => id == backto);
                 if (nextid) {
-                    state.navigateToAnnotation(nextid);
+                    await state.navigateToInteraction(nextid, false, 'prev');
+                    return;
                 } else {
                     // Show endscreen.
                 }

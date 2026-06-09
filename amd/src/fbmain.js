@@ -107,6 +107,49 @@ export default class InteractiveVideo extends Base {
             });
 
             let timeInterval = null;
+
+            /**
+             * Handle reaching the segment end: pause, record completion, seek to start, show restart screen.
+             *
+             * @param {number|string} annoId Annotation id
+             */
+            const handleSegmentEnded = async (annoId) => {
+                if (!annoId || self._segmentEnded === annoId) {
+                    return;
+                }
+                const player = self['player_' + annoId];
+                if (!player) {
+                    return;
+                }
+                self._segmentEnded = annoId;
+
+                clearInterval(timeInterval);
+                timeInterval = null;
+
+                try {
+                    player.pause();
+                } catch (err) {
+                    // Ignore.
+                }
+
+                const isPlayerMode = !self.isEditMode() && !isViewReport;
+                if (isPlayerMode && state.currentanno?.id == annoId) {
+                    if (state.interactionData?.[annoId]) {
+                        state.interactionData[annoId].timestamp = player.start ?? startTime;
+                    }
+                    self.dispatchEvent('iv:complete');
+                    self.triggerCompletion(state.currentanno);
+                }
+
+                try {
+                    player.seek(player.start ?? startTime);
+                } catch (err) {
+                    // Ignore.
+                }
+
+                toggleRestartScreen($body.find(`#restart-screen-${annoId}`), true);
+            };
+
             const startTimeInterval = () => {
                 if (timeInterval) {
                     clearInterval(timeInterval);
@@ -126,11 +169,7 @@ export default class InteractiveVideo extends Base {
                         }
 
                         if (currentTime >= player.end) {
-                            player.pause();
-                            player.seek(player.start);
-                            clearInterval(timeInterval);
-                            toggleRestartScreen($body.find(`#restart-screen-${annotation.id}`), true);
-                            $(document).trigger('iv:playerEnded.' + annotation.id);
+                            await handleSegmentEnded(id);
                         }
                     } catch (err) {
                         window.console.log(err);
@@ -154,6 +193,7 @@ export default class InteractiveVideo extends Base {
                 const id = $(this).attr('data-annotation');
                 const player = self['player_' + id];
                 if (player) {
+                    self._segmentEnded = null;
                     player.seek(startTime);
                     player.play();
                     toggleRestartScreen($(this).closest('.restart-screen'), false);
@@ -223,15 +263,11 @@ export default class InteractiveVideo extends Base {
             });
 
             if (self.isEditMode() || isViewReport) {
-                $(document).off('iv:playerEnded.fbinteractivevideo').on('iv:playerEnded.fbinteractivevideo', () => {
-                    const id = annotation.id;
-                    const player = this['player_' + id];
-                    if (!player) {
+                $(document).off('iv:playerEnded.fbinteractivevideo').on('iv:playerEnded.fbinteractivevideo', (e) => {
+                    if (e.target.id != `fbvideo-${annotation.id}`) {
                         return;
                     }
-                    player.pause();
-                    clearInterval(timeInterval);
-                    toggleRestartScreen($body.find(`#restart-screen-${id}`), true);
+                    handleSegmentEnded(annotation.id);
                 });
                 return;
             }
@@ -241,35 +277,7 @@ export default class InteractiveVideo extends Base {
                     return;
                 }
                 e.stopImmediatePropagation();
-                if (this._firingEnded === state.currentanno.id) {
-                    return;
-                }
-                this._firingEnded = state.currentanno.id;
-                const player = this['player_' + state.currentanno.id];
-                if (!player) {
-                    return;
-                }
-
-                clearInterval(timeInterval);
-                timeInterval = null;
-                if (state.interactionData && state.interactionData[state.currentanno.id]) {
-                    try {
-                        state.interactionData[state.currentanno.id].timestamp = player.start;
-                    } catch (e) {
-                        // Ignore.
-                    }
-                }
-                annotation = state.currentanno;
-                this.dispatchEvent('iv:complete');
-
-                this.triggerCompletion(annotation);
-
-                toggleRestartScreen($body.find(`#restart-screen-${state.currentanno.id}`), true);
-
-                // Reset the guard after a short delay to allow future completions if the video is replayed.
-                setTimeout(() => {
-                    this._firingEnded = null;
-                }, 2000);
+                await handleSegmentEnded(state.currentanno?.id);
             });
 
             // Event listeners for the player.
