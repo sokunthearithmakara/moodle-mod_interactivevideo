@@ -84,13 +84,13 @@ class interactivevideo_util {
         }
         $record->title = $record->title . ' (' . get_string('copynoun', 'mod_interactivevideo') . ')';
         $record->id = $DB->insert_record('interactivevideo_items', $record);
-        // Handle related files in content, text1, text2, text3.
+        // Handle related files in item fileareas.
         require_once($CFG->libdir . '/filelib.php');
         $fs = get_file_storage();
         $contentfiles = $fs->get_area_files($contextid, 'mod_interactivevideo', 'content', $id, 'id ASC', false);
-        $text1files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text1', $id, 'id ASC', false);
-        $text2files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text2', $id, 'id ASC', false);
-        $text3files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text3', $id, 'id ASC', false);
+        $text1files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'itext1', $id, 'id ASC', false);
+        $text2files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'itext2', $id, 'id ASC', false);
+        $text3files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'itext3', $id, 'id ASC', false);
 
         // Merge the files.
         $files = array_merge($contentfiles, $text1files, $text2files, $text3files);
@@ -1129,7 +1129,7 @@ class interactivevideo_util {
                 ];
             }
 
-            $text1files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text1', $annotation->id, 'id ASC', false);
+            $text1files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'itext1', $annotation->id, 'id ASC', false);
             foreach ($text1files as $file) {
                 if ($file->get_filename() == '.') {
                     continue;
@@ -1139,11 +1139,11 @@ class interactivevideo_util {
                     'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
                     'itemid' => $file->get_itemid(),
                     'file' => $file,
-                    'area' => 'text1',
+                    'area' => 'itext1',
                 ];
             }
 
-            $text2files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text2', $annotation->id, 'id ASC', false);
+            $text2files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'itext2', $annotation->id, 'id ASC', false);
             foreach ($text2files as $file) {
                 if ($file->get_filename() == '.') {
                     continue;
@@ -1153,11 +1153,11 @@ class interactivevideo_util {
                     'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
                     'itemid' => $file->get_itemid(),
                     'file' => $file,
-                    'area' => 'text2',
+                    'area' => 'itext2',
                 ];
             }
 
-            $text3files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'text3', $annotation->id, 'id ASC', false);
+            $text3files = $fs->get_area_files($contextid, 'mod_interactivevideo', 'itext3', $annotation->id, 'id ASC', false);
             foreach ($text3files as $file) {
                 if ($file->get_filename() == '.') {
                     continue;
@@ -1167,7 +1167,7 @@ class interactivevideo_util {
                     'formattedfilename' => '$$' . $file->get_itemid() . '$$' . $file->get_filename(),
                     'itemid' => $file->get_itemid(),
                     'file' => $file,
-                    'area' => 'text3',
+                    'area' => 'itext3',
                 ];
             }
 

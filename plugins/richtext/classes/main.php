@@ -178,7 +178,7 @@ class main {
         $text1files = $fs->get_area_files(
             $oldcontextid,
             'mod_interactivevideo',
-            'text1',
+            'itext1',
             (int) $annotation->oldid,
             'id ASC',
             false
@@ -186,7 +186,7 @@ class main {
         $text2files = $fs->get_area_files(
             $oldcontextid,
             'mod_interactivevideo',
-            'text2',
+            'itext2',
             (int) $annotation->oldid,
             'id ASC',
             false
@@ -194,7 +194,7 @@ class main {
         $text3files = $fs->get_area_files(
             $oldcontextid,
             'mod_interactivevideo',
-            'text3',
+            'itext3',
             (int) $annotation->oldid,
             'id ASC',
             false

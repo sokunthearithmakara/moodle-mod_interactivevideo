@@ -108,6 +108,9 @@ switch ($action) {
         // Delete files.
         $fs->delete_area_files($contextid, 'mod_interactivevideo', 'content', $id);
         $fs->delete_area_files($contextid, 'mod_interactivevideo', 'public', $id);
+        $fs->delete_area_files($contextid, 'mod_interactivevideo', 'itext1', $id);
+        $fs->delete_area_files($contextid, 'mod_interactivevideo', 'itext2', $id);
+        $fs->delete_area_files($contextid, 'mod_interactivevideo', 'itext3', $id);
         $fs->delete_area_files($contextid, 'mod_interactivevideo', 'asset', $id);
         // Delete logs files & logs.
         if ($logs) {
