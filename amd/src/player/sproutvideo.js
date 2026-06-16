@@ -23,6 +23,7 @@
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+import fetchOembed from 'mod_interactivevideo/player/oembed';
 
 let player = {};
 
@@ -56,12 +57,8 @@ class SproutVideo {
         let self = this;
         const getData = async() => {
             try {
-                const data = await $.ajax({
-                    url: `https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/${videoId}`,
-                    type: 'GET',
-                    dataType: 'json',
-                });
-                return data;
+                const oembedUrl = `https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/${videoId}`;
+                return await fetchOembed(oembedUrl);
             } catch {
                 return {error: true};
             }
@@ -256,12 +253,8 @@ class SproutVideo {
 
         const getData = async() => {
             try {
-                const data = await $.ajax({
-                    url: `https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/${videoId}`,
-                    type: 'GET',
-                    dataType: 'json',
-                });
-                return data;
+                const oembedUrl = `https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/${videoId}`;
+                return await fetchOembed(oembedUrl);
             } catch {
                 return {error: true};
             }

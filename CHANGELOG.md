@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.3] - 2026-06-16
+
+### Added
+
+- Shared `player/oembed` AMD module for server-side oEmbed fetches through `ajax.php`.
+- Exported `getVideoType` from `fb_util` for Flexbook video URL detection.
+
+### Fixed
+
+- Require `mod/interactivevideo:view` capability on the `get_from_url` ajax action.
+- Flexbook segment replay now seeks to the segment start and pauses correctly after replay.
+- Flexbook `interactionclose` replay handler now targets the correct annotation and guards missing event detail.
+- Improved video URL regex coverage (YouTube Shorts/Live, Wistia embed domains, Vimeo player URLs, and more).
+- HTML5 video type detection no longer leaves stray `<video>` elements and times out after 3 seconds.
+- Video info preview creates a temporary wrapper when `#video-info-wrapper` is absent.
+- DynTube, SproutVideo, Vimeo, and Wistia players use the shared oEmbed helper.
+- Flexbook interaction iframe width in the editor preview.
+
 ## [1.8.2] - 2026-06-10
 
 ### Fixed

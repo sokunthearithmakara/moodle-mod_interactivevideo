@@ -21,158 +21,165 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import $ from 'jquery';
-const getVideoInfo = async(url) => {
-    let type = 'unknown';
 
-    const checkVideo = (url) => new Promise((resolve) => {
-        // Check if URL appears to be an HLS or DASH stream.
-        if (url.includes('.m3u8') || url.includes('.mpd')) {
-            // First check if the file is accessible.
-            let video = document.createElement('video');
-            // For HLS (m3u8) and DASH (mpd), use appropriate MIME types.
-            let type = url.includes('.m3u8') ? 'application/vnd.apple.mpegurl' : 'application/dash+xml';
-            // Check if the browser can play the stream type.
-            if (video.canPlayType(type)) {
-                resolve(true);
-            } else {
-                if (url.includes('.m3u8')) {
-                    require(['mod_interactivevideo/player/hls'], function(Hls) {
-                        if (Hls.isSupported()) {
-                            resolve(true);
-                        } else {
-                            resolve(false);
-                        }
-                    });
-                } else if (url.includes('.mpd')) {
-                    require(['mod_interactivevideo/player/dash'], function(dashjs) {
-                        if (dashjs.MediaPlayer()) {
-                            resolve(true);
-                        } else {
-                            resolve(false);
-                        }
-                    });
-                } else {
-                    resolve(false);
-                }
-            }
-            return;
-        }
-
-        // Remove video element if it exists.
-        const existingVideo = document.querySelector('video');
-        if (existingVideo) {
-            existingVideo.remove();
-        }
-        let video = document.createElement('video');
-        video.src = url;
-        video.addEventListener('canplay', function() {
-            resolve(true);
-        });
-        video.addEventListener('error', function() {
-            resolve(false);
-        });
-    });
-
-    let regexes = [
+const videoTypeRegexes = [
         {
             'type': 'yt',
             'regex': new RegExp(
                 '(?:https?:\\/\\/)?' +
                 '(?:www\\.)?' +
                 '(?:youtube\\.com|youtu\\.be|youtube-nocookie\\.com)' +
-                '(?:\\/embed\\/|\\/watch\\?v=|\\/)([^\\/]+)',
-                'g'
+                '(?:\\/embed\\/|\\/shorts\\/|\\/live\\/|\\/watch\\?v=|\\/)([^\\/?&#]+)',
+                'i'
             ),
         },
         {
             'type': 'vimeo',
-            'regex': /(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com)\/([^/]+)/g,
+            'regex': /(?:https?:\/\/)?(?:(?:www\.)?vimeo\.com\/(?:video\/)?\d+|player\.vimeo\.com\/video\/\d+)/i,
         },
         {
             'type': 'panopto',
-            'regex': /(?:https?:\/\/)?(?:www\.)?(?:[^/]*panopto\.[^/]+)\/Panopto\/.+\?id=([^/]+)/g,
+            'regex': /(?:https?:\/\/)?(?:www\.)?(?:[^/]*panopto\.[^/]+)\/Panopto\/.+\?id=([^/]+)/i,
         },
         {
             'type': 'dailymotion',
-            'regex': /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/g,
+            'regex': /(?:https?:\/\/)?(?:www\.)?(?:dai\.ly|dailymotion\.com)\/(?:embed\/video\/|video\/|)([^/]+)/i,
         },
         {
             'type': 'wistia',
             'regex': new RegExp(
                 '(?:https?:\\/\\/)?' +
-                '(?:www\\.)?' +
-                '(?:wistia\\.com)\\/medias\\/([^\\/]+)',
-                'g'
+                '(?:[^\\/]+\\.)?' +
+                '(?:wistia\\.(?:com|net)|fast\\.wistia\\.(?:com|net))' +
+                '\\/(?:medias|embed\\/iframe)\\/([^\\/?&#]+)',
+                'i'
             ),
         },
         {
             'type': 'rumble',
-            'regex': /https:\/\/rumble.com\/([a-zA-Z0-9]+)/,
+            'regex': /https?:\/\/(?:www\.)?rumble\.com\/(?:embed\/)?([a-zA-Z0-9]+)/i,
         },
         {
             'type': 'sproutvideo',
-            'regex': /(?:https?:\/\/)?(?:[^.]+\.)*(?:sproutvideo\.com\/(?:videos|embed)|vids\.io\/videos)\/([^/]+)/,
+            'regex': /(?:https?:\/\/)?(?:[^.]+\.)*(?:sproutvideo\.com\/(?:videos|embed)|vids\.io\/videos)\/([^/]+)/i,
         },
         {
             'type': 'kinescope',
-            'regex': /https:\/\/kinescope.io\/(.+)/,
+            'regex': /https?:\/\/kinescope\.io\/([^/?#]+)/i,
         },
         {
             'type': 'rutube',
-            'regex': /https:\/\/rutube.ru\/video\/(?:private\/)?(.+)/,
+            'regex': /https?:\/\/rutube\.ru\/video\/(?:private\/)?(.+)/i,
         },
         {
             'type': 'spotify',
-            'regex': /https:\/\/open.spotify.com\/(episode|track)\/([^/]+)/,
+            'regex': /https?:\/\/open\.spotify\.com\/(episode|track)\/([^/]+)/i,
         },
         {
             'type': 'soundcloud',
-            'regex': /https:\/\/soundcloud.com\/([^/]+)\/([^/]+)/,
+            'regex': /https?:\/\/soundcloud\.com\/([^/]+)\/([^/]+)/i,
         },
         {
             'type': 'peertube',
-            'regex': /https:\/\/([^/]+)\/w\/([^/]+)/,
+            'regex': /https?:\/\/([^/]+)\/w\/([^/]+)/i,
         },
         {
             'type': 'bunnystream',
-            'regex': /https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/,
+            'regex': /(?:https?:\/\/)?(?:iframe|player)\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/i,
         },
         {
             'type': 'dyntube',
-            'regex': /(?:https?:\/\/)?(videos\.dyntube\.com|dyntube\.com)\/(videos|iframes)\/([^/]+)/,
+            'regex': /(?:https?:\/\/)?(videos\.dyntube\.com|dyntube\.com)\/(videos|iframes)\/([^/]+)/i,
         },
         {
             'type': 'vdocipher',
-            'regex': /(?:https?:\/\/)?(?:www\.)?(?:[^.]+\.)*(?:vdocipher\.com)\/dashboard\/video\/([^/]+)/,
+            'regex': /(?:https?:\/\/)?(?:www\.)?(?:[^.]+\.)*(?:vdocipher\.com)\/dashboard\/video\/([^/]+)/i,
         },
         {
             'type': 'vidyard',
-            'regex': /(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/,
+            'regex': /(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i,
         },
         {
             'type': 'viostream',
-            'regex': /(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/,
+            'regex': /(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i,
         }
     ];
 
-    for (const regex of regexes) {
-        let match = regex.regex.exec(url);
-        if (match) {
-            type = regex.type;
-            break;
+const checkVideo = (url) => new Promise((resolve) => {
+    // Check if URL appears to be an HLS or DASH stream.
+    if (url.includes('.m3u8') || url.includes('.mpd')) {
+        let video = document.createElement('video');
+        let type = url.includes('.m3u8') ? 'application/vnd.apple.mpegurl' : 'application/dash+xml';
+        if (video.canPlayType(type)) {
+            resolve(true);
+        } else {
+            if (url.includes('.m3u8')) {
+                require(['mod_interactivevideo/player/hls'], function(Hls) {
+                    resolve(Hls.isSupported());
+                });
+            } else if (url.includes('.mpd')) {
+                require(['mod_interactivevideo/player/dash'], function(dashjs) {
+                    resolve(Boolean(dashjs.MediaPlayer()));
+                });
+            } else {
+                resolve(false);
+            }
         }
+        return;
     }
 
-    if (type == 'unknown') {
-        if (await checkVideo(url)) {
-            type = 'html5video';
+    let settled = false;
+    let video = document.createElement('video');
+    const finish = (result) => {
+        if (settled) {
+            return;
         }
-    }
+        settled = true;
+        video.removeAttribute('src');
+        video.load();
+        resolve(result);
+    };
+    video.preload = 'metadata';
+    video.src = url;
+    video.addEventListener('loadedmetadata', function() {
+        finish(true);
+    });
+    video.addEventListener('canplay', function() {
+        finish(true);
+    });
+    video.addEventListener('error', function() {
+        finish(false);
+    });
+    setTimeout(() => finish(false), 3000);
+    video.load();
+});
 
-    if (type == 'unknown') {
+const getVideoType = async(url) => {
+    const trimmed = (url || '').trim();
+    if (!trimmed) {
         return null;
     }
 
+    for (const regex of videoTypeRegexes) {
+        let match = regex.regex.exec(trimmed);
+        if (match) {
+            return regex.type;
+        }
+    }
+
+    if (await checkVideo(trimmed)) {
+        return 'html5video';
+    }
+
+    return null;
+};
+
+const getVideoInfo = async(url) => {
+    const type = await getVideoType(url);
+
+    if (!type) {
+        return null;
+    }
 
     // Now get the info from the video: duration, title, poster image.
     let info;
@@ -184,14 +191,26 @@ const getVideoInfo = async(url) => {
     }).then(async(VP) => {
         player = new VP();
         let id = 'video-info-' + new Date().getTime();
-        if (type == 'html5video') {
-            $('#video-info-wrapper')
-                .html(`<video id="${id}" class="w-100" controls></video>`);
-        } else {
-            $('#video-info-wrapper')
-                .html('<div id="' + id + '" class="w-100"></div>');
+        let $wrapper = $('#video-info-wrapper');
+        let temporaryWrapper = false;
+        if (!$wrapper.length) {
+            $wrapper = $('<div id="video-info-wrapper" class="d-none"></div>').appendTo(document.body);
+            temporaryWrapper = true;
         }
-        info = await player.getInfo(url, id);
+        if (type == 'html5video') {
+            $wrapper.html(`<video id="${id}" class="w-100" controls></video>`);
+        } else {
+            $wrapper.html('<div id="' + id + '" class="w-100"></div>');
+        }
+        try {
+            info = await player.getInfo(url, id);
+        } catch (e) {
+            info = null;
+        } finally {
+            if (temporaryWrapper) {
+                $wrapper.remove();
+            }
+        }
         return info;
     });
 
@@ -205,4 +224,4 @@ const getVideoInfo = async(url) => {
     return info;
 };
 
-export {getVideoInfo};
+export {getVideoInfo, getVideoType};

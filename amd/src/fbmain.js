@@ -126,12 +126,6 @@ export default class InteractiveVideo extends Base {
                 clearInterval(timeInterval);
                 timeInterval = null;
 
-                try {
-                    player.pause();
-                } catch (err) {
-                    // Ignore.
-                }
-
                 const isPlayerMode = !self.isEditMode() && !isViewReport;
                 if (isPlayerMode && state.currentanno?.id == annoId) {
                     if (state.interactionData?.[annoId]) {
@@ -142,7 +136,12 @@ export default class InteractiveVideo extends Base {
                 }
 
                 try {
-                    player.seek(player.start ?? startTime);
+                    const restartTime = player.start ?? startTime;
+                    await player.seek(restartTime);
+                    if ('paused' in player) {
+                        player.paused = false;
+                    }
+                    await player.pause();
                 } catch (err) {
                     // Ignore.
                 }
@@ -303,11 +302,11 @@ export default class InteractiveVideo extends Base {
             $(document).off('interactionclose.fbreplay-' + annotation.id)
                 .on('interactionclose.fbreplay-' + annotation.id, async(e) => {
                     clearInterval(timeInterval);
-                    if (e.detail.annotation.id != state.currentanno.id) {
+                    if (!e.detail?.annotation || e.detail.annotation.id != annotation.id) {
                         return;
                     }
                     e.stopImmediatePropagation();
-                    const player = this['player_' + state.currentanno.id];
+                    const player = this['player_' + annotation.id];
                     if (player) {
                         try {
                             player.pause();

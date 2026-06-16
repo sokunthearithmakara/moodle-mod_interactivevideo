@@ -4174,6 +4174,10 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
     height: 100%;
 }
 
+.path-mod-interactivevideo.path-mod-flexbook #video-wrapper.fb-interaction iframe {
+    width: 100% !important;
+}
+
 .path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper iframe,
 .path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper video,
 .path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper audio {

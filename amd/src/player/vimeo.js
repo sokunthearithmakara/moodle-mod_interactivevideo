@@ -22,6 +22,7 @@
  */
 import {dispatchEvent} from 'core/event_dispatcher';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+import fetchOembed from 'mod_interactivevideo/player/oembed';
 
 let player = {};
 
@@ -39,31 +40,100 @@ class Vimeo {
             password: true,
         };
     }
+
+    /**
+     * Extract a Vimeo video id and optional hash from a supported URL.
+     *
+     * @param {string} url Vimeo URL.
+     * @return {Object}
+     */
+    getVideoData(url) {
+        try {
+            const parsed = new URL(url);
+            const path = parsed.pathname.split('/').filter(Boolean);
+            let id = '';
+            let hash = parsed.searchParams.get('h') || '';
+            if (parsed.hostname === 'player.vimeo.com' && path[0] === 'video') {
+                id = path[1] || '';
+            } else {
+                id = path[0] || '';
+                hash = hash || path[1] || '';
+            }
+            return {id, hash};
+        } catch {
+            const match = /(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com)\/([^/?#]+)(?:\/([^/?#]+))?/.exec(url);
+            return {
+                id: match ? match[1] : '',
+                hash: match && match[2] ? match[2] : '',
+            };
+        }
+    }
+
+    /**
+     * Build a direct Vimeo iframe URL so player.js does not resolve page URLs through oEmbed.
+     *
+     * @param {string} url Vimeo URL.
+     * @param {Object} params Embed parameters.
+     * @return {string}
+     */
+    getIframeUrl(url, params = {}) {
+        const video = this.getVideoData(url);
+        const search = new URLSearchParams();
+        if (video.hash) {
+            search.set('h', video.hash);
+        }
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+                search.set(key, value);
+            }
+        });
+        return `https://player.vimeo.com/video/${video.id}?${search.toString()}`;
+    }
+
+    /**
+     * Replace the target node with a Vimeo iframe.
+     *
+     * @param {string} node Target node id.
+     * @param {string} src Iframe source.
+     */
+    setIframe(node, src) {
+        const iframe = document.createElement('iframe');
+        iframe.id = node;
+        iframe.src = src;
+        iframe.width = '1080';
+        iframe.height = '720';
+        iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+        iframe.allowFullscreen = true;
+        iframe.referrerPolicy = 'strict-origin';
+        iframe.setAttribute('frameborder', '0');
+        document.getElementById(node).replaceWith(iframe);
+    }
+
     async getInfo(url, node) {
         this.node = node;
         const _this = this;
         return new Promise((resolve) => {
             let VimeoPlayer;
-            const option = {
-                url: url,
+            const iframeUrl = this.getIframeUrl(url, {
                 width: 1080,
                 height: 720,
-            };
+                dnt: true,
+            });
             const vimeoEvents = (player) => {
                 player.on('loaded', async function() {
                     let title = await player.getVideoTitle();
                     let duration = await player.getDuration();
                     // Get poster image using oEmbed.
                     var posterUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url);
-                    const oEmbed = await fetch(posterUrl);
-                    if (!oEmbed.ok) {
-                        resolve(null);
+                    let posterImage = '';
+                    try {
+                        const oEmbedData = await fetchOembed(posterUrl);
+                        if (oEmbedData.domain_status_code !== 403 && !oEmbedData.error) {
+                            posterImage = oEmbedData.thumbnail_url || '';
+                        }
+                    } catch {
+                        // Vimeo may block oEmbed by network policy. The player API still provides the core metadata.
                     }
-                    const oEmbedData = await oEmbed.json();
-                    if (oEmbedData.domain_status_code === 403 || oEmbedData.error) {
-                        resolve(null);
-                    }
-                    let posterImage = oEmbedData.thumbnail_url || '';
                     resolve({
                         duration,
                         title,
@@ -76,7 +146,8 @@ class Vimeo {
                 try {
                     require(['https://player.vimeo.com/api/player.js'], function(Player) {
                         VimeoPlayer = Player;
-                        player[node] = new Player(node, option);
+                        _this.setIframe(node, iframeUrl);
+                        player[node] = new Player(document.getElementById(node));
                         vimeoEvents(player[node]);
                     });
                 } catch (e) {
@@ -84,7 +155,8 @@ class Vimeo {
                     return;
                 }
             } else {
-                player[node] = new VimeoPlayer(node, option);
+                _this.setIframe(node, iframeUrl);
+                player[node] = new VimeoPlayer(document.getElementById(node));
                 vimeoEvents(player[node]);
             }
         });
@@ -112,55 +184,55 @@ class Vimeo {
         this.aspectratio = 16 / 9;
         // Get poster image using oEmbed.
         var posterUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url);
-        const oEmbed = await fetch(posterUrl);
-        if (!oEmbed.ok) {
-            _this.sendEvent('iv:playerError', {error: 'Video not found'}, _this.node);
-            return;
+        this.posterImage = '';
+        this.title = '';
+        this.videoId = '';
+        try {
+            const oEmbedData = await fetchOembed(posterUrl);
+            if (oEmbedData.domain_status_code !== 403 && !oEmbedData.error) {
+                this.posterImage = oEmbedData.thumbnail_url || '';
+                this.title = oEmbedData.title;
+                this.videoId = oEmbedData.video_id;
+                // Change the dimensions of the poster image to 16:9.
+                this.posterImage = this.posterImage.replace(/_\d+x\d+/, '_720x405');
+                this.aspectratio = oEmbedData.width / oEmbedData.height;
+            }
+        } catch {
+            // Vimeo may block oEmbed by network policy. Continue with the player API.
         }
         document.getElementById('video-wrapper').style.display = 'block';
-        const oEmbedData = await oEmbed.json();
-        if (oEmbedData.domain_status_code === 403 || oEmbedData.error) {
-            _this.sendEvent('iv:playerError', {error: 'Video not found'}, _this.node);
+        if (!this.videoId) {
+            this.videoId = this.getVideoData(url).id;
         }
-        this.posterImage = oEmbedData.thumbnail_url || '';
-        this.title = oEmbedData.title;
-        this.videoId = oEmbedData.video_id;
-        // Change the dimensions of the poster image to 16:9.
-        this.posterImage = this.posterImage.replace(/_\d+x\d+/, '_720x405');
-        this.aspectratio = oEmbedData.width / oEmbedData.height;
         let self = this;
-        const option = {
-            url: url,
+        const iframeUrl = this.getIframeUrl(url, {
             width: 1080,
             height: 720,
-            autoplay: !showControls,
-            controls: showControls,
-            loop: false,
-            muted: true,
-            playsinline: true,
-            background: false,
-            byline: false,
-            portrait: false,
-            title: false,
-            transparent: false,
-            responsive: false,
-            "start_time": start,
-            "end_time": end,
-            pip: false,
-            fullscreen: false,
-            "watch_full_video": false,
-            keyboard: false,
-            dnt: true,
-            chapters: showControls,
-            "interactive_markers": showControls,
-            "vimeo_logo": false,
-            "initial_quality": '360p',
-        };
+            autoplay: !showControls ? 1 : 0,
+            controls: showControls ? 1 : 0,
+            loop: 0,
+            muted: 1,
+            playsinline: 1,
+            background: 0,
+            byline: 0,
+            portrait: 0,
+            title: 0,
+            transparent: 0,
+            responsive: 0,
+            pip: 0,
+            fullscreen: 0,
+            keyboard: 0,
+            dnt: 1,
+            chapters: showControls ? 1 : 0,
+            interactive_markers: showControls ? 1 : 0,
+            vimeo_logo: 0,
+            quality: '360p',
+        });
 
         let ready = false;
         const vimeoEvents = (player) => {
             player.on('loaded', async function() {
-                const iframe = document.querySelector(`#${node} iframe`);
+                const iframe = document.getElementById(node);
                 if (iframe) {
                     iframe.setAttribute('referrerpolicy', 'strict-origin');
                 }
@@ -324,17 +396,19 @@ class Vimeo {
 
         if (!VimeoPlayer) {
             try {
-                require(['https://player.vimeo.com/api/player.js'], function(Player) {
-                    VimeoPlayer = Player;
-                    player[node] = new Player(node, option);
-                    vimeoEvents(player[node]);
-                });
-            } catch (e) {
+                    require(['https://player.vimeo.com/api/player.js'], function(Player) {
+                        VimeoPlayer = Player;
+                        _this.setIframe(node, iframeUrl);
+                        player[node] = new Player(document.getElementById(node));
+                        vimeoEvents(player[node]);
+                    });
+                } catch (e) {
                 _this.sendEvent('iv:playerError', {error: e.message}, _this.node);
                 return;
             }
         } else {
-            player[node] = new VimeoPlayer(node, option);
+            _this.setIframe(node, iframeUrl);
+            player[node] = new VimeoPlayer(document.getElementById(node));
             vimeoEvents(player[node]);
         }
     }

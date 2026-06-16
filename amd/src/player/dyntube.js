@@ -24,6 +24,7 @@
 import $ from 'jquery';
 import {dispatchEvent} from 'core/event_dispatcher';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+import fetchOembed from 'mod_interactivevideo/player/oembed';
 
 let player = {};
 class Dyntube {
@@ -67,12 +68,7 @@ class Dyntube {
 
         const getData = async() => {
             try {
-                const data = await $.ajax({
-                    url: oembedUrl,
-                    type: 'GET',
-                    dataType: 'json',
-                });
-                return data;
+                return await fetchOembed(oembedUrl);
             } catch {
                 return {error: true};
             }
@@ -174,12 +170,7 @@ class Dyntube {
 
         const getData = async() => {
             try {
-                const data = await $.ajax({
-                    url: oembedUrl,
-                    type: 'GET',
-                    dataType: 'json',
-                });
-                return data;
+                return await fetchOembed(oembedUrl);
             } catch {
                 return {error: true};
             }

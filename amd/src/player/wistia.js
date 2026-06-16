@@ -24,6 +24,7 @@
 import $ from 'jquery';
 import {dispatchEvent} from 'core/event_dispatcher';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+import fetchOembed from 'mod_interactivevideo/player/oembed';
 
 let player = {};
 
@@ -55,7 +56,7 @@ class Wistia {
               fullscreenButton=false
                fitStrategy=contain" style="height:100%;width:100%"></div>`);
             let self = this;
-            $.get('https://fast.wistia.com/oembed.json?url=' + url)
+            fetchOembed('https://fast.wistia.com/oembed.json?url=' + encodeURIComponent(url))
                 .then(function(data) {
                     self.posterImage = data.thumbnail_url;
                     self.title = data.title;
@@ -124,7 +125,7 @@ class Wistia {
                fitStrategy=contain" style="height:100%;width:100%"></div>`);
         let self = this;
         if (opts.editform) {
-            $.get('https://fast.wistia.com/oembed.json?url=' + url)
+            fetchOembed('https://fast.wistia.com/oembed.json?url=' + encodeURIComponent(url))
                 .then(function(data) {
                     self.posterImage = data.thumbnail_url;
                     self.title = data.title;

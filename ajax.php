@@ -44,6 +44,7 @@ switch ($action) {
         echo interactivevideo_util::format_content($text, 1, $contextid);
         break;
     case 'get_from_url':
+        require_capability('mod/interactivevideo:view', $context);
         $url = required_param('url', PARAM_URL);
         // Send get request to the URL.
         $response = file_get_contents($url);
