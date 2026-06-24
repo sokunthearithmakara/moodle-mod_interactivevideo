@@ -1597,8 +1597,8 @@ html:has(.path-mod-interactivevideo) {
     margin-top: 3.5rem;
 }
 
-#page-mod-interactivevideo-report #annotation-modal.has-completion-detail-nav .modal-content,
-#page-mod-flexbook-report #annotation-modal.has-completion-detail-nav .modal-content {
+#page-mod-interactivevideo-report #annotation-modal.has-completion-detail-nav:not(.modal-fullscreen) .modal-content,
+#page-mod-flexbook-report #annotation-modal.has-completion-detail-nav:not(.modal-fullscreen) .modal-content {
     max-height: calc(var(--ivdvh) - 5.5rem);
 }
 

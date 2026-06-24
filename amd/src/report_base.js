@@ -32,6 +32,9 @@ import {get_string as getString} from 'core/str';
  */
 export default class ReportBase {
 
+    /** @type {number} Monotonic id to ignore stale async nav updates. */
+    static completionDetailNavGeneration = 0;
+
     /**
      * Get the standard export options for DataTables buttons.
      *
@@ -415,13 +418,6 @@ export default class ReportBase {
     }
 
     /**
-     * Get filtered and sorted users with clickable completion details for an item.
-     *
-     * @param {Object} tabledata The DataTable instance.
-     * @param {Number|String} itemId The interaction item id.
-     * @returns {Array}
-     */
-    /**
      * Get completion details for a specific interaction item from a report row.
      *
      * @param {Object} rowData Report row data.
@@ -459,37 +455,36 @@ export default class ReportBase {
         return `${earnedXp} XP`;
     }
 
+    /**
+     * Get filtered and sorted users with completion data for an interaction column.
+     *
+     * Uses row completiondetails only — skip empty cells (no detail) and deleted rows.
+     *
+     * @param {Object} tabledata The DataTable instance.
+     * @param {Number|String} itemId The interaction item id.
+     * @param {Number} maxXp Maximum XP for the interaction.
+     * @returns {Array}
+     */
     static getCompletionDetailNavUsers(tabledata, itemId, maxXp = 0) {
-        const columnIndex = ReportBase.getCompletionDetailColumnIndex(tabledata, itemId);
-        if (columnIndex < 0) {
-            return [];
-        }
-
         const users = [];
         tabledata.rows({search: 'applied', order: 'applied'}).every(function() {
             const rowData = this.data() || {};
-            const rowIndex = this.index();
-            const renderedCell = tabledata.cell(rowIndex, columnIndex).render('display') || '';
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = renderedCell;
-            const detail = wrapper.querySelector('.completion-detail.cursor-pointer');
-            if (!detail) {
+            const itemDetails = ReportBase.getCompletionDetailForItem(rowData, itemId);
+            if (!itemDetails || itemDetails.deleted) {
                 return;
             }
 
             const rowNode = this.node();
-            const userid = rowData.id || (rowNode ? $(rowNode).attr('id') : '') || detail.getAttribute('data-userid');
+            const userid = rowData.id || (rowNode ? $(rowNode).attr('id') : '');
             if (!userid) {
                 return;
             }
 
-            const itemDetails = ReportBase.getCompletionDetailForItem(rowData, itemId);
-
             users.push({
                 userid: String(userid),
-                fullname: rowData.fullname || detail.getAttribute('data-fullname') || String(userid),
+                fullname: rowData.fullname || String(userid),
                 pictureonly: rowData.pictureonly || '',
-                xp: itemDetails && itemDetails.xp !== undefined && itemDetails.xp !== null ? Number(itemDetails.xp) : 0,
+                xp: itemDetails.xp !== undefined && itemDetails.xp !== null ? Number(itemDetails.xp) : 0,
                 maxXp: Number(maxXp) || 0,
                 completionid: rowData.completionid || '',
             });
@@ -567,6 +562,21 @@ export default class ReportBase {
     }
 
     /**
+     * Whether a completion detail nav update is still valid for the current modal.
+     *
+     * @param {Object} root The modal root.
+     * @param {Number} navGeneration Nav generation id from context.
+     * @returns {Boolean}
+     */
+    static isCompletionDetailNavActive(root, navGeneration) {
+        if (navGeneration !== ReportBase.completionDetailNavGeneration) {
+            return false;
+        }
+        const $root = root instanceof $ ? root : $(root);
+        return $root.length && $root.attr('id') === 'annotation-modal' && $root.find('.completion-detail-nav').length > 0;
+    }
+
+    /**
      * Open a completion detail modal and add report navigation to it.
      *
      * @param {Object} context Navigation context.
@@ -574,40 +584,84 @@ export default class ReportBase {
      */
     static async openCompletionDetail(context) {
         const maxXp = context.maxXp ?? 0;
-        const users = ReportBase.getCompletionDetailNavUsers(context.tabledata, context.itemId, maxXp);
-        let currentIndex = users.findIndex((user) => user.userid == context.userid);
-        if (currentIndex < 0) {
-            users.push({
-                userid: String(context.userid),
-                fullname: context.fullname || String(context.userid),
-                pictureonly: context.pictureonly || '',
-                xp: context.xp ?? 0,
-                maxXp: maxXp,
-                completionid: context.completionid || '',
-            });
-            currentIndex = users.length - 1;
-        }
+        const navGeneration = ++ReportBase.completionDetailNavGeneration;
 
-        const currentUser = users[currentIndex];
         const nextContext = {
             ...context,
-            users,
-            index: currentIndex,
-            userid: currentUser.userid,
-            fullname: currentUser.fullname,
-            pictureonly: currentUser.pictureonly,
-            xp: currentUser.xp,
-            maxXp: currentUser.maxXp,
-            completionid: currentUser.completionid || context.completionid || '',
+            maxXp,
+            navGeneration,
         };
 
-        ReportBase.completionDetailNavState = nextContext;
-        await context.openCompletion(context.itemId, currentUser.userid, context.type);
+        if (Array.isArray(context.users)) {
+            const currentIndex = context.users.findIndex((user) => user.userid == context.userid);
+            nextContext.users = context.users;
+            nextContext.index = currentIndex >= 0 ? currentIndex : 0;
+        } else {
+            nextContext.index = -1;
+        }
+
+        await context.openCompletion(context.itemId, context.userid, context.type);
 
         const root = await ReportBase.waitForCompletionDetailModal();
-        if (root.length) {
-            await ReportBase.injectCompletionDetailNav(root, nextContext);
+        if (!root.length || navGeneration !== ReportBase.completionDetailNavGeneration) {
+            return;
         }
+
+        await ReportBase.injectCompletionDetailNavPlaceholder(root, nextContext);
+        ReportBase.finishCompletionDetailNav(root, nextContext).catch(() => {
+            // Pager stays on placeholder if the user scan fails.
+        });
+    }
+
+    /**
+     * Build the nav user list and refresh pager controls after the modal is shown.
+     *
+     * @param {Object} root The modal root.
+     * @param {Object} context Navigation context.
+     * @returns {Promise}
+     */
+    static async finishCompletionDetailNav(root, context) {
+        const navGeneration = context.navGeneration;
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        if (!ReportBase.isCompletionDetailNavActive(root, navGeneration)) {
+            return;
+        }
+
+        if (!Array.isArray(context.users)) {
+            const maxXp = context.maxXp ?? 0;
+            let users = ReportBase.getCompletionDetailNavUsers(context.tabledata, context.itemId, maxXp);
+            let currentIndex = users.findIndex((user) => user.userid == context.userid);
+            if (currentIndex < 0) {
+                users.push({
+                    userid: String(context.userid),
+                    fullname: context.fullname || String(context.userid),
+                    pictureonly: context.pictureonly || '',
+                    xp: context.xp ?? 0,
+                    maxXp: maxXp,
+                    completionid: context.completionid || '',
+                });
+                currentIndex = users.length - 1;
+            }
+            context.users = users;
+            context.index = currentIndex;
+
+            const currentUser = context.users[context.index];
+            if (currentUser) {
+                context.userid = currentUser.userid;
+                context.fullname = currentUser.fullname;
+                context.pictureonly = currentUser.pictureonly;
+                context.xp = currentUser.xp;
+                context.maxXp = currentUser.maxXp;
+                context.completionid = currentUser.completionid || context.completionid || '';
+            }
+        }
+
+        if (!ReportBase.isCompletionDetailNavActive(root, navGeneration)) {
+            return;
+        }
+
+        ReportBase.refreshCompletionDetailNav(root, context);
     }
 
     /**
@@ -635,66 +689,48 @@ export default class ReportBase {
     }
 
     /**
-     * Add previous and next controls to the current completion detail modal.
+     * Update completion detail nav controls after the user list is ready.
      *
      * @param {Object} root The modal root.
      * @param {Object} context Navigation context.
-     * @returns {Promise}
      */
-    static async injectCompletionDetailNav(root, context) {
-        root.addClass('has-completion-detail-nav');
-        root.find('.completion-detail-nav').remove();
+    static refreshCompletionDetailNav(root, context) {
+        const nav = root.find('.completion-detail-nav');
+        if (!nav.length) {
+            return;
+        }
 
-        const component = context.stringComponent || 'mod_interactivevideo';
-        const previousLabel = await getString('previous', component);
-        const nextLabel = await getString('next', component);
-        const position = `${context.index + 1}/${context.users.length}`;
-        const earnedXp = Number(context.xp) || 0;
-        const maxXp = Number(context.maxXp) || 0;
-        const canEditXp = context.canedit == 1 && typeof context.saveXpOverride === 'function' && maxXp > 0;
+        const hasUsers = Array.isArray(context.users) && context.users.length > 0;
+        const position = hasUsers ? `${context.index + 1}/${context.users.length}` : '…';
 
-        const nav = $(`<div class="completion-detail-nav d-flex align-items-center justify-content-between">
-                <div class="completion-detail-nav-profile-region min-w-0 iv-mr-3"></div>
-                <div class="completion-detail-nav-controls d-flex align-items-center flex-shrink-0">
-                    <span class="completion-detail-nav-xp-region d-flex align-items-center flex-shrink-0"></span>
-                    <div class="btn-group completion-detail-nav-pager iv-ml-2" role="group">
-                        <button type="button" class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-button"
-                                data-direction="previous" aria-label="${previousLabel}">
-                            <i class="bi bi-chevron-left fs-unset" aria-hidden="true"></i>
-                        </button>
-                        <span class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-position"></span>
-                        <button type="button" class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-button"
-                                data-direction="next" aria-label="${nextLabel}">
-                            <i class="bi bi-chevron-right fs-unset" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>`);
-
-        nav.find('.completion-detail-nav-profile-region')
+        nav.find('.completion-detail-nav-profile-region').empty()
             .append(ReportBase.renderCompletionDetailProfile(context));
         nav.find('.completion-detail-nav-position').text(position);
 
-        const xpRegion = nav.find('.completion-detail-nav-xp-region');
-        if (canEditXp) {
-            const saveLabel = await getString('save', 'core');
-            const xpLabel = await getString('xp', 'mod_interactivevideo');
-            xpRegion.addClass('completion-detail-nav-xp-edit');
-            xpRegion.html(`<input type="number" class="form-control form-control-sm completion-detail-nav-xp-input"
-                        min="0" max="${maxXp}" step="any" value="${earnedXp}" aria-label="${xpLabel}">
-                    <span class="completion-detail-nav-xp-max iv-ml-1">/ ${maxXp}</span>
-                    <button type="button" class="btn btn-sm btn-primary btn-rounded completion-detail-nav-xp-save iv-ml-1"
-                            title="${saveLabel}" aria-label="${saveLabel}">
-                        <i class="bi bi-check-lg fs-unset" aria-hidden="true"></i>
-                    </button>`);
+        const earnedXp = Number(context.xp) || 0;
+        const maxXp = Number(context.maxXp) || 0;
+        const xpInput = nav.find('.completion-detail-nav-xp-input');
+        if (xpInput.length) {
+            xpInput.val(earnedXp);
         } else {
-            xpRegion.append($('<span class="badge iv-badge-secondary completion-detail-nav-xp"></span>')
-                .text(ReportBase.formatCompletionDetailXp(earnedXp, maxXp)));
+            const xpBadge = nav.find('.completion-detail-nav-xp');
+            if (xpBadge.length) {
+                xpBadge.text(ReportBase.formatCompletionDetailXp(earnedXp, maxXp));
+            }
         }
 
-        nav.find('[data-direction="previous"]').prop('disabled', context.index === 0);
-        nav.find('[data-direction="next"]').prop('disabled', context.index >= context.users.length - 1);
+        nav.find('[data-direction="previous"]').prop('disabled', !hasUsers || context.index <= 0);
+        nav.find('[data-direction="next"]').prop('disabled', !hasUsers || context.index >= context.users.length - 1);
+    }
 
+    /**
+     * Bind completion detail nav events.
+     *
+     * @param {Object} nav The nav element.
+     * @param {Object} root The modal root.
+     * @param {Object} context Navigation context.
+     */
+    static bindCompletionDetailNavEvents(nav, root, context) {
         nav.on('click', function(e) {
             e.stopPropagation();
         });
@@ -716,6 +752,10 @@ export default class ReportBase {
         nav.on('click', '.completion-detail-nav-button', async function(e) {
             e.preventDefault();
             e.stopPropagation();
+
+            if (!Array.isArray(context.users) || context.users.length === 0) {
+                return;
+            }
 
             const direction = $(this).data('direction');
             const targetIndex = direction === 'previous' ? context.index - 1 : context.index + 1;
@@ -739,9 +779,66 @@ export default class ReportBase {
         root.off(ModalEvents.hidden + '.completionDetailNav').on(ModalEvents.hidden + '.completionDetailNav', function() {
             $(this).find('.completion-detail-nav').remove();
             $(this).removeClass('has-completion-detail-nav');
-            ReportBase.completionDetailNavState = null;
         });
+    }
 
+    /**
+     * Add placeholder previous/next controls to the current completion detail modal.
+     *
+     * @param {Object} root The modal root.
+     * @param {Object} context Navigation context.
+     * @returns {Promise}
+     */
+    static async injectCompletionDetailNavPlaceholder(root, context) {
+        root.addClass('has-completion-detail-nav');
+        root.find('.completion-detail-nav').remove();
+
+        const component = context.stringComponent || 'mod_interactivevideo';
+        const previousLabel = await getString('previous', component);
+        const nextLabel = await getString('next', component);
+        const earnedXp = Number(context.xp) || 0;
+        const maxXp = Number(context.maxXp) || 0;
+        const canEditXp = context.canedit == 1 && typeof context.saveXpOverride === 'function' && maxXp > 0;
+
+        const nav = $(`<div class="completion-detail-nav d-flex align-items-center justify-content-between">
+                <div class="completion-detail-nav-profile-region min-w-0 iv-mr-3"></div>
+                <div class="completion-detail-nav-controls d-flex align-items-center flex-shrink-0">
+                    <span class="completion-detail-nav-xp-region d-flex align-items-center flex-shrink-0"></span>
+                    <div class="btn-group completion-detail-nav-pager iv-ml-2" role="group">
+                        <button type="button" class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-button"
+                                data-direction="previous" aria-label="${previousLabel}" disabled>
+                            <i class="bi bi-chevron-left fs-unset" aria-hidden="true"></i>
+                        </button>
+                        <span class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-position">…</span>
+                        <button type="button" class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-button"
+                                data-direction="next" aria-label="${nextLabel}" disabled>
+                            <i class="bi bi-chevron-right fs-unset" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>`);
+
+        nav.find('.completion-detail-nav-profile-region')
+            .append(ReportBase.renderCompletionDetailProfile(context));
+
+        const xpRegion = nav.find('.completion-detail-nav-xp-region');
+        if (canEditXp) {
+            const saveLabel = await getString('save', 'core');
+            const xpLabel = await getString('xp', 'mod_interactivevideo');
+            xpRegion.addClass('completion-detail-nav-xp-edit');
+            xpRegion.html(`<input type="number" class="form-control form-control-sm completion-detail-nav-xp-input"
+                        min="0" max="${maxXp}" step="any" value="${earnedXp}" aria-label="${xpLabel}">
+                    <span class="completion-detail-nav-xp-max iv-ml-1">/ ${maxXp}</span>
+                    <button type="button" class="btn btn-sm btn-primary btn-rounded completion-detail-nav-xp-save iv-ml-1"
+                            title="${saveLabel}" aria-label="${saveLabel}">
+                        <i class="bi bi-check-lg fs-unset" aria-hidden="true"></i>
+                    </button>`);
+        } else {
+            xpRegion.append($('<span class="badge iv-badge-secondary completion-detail-nav-xp"></span>')
+                .text(ReportBase.formatCompletionDetailXp(earnedXp, maxXp)));
+        }
+
+        ReportBase.bindCompletionDetailNavEvents(nav, root, context);
         root.prepend(nav);
     }
 
@@ -903,7 +1000,10 @@ export default class ReportBase {
         const tabledata = params.tabledata || params.table;
 
         $(document).off('click.completionDetailNav', 'td .completion-detail')
-            .on('click.completionDetailNav', 'td .completion-detail.cursor-pointer', async function(e) {
+            .on('click.completionDetailNav', 'td .completion-detail', async function(e) {
+                if ($(e.target).closest('.delete-cell').length) {
+                    return;
+                }
                 e.preventDefault();
                 e.stopPropagation();
 

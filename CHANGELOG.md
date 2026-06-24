@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.1] - 2026-06-25
+
+### Fixed
+
+- **Report — completion cell clicks:** Restored the pre-1.9 click handler on `.completion-detail` cells (removed the `.cursor-pointer` requirement that blocked Form and other interaction types from opening submission/detail modals).
+- **Report — completion detail nav:** The modal opens immediately; the Previous/Next user list is built afterward from row data instead of re-rendering every table cell, so large reports feel much faster.
+- **Report — completion detail modal layout:** Max-height spacing for the nav bar applies only when the modal is not fullscreen.
+
 ## [1.9] - 2026-06-24
 
 ### Added
