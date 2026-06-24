@@ -57,6 +57,61 @@ class main {
     }
 
     /**
+     * The flexbook_defaults columns to apply when creating an interaction via
+     * drag-and-drop or programmatic creation (mod_flexbook only).
+     *
+     * The returned fields are merged on top of the drop payload, so the type-specific
+     * data (content, url, contentid, title, ...) is preserved. Subclasses may override
+     * this to opt into or out of additional fields.
+     *
+     * @return string[]
+     */
+    public function get_dnd_default_fields(): array {
+        return [
+            'xp',
+            'hascompletion',
+            'completiontracking',
+            'requiremintime',
+            'displayoptions',
+            'advanced',
+        ];
+    }
+
+    /**
+     * Whether the course has saved flexbook_defaults for an interaction type.
+     *
+     * @param int $courseid
+     * @param string $type Interaction type name (flexbook_defaults.type).
+     * @return bool
+     */
+    protected function has_flexbook_course_defaults(int $courseid, string $type): bool {
+        global $DB;
+        if ($courseid <= 0 || !$DB->get_manager()->table_exists('flexbook_defaults')) {
+            return false;
+        }
+        return $DB->record_exists('flexbook_defaults', [
+            'courseid' => $courseid,
+            'type' => $type,
+        ]);
+    }
+
+    /**
+     * Set hascompletion when course defaults specify tracking but omit the flag.
+     *
+     * @param \stdClass $data
+     * @return void
+     */
+    protected function normalize_merged_completion(\stdClass $data): void {
+        if (
+            !empty($data->completiontracking)
+            && $data->completiontracking !== 'none'
+            && empty($data->hascompletion)
+        ) {
+            $data->hascompletion = 1;
+        }
+    }
+
+    /**
      * Check if the richtext can be used.
      * @return bool True if the richtext can be used, false otherwise.
      */

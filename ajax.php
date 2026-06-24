@@ -332,6 +332,16 @@ switch ($action) {
         }
         echo interactivevideo_util::delete_completion_data($id, $itemid, $userid, $contextid);
         break;
+    case 'override_completion_xp':
+        require_capability('mod/interactivevideo:editreport', $context);
+        $id = required_param('id', PARAM_INT);
+        $itemid = required_param('itemid', PARAM_INT);
+        $userid = required_param('userid', PARAM_INT);
+        $xp = required_param('xp', PARAM_FLOAT);
+        $courseid = required_param('courseid', PARAM_INT);
+        $reportview = optional_param('reportview', '', PARAM_RAW);
+        echo interactivevideo_util::override_completion_xp($id, $itemid, $userid, $contextid, $xp, $courseid, $reportview);
+        break;
     case 'download_annotations':
         require_capability('mod/interactivevideo:edit', $context);
         $annotations = required_param('annotations', PARAM_TEXT);
@@ -346,6 +356,13 @@ switch ($action) {
         $defaults = json_decode($defaults, true);
         $saved = interactivevideo_util::save_defaults($defaults, $contextid);
         echo json_encode($saved);
+        break;
+    case 'delete_default':
+        require_capability('mod/interactivevideo:manage', $context);
+        $courseid = required_param('courseid', PARAM_INT);
+        $type = required_param('type', PARAM_TEXT);
+        interactivevideo_util::delete_default($courseid, $type);
+        echo json_encode(['status' => 'success', 'type' => $type]);
         break;
     case 'get_vdocipher':
         require_capability('mod/interactivevideo:view', $context);

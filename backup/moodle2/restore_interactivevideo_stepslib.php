@@ -238,6 +238,24 @@ class restore_interactivevideo_activity_structure_step extends restore_activity_
      * Actions to be executed after the restore is completed
      */
     protected function after_execute() {
+        global $DB;
+
+        // Decode placeholders in annotation items (e.g. model viewer gotoInteraction refs).
+        $interactivevideoid = $this->get_new_parentid('interactivevideo');
+        $items = $DB->get_records('interactivevideo_items', ['annotationid' => $interactivevideoid]);
+        foreach ($items as $item) {
+            $item->content = $this->decode_text($item->content);
+            $item->advanced = $this->decode_text($item->advanced);
+            $item->text1 = $this->decode_text($item->text1);
+            $item->text2 = $this->decode_text($item->text2);
+            $item->text3 = $this->decode_text($item->text3);
+            $item->char1 = $this->decode_text($item->char1);
+            $item->char2 = $this->decode_text($item->char2);
+            $item->char3 = $this->decode_text($item->char3);
+
+            $DB->update_record('interactivevideo_items', $item);
+        }
+
         // Add interactivevideo related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('mod_interactivevideo', 'intro', null);
         $this->add_related_files('mod_interactivevideo', 'endscreentext', null);

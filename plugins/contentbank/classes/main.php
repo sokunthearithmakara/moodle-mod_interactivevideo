@@ -54,6 +54,68 @@ class main extends \ivplugin_richtext\main {
     }
 
     /**
+     * Flexbook DND / programmatic creation fields merged from flexbook_defaults.
+     *
+     * @return string[]
+     */
+    public function get_dnd_default_fields(): array {
+        return array_merge(parent::get_dnd_default_fields(), ['char1']);
+    }
+
+    /**
+     * Whether the course has saved defaults for contentbank interactions.
+     *
+     * @param int $courseid
+     * @return bool
+     */
+    protected function has_course_defaults(int $courseid): bool {
+        global $DB;
+        if ($courseid <= 0 || !$DB->get_manager()->table_exists('flexbook_defaults')) {
+            return false;
+        }
+        return $DB->record_exists('flexbook_defaults', [
+            'courseid' => $courseid,
+            'type' => 'contentbank',
+        ]);
+    }
+
+    /**
+     * Apply completion and advanced defaults after DND merge.
+     *
+     * @param \stdClass $data
+     * @return void
+     */
+    protected function apply_creation_defaults(\stdClass $data): void {
+        $courseid = (int) ($data->courseid ?? 0);
+        if (!$this->has_course_defaults($courseid)) {
+            $data->completiontracking = 'complete';
+            $data->hascompletion = 1;
+        } else if (
+            !empty($data->completiontracking)
+            && $data->completiontracking !== 'none'
+            && empty($data->hascompletion)
+        ) {
+            $data->hascompletion = 1;
+        }
+
+        if (empty($data->advanced)) {
+            $advanced = $this->flexbook_advanced();
+            $advanced['savecurrentstate'] = 0;
+            $data->advanced = json_encode($advanced);
+            return;
+        }
+
+        $advanced = json_decode($data->advanced, true);
+        if (!is_array($advanced)) {
+            $advanced = $this->flexbook_advanced();
+        }
+        if (!array_key_exists('savecurrentstate', $advanced)) {
+            $advanced['savecurrentstate'] = 0;
+        }
+        $data->advanced = json_encode($advanced);
+    }
+
+    /**
      * Get the content.
      * @param array $arg
      * @return string
@@ -226,15 +288,7 @@ class main extends \ivplugin_richtext\main {
 
         $data = (object) $data;
 
-        $data->completiontracking = 'complete';
-        $data->hascompletion = 1;
-
-        // Form a default advanced settings.
-        if (empty($data->advanced)) {
-            $data->advanced = $this->flexbook_advanced();
-            $data->advanced['savecurrentstate'] = 0;
-            $data->advanced = json_encode($data->advanced);
-        }
+        $this->apply_creation_defaults($data);
 
         // Final check: if contentid is missing or doesn't correspond to a valid contentbank record, throw an error.
         if (empty($data->contentid) || !$DB->record_exists('contentbank_content', ['id' => $data->contentid])) {

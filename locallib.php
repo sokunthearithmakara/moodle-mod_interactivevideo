@@ -734,6 +734,46 @@ class interactivevideo_util {
     }
 
     /**
+     * Remap @@ANNOID# placeholders using an old-id => new-id map.
+     *
+     * @param string|null $text The text to remap.
+     * @param array $annotationidmap Old annotation item id => new annotation item id.
+     * @return string|null
+     */
+    public static function remap_annotation_placeholders($text, array $annotationidmap) {
+        if ($text === null || $text === '') {
+            return $text;
+        }
+
+        $search = '/@@ANNOID#([0-9]+)/';
+        $text = preg_replace_callback($search, function ($matches) use ($annotationidmap) {
+            $oldid = (int) $matches[1];
+            if (isset($annotationidmap[$oldid])) {
+                return '@@ANNOID#' . $annotationidmap[$oldid];
+            }
+            return $matches[0];
+        }, $text);
+
+        return $text;
+    }
+
+    /**
+     * Remap @@ANNOID# placeholders in all text fields on an interaction item.
+     *
+     * @param stdClass $item The interaction item record.
+     * @param array $annotationidmap Old annotation item id => new annotation item id.
+     * @return stdClass
+     */
+    public static function remap_item_placeholders($item, array $annotationidmap) {
+        foreach (['content', 'advanced', 'text1', 'text2', 'text3', 'char1', 'char2', 'char3'] as $field) {
+            if (!empty($item->$field)) {
+                $item->$field = self::remap_annotation_placeholders($item->$field, $annotationidmap);
+            }
+        }
+        return $item;
+    }
+
+    /**
      * Processes the given text within a specific context.
      *
      * @param string $text The text to be processed.
@@ -914,6 +954,7 @@ class interactivevideo_util {
         $oldcontextid = $annotation->contextid;
         $PAGE->set_context(context::instance_by_id($contextid));
         $copied = [];
+        $idmap = [];
         foreach ($annotations as $annotation) {
             $annotation = (object) $annotation;
             $annotation->courseid = $tocourse;
@@ -925,6 +966,7 @@ class interactivevideo_util {
             $annotation->timemodified = time();
             $annotation->contextid = $contextid;
             $annotation->id = $DB->insert_record('interactivevideo_items', $annotation);
+            $idmap[(int) $annotation->oldid] = (int) $annotation->id;
             $prop = json_decode($annotation->prop);
             $class = $prop->class;
             if (class_exists($class)) {
@@ -934,6 +976,15 @@ class interactivevideo_util {
             $annotation->formattedtitle = format_string($annotation->title);
             $copied[] = $annotation;
         }
+
+        if (count($idmap) > 1) {
+            foreach ($idmap as $newid) {
+                $item = $DB->get_record('interactivevideo_items', ['id' => $newid], '*', MUST_EXIST);
+                $item = self::remap_item_placeholders($item, $idmap);
+                $DB->update_record('interactivevideo_items', $item);
+            }
+        }
+
         return $copied;
     }
 
@@ -1294,6 +1345,29 @@ class interactivevideo_util {
     }
 
     /**
+     * Get all saved interaction-type defaults for a course.
+     *
+     * @param int $courseid The course ID.
+     * @return array The default records ordered by type.
+     */
+    public static function get_course_defaults($courseid) {
+        global $DB;
+        return array_values($DB->get_records('interactivevideo_defaults', ['courseid' => $courseid], 'type ASC'));
+    }
+
+    /**
+     * Delete a saved interaction-type default for a course.
+     *
+     * @param int $courseid The course ID.
+     * @param string $type The interaction type.
+     * @return void
+     */
+    public static function delete_default($courseid, $type) {
+        global $DB;
+        $DB->delete_records('interactivevideo_defaults', ['courseid' => $courseid, 'type' => $type]);
+    }
+
+    /**
      * Delete completion data for a given itemid and userid.
      *
      * @param int $id The completion id.
@@ -1344,5 +1418,144 @@ class interactivevideo_util {
         } else {
             return json_encode(['error' => 'Completion record not found']);
         }
+    }
+
+    /**
+     * Override the earned XP of a single completed interaction for a user.
+     *
+     * Recalculates the row total XP and the gradebook grade, and keeps the
+     * per-item percent and reportView in sync so the learner view reflects the
+     * overridden value on revisit.
+     *
+     * @param int $id The completion record id.
+     * @param int $itemid The interaction item id.
+     * @param int $userid The user id.
+     * @param int $contextid The module context id.
+     * @param float $newxp The overridden earned XP (0..item max).
+     * @param int $courseid The course id.
+     * @param string|null $reportview Client-built reportView (optional).
+     * @return string JSON-encoded result.
+     */
+    public static function override_completion_xp($id, $itemid, $userid, $contextid, $newxp, $courseid = 0, $reportview = null) {
+        global $DB, $CFG;
+
+        $context = context::instance_by_id($contextid);
+        require_capability('mod/interactivevideo:editreport', $context);
+
+        $record = $DB->get_record('interactivevideo_completion', ['id' => $id]);
+        if (!$record) {
+            return json_encode(['error' => 'Completion record not found']);
+        }
+        $userid = $record->userid;
+        $cmid = $record->cmid;
+
+        // Gradable items for this activity (cmid here is the module instance id).
+        $items = (array) self::get_items($cmid, $contextid, true);
+        $itemmaxmap = [];
+        $totalmax = 0;
+        foreach ($items as $item) {
+            $itemmaxmap[(string)$item->id] = (float)$item->xp;
+            $totalmax += (float)$item->xp;
+        }
+
+        if (!isset($itemmaxmap[(string)$itemid])) {
+            return json_encode(['error' => 'Interaction not found or not gradable']);
+        }
+        $itemmax = $itemmaxmap[(string)$itemid];
+
+        // Validate bounds: 0..item max.
+        $newxp = (float)$newxp;
+        if ($newxp < 0 || ($itemmax > 0 && $newxp > $itemmax) || ($itemmax <= 0 && $newxp != 0)) {
+            return json_encode(['error' => 'invalidxpvalue']);
+        }
+
+        $completeditems = json_decode($record->completeditems);
+        if (!is_array($completeditems)) {
+            $completeditems = [];
+        }
+        if (!in_array((string)$itemid, array_map('strval', $completeditems), true)) {
+            return json_encode(['error' => 'Interaction not completed']);
+        }
+
+        $rawdetails = json_decode($record->completiondetails);
+        if (!is_array($rawdetails)) {
+            $rawdetails = [];
+        }
+
+        $found = false;
+        $updateditemdetail = null;
+        $rawdetails = array_map(function ($entry) use ($itemid, $itemmax, $newxp, $reportview, &$found, &$updateditemdetail) {
+            $decoded = json_decode($entry);
+            if ($decoded && isset($decoded->id) && $decoded->id == $itemid && empty($decoded->deleted)) {
+                $decoded->xp = $newxp;
+                $decoded->percent = $itemmax > 0 ? ($newxp / $itemmax) : 0;
+                $decoded->xpOverridden = true;
+                if (isset($decoded->reportView)) {
+                    if ($reportview !== null && $reportview !== '') {
+                        $clean = clean_param($reportview, PARAM_RAW);
+                        if ($clean !== '' && strlen($clean) <= 4096) {
+                            $decoded->reportView = $clean;
+                        } else {
+                            $decoded->reportView = \mod_interactivevideo\report_helper::patch_report_view_xp(
+                                $decoded->reportView,
+                                $newxp
+                            );
+                        }
+                    } else {
+                        $decoded->reportView = \mod_interactivevideo\report_helper::patch_report_view_xp(
+                            $decoded->reportView,
+                            $newxp
+                        );
+                    }
+                }
+                $found = true;
+                $updateditemdetail = $decoded;
+            }
+            return json_encode($decoded);
+        }, $rawdetails);
+
+        if (!$found) {
+            return json_encode(['error' => 'Interaction completion not found']);
+        }
+
+        $record->completiondetails = json_encode(array_values($rawdetails));
+
+        // Re-sum earned XP from the updated, non-deleted, completed details.
+        $decodeddetails = array_map(fn($entry) => json_decode($entry), $rawdetails);
+        $earned = \mod_interactivevideo\report_helper::sum_earned_xp($decodeddetails, $completeditems);
+        $record->xp = $earned;
+
+        $DB->update_record('interactivevideo_completion', $record);
+
+        // Recalculate and update the gradebook grade.
+        require_once($CFG->libdir . '/gradelib.php');
+        if (!$courseid) {
+            $cm = get_coursemodule_from_instance('interactivevideo', $cmid);
+            $courseid = $cm->course;
+        }
+        $grade = null;
+        $gradeitem = \grade_item::fetch([
+            'iteminstance' => $cmid,
+            'itemtype' => 'mod',
+            'itemmodule' => 'interactivevideo',
+            'courseid' => $courseid,
+        ]);
+        if ($gradeitem) {
+            $grade = \mod_interactivevideo\report_helper::calculate_grade($earned, $totalmax, (float)$gradeitem->grademax);
+            $gradeobj = new stdClass();
+            $gradeobj->userid = $userid;
+            $gradeobj->rawgrade = ($grade === null || $grade <= 0) ? null : $grade;
+            grade_update('mod/interactivevideo', $courseid, 'mod', 'interactivevideo', $cmid, 0, $gradeobj);
+        }
+
+        return json_encode([
+            'id' => $id,
+            'itemid' => $itemid,
+            'xp' => $earned,
+            'itemxp' => $newxp,
+            'completiondetails' => $record->completiondetails,
+            'itemdetail' => $updateditemdetail,
+            'grade' => $grade,
+        ]);
     }
 }

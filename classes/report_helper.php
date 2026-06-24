@@ -304,4 +304,106 @@ class report_helper {
             return ['name' => $f, 'label' => $l];
         }, array_filter($fields));
     }
+
+    /**
+     * Format an XP number the same way the client does (no trailing decimals for whole numbers).
+     *
+     * @param float $xp
+     * @return string
+     */
+    public static function format_xp_number($xp) {
+        $xp = (float)$xp;
+        if ($xp == (int)$xp) {
+            return (string)(int)$xp;
+        }
+        return (string)(round($xp * 100) / 100);
+    }
+
+    /**
+     * Update the earned XP segment within a stored reportView string.
+     *
+     * Supports the base format (##time|duration|xp) where XP is the last segment,
+     * and the extended format used by some subplugins
+     * (##time|duration|summary|icon|xp|meta) where XP is at index 4.
+     *
+     * @param string $reportview The stored reportView string.
+     * @param float $newxp The overridden earned XP.
+     * @return string
+     */
+    public static function patch_report_view_xp($reportview, $newxp) {
+        if (!is_string($reportview) || $reportview === '') {
+            return $reportview;
+        }
+
+        $formatted = self::format_xp_number($newxp);
+
+        if (strpos($reportview, '##') === 0) {
+            $parts = explode('|', $reportview);
+            $count = count($parts);
+            // Extended formats carry XP at index 4; base format keeps it as the final segment.
+            $xpindex = $count >= 5 ? 4 : $count - 1;
+            $parts[$xpindex] = $formatted;
+            return implode('|', $parts);
+        }
+
+        if (strpos($reportview, '|') !== false) {
+            $parts = explode('|', $reportview);
+            // Quiz compact format: duration|time|correct|total|icon|xp.
+            if (count($parts) === 6) {
+                $parts[5] = $formatted;
+                return implode('|', $parts);
+            }
+            // Other pipe-delimited views: XP is the last segment.
+            if (count($parts) >= 2) {
+                $parts[count($parts) - 1] = $formatted;
+                return implode('|', $parts);
+            }
+        }
+
+        return $reportview;
+    }
+
+    /**
+     * Sum earned XP across completed, non-deleted interactions.
+     *
+     * Mirrors the client aggregation in toggleCompletion(): only items that are
+     * still in the completed list and not flagged deleted contribute their earned XP.
+     *
+     * @param array $completiondetails Array of decoded per-item detail objects.
+     * @param array $completeditems Array of completed item ids.
+     * @return float
+     */
+    public static function sum_earned_xp($completiondetails, $completeditems) {
+        $completeditems = array_map('strval', $completeditems);
+        $earned = 0;
+        foreach ($completiondetails as $detail) {
+            if (empty($detail) || !empty($detail->deleted) || !isset($detail->id)) {
+                continue;
+            }
+            if (!in_array((string)$detail->id, $completeditems, true)) {
+                continue;
+            }
+            if (isset($detail->xp)) {
+                $earned += (float)$detail->xp;
+            }
+        }
+        return $earned;
+    }
+
+    /**
+     * Calculate the gradebook grade from earned XP.
+     *
+     * Same formula as the client: (earned / totalmax) * grademax.
+     *
+     * @param float $earned Earned XP.
+     * @param float $totalmax Sum of configured XP across gradable items.
+     * @param float $grademax The activity grade max.
+     * @return float|null Null when there is no gradable XP to scale against.
+     */
+    public static function calculate_grade($earned, $totalmax, $grademax) {
+        if ($totalmax <= 0) {
+            return null;
+        }
+        return round(((float)$earned / (float)$totalmax) * (float)$grademax, 2);
+    }
 }

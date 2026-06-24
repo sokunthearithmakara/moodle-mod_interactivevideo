@@ -1556,6 +1556,127 @@ html:has(.path-mod-interactivevideo) {
     vertical-align: middle;
 }
 
+#page-mod-interactivevideo-report .completion-detail--xp-overridden,
+#page-mod-flexbook-report .completion-detail--xp-overridden {
+    color: var(--bs-warning);
+    font-weight: 600;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav {
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    z-index: 1060;
+    width: calc(100% - 2rem);
+    max-width: 940px;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    padding: 0.25rem 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-position,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-position {
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-xp,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-xp {
+    white-space: nowrap;
+}
+
+#annotation-modal.has-completion-detail-nav {
+    overflow: hidden;
+}
+
+#page-mod-interactivevideo-report #annotation-modal.has-completion-detail-nav .modal-dialog,
+#page-mod-flexbook-report #annotation-modal.has-completion-detail-nav .modal-dialog {
+    margin-top: 3.5rem;
+}
+
+#page-mod-interactivevideo-report #annotation-modal.has-completion-detail-nav .modal-content,
+#page-mod-flexbook-report #annotation-modal.has-completion-detail-nav .modal-content {
+    max-height: calc(var(--ivdvh) - 5.5rem);
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile-region,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile-region,
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile,
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile-link,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile-link {
+    min-width: 0;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile-link,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile-link {
+    color: #fff;
+    font-weight: 700;
+    gap: 0.5rem;
+    max-width: 100%;
+    text-decoration: none;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile-link:hover,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile-link:hover,
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile-link:focus,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile-link:focus {
+    color: #fff;
+    text-decoration: none;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile-link .userpicture,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile-link .userpicture {
+    flex-shrink: 0;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-profile-link .userinitials,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-profile-link .userinitials {
+    flex-shrink: 0;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-xp-input,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-xp-input {
+    width: 3.25rem;
+    min-height: auto;
+    height: 1.875rem;
+    padding: 0.125rem 0.375rem;
+    text-align: center;
+    border: 0;
+    background: #fff;
+    border-radius: 0.25rem;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-xp-edit,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-xp-edit {
+    gap: 0.25rem;
+    padding: 0.125rem 0.25rem 0.125rem 0.375rem;
+    background: #f8f9fa;
+    border-radius: 10rem;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-xp-max,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-xp-max {
+    color: #212529;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-xp-save,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-xp-save {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+#page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-xp-region .completion-detail-nav-xp.badge,
+#page-mod-flexbook-report #annotation-modal .completion-detail-nav-xp-region .completion-detail-nav-xp.badge {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
 #page-mod-interactivevideo-view #start-screen .intro-content:not(.hasintro),
 #page-mod-interactivevideo-view #end-screen .end-content:not(.hascontent) {
     display: flex;
@@ -4188,6 +4309,17 @@ body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo {
 .path-mod-interactivevideo.path-mod-flexbook .video-player[controls] {
     visibility: visible !important;
     z-index: 10 !important;
+}
+
+.path-mod-flexbook #video-wrapper.fb-interaction .restart-screen-next,
+.path-mod-interactivevideo.path-mod-flexbook #video-wrapper.fb-interaction .restart-screen-next {
+    position: absolute;
+    inset-block-end: 1.25rem;
+    inset-inline-end: 1.25rem;
+    z-index: 1;
+    padding: 0.5rem 1.25rem;
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 .path-mod-interactivevideo #message[data-placement="popup"] .modal-content {

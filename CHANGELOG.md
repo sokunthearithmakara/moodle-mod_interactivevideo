@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9] - 2026-06-24
+
+### Added
+
+- **Report — completion detail modal:** When you open a learner’s completion cell, the modal now includes a navigation bar with the participant’s photo/name (opens their Moodle profile in a new tab), **Previous / Next** buttons, and a position counter (e.g. 3/12). Previous/Next follows the learners currently shown in the report (respects filters and sorting).
+- **Report — XP override:** Teachers with report edit permission can change earned XP for a completed interaction from that navigation bar. Overridden scores are **highlighted in the report table**, the learner’s **row total XP** updates, and the **gradebook grade** for the activity is recalculated.
+- **Course manage — Interaction defaults:** New tab on the course Interactive Video manage page lists saved per-interaction-type defaults for the course and lets you delete individual defaults.
+- **Flexbook video segments:** On the segment replay screen, learners get a **Next** button (as well as Replay) to continue to the next interaction according to jump settings.
+- **Flexbook drag-and-drop:** Rich text and Content bank interactions created by drag-and-drop now use **course-saved interaction defaults** (XP, completion, display options, etc.) when available.
+
+### Fixed
+
+- The **main video** no longer reacts to play, pause, seek, or end events fired by **embedded interaction players** inside the page.
+- **Chapters (Flexbook):** Global interactions are excluded when gathering interactions inside a chapter, so chapter boundaries and gradable counts stay correct.
+- **Backup & restore:** Placeholder text in interaction items is decoded after restore (e.g. model viewer “go to interaction” links), so internal navigation works again.
+- **Content bank (Flexbook):** New items from drag-and-drop respect course defaults for completion settings instead of always forcing completion on.
+
 ## [1.8.3] - 2026-06-16
 
 ### Added

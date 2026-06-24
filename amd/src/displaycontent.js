@@ -157,56 +157,12 @@ const defaultDisplayContent = async function(annotation, player) {
         }
     }
 
-    // Add completion button if the annotation has completion criteria.
-    let completionbutton = "";
-    // Display the xp badge conditionally.
-    if (annotation.hascompletion == 1 && annotation.xp > 0) {
-        if (Number(annotation.earned) % 1 != 0) {
-            annotation.earned = Math.round(Number(annotation.earned) * 100) / 100;
-        } else {
-            annotation.earned = Number(annotation.earned);
-        }
-        let earned = annotation.earned == annotation.xp ? annotation.xp : annotation.earned + '/' + annotation.xp;
-        completionbutton += `<span class="badge ${annotation.completed ? 'alert-success' : 'iv-badge-secondary'} iv-mr-2">
-        ${annotation.completed ? earned : Number(annotation.xp)} XP</span>`;
-    }
-    // Display the completion button conditionally.
-
-    completionbutton += await Templates.render('mod_interactivevideo/player/completionbutton', {
-        id: annotation.id,
-        iscompleted: annotation.completed,
-        isPlayerMode: isPlayerMode && !isPreviewMode,
-        refreshonly: annotation.hascompletion != 1
+    const messageTitle = await buildMessageTitle(annotation, {
+        isPlayerMode,
+        isPreviewMode,
+        showFullscreen: displayoptions === 'popup',
     });
-
-    // Append refresh button after the completion button.
-    if (!isPlayerMode || isPreviewMode) {
-        completionbutton = ``;
-    }
-
-    // Message title.
-    let showdelete = false;
-    let settings = JSON.parse(annotation.advanced || '{}');
-    if (settings.deletebeforecomplete == 1 || settings.deleteaftercomplete == 1) {
-        showdelete = true;
-    }
-
-    if (annotation.hascompletion == 0 || annotation.completiontracking == 'manual' || annotation.completiontracking == 'none') {
-        showdelete = false;
-    }
-
-    let prop = JSON.parse(annotation.prop);
-    let messageTitle = await Templates.render('mod_interactivevideo/player/messagetitle', {
-        icon: prop.icon || 'bi bi-info-circle',
-        title: annotation.formattedtitle || '',
-        completionbutton: completionbutton,
-        id: annotation.id,
-        showdelete,
-        showfullscreen: displayoptions === 'popup',
-        bs: isBS5 ? '-bs' : '',
-        candelete: annotation.completed == true && ((annotation.activitycomplete == 1 && settings.deleteaftercomplete == 1) ||
-            (annotation.activitycomplete == 0 && settings.deletebeforecomplete == 1)),
-    });
+    const prop = JSON.parse(annotation.prop || '{}');
 
     // Hide existing modal if it shows.
     $('#annotation-modal').modal('hide');
@@ -563,4 +519,69 @@ const defaultDisplayContent = async function(annotation, player) {
     return true;
 };
 
-export {renderContent, defaultDisplayContent, formatText};
+/**
+ * Build IV interaction modal header markup (icon, XP badge, completion, close).
+ *
+ * @param {Object} annotation Annotation object.
+ * @param {Object} [options]
+ * @param {boolean} [options.isPlayerMode]
+ * @param {boolean} [options.isPreviewMode]
+ * @param {boolean} [options.showFullscreen]
+ * @returns {Promise<string>}
+ */
+const buildMessageTitle = async function(annotation, options = {}) {
+    const $body = $('body');
+    const isBS5 = $body.hasClass('bs-5');
+    const isPlayerMode = options.isPlayerMode ?? ($body.attr('id') == 'page-mod-interactivevideo-view');
+    const isPreviewMode = options.isPreviewMode ?? Boolean(annotation.previewMode);
+    const showFullscreen = options.showFullscreen ?? true;
+
+    let completionbutton = '';
+    if (annotation.hascompletion == 1 && annotation.xp > 0) {
+        if (Number(annotation.earned) % 1 != 0) {
+            annotation.earned = Math.round(Number(annotation.earned) * 100) / 100;
+        } else {
+            annotation.earned = Number(annotation.earned);
+        }
+        const earned = annotation.earned == annotation.xp ? annotation.xp : annotation.earned + '/' + annotation.xp;
+        completionbutton += `<span class="badge ${annotation.completed ? 'alert-success' : 'iv-badge-secondary'} iv-mr-2">
+        ${annotation.completed ? earned : Number(annotation.xp)} XP</span>`;
+    }
+
+    completionbutton += await Templates.render('mod_interactivevideo/player/completionbutton', {
+        id: annotation.id,
+        iscompleted: annotation.completed,
+        isPlayerMode: isPlayerMode && !isPreviewMode,
+        refreshonly: annotation.hascompletion != 1,
+    });
+
+    if (!isPlayerMode || isPreviewMode) {
+        completionbutton = '';
+    }
+
+    let showdelete = false;
+    const settings = JSON.parse(annotation.advanced || '{}');
+    if (settings.deletebeforecomplete == 1 || settings.deleteaftercomplete == 1) {
+        showdelete = true;
+    }
+
+    if (annotation.hascompletion == 0 || annotation.completiontracking == 'manual'
+        || annotation.completiontracking == 'none') {
+        showdelete = false;
+    }
+
+    const prop = JSON.parse(annotation.prop || '{}');
+    return Templates.render('mod_interactivevideo/player/messagetitle', {
+        icon: prop.icon || 'bi bi-info-circle',
+        title: annotation.formattedtitle || annotation.title || '',
+        completionbutton: completionbutton,
+        id: annotation.id,
+        showdelete,
+        showfullscreen: showFullscreen,
+        bs: isBS5 ? '-bs' : '',
+        candelete: annotation.completed == true && ((annotation.activitycomplete == 1 && settings.deleteaftercomplete == 1) ||
+            (annotation.activitycomplete == 0 && settings.deletebeforecomplete == 1)),
+    });
+};
+
+export {renderContent, defaultDisplayContent, formatText, buildMessageTitle};

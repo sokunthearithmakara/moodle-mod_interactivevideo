@@ -28,6 +28,7 @@ import {add as addToast} from 'core/toast';
 import ModalForm from 'core_form/modalform';
 import 'mod_interactivevideo/libraries/jquery-ui';
 import {get_string as getString} from 'core/str';
+import {patchReportViewXp} from 'mod_interactivevideo/report_view';
 
 class Base {
     /**
@@ -1565,6 +1566,26 @@ class Base {
                 }
             });
         });
+    }
+
+    /**
+     * Patch completion detail for an XP override (reportView + xp + percent).
+     *
+     * @param {Object|null} detail Completion detail object.
+     * @param {number} newXp Overridden earned XP.
+     * @param {number} maxXp Interaction max XP.
+     * @returns {Object|null}
+     */
+    static patchReportViewForXp(detail, newXp, maxXp = 0) {
+        if (!detail) {
+            return detail;
+        }
+        const updated = {...detail, xp: newXp};
+        if (updated.reportView) {
+            updated.reportView = patchReportViewXp(updated.reportView, newXp);
+        }
+        updated.percent = maxXp > 0 ? newXp / maxXp : 0;
+        return updated;
     }
 
     renderReportView(annotation, details, data) {

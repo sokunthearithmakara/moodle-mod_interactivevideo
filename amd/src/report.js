@@ -36,6 +36,7 @@ import './libraries/select.bootstrap4';
 import './libraries/select2';
 import quickform from './quickform';
 import ModalEvents from 'core/modal_events';
+import Base from 'mod_interactivevideo/type/base';
 
 /**
  * Resolve the interaction type icon class from annotation prop JSON.
@@ -389,6 +390,12 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
                                   title="${M.util.get_string('delete', 'mod_interactivevideo')}"></i>`;
                             }
                         }
+                        if (details.xpOverridden && res.includes('completion-detail')) {
+                            res = res.replace(
+                                'class="completion-detail',
+                                'class="completion-detail completion-detail--xp-overridden'
+                            );
+                        }
                         return res;
                     } else {
                         return '-';
@@ -653,24 +660,76 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
             ajaxAction: 'delete_progress_by_id',
         });
 
-        $(document).on('click', 'td .completion-detail', function() {
-            let id = $(this).closest('td').data('item');
-            let userid = $(this).closest('tr').attr('id');
-            let type = $(this).closest('td').data('type');
+        const openCompletion = (id, userid, type) => {
             let theAnnotation = itemsdata.find(x => x.id == id);
             let module = relContentTypeAmd[type];
             if (module) {
-                module.getCompletionData(theAnnotation, userid);
-                return;
+                return module.getCompletionData(theAnnotation, userid);
             }
             let matchingContentTypes = contentTypes.find(x => x.name === type);
             let amdmodule = matchingContentTypes.amdmodule;
             // Get column header with the item id.
-            require([amdmodule], function(Module) {
-                new Module(player, itemsdata, cmid, courseid, null,
-                    completionpercentage, null, grademax, videotype, null,
-                    end - start, start, end, theAnnotation.prop, cm).getCompletionData(theAnnotation, userid);
+            return new Promise((resolve, reject) => {
+                require([amdmodule], function(Module) {
+                    Promise.resolve(new Module(player, itemsdata, cmid, courseid, null,
+                        completionpercentage, null, grademax, videotype, null,
+                        end - start, start, end, theAnnotation.prop, cm).getCompletionData(theAnnotation, userid))
+                    .then(resolve)
+                    .catch(reject);
+                });
             });
+        };
+
+        ReportBase.registerCompletionDetailHandler({
+            tabledata,
+            openCompletion,
+            stringComponent: 'mod_interactivevideo',
+            canedit: access.canedit == 1,
+            getInteractionMeta: (itemId) => {
+                const annotation = itemsdata.find((item) => item.id == itemId);
+                return {
+                    maxXp: annotation?.xp ?? 0,
+                };
+            },
+            saveXpOverride: (ctx, newXp, reportview = '') => {
+                return $.ajax({
+                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                    method: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'override_completion_xp',
+                        sesskey: M.cfg.sesskey,
+                        contextid: M.cfg.contextid,
+                        id: ctx.completionid,
+                        itemid: ctx.itemId,
+                        userid: ctx.userid,
+                        xp: newXp,
+                        courseid: courseid,
+                        reportview: reportview,
+                    },
+                }).then((res) => (typeof res === 'string' ? JSON.parse(res) : res))
+                    .catch((jqXHR) => {
+                        if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                            return jqXHR.responseJSON;
+                        }
+                        if (jqXHR.responseText) {
+                            try {
+                                return JSON.parse(jqXHR.responseText);
+                            } catch (e) {
+                                // Fall through.
+                            }
+                        }
+                        return Promise.reject(jqXHR);
+                    });
+            },
+            patchReportViewForXp: (type, detail, newXp, maxXp) => {
+                const module = relContentTypeAmd[type];
+                const Mod = module?.constructor;
+                if (Mod?.patchReportViewForXp) {
+                    return Mod.patchReportViewForXp(detail, newXp, maxXp);
+                }
+                return Base.patchReportViewForXp(detail, newXp, maxXp);
+            },
         });
     });
 };

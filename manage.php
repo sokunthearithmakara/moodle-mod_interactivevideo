@@ -56,6 +56,16 @@ $tabs[] = new tabobject(
     get_string('list', 'mod_interactivevideo')
 );
 
+// Interaction defaults.
+$tabs[] = new tabobject(
+    'defaults',
+    new moodle_url(
+        '/mod/interactivevideo/manage.php',
+        ['courseid' => $courseid, 'tab' => 'defaults']
+    ),
+    get_string('interactiondefaults', 'mod_interactivevideo')
+);
+
 // Settings.
 if (get_config('mod_interactivevideo', 'enablecoursesettings')) {
     $tabs[] = new tabobject(
@@ -98,6 +108,31 @@ if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesetti
     $form->set_data_for_dynamic_submission();
     echo '<div id="settings">';
     echo $form->render();
+    echo '</div>';
+    $PAGE->requires->js_call_amd('mod_interactivevideo/manage', $tab, [
+        $courseid,
+        $coursecontext->id,
+        $USER->id,
+    ]);
+} else if ($tab === 'defaults') {
+    $activitytypes = interactivevideo_util::get_all_activitytypes();
+    $typemap = [];
+    foreach ($activitytypes as $activitytype) {
+        $typemap[$activitytype['name']] = $activitytype;
+    }
+    $rows = [];
+    foreach (interactivevideo_util::get_course_defaults($courseid) as $default) {
+        $rows[] = [
+            'type' => $default->type,
+            'icon' => $typemap[$default->type]['icon'] ?? 'bi bi-cursor',
+            'title' => $typemap[$default->type]['title'] ?? $default->type,
+        ];
+    }
+    echo '<div class="container" id="defaults">';
+    echo $OUTPUT->render_from_template('mod_interactivevideo/managedefaults', [
+        'defaults' => $rows,
+        'hasdefaults' => !empty($rows),
+    ]);
     echo '</div>';
     $PAGE->requires->js_call_amd('mod_interactivevideo/manage', $tab, [
         $courseid,

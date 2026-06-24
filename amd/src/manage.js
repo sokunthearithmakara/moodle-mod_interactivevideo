@@ -53,6 +53,44 @@ define(['jquery', 'core/templates'], function($, Templates) {
                 });
             });
         },
+        defaults: async function(courseid, coursecontextid) {
+            let addToast = await import('core/toast');
+            let Notification = await import('core/notification');
+            let str = await import('core/str');
+            $(document).off('click', '[data-action="delete-default"]')
+                .on('click', '[data-action="delete-default"]', async function(e) {
+                    e.preventDefault();
+                    const row = $(this).closest('tr');
+                    const type = $(this).data('type');
+                    const title = row.find('td').first().text().trim();
+                    try {
+                        await Notification.saveCancelPromise(
+                            str.get_string('delete', 'core'),
+                            str.get_string('confirmdeletedefault', 'mod_interactivevideo', title),
+                            str.get_string('delete', 'core')
+                        );
+                    } catch (cancelled) {
+                        return;
+                    }
+                    await $.ajax({
+                        url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                        method: 'POST',
+                        dataType: 'json',
+                        data: {
+                            action: 'delete_default',
+                            sesskey: M.cfg.sesskey,
+                            contextid: coursecontextid,
+                            courseid: courseid,
+                            type: type,
+                        }
+                    });
+                    row.remove();
+                    addToast.add(await str.get_string('defaultdeleted', 'mod_interactivevideo'), {type: 'success'});
+                    if ($('#defaults table tbody tr').length === 0) {
+                        window.location.reload();
+                    }
+                });
+        },
         list: async function(courseid, coursecontextid) {
             let addToast = await import('core/toast');
             let ModalForm, str;

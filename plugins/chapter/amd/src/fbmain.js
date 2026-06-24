@@ -25,6 +25,7 @@ import $ from 'jquery';
 import Base from 'mod_flexbook/type/base';
 import {get_string as getString} from 'core/str';
 import state from 'mod_flexbook/state';
+import {isGlobalInteraction} from 'mod_flexbook/interaction-utils';
 
 export default class Chapter extends Base {
     /**
@@ -117,9 +118,10 @@ export default class Chapter extends Base {
             let nextchapter = arr[index + 1];
             let chapteritems = [];
             if (nextchapter) {
-                chapteritems = annotations.filter((a) => a.order > chapter.order && a.order < nextchapter.order);
+                chapteritems = annotations.filter((a) =>
+                    !isGlobalInteraction(a) && a.order > chapter.order && a.order < nextchapter.order);
             } else {
-                chapteritems = annotations.filter((a) => a.order > chapter.order);
+                chapteritems = annotations.filter((a) => !isGlobalInteraction(a) && a.order > chapter.order);
             }
 
             const gradableitems = chapteritems.filter((item) => item.hascompletion == '1');

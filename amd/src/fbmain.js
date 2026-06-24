@@ -8,6 +8,7 @@
 
 import Base from 'mod_flexbook/type/base';
 import state from 'mod_flexbook/state';
+import {safeParse} from 'mod_flexbook/utils';
 import $ from 'jquery';
 import ModalForm from 'core_form/modalform';
 import {get_string as getString} from 'core/str';
@@ -20,9 +21,9 @@ import {get_string as getString} from 'core/str';
  */
 const toggleRestartScreen = ($screen, show) => {
     if (show) {
-        $screen.removeClass('d-none').addClass('d-flex');
+        $screen.removeClass('d-none');
     } else {
-        $screen.removeClass('d-flex').addClass('d-none');
+        $screen.addClass('d-none');
     }
 };
 
@@ -66,19 +67,37 @@ export default class InteractiveVideo extends Base {
             let url = data.url;
             let type = annotation.char1;
 
+            const isPlayerMode = !self.isEditMode() && !isViewReport;
+            const [replayLabel, nextLabel] = await Promise.all([
+                getString('replay', 'mod_interactivevideo'),
+                getString('next', 'mod_flexbook'),
+            ]);
+            const nextButtonHtml = isPlayerMode ? `
+                    <button type="button"
+                        class="btn btn-rounded btn-dark next-interaction restart-screen-next text-uppercase
+                            d-inline-flex align-items-center gap-2 iv-font-weight-bold"
+                        data-annotation="${annotation.id}">
+                        <i class="bi bi-chevron-left dir-ltr-hide fs-25px" aria-hidden="true"></i>
+                        <span>${nextLabel}</span>
+                        <i class="bi bi-chevron-right dir-rtl-hide fs-25px" aria-hidden="true"></i>
+                    </button>` : '';
+
             $body.html(`<div id="video-wrapper" class="fb-interaction w-100 h-100 position-absolute p-0 bg-black">
                 <div id="fbvideo-${annotation.id}" class="video-player w-100 h-100 position-absolute left-0 top-0"></div>
                 <div class="video-block position-absolute top-0 left-0 w-100 h-100" data-annotation="${annotation.id}"
                     id="${annotation.id}"></div>
                 <div id="restart-screen-${annotation.id}"
-                    class="restart-screen position-absolute top-0 left-0 w-100 h-100 bg-black
-                        align-items-center justify-content-center d-none"
+                    class="restart-screen position-absolute top-0 left-0 w-100 h-100 bg-black d-none"
                     style="z-index: 100;">
-                    <button class="btn btn-lg btn-rounded btn-danger restart-video text-uppercase"
-                     data-annotation="${annotation.id}">
-                        <i class="bi bi-arrow-counterclockwise iv-mr-2 fs-25px"></i>
-                        ${await getString('replay', 'mod_interactivevideo')}
-                    </button>
+                    <div class="restart-screen-center w-100 h-100 d-flex align-items-center justify-content-center">
+                        <button type="button"
+                            class="btn btn-lg btn-rounded btn-danger restart-video text-uppercase"
+                            data-annotation="${annotation.id}">
+                            <i class="bi bi-arrow-counterclockwise iv-mr-2 fs-25px" aria-hidden="true"></i>
+                            ${replayLabel}
+                        </button>
+                    </div>
+                    ${nextButtonHtml}
                 </div>
             </div>`);
             if (!hideControls) {
@@ -126,7 +145,6 @@ export default class InteractiveVideo extends Base {
                 clearInterval(timeInterval);
                 timeInterval = null;
 
-                const isPlayerMode = !self.isEditMode() && !isViewReport;
                 if (isPlayerMode && state.currentanno?.id == annoId) {
                     if (state.interactionData?.[annoId]) {
                         state.interactionData[annoId].timestamp = player.start ?? startTime;
@@ -197,6 +215,20 @@ export default class InteractiveVideo extends Base {
                     player.play();
                     toggleRestartScreen($(this).closest('.restart-screen'), false);
                 }
+            });
+
+            $(document).off('click', '.next-interaction').on('click', '.next-interaction', async function(e) {
+                e.preventDefault();
+                const id = $(this).attr('data-annotation');
+                if (!isPlayerMode || !state.navigateToInteraction || state.currentanno?.id != id) {
+                    return;
+                }
+                state.direction = 'next';
+                const advanced = safeParse(state.currentanno.advanced, {});
+                const target = (!advanced.jumpto || advanced.jumpto === '')
+                    ? 'nextinteraction'
+                    : advanced.jumpto;
+                await state.navigateToInteraction(target, false, 'next');
             });
 
             $(document).off('click', '.video-block')

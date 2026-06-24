@@ -24,6 +24,8 @@
 import $ from 'jquery';
 import Ajax from 'core/ajax';
 import {add as addToast} from 'core/toast';
+import ModalEvents from 'core/modal_events';
+import {get_string as getString} from 'core/str';
 
 /**
  * Base Report Class
@@ -394,6 +396,546 @@ export default class ReportBase {
     }
 
     /**
+     * Get the report column index for an interaction item.
+     *
+     * @param {Object} tabledata The DataTable instance.
+     * @param {Number|String} itemId The interaction item id.
+     * @returns {Number}
+     */
+    static getCompletionDetailColumnIndex(tabledata, itemId) {
+        let columnIndex = -1;
+        tabledata.columns().every(function(index) {
+            const header = this.header();
+            if ($(header).data('item') == itemId) {
+                columnIndex = index;
+            }
+        });
+
+        return columnIndex;
+    }
+
+    /**
+     * Get filtered and sorted users with clickable completion details for an item.
+     *
+     * @param {Object} tabledata The DataTable instance.
+     * @param {Number|String} itemId The interaction item id.
+     * @returns {Array}
+     */
+    /**
+     * Get completion details for a specific interaction item from a report row.
+     *
+     * @param {Object} rowData Report row data.
+     * @param {Number|String} itemId Interaction item id.
+     * @returns {Object|null}
+     */
+    static getCompletionDetailForItem(rowData, itemId) {
+        try {
+            const completiondetails = JSON.parse(rowData.completiondetails || '[]').map((entry) => JSON.parse(entry));
+            return completiondetails.find((detail) => Number(detail.id) === Number(itemId)) || null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Format earned XP for the completion detail navigation.
+     *
+     * @param {Number|String} earned Earned XP.
+     * @param {Number|String} maxXp Maximum XP for the interaction.
+     * @returns {String}
+     */
+    static formatCompletionDetailXp(earned, maxXp) {
+        let earnedXp = Number(earned) || 0;
+        const max = Number(maxXp) || 0;
+
+        if (earnedXp % 1 !== 0) {
+            earnedXp = Math.round(earnedXp * 100) / 100;
+        }
+
+        if (max > 0 && earnedXp !== max) {
+            return `${earnedXp}/${max} XP`;
+        }
+
+        return `${earnedXp} XP`;
+    }
+
+    static getCompletionDetailNavUsers(tabledata, itemId, maxXp = 0) {
+        const columnIndex = ReportBase.getCompletionDetailColumnIndex(tabledata, itemId);
+        if (columnIndex < 0) {
+            return [];
+        }
+
+        const users = [];
+        tabledata.rows({search: 'applied', order: 'applied'}).every(function() {
+            const rowData = this.data() || {};
+            const rowIndex = this.index();
+            const renderedCell = tabledata.cell(rowIndex, columnIndex).render('display') || '';
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = renderedCell;
+            const detail = wrapper.querySelector('.completion-detail.cursor-pointer');
+            if (!detail) {
+                return;
+            }
+
+            const rowNode = this.node();
+            const userid = rowData.id || (rowNode ? $(rowNode).attr('id') : '') || detail.getAttribute('data-userid');
+            if (!userid) {
+                return;
+            }
+
+            const itemDetails = ReportBase.getCompletionDetailForItem(rowData, itemId);
+
+            users.push({
+                userid: String(userid),
+                fullname: rowData.fullname || detail.getAttribute('data-fullname') || String(userid),
+                pictureonly: rowData.pictureonly || '',
+                xp: itemDetails && itemDetails.xp !== undefined && itemDetails.xp !== null ? Number(itemDetails.xp) : 0,
+                maxXp: Number(maxXp) || 0,
+                completionid: rowData.completionid || '',
+            });
+        });
+
+        return users;
+    }
+
+    /**
+     * Wait until the completion detail modal is available in the DOM.
+     *
+     * @returns {Promise}
+     */
+    static waitForCompletionDetailModal() {
+        return new Promise((resolve) => {
+            let attempts = 0;
+            const waitForRoot = () => {
+                const root = $('#annotation-modal');
+                if (root.length && root.find('.modal-content').length) {
+                    resolve(root);
+                    return;
+                }
+
+                attempts++;
+                if (attempts > 20) {
+                    resolve(root);
+                    return;
+                }
+
+                setTimeout(waitForRoot, 50);
+            };
+
+            waitForRoot();
+        });
+    }
+
+    /**
+     * Close the current completion detail modal.
+     *
+     * @returns {Promise}
+     */
+    static closeCompletionDetailModal() {
+        return new Promise((resolve) => {
+            const root = $('#annotation-modal');
+            if (!root.length) {
+                resolve();
+                return;
+            }
+
+            let resolved = false;
+            const finish = () => {
+                if (!resolved) {
+                    resolved = true;
+                    resolve();
+                }
+            };
+
+            root.one(ModalEvents.hidden, finish);
+
+            const modal = root.data('modal');
+            if (modal && typeof modal.hide === 'function') {
+                modal.hide();
+            } else {
+                const closeButton = root.find('.interaction-dismiss, [id^="close-"]').first();
+                if (closeButton.length) {
+                    closeButton.trigger('click');
+                } else {
+                    root.remove();
+                    finish();
+                }
+            }
+
+            setTimeout(finish, 600);
+        });
+    }
+
+    /**
+     * Open a completion detail modal and add report navigation to it.
+     *
+     * @param {Object} context Navigation context.
+     * @returns {Promise}
+     */
+    static async openCompletionDetail(context) {
+        const maxXp = context.maxXp ?? 0;
+        const users = ReportBase.getCompletionDetailNavUsers(context.tabledata, context.itemId, maxXp);
+        let currentIndex = users.findIndex((user) => user.userid == context.userid);
+        if (currentIndex < 0) {
+            users.push({
+                userid: String(context.userid),
+                fullname: context.fullname || String(context.userid),
+                pictureonly: context.pictureonly || '',
+                xp: context.xp ?? 0,
+                maxXp: maxXp,
+                completionid: context.completionid || '',
+            });
+            currentIndex = users.length - 1;
+        }
+
+        const currentUser = users[currentIndex];
+        const nextContext = {
+            ...context,
+            users,
+            index: currentIndex,
+            userid: currentUser.userid,
+            fullname: currentUser.fullname,
+            pictureonly: currentUser.pictureonly,
+            xp: currentUser.xp,
+            maxXp: currentUser.maxXp,
+            completionid: currentUser.completionid || context.completionid || '',
+        };
+
+        ReportBase.completionDetailNavState = nextContext;
+        await context.openCompletion(context.itemId, currentUser.userid, context.type);
+
+        const root = await ReportBase.waitForCompletionDetailModal();
+        if (root.length) {
+            await ReportBase.injectCompletionDetailNav(root, nextContext);
+        }
+    }
+
+    /**
+     * Render the participant profile shown in the completion detail navigation.
+     *
+     * @param {Object} user User data.
+     * @returns {Object}
+     */
+    static renderCompletionDetailProfile(user) {
+        const profile = $('<div class="completion-detail-nav-profile d-flex align-items-center min-w-0"></div>');
+        const link = $(`<a class="completion-detail-nav-profile-link d-flex align-items-center min-w-0 text-truncate"
+                target="_blank" rel="noopener noreferrer"></a>`);
+        const profileUrl = `${M.cfg.wwwroot}/user/profile.php?id=${encodeURIComponent(user.userid)}`;
+
+        link.attr('href', profileUrl);
+        if (user.pictureonly) {
+            link.html(user.pictureonly);
+        } else {
+            link.text(user.fullname || user.userid);
+        }
+
+        profile.append(link);
+
+        return profile;
+    }
+
+    /**
+     * Add previous and next controls to the current completion detail modal.
+     *
+     * @param {Object} root The modal root.
+     * @param {Object} context Navigation context.
+     * @returns {Promise}
+     */
+    static async injectCompletionDetailNav(root, context) {
+        root.addClass('has-completion-detail-nav');
+        root.find('.completion-detail-nav').remove();
+
+        const component = context.stringComponent || 'mod_interactivevideo';
+        const previousLabel = await getString('previous', component);
+        const nextLabel = await getString('next', component);
+        const position = `${context.index + 1}/${context.users.length}`;
+        const earnedXp = Number(context.xp) || 0;
+        const maxXp = Number(context.maxXp) || 0;
+        const canEditXp = context.canedit == 1 && typeof context.saveXpOverride === 'function' && maxXp > 0;
+
+        const nav = $(`<div class="completion-detail-nav d-flex align-items-center justify-content-between">
+                <div class="completion-detail-nav-profile-region min-w-0 iv-mr-3"></div>
+                <div class="completion-detail-nav-controls d-flex align-items-center flex-shrink-0">
+                    <span class="completion-detail-nav-xp-region d-flex align-items-center flex-shrink-0"></span>
+                    <div class="btn-group completion-detail-nav-pager iv-ml-2" role="group">
+                        <button type="button" class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-button"
+                                data-direction="previous" aria-label="${previousLabel}">
+                            <i class="bi bi-chevron-left fs-unset" aria-hidden="true"></i>
+                        </button>
+                        <span class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-position"></span>
+                        <button type="button" class="btn btn-sm btn-secondary btn-rounded completion-detail-nav-button"
+                                data-direction="next" aria-label="${nextLabel}">
+                            <i class="bi bi-chevron-right fs-unset" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>`);
+
+        nav.find('.completion-detail-nav-profile-region')
+            .append(ReportBase.renderCompletionDetailProfile(context));
+        nav.find('.completion-detail-nav-position').text(position);
+
+        const xpRegion = nav.find('.completion-detail-nav-xp-region');
+        if (canEditXp) {
+            const saveLabel = await getString('save', 'core');
+            const xpLabel = await getString('xp', 'mod_interactivevideo');
+            xpRegion.addClass('completion-detail-nav-xp-edit');
+            xpRegion.html(`<input type="number" class="form-control form-control-sm completion-detail-nav-xp-input"
+                        min="0" max="${maxXp}" step="any" value="${earnedXp}" aria-label="${xpLabel}">
+                    <span class="completion-detail-nav-xp-max iv-ml-1">/ ${maxXp}</span>
+                    <button type="button" class="btn btn-sm btn-primary btn-rounded completion-detail-nav-xp-save iv-ml-1"
+                            title="${saveLabel}" aria-label="${saveLabel}">
+                        <i class="bi bi-check-lg fs-unset" aria-hidden="true"></i>
+                    </button>`);
+        } else {
+            xpRegion.append($('<span class="badge iv-badge-secondary completion-detail-nav-xp"></span>')
+                .text(ReportBase.formatCompletionDetailXp(earnedXp, maxXp)));
+        }
+
+        nav.find('[data-direction="previous"]').prop('disabled', context.index === 0);
+        nav.find('[data-direction="next"]').prop('disabled', context.index >= context.users.length - 1);
+
+        nav.on('click', function(e) {
+            e.stopPropagation();
+        });
+
+        nav.on('click', '.completion-detail-nav-xp-save', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            ReportBase.handleCompletionDetailXpSave(nav, context);
+        });
+
+        nav.on('keydown', '.completion-detail-nav-xp-input', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                ReportBase.handleCompletionDetailXpSave(nav, context);
+            }
+        });
+
+        nav.on('click', '.completion-detail-nav-button', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const direction = $(this).data('direction');
+            const targetIndex = direction === 'previous' ? context.index - 1 : context.index + 1;
+            if (targetIndex < 0 || targetIndex >= context.users.length) {
+                return;
+            }
+
+            const targetUser = context.users[targetIndex];
+            await ReportBase.closeCompletionDetailModal();
+            await ReportBase.openCompletionDetail({
+                ...context,
+                userid: targetUser.userid,
+                fullname: targetUser.fullname,
+                pictureonly: targetUser.pictureonly,
+                xp: targetUser.xp,
+                maxXp: targetUser.maxXp,
+                completionid: targetUser.completionid || '',
+            });
+        });
+
+        root.off(ModalEvents.hidden + '.completionDetailNav').on(ModalEvents.hidden + '.completionDetailNav', function() {
+            $(this).find('.completion-detail-nav').remove();
+            $(this).removeClass('has-completion-detail-nav');
+            ReportBase.completionDetailNavState = null;
+        });
+
+        root.prepend(nav);
+    }
+
+    /**
+     * Validate and persist an overridden XP value from the completion detail nav.
+     *
+     * @param {Object} nav The nav element.
+     * @param {Object} context Navigation context.
+     * @returns {Promise}
+     */
+    static async handleCompletionDetailXpSave(nav, context) {
+        if (context.canedit != 1 || typeof context.saveXpOverride !== 'function') {
+            return;
+        }
+
+        const component = context.stringComponent || 'mod_interactivevideo';
+        const input = nav.find('.completion-detail-nav-xp-input');
+        const saveBtn = nav.find('.completion-detail-nav-xp-save');
+        const maxXp = Number(context.maxXp) || 0;
+        const newXp = parseFloat(input.val());
+
+        if (isNaN(newXp) || newXp < 0 || newXp > maxXp) {
+            input.addClass('is-invalid');
+            try {
+                addToast(await getString('invalidxpvalue', component), {type: 'danger'});
+            } catch (e) {
+                // Ignore string load failure.
+            }
+            return;
+        }
+
+        let currentXp = Number(context.xp) || 0;
+        if (context.tabledata) {
+            try {
+                const rowApi = context.tabledata.row(`#${context.userid}`);
+                if (rowApi && rowApi.any()) {
+                    const detail = ReportBase.getCompletionDetailForItem(rowApi.data() || {}, context.itemId);
+                    if (detail && detail.xp !== undefined) {
+                        currentXp = Number(detail.xp) || 0;
+                    }
+                }
+            } catch (e) {
+                // Keep context.xp.
+            }
+        }
+
+        const roundedNew = Math.round(newXp * 100) / 100;
+        const roundedCurrent = Math.round(currentXp * 100) / 100;
+        if (roundedNew === roundedCurrent) {
+            return;
+        }
+
+        input.removeClass('is-invalid');
+        saveBtn.prop('disabled', true);
+        input.prop('disabled', true);
+
+        let reportview = '';
+        if (context.tabledata && typeof context.patchReportViewForXp === 'function') {
+            try {
+                const rowApi = context.tabledata.row(`#${context.userid}`);
+                if (rowApi && rowApi.any()) {
+                    const rowData = rowApi.data() || {};
+                    const detail = ReportBase.getCompletionDetailForItem(rowData, context.itemId);
+                    const patched = context.patchReportViewForXp(context.type, detail, newXp, maxXp);
+                    reportview = patched?.reportView ?? '';
+                }
+            } catch (e) {
+                // Fall back to server-side reportView patch.
+            }
+        }
+
+        try {
+            const response = await context.saveXpOverride(context, newXp, reportview);
+            if (!response || response.error) {
+                const errorKey = response && response.error;
+                let message;
+                if (errorKey === 'invalidxpvalue') {
+                    message = await getString('invalidxpvalue', component);
+                } else if (errorKey) {
+                    message = errorKey;
+                } else {
+                    message = await getString('overridexperror', component);
+                }
+                throw new Error(message);
+            }
+
+            const savedXp = Number(response.itemxp ?? newXp);
+            context.xp = savedXp;
+            if (context.users && context.users[context.index]) {
+                context.users[context.index].xp = savedXp;
+            }
+            ReportBase.updateReportRowAfterXpOverride(context, response);
+            addToast(await getString('overridexpsaved', component), {type: 'success'});
+        } catch (e) {
+            try {
+                const message = e && e.message && e.message !== 'error'
+                    ? e.message
+                    : await getString('overridexperror', component);
+                addToast(message, {type: 'danger'});
+            } catch (ignore) {
+                // Ignore string load failure.
+            }
+        } finally {
+            saveBtn.prop('disabled', false);
+            input.prop('disabled', false);
+        }
+    }
+
+    /**
+     * Patch the report DataTable row after an XP override so the cell, row total
+     * and footer aggregates reflect the new value.
+     *
+     * @param {Object} context Navigation context.
+     * @param {Object} response Server response with xp and completiondetails.
+     * @returns {void}
+     */
+    static updateReportRowAfterXpOverride(context, response) {
+        const tabledata = context.tabledata;
+        if (!tabledata || !context.userid) {
+            return;
+        }
+
+        let rowApi;
+        try {
+            rowApi = tabledata.row(`#${context.userid}`);
+        } catch (e) {
+            rowApi = null;
+        }
+        if (!rowApi || !rowApi.any()) {
+            return;
+        }
+
+        const rowData = rowApi.data() || {};
+        if (response.completiondetails !== undefined) {
+            rowData.completiondetails = response.completiondetails;
+        }
+        if (response.xp !== undefined) {
+            rowData.xp = response.xp;
+        }
+        rowApi.data(rowData).invalidate();
+
+        const columnIndex = ReportBase.getCompletionDetailColumnIndex(tabledata, context.itemId);
+        if (columnIndex >= 0) {
+            rowApi.cells(rowApi.index(), columnIndex).invalidate();
+        }
+
+        tabledata.draw(false);
+    }
+
+    /**
+     * Register report completion detail navigation.
+     *
+     * @param {Object} params Handler params.
+     * @param {Object} params.tabledata The DataTable instance.
+     * @param {Function} params.openCompletion Opens a completion detail modal.
+     * @param {String} params.stringComponent Language component.
+     */
+    static registerCompletionDetailHandler(params) {
+        const tabledata = params.tabledata || params.table;
+
+        $(document).off('click.completionDetailNav', 'td .completion-detail')
+            .on('click.completionDetailNav', 'td .completion-detail.cursor-pointer', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const cell = $(this).closest('td');
+                const row = $(this).closest('tr');
+                const rowData = tabledata.row(row).data() || {};
+                const itemId = cell.data('item');
+                const itemDetails = ReportBase.getCompletionDetailForItem(rowData, itemId);
+                const interactionMeta = params.getInteractionMeta ? params.getInteractionMeta(itemId) : {};
+                const maxXp = interactionMeta?.maxXp ?? 0;
+                const context = {
+                    tabledata,
+                    itemId,
+                    type: cell.data('type'),
+                    userid: String(row.attr('id') || rowData.id || $(this).data('userid')),
+                    fullname: rowData.fullname || String(row.attr('id') || rowData.id || $(this).data('userid')),
+                    pictureonly: rowData.pictureonly || '',
+                    xp: itemDetails && itemDetails.xp !== undefined && itemDetails.xp !== null ? Number(itemDetails.xp) : 0,
+                    maxXp,
+                    completionid: rowData.completionid || '',
+                    canedit: params.canedit ? 1 : 0,
+                    saveXpOverride: params.saveXpOverride,
+                    patchReportViewForXp: params.patchReportViewForXp,
+                    openCompletion: params.openCompletion,
+                    stringComponent: params.stringComponent || 'mod_interactivevideo',
+                };
+
+                await ReportBase.openCompletionDetail(context);
+            });
+    }
+
+    /**
      * Get the default DataTable options.
      *
      * @param {Object} params Configuration parameters.
@@ -441,11 +983,6 @@ export default class ReportBase {
                 data.start = 0;
                 data.columns.forEach(function(column) {
                     column.search.search = "";
-                });
-                data.columns.forEach(function(column) {
-                    if (column.visible === false) {
-                        column.visible = true;
-                    }
                 });
                 return data;
             },

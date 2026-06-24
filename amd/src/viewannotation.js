@@ -617,6 +617,9 @@ define([
                             // Do nothing.
                         }
                     }));
+                    Object.values(ctRenderer).forEach((renderer) => {
+                        renderer.ivCtRenderer = ctRenderer;
+                    });
                 }
             };
 
@@ -1955,27 +1958,48 @@ define([
             });
 
             const addPlayerEvents = function() {
-                $(document).on('iv:playerPaused', function() {
+                const isMainPlayerEvent = (e) => {
+                    const target = e?.target || e?.originalEvent?.target;
+                    const main = document.getElementById('player');
+                    return Boolean(main && target && (target === main || main.contains(target)));
+                };
+
+                $(document).on('iv:playerPaused', function(e) {
+                    if (!isMainPlayerEvent(e)) {
+                        return;
+                    }
                     // Remove the tooltip.
                     $('.tooltip').remove();
                     dispatchEvent('videoPaused');
                     onPaused();
                 });
 
-                $(document).on('iv:playerPlaying', function() {
+                $(document).on('iv:playerPlaying', function(e) {
+                    if (!isMainPlayerEvent(e)) {
+                        return;
+                    }
                     onPlaying();
                 });
 
-                $(document).on('iv:playerPlay', function() {
+                $(document).on('iv:playerPlay', function(e) {
+                    if (!isMainPlayerEvent(e)) {
+                        return;
+                    }
                     onPlay();
                     $loader.fadeOut(300);
                 });
 
-                $(document).on('iv:playerEnded', function() {
+                $(document).on('iv:playerEnded', function(e) {
+                    if (!isMainPlayerEvent(e)) {
+                        return;
+                    }
                     onEnded();
                 });
 
                 $(document).on('iv:playerSeek', function(e) {
+                    if (!isMainPlayerEvent(e)) {
+                        return;
+                    }
                     if (player.live) {
                         return;
                     }
