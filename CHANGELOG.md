@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.2] - 2026-07-12
+### Updated
+- **Play guard:** Prevent video from playing using browser or OS media controls when the tab is invisible. **Previous behavior:** when learners switched the Interactive Video tab in the browser to a different tab, the video was paused automatically if the "Pause video when tab is inactive" was checked. Learners could still use the media controls, such as those on Chrome, to play the video in the background. **New behavior:** When the play event is triggered, the player will first check if the tab is active; if not, the video is paused (still contingent upon the "Pause video when tab is inactive" setting). **Require stronger guards?** Check out the Analytics extension. 😉
+
+### Fixed
+- **PeerTube:** Addressed PeerTube video's new requirement for non-zero width wrapper when embedded.
+
 ## [1.9.1] - 2026-06-25
 
 ### Fixed

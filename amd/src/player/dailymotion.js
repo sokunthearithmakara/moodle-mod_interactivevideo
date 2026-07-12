@@ -228,7 +228,10 @@ class DailyMotion {
                         self.ended = false;
                     } else {
                         if (e.playerIsPlaying === true) {
-                            self.sendEvent('iv:playerPlaying', null, self.node);
+                            self.sendEvent('iv:playerPlaying', {
+                                time: e.videoTime,
+                                rate: e.playerPlaybackSpeed,
+                            }, self.node);
                             self.ended = false;
                             self.paused = false;
                         }
@@ -276,6 +279,10 @@ class DailyMotion {
                 player.on(dailymotion.events.VIDEO_QUALITYCHANGE, function(e) {
                     self.sendEvent('iv:playerQualityChange', {quality: e.videoQuality}, self.node);
                 });
+
+                player.on(dailymotion.events.VIDEO_SEEKEND, function(e) {
+                    self.sendEvent('iv:playerSeek', {time: e.videoTime}, self.node);
+                });
             };
 
             if (customStart) {
@@ -300,7 +307,7 @@ class DailyMotion {
                             playerEvents();
                             ready = true;
                             if (state.playerIsPlaybackAllowed) {
-                                this.sendEvent('iv:playerReady', null, this.node);
+                                self.sendEvent('iv:playerReady', null, self.node);
                             }
                         }
                     }, state.playerIsPlaybackAllowed ? 1000 : 0);
@@ -309,7 +316,7 @@ class DailyMotion {
                 playerEvents();
                 ready = true;
                 if (state.playerIsPlaybackAllowed) {
-                    this.sendEvent('iv:playerReady', null, this.node);
+                    self.sendEvent('iv:playerReady', null, self.node);
                 }
             }
 
@@ -408,7 +415,6 @@ class DailyMotion {
         this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         await player[this.node].seek(time);
         this.ended = false;
-        this.sendEvent('iv:playerSeek', {time: time}, this.node);
     }
     /**
      * Retrieves the current playback time of the video.
@@ -538,6 +544,11 @@ class DailyMotion {
             return;
         }
         player[this.node].setPlaybackSpeed(rate);
+    }
+
+    async getRate() {
+        const state = await player[this.node].getState();
+        return state.playerPlaybackSpeed;
     }
     /**
      * Mutes the Dailymotion player.

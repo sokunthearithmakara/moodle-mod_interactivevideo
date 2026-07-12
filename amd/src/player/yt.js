@@ -331,7 +331,10 @@ class Yt {
                                 }
                             }
                             self.sendEvent('iv:playerPlay', null, self.node);
-                            self.sendEvent('iv:playerPlaying', null, self.node);
+                            self.sendEvent('iv:playerPlaying', {
+                                time: currentTime,
+                                rate: player[self.node].getPlaybackRate() || 1,
+                            }, self.node);
                             if (!self.live && currentTime >= self.end) {
                                 self.ended = true;
                                 self.paused = true;
@@ -572,6 +575,16 @@ class Yt {
         }
         player[this.node].setPlaybackRate(rate);
         return rate;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    async getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return player[this.node].getPlaybackRate() || 1;
     }
     /**
      * Mute the video

@@ -197,7 +197,7 @@ class Rumble {
                             player[node].setCurrentTime(start);
                             ready = true;
                             firstAPIrun = true;
-                            this.sendEvent('iv:playerReady', null, this.node);
+                            _this.sendEvent('iv:playerReady', null, _this.node);
                         }
                         $(document).off('timeupdate.Rumble').on('timeupdate.Rumble', function() {
                             if (!ready) {
@@ -229,7 +229,7 @@ class Rumble {
                             }
                             self.ended = false;
                             self.sendEvent('iv:playerPlay', null, self.node);
-                            self.sendEvent('iv:playerPlaying', null, self.node);
+                            self.sendEvent('iv:playerPlaying', {time: player[node].getCurrentTime(), rate: 1}, self.node);
                             if (!showControls && !$('body').hasClass('no-original-controls')) {
                                 $('body').addClass('no-original-controls');
                             }
@@ -426,6 +426,13 @@ class Rumble {
      */
     setRate() {
         // Rumble does not support playback rate.
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        return 1;
     }
     /**
      * Mutes the Rumble player.

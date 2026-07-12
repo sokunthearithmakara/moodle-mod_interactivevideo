@@ -227,7 +227,7 @@ class BunnyStream {
             });
 
             player[node].on('timeupdate', (data) => {
-                self.sendEvent('iv:playerPlaying', null, self.node);
+                self.sendEvent('iv:playerPlaying', {time: data.seconds, rate: 1}, self.node);
                 if (data.seconds >= self.end) {
                     self.ended = true;
                     player[node].pause();
@@ -404,6 +404,11 @@ class BunnyStream {
         }
         return rate;
     }
+
+    getRate() {
+        return 1;
+    }
+
     /**
      * Mute the video
      */

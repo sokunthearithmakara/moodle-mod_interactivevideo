@@ -233,6 +233,7 @@ class Kinescope {
                             return;
                         }
                         let currentTime = await player[node].getCurrentTime();
+                        let rate = await player[node].getPlaybackRate();
                         if (currentTime < start) {
                             await player[node].seekTo(start);
                             self.ended = false;
@@ -247,7 +248,10 @@ class Kinescope {
                             self.sendEvent('iv:playerEnded', null, self.node);
                         } else if (!self.paused) {
                             self.paused = false;
-                            self.sendEvent('iv:playerPlaying', null, self.node);
+                            self.sendEvent('iv:playerPlaying', {
+                                time: currentTime,
+                                rate: rate,
+                            }, self.node);
                         };
                     });
                     pl.on(pl.Events.QualityChanged, async function(event) {
@@ -273,6 +277,13 @@ class Kinescope {
                             return;
                         }
                         self.sendEvent('iv:playerVolumeChange', {volume: event.data.muted ? 0 : 1}, self.node);
+                    });
+
+                    pl.on(pl.Events.Seeked, function(event) {
+                        if (!ready) {
+                            return;
+                        }
+                        self.sendEvent('iv:playerSeek', {time: event.data.time}, self.node);
                     });
                 });
         };
@@ -349,7 +360,6 @@ class Kinescope {
         this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         player[this.node].seekTo(parseFloat(time));
-        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return time;
     }
     /**
@@ -476,6 +486,12 @@ class Kinescope {
             return;
         }
         player[this.node].setPlaybackRate(rate);
+    }
+    async getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return await player[this.node].getPlaybackRate();
     }
     /**
      * Mutes the Sprout Video player by setting the volume to 0.

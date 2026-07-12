@@ -497,7 +497,6 @@ export default class InteractiveVideo extends Base {
 
             form.addEventListener(form.events.FORM_SUBMITTED, (e) => {
                 const response = e.detail;
-                window.console.log(response);
                 $(`#video-url`).val(response.url);
                 $('[data-name="interaction-form"] [name="draftitemid"]').val(response.videofile);
                 $('#video-info-form .play-video').trigger('click');

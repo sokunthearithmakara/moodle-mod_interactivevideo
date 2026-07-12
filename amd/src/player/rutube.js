@@ -24,6 +24,7 @@
 import {dispatchEvent} from 'core/event_dispatcher';
 import $ from 'jquery';
 import allowAutoplay from 'mod_interactivevideo/player/checkautoplay';
+import {get_string as getString} from 'core/str';
 
 let player = {};
 
@@ -190,7 +191,7 @@ class Rutube {
                                 self.seek(self.start);
                                 self.ended = false;
                                 self.paused = false;
-                                self.sendEvent('iv:playerPlaying', null, self.node);
+                                self.sendEvent('iv:playerPlaying', {time: currentTime, rate: 1}, self.node);
                                 return;
                             }
                             if (!self.ended && currentTime >= self.end) {
@@ -201,7 +202,10 @@ class Rutube {
                             }
                             self.paused = false;
                             self.ended = false;
-                            self.sendEvent('iv:playerPlaying', null, self.node);
+                            self.sendEvent('iv:playerPlaying', {
+                                time: currentTime,
+                                rate: 1,
+                            }, self.node);
                         } else if (message.data.state === 'paused' || message.data.state === 'pause') {
                             self.paused = true;
                             self.sendEvent('iv:playerPaused', null, self.node);
@@ -403,7 +407,14 @@ class Rutube {
         if (!player[this.node]) {
             return;
         }
-        player[this.node].setPlaybackRate(rate);
+        return rate;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        return 1;
     }
     /**
      * Mutes the Rutube player by setting the volume to 0.
@@ -446,7 +457,7 @@ class Rutube {
             }
         return {
             qualities: ['auto', ...this.qualities],
-            qualitiesLabel: [M.util.get_string('auto', 'mod_interactivevideo'), ...this.qualities],
+            qualitiesLabel: [await getString('auto', 'mod_interactivevideo'), ...this.qualities],
             currentQuality: this.currentQuality,
         };
     }

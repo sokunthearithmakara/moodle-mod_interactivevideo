@@ -374,7 +374,10 @@ class VdoCipher {
             if (player[node].video.currentTime >= self.end + self.frequency && !self.live) {
                 player[node].video.currentTime = self.end - self.frequency;
             }
-            self.sendEvent('iv:playerPlaying', null, self.node);
+            self.sendEvent('iv:playerPlaying', {
+                time: player[node].video.currentTime,
+                rate: player[node].video.playbackRate || 1,
+            }, self.node);
             if (self.live) {
                 return;
             }
@@ -571,6 +574,16 @@ class VdoCipher {
         }
         player[this.node].video.playbackRate = rate;
         return rate;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return player[this.node].video.playbackRate || 1;
     }
     /**
      * Mute the video

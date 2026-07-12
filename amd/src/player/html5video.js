@@ -338,7 +338,10 @@ class Html5Video {
             if (player.currentTime >= self.end + self.frequency && !self.live) {
                 player.currentTime = self.end - self.frequency;
             }
-            _this.sendEvent('iv:playerPlaying', null, _this.node);
+            _this.sendEvent('iv:playerPlaying', {
+                time: player.currentTime,
+                rate: player.playbackRate,
+            }, _this.node);
             if (self.live) {
                 return;
             }
@@ -369,6 +372,10 @@ class Html5Video {
         // Volume change event.
         player.addEventListener('volumechange', function() {
             _this.sendEvent('iv:playerVolumeChange', {volume: player.volume}, _this.node);
+        });
+
+        player.addEventListener('seeked', function() {
+            _this.sendEvent('iv:playerSeek', {time: player.currentTime}, _this.node);
         });
 
         this.player = player;
@@ -499,7 +506,6 @@ class Html5Video {
         this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         this.player.currentTime = time;
-        this.sendEvent('iv:playerSeek', {time}, this.node);
         return true;
     }
     /**
@@ -626,6 +632,13 @@ class Html5Video {
             return;
         }
         this.player.playbackRate = rate;
+    }
+
+    getRate() {
+        if (!playerids[this.node]) {
+            return 1;
+        }
+        return this.player.playbackRate || 1;
     }
 
     /**

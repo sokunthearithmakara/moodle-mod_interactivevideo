@@ -273,6 +273,7 @@ class Panopto {
                         return;
                     }
                     let currentTime = player[node].getCurrentTime();
+                    let rate = player[node].getPlaybackRate();
                     switch (state) {
                         case PlayerState.Ended:
                             self.ended = true;
@@ -283,7 +284,10 @@ class Panopto {
                                 player[node].seekTo(self.start);
                             }
                             _this.sendEvent('iv:playerPlay', null, _this.node);
-                            _this.sendEvent('iv:playerPlaying', null, _this.node);
+                            _this.sendEvent('iv:playerPlaying', {
+                                time: currentTime,
+                                rate: rate || 1,
+                            }, _this.node);
                             self.ended = false;
                             this.paused = false;
                             break;
@@ -403,6 +407,9 @@ class Panopto {
         return new Promise((resolve) => {
             player[this.node].seekTo(time, true);
             this.sendEvent('iv:playerSeek', {time: time}, this.node);
+            if (this.isPlaying()) {
+                this.sendEvent('iv:playerPlaying', {time: time, rate: player[this.node].getPlaybackRate() || 1}, this.node);
+            }
             resolve(true);
         });
     }
@@ -506,6 +513,16 @@ class Panopto {
         }
         player[this.node].setPlaybackRate(rate);
         return rate;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return player[this.node].getPlaybackRate() || 1;
     }
     /**
      * Mute the video

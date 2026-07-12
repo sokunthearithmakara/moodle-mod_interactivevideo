@@ -260,7 +260,7 @@ class Spotify {
                                 self.sendEvent('iv:playerPlay', null, self.node);
                             }
                             self.paused = false;
-                            self.sendEvent('iv:playerPlaying', null, self.node);
+                            self.sendEvent('iv:playerPlaying', {time: self.currentTime, rate: 1}, self.node);
                             if (self.currentTime >= self.end - self.frequency) {
                                 self.ended = true;
                                 self.sendEvent('iv:playerEnded', null, self.node);
@@ -400,6 +400,13 @@ class Spotify {
      */
     setRate() {
         return false;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        return 1;
     }
     /**
      * Mute the video

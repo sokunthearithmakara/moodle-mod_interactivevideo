@@ -223,7 +223,7 @@ class Vidyard {
                     }
                     self.paused = false;
                     self.ended = false;
-                    self.sendEvent('iv:playerPlaying', null, self.node);
+                    self.sendEvent('iv:playerPlaying', {time: e, rate: player[node].rate || 1}, self.node);
                 });
 
                 player[node].on('volumechange', function(e) {
@@ -378,7 +378,19 @@ class Vidyard {
             return rate;
         }
         player[this.node].setPlaybackSpeed(rate);
+        this.sendEvent('iv:playerRateChange', {rate: rate}, this.node);
+        player[this.node].rate = rate;
         return rate;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return player[this.node].rate || 1;
     }
     /**
      * Mute the video

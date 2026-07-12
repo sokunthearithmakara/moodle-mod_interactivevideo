@@ -223,7 +223,10 @@ class SproutVideo {
                 self.paused = false;
                 self.ended = false;
                 self.sendEvent('iv:playerPlay', null, self.node);
-                self.sendEvent('iv:playerPlaying', null, self.node);
+                self.sendEvent('iv:playerPlaying', {
+                    time: currentTime,
+                    rate: player.getPlaybackRate() || 1,
+                }, self.node);
             });
 
             player.bind('pause', function() {
@@ -481,6 +484,16 @@ class SproutVideo {
             return;
         }
         player[this.node].setPlaybackRate(rate);
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return player[this.node].getPlaybackRate() || 1;
     }
     /**
      * Mutes the Sprout Video player by setting the volume to 0.

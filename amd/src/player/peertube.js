@@ -132,6 +132,8 @@ class PeerTube {
             $('#video-block, .video-block').remove();
         }
 
+        $(`#annotation-canvas`).removeClass('d-none w-0');
+
         // Get the id and domain of the video.
         // Sample Url: https://video.hardlimit.com/w/hFwjKHQa3ixivePeqGc4KR
         const regex = /https:\/\/([^/]+)\/w\/([^/]+)/;
@@ -220,7 +222,7 @@ class PeerTube {
             reloaded: reloaded,
         }, this.node);
 
-        let listener = (status) => {
+        let listener = async(status) => {
             let currentTime = status.position;
             self.currentTime = currentTime;
             switch (status.playbackState) {
@@ -230,7 +232,10 @@ class PeerTube {
                     if (currentTime < self.start) {
                         self.seek(self.start);
                     }
-                    self.sendEvent('iv:playerPlaying', null, self.node);
+                    self.sendEvent('iv:playerPlaying', {
+                        time: currentTime,
+                        rate: await player[node].getPlaybackRate(),
+                    }, self.node);
                     if (currentTime >= self.end) {
                         self.ended = true;
                         self.sendEvent('iv:playerEnded', null, self.node);
@@ -372,6 +377,7 @@ class PeerTube {
         this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         this.ended = false;
         await player[this.node].seek(time);
+        this.currentTime = time;
         this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return true;
     }
@@ -469,6 +475,16 @@ class PeerTube {
         }
         await player[this.node].setPlaybackRate(rate);
         return rate;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    async getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return await player[this.node].getPlaybackRate();
     }
     /**
      * Mute the video

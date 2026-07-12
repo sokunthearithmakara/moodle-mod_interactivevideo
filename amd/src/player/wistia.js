@@ -187,7 +187,6 @@ class Wistia {
                         }
                         self.paused = false;
                         self.sendEvent('iv:playerPlay', null, self.node);
-                        self.sendEvent('iv:playerPlaying', null, self.node);
                     });
 
                     video.on('timechange', (s) => {
@@ -202,6 +201,9 @@ class Wistia {
                             self.ended = true;
                             self.sendEvent('iv:playerEnded', null, self.node);
                         }
+                        if (self.isPlaying()) {
+                            self.sendEvent('iv:playerPlaying', {time: video.time(), rate: player[node].rate || 1}, self.node);
+                        }
                     });
 
                     video.on("error", (e) => {
@@ -209,6 +211,7 @@ class Wistia {
                     });
 
                     video.on("playbackratechange", (e) => {
+                        player[node].rate = e;
                         self.sendEvent('iv:playerRateChange', {rate: e}, self.node);
                     });
 
@@ -306,7 +309,6 @@ class Wistia {
         this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         player[this.node].time(time);
         this.ended = false;
-        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return time;
     }
     /**
@@ -420,6 +422,16 @@ class Wistia {
             return;
         }
         player[this.node].playbackRate(rate);
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return player[this.node].rate || 1;
     }
     /**
      * Mutes the Wistia player.

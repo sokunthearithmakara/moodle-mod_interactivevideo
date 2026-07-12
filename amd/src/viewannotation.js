@@ -1985,6 +1985,11 @@ define([
                     if (!isMainPlayerEvent(e)) {
                         return;
                     }
+                    // If the tab is not active and pauseonblur is enabled, pause the video.
+                    if (!document.hasFocus() && displayoptions.pauseonblur == 1) {
+                        player.pause();
+                        return;
+                    }
                     onPlay();
                     $loader.fadeOut(300);
                 });

@@ -214,7 +214,7 @@ class SoundCloud {
                     self.ended = false;
                     self.player.seekTo(self.start * 1000);
                 }
-                self.sendEvent('iv:playerPlaying', null, self.node);
+                self.sendEvent('iv:playerPlaying', {time: currentTime, rate: 1}, self.node);
             });
 
             self.player.bind(window.SC.Widget.Events.PLAY, function() {
@@ -404,6 +404,13 @@ class SoundCloud {
      */
     setRate() {
         return false;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        return 1;
     }
     /**
      * Mute the video

@@ -245,7 +245,7 @@ class Viostream {
             });
 
             player[node].on('timeupdate', (data) => {
-                self.sendEvent('iv:playerPlaying', null, self.node);
+                self.sendEvent('iv:playerPlaying', {time: data.seconds, rate: 1}, self.node);
                 if (data.seconds >= self.end) {
                     self.ended = true;
                     player[node].pause();
@@ -421,6 +421,13 @@ class Viostream {
             return rate;
         }
         return rate;
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    getRate() {
+        return 1;
     }
     /**
      * Mute the video

@@ -39,7 +39,7 @@ class Dyntube {
         this.useAnimationFrame = false;
         this.support = {
             hideControls: false,
-            playbackrate: false,
+            playbackrate: true,
             quality: false,
             password: false,
         };
@@ -260,7 +260,7 @@ class Dyntube {
                     currentTime = Math.ceil(self.start);
                     self.seek(currentTime);
                 }
-                self.sendEvent('iv:playerPlaying', null, self.node);
+                self.sendEvent('iv:playerPlaying', {time: currentTime, rate: player[self.node].rate || 1}, self.node);
                 self.currentTime = currentTime;
             });
 
@@ -418,7 +418,17 @@ class Dyntube {
         if (!player[this.node]) {
             return 1;
         }
+        player[this.node].playbackRate(rate);
+        player[this.node].rate = rate;
+        this.sendEvent('iv:playerRateChange', {rate: rate}, this.node);
         return rate;
+    }
+
+    getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return player[this.node].rate || 1;
     }
     /**
      * Mute the video

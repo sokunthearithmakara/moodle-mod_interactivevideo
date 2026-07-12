@@ -346,7 +346,10 @@ class Vimeo {
                 } else {
                     self.paused = false;
                     self.ended = false;
-                    _this.sendEvent('iv:playerPlaying', null, _this.node);
+                    _this.sendEvent('iv:playerPlaying', {
+                        time: e.seconds,
+                        rate: await player.getPlaybackRate() || 1,
+                    }, _this.node);
                 }
             });
 
@@ -391,6 +394,10 @@ class Vimeo {
 
             player.on('volumechange', function(e) {
                 _this.sendEvent('iv:playerVolumeChange', {volume: e.volume}, _this.node);
+            });
+
+            player.on('seeked', function(e) {
+                _this.sendEvent('iv:playerSeek', {time: e.seconds}, _this.node);
             });
         };
 
@@ -465,7 +472,6 @@ class Vimeo {
         let currentTime = await this.getCurrentTime();
         this.sendEvent('iv:playerSeekStart', {time: currentTime}, this.node);
         await player[this.node].setCurrentTime(time);
-        this.sendEvent('iv:playerSeek', {time: time}, this.node);
         return time;
     }
     /**
@@ -592,6 +598,16 @@ class Vimeo {
             return;
         }
         player[this.node].setPlaybackRate(rate);
+    }
+    /**
+     * Get the playback rate of the video
+     * @return {Number}
+     */
+    async getRate() {
+        if (!player[this.node]) {
+            return 1;
+        }
+        return await player[this.node].getPlaybackRate() || 1;
     }
     /**
      * Mutes the Vimeo player by setting the volume to 0.
