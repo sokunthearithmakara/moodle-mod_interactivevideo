@@ -322,7 +322,7 @@ class Panopto {
                         } else {
                             if (!autoplayBlocked) {
                                 autoplayBlocked = true;
-                                this.sendEvent('iv:playerReady', null, this.node);
+                                _this.sendEvent('iv:playerReady', null, _this.node);
                             }
                         }
                         return;
@@ -332,7 +332,7 @@ class Panopto {
                         }
                         return;
                     }
-                    this.sendEvent('iv:playerError', {error}, this.node);
+                    _this.sendEvent('iv:playerError', {error}, _this.node);
                 },
                 onLoginShown: function() {
                     $('#start-screen').addClass('d-none');

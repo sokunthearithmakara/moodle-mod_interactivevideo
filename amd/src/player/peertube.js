@@ -217,10 +217,10 @@ class PeerTube {
                 };
             });
         }
-        this.sendEvent('iv:playerLoaded', {
+        _this.sendEvent('iv:playerLoaded', {
             tracks: captions, qualities: self.getQualities(),
             reloaded: reloaded,
-        }, this.node);
+        }, _this.node);
 
         let listener = async(status) => {
             let currentTime = status.position;

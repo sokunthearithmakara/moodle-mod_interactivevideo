@@ -137,7 +137,7 @@ class DailyMotion {
         const dailymotionEvents = async(player) => {
             const state = await player.getState();
             if (state.playerIsViewable === false && state.videoDuration == 0) {
-                this.sendEvent('iv:playerError', {error: 'Video is not viewable.'}, this.node);
+                self.sendEvent('iv:playerError', {error: 'Video is not viewable.'}, self.node);
                 return;
             }
 

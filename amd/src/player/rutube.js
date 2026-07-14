@@ -242,12 +242,12 @@ class Rutube {
                         }
                         break;
                     case 'player:error':
-                        this.sendEvent('iv:playerError', {error: message.data}, this.node);
+                        self.sendEvent('iv:playerError', {error: message.data}, self.node);
                         break;
                 };
             });
         }).catch(function(error) {
-            this.sendEvent('iv:playerError', {error: error}, this.node);
+            self.sendEvent('iv:playerError', {error: error}, self.node);
         });
     }
     doCommand(commandJSON) {

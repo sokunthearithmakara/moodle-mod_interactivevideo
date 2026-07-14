@@ -152,12 +152,12 @@ class Html5Video {
 
                 // Handle quality change.
                 hls.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
-                    this.sendEvent('iv:playerQualityChange', {quality: data.level}, this.node);
+                    _this.sendEvent('iv:playerQualityChange', {quality: data.level}, _this.node);
                 });
 
                 hls.on(Hls.Events.ERROR, function(event, data) {
                     if (data.fatal) {
-                        this.sendEvent('iv:playerError', {error: data}, this.node);
+                        _this.sendEvent('iv:playerError', {error: data}, _this.node);
                     }
                 });
             } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
@@ -180,10 +180,10 @@ class Html5Video {
                     if (!current) {
                         return;
                     }
-                    this.sendEvent('iv:playerQualityChange', {quality: current.absoluteIndex}, this.node);
+                    _this.sendEvent('iv:playerQualityChange', {quality: current.absoluteIndex}, _this.node);
                 });
                 dashPlayer.on(dashjs.MediaPlayer.events.ERROR, function() {
-                    this.sendEvent('iv:playerError', null, this.node);
+                    _this.sendEvent('iv:playerError', null, _this.node);
                 });
                 this.support.quality = true;
             } else {

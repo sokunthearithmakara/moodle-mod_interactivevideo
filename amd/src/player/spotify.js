@@ -216,7 +216,7 @@ class Spotify {
                         // We don't want to play the preview version.
                         EmbedController.pause();
                         EmbedController.destroy();
-                        this.sendEvent('iv:playerError', {message: 'The video is too short.'}, this.node);
+                        self.sendEvent('iv:playerError', {message: 'The video is too short.'}, self.node);
                         return;
                     }
 
