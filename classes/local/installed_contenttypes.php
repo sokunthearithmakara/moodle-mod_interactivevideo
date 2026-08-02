@@ -78,7 +78,7 @@ class installed_contenttypes {
         string $component,
         bool $external,
         array $enabledlist,
-        bool $hasenabledconfig,
+        bool $hasenabledconfig
     ): array {
         $versionconfig = get_config($component);
         $version = !empty($versionconfig->version) ? (string) $versionconfig->version : '';
@@ -113,7 +113,7 @@ class installed_contenttypes {
         }
 
         $enabled = !$hasenabledconfig || in_array($component, $enabledlist, true);
-        $activation = self::resolve_activation_fields($component, $props);
+        $activation = self::resolve_activation_fields($component);
 
         return [
             'component' => $component,
@@ -132,11 +132,9 @@ class installed_contenttypes {
      * Resolve paid flag and activation status for an installed plugin row.
      *
      * @param string $component Plugin component.
-     * @param array<string, mixed>|null $props get_property() result when available.
-     * @return array{paid: bool, activated: bool}
+     * @return array Paid and activated flags for the installed row.
      */
-    private static function resolve_activation_fields(string $component, ?array $props): array {
-        unset($props);
+    private static function resolve_activation_fields(string $component): array {
         if (!plugins_catalog::is_paid_component($component)) {
             return ['paid' => false, 'activated' => false];
         }

@@ -151,14 +151,14 @@ class plugins_catalog {
      * Catalog with installed status and update information merged in.
      *
      * @param string $target Target module name in plugins.json support.
-     * @param array<int, array<string, mixed>> $installedrows Installed plugin metadata rows.
+     * @param array $installedrows Installed plugin metadata rows.
      * @param bool $refresh When true, refetch the remote catalog before enriching.
-     * @return array<string, mixed>
+     * @return array Enriched catalog data.
      */
     public static function get_enriched_catalog(
         string $target,
         array $installedrows,
-        bool $refresh = false,
+        bool $refresh = false
     ): array {
         $catalog = self::get_catalog($target, $refresh);
         $installedmap = [];
@@ -271,7 +271,7 @@ class plugins_catalog {
     /**
      * Merge bundled support metadata into catalog entries that lack it.
      *
-     * @param array<string, mixed> $data Catalog data (modified in place).
+     * @param array $data Catalog data modified in place.
      */
     private static function apply_bundled_support_metadata(array &$data): void {
         $supportmap = self::get_bundled_support_map();
@@ -290,9 +290,9 @@ class plugins_catalog {
     /**
      * Whether a catalog entry supports the given target module.
      *
-     * @param array<string, mixed> $plugin
-     * @param string $target
-     * @return bool
+     * @param array $plugin Catalog plugin entry.
+     * @param string $target Target module name.
+     * @return bool True when the plugin supports the target.
      */
     private static function supports_target(array $plugin, string $target): bool {
         if (empty($plugin['support']) || !is_array($plugin['support'])) {
@@ -304,6 +304,8 @@ class plugins_catalog {
     }
 
     /**
+     * Return the application cache store for the plugins catalog.
+     *
      * @return \cache Application cache store for the plugins catalog.
      */
     private static function get_catalog_cache(): \cache {

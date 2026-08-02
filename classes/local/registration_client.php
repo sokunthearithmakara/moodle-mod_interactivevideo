@@ -110,8 +110,8 @@ class registration_client {
     /**
      * Whether unregister succeeded or the activation is already absent on the server.
      *
-     * @param array{success: bool, errorcode?: string} $result Unregister response.
-     * @return bool
+     * @param array $result Unregister response.
+     * @return bool True when unregister succeeded or the activation was already absent.
      */
     protected static function unregister_succeeded(array $result): bool {
         if (!empty($result['success'])) {

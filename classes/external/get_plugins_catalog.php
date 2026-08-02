@@ -65,7 +65,7 @@ class get_plugins_catalog extends external_api {
      */
     public static function execute(
         string $target = plugins_catalog::TARGET_INTERACTIVEVIDEO,
-        bool $refresh = false,
+        bool $refresh = false
     ): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'target' => $target,
