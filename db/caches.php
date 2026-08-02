@@ -40,4 +40,16 @@ $definitions = [
         'simpledata' => true,
         'staticacceleration' => true,
     ],
+    'iv_activation' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => false,
+        'staticacceleration' => true,
+    ],
+    'iv_plugins_catalog' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => false,
+        'staticacceleration' => true,
+    ],
 ];

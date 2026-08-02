@@ -308,5 +308,25 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025091802, 'interactivevideo');
     }
 
+    if ($oldversion < 2026080100) {
+        // Register web services and admin settings hook for content types modal.
+        upgrade_mod_savepoint(true, 2026080100, 'interactivevideo');
+    }
+
+    if ($oldversion < 2026080101) {
+        // Add target parameter to get_plugins_catalog web service.
+        upgrade_mod_savepoint(true, 2026080101, 'interactivevideo');
+    }
+
+    if ($oldversion < 2026080102) {
+        // Add iv_activation cache for content type plugin activation.
+        upgrade_mod_savepoint(true, 2026080102, 'interactivevideo');
+    }
+
+    if ($oldversion < 2026080103) {
+        // Add iv_plugins_catalog cache for remote content types catalog.
+        upgrade_mod_savepoint(true, 2026080103, 'interactivevideo');
+    }
+
     return true;
 }

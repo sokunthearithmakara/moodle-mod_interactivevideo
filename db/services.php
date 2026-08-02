@@ -15,24 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Hook callbacks for Interactive Video
+ * External functions and service declaration for Interactive Video.
  *
  * @package    mod_interactivevideo
- * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
+ * @category   webservice
+ * @copyright  2026 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$callbacks = [
-    [
-        'hook' => \core\hook\output\before_http_headers::class,
-        'callback' => \mod_interactivevideo\hook_callbacks::class . '::init_plugin_admin_settings',
-        'priority' => 0,
-    ],
-    [
-        'hook' => \core\hook\output\after_standard_main_region_html_generation::class,
-        'callback' => \mod_interactivevideo\hook_callbacks::class . '::launch_player_modal',
-        'priority' => 0,
+$functions = [
+    'mod_interactivevideo_get_plugins_catalog' => [
+        'classname' => mod_interactivevideo\external\get_plugins_catalog::class,
+        'description' => 'Fetch available content type plugins catalog',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'moodle/site:config',
     ],
 ];

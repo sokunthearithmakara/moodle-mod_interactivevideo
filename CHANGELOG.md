@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.3] - 2026-08-01
+https://buymeacoffee.com/tsmakara/interactive-video-1-9-3
+### Added
+- **Pro content type activation:** Establish a shared helper to activate/deactivate paid content types. You can use the paid plugins without activation until Interactive video 2.0 (September 2026).
+
+### Improved
+- **Content type manager:** A single modal to enable/disable installed content types and explore available content types.
+
 ## [1.9.2] - 2026-07-12
 ### Updated
 - **Play guard:** Prevent video from playing using browser or OS media controls when the tab is invisible. **Previous behavior:** when learners switched the Interactive Video tab in the browser to a different tab, the video was paused automatically if the "Pause video when tab is inactive" was checked. Learners could still use the media controls, such as those on Chrome, to play the video in the background. **New behavior:** When the play event is triggered, the player will first check if the tab is active; if not, the video is paused (still contingent upon the "Pause video when tab is inactive" setting). **Require stronger guards?** Check out the Analytics extension. 😉

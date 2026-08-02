@@ -21,6 +21,20 @@
  * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+/** License proxy register.php URL (set per deployment). */
+define('IV_LICENSE_PROXY', 'https://license.tmakara.com/register.php');
+
+/** Shared HMAC secret for BMC registration requests. */
+define('IV_REGISTRATION_PUBLICKEY', '8f9044c52040e89277e7658077690308');
+
+/**
+ * Utility functions for interactivevideo module
+ *
+ * @package    mod_interactivevideo
+ * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class interactivevideo_util {
     /**
      * Get all interactions in one interactive video module.

@@ -1,0 +1,52 @@
+{{!
+    @template mod_interactivevideo/admin/enablecontenttypes_modal
+
+    Shell markup for the enable content types admin modal (populated by AMD).
+}}
+<div class="modal-content iv-rounded-lg">
+    <div class="modal-header align-items-stretch flex-column border-0">
+        <div class="d-flex align-items-center justify-content-between">
+            <h5 class="modal-title mb-0 iv-font-weight-bold">{{#str}}enablecontenttypes, mod_interactivevideo{{/str}}</h5>
+            <button type="button" class="btn p-0 border-0 iv-enablecontenttypes-close" aria-label="{{#str}}close, core{{/str}}">
+                <i class="bi bi-x-lg fa-fw iv-enablecontenttypes-close-icon"></i>
+            </button>
+        </div>
+        <div class="mt-3">
+            <input type="text" class="form-control w-100 iv-enablecontenttypes-search"
+                placeholder="{{#str}}search, mod_interactivevideo{{/str}}" tabindex="0">
+        </div>
+        <ul class="nav nav-tabs iv-enablecontenttypes-tabs w-100 mt-3 mb-0" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" type="button" role="tab"
+                    data-tab="installed" aria-selected="true">
+                    {{#str}}contenttypesinstalled, mod_interactivevideo{{/str}}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" type="button" role="tab"
+                    data-tab="more" aria-selected="false">
+                    {{#str}}contenttypesmore, mod_interactivevideo{{/str}}
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="p-0 modal-body iv-enablecontenttypes-body">
+        <div class="iv-enablecontenttypes-panel" data-panel="installed"></div>
+        <div class="iv-enablecontenttypes-panel d-none" data-panel="more">
+            <div class="text-center p-4 iv-enablecontenttypes-loading">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer iv-enablecontenttypes-footer">
+        <a href="https://tmakara.com/shop" class="iv-enablecontenttypes-shoplink"
+            target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-cart3" aria-hidden="true"></i>
+            {{#str}}contenttypesexploremoreplugins, mod_interactivevideo{{/str}}
+        </a>
+        <div class="iv-enablecontenttypes-footer-actions">
+            <button type="button" class="btn btn-secondary iv-enablecontenttypes-cancel">{{#str}}cancel, core{{/str}}</button>
+            <button type="button" class="btn btn-primary iv-enablecontenttypes-save">{{#str}}savechanges, core{{/str}}</button>
+        </div>
+    </div>
+</div>

@@ -14,91 +14,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Module for settings page.
+ * Interactive Video admin settings entry point for content types modal.
  *
  * @module     mod_interactivevideo/settings
  * @copyright  2025 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/modal_events'],
-    function($, modalEvents) {
+define(['mod_interactivevideo/contenttypes_settings'], function(ContentTypesSettings) {
+    const init = () => {
+        ContentTypesSettings.init({
+            textareaName: 's_mod_interactivevideo_enablecontenttypes',
+            installedNodeId: 'iv-installed-contenttypes',
+            wsMethod: 'mod_interactivevideo_get_plugins_catalog',
+            wsArgs: {target: 'mod_interactivevideo'},
+            modalTemplate: 'mod_interactivevideo/admin/enablecontenttypes_modal',
+            clickNamespace: 'ivenablecontenttypes',
+        });
+    };
 
-        var init = async function() {
-            window.M = window.M || {};
-            window.M.version = $('#iv-m-version').data('value');
-            let ModalFactory;
-            if (window.M.version >= 403) {
-                ModalFactory = await import('core/modal');
-            } else {
-                ModalFactory = await import('core/modal_factory');
-            }
-
-            $('#ivplugin_checkupdate').off('click').on('click', async function(e) {
-                e.preventDefault();
-                const modal = await ModalFactory.create({
-                    body: '<div class="spinner"></div>',
-                    title: 'Available interaction types',
-                    show: false,
-                    removeOnClose: true,
-                    isVerticallyCentered: true,
-                });
-
-                let root = modal.getRoot();
-                root.attr('id', 'ivplugin_checkupdate_modal');
-
-                let plugins = $('#ivplugin_updateinfo').val();
-                plugins = JSON.parse(plugins);
-                let installed = $('#ivplugin_installed').val();
-                installed = JSON.parse(installed);
-                plugins = plugins.map((plugin) => {
-                    plugin.installed = installed.find((p) => p.component === plugin.component);
-                    return plugin;
-                });
-
-                // Sort by title.
-                plugins.sort((a, b) => {
-                    if (a.title < b.title) {
-                        return -1;
-                    }
-                    if (a.title > b.title) {
-                        return 1;
-                    }
-                    return 0;
-                });
-
-                let table = '<table class="table table-striped table-bordered">';
-                table += '<tbody>';
-                plugins.forEach((plugin) => {
-                    table += '<tr>';
-                    const row = `<td>
-                <p class="iv-font-weight-bold mb-1 d-flex justify-content-between"><span>${plugin.title}</span>
-                <span><a href="${plugin.description_url}" class="iv-mr-2" target="_blank">
-                <i class="fa fa-circle-info"></i></a>
-                <a href="${plugin.download_url}" class="iv-mr-2" target="_blank">
-                <i class="fa fa-cloud-download"></i></a>
-                </span></p>
-                <p>${plugin.description}</p>
-                <div class="d-flex justify-content-between">
-                <div class="small iv-font-weight-bold">
-                ${plugin.installed ? '<span class="text-success">Installed</span>' : 'Not installed'}
-                </div>
-                <div>${plugin.type == 'free' ? 'Free' : 'Paid'}</div>
-                </div>
-                </td>`;
-                    table += row;
-                    table += '</tr>';
-                });
-                table += '</tbody></table>';
-                root.find('.modal-body').html(table);
-                modal.show();
-
-                root.off(modalEvents.hidden);
-                root.on(modalEvents.hidden, function() {
-                    modal.destroy();
-                });
-            });
-        };
-
-        return {init};
-    });
+    return {init};
+});

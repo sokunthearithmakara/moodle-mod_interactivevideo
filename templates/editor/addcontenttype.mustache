@@ -25,7 +25,7 @@
 }}
 <div class="modal fade" id="contentmodal-original" role="dialog" aria-labelledby="contentmodal-original" aria-hidden="true" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable" role="document">
-        <div class="modal-content iv-rounded-lg">
+        <div class="modal-content iv-rounded-lg iv-addcontenttype-modal">
             <div class="modal-header align-items-center flex-column">
             <div class="w-100 d-flex align-items-center justify-content-between">
                 <h5 class="modal-title">{{#str}}selectacontenttypetoadd, mod_interactivevideo{{/str}}</h5>
@@ -61,6 +61,13 @@
                     </span>
                 {{/hideonchooser}}
                 {{/contenttype}}
+            </div>
+            <div class="modal-footer iv-enablecontenttypes-footer">
+                <a href="https://tmakara.com/shop" class="iv-enablecontenttypes-shoplink"
+                    target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-cart3" aria-hidden="true"></i>
+                    {{#str}}contenttypesexploremoreplugins, mod_interactivevideo{{/str}}
+                </a>
             </div>
         </div>
     </div>

@@ -48,126 +48,52 @@ foreach ($profilefields as $field) {
 
 $settings = null; // Must first tell Moodle not to add the default node.
 
-$modfolder = new admin_category(
-    'modivfolder',
-    new lang_string('pluginname', 'mod_interactivevideo'),
-    $module->is_enabled() === false
-);
-$ADMIN->add('modsettings', $modfolder);
-
-$plugins = '{}';
-if (
-    $PAGE->bodyid == 'page-admin-setting-modivfolder' ||
-    $PAGE->bodyid == 'page-admin-setting-modsettinginteractivevideo'
-) {
-    // Get file content from GitHub.
-    $file = 'https://raw.githubusercontent.com/sokunthearithmakara/moodle-mod_interactivevideo/refs/heads/main/plugins.json';
-    try {
-        $plugins = @file_get_contents($file);
-        if ($plugins === false) {
-            $plugins = '{}';
-        }
-    } catch (Exception $e) {
-        $plugins = '{}';
-    }
-    // Launch popup modal when the button is clicked.
-    $PAGE->requires->js_call_amd('mod_interactivevideo/settings', 'init');
-}
-
-$plugins = json_decode($plugins, true);
+\mod_interactivevideo\local\admin_tree::ensure_contenttype_category($ADMIN);
 
 // General settings page.
 $gsettings = new admin_settingpage('modsettinginteractivevideo', get_string('generalsettings', 'mod_interactivevideo'));
 
-// Checkboxes for enabling the content types.
-$subplugins = array_keys(core_component::get_plugin_list('ivplugin'));
-$contenttypes = [];
-foreach ($subplugins as $subplugin) {
-    $version = get_config('ivplugin_' . $subplugin);
-    if (!empty($version->version)) {
-        $contenttypes['ivplugin_' . $subplugin] = '<span class="ivname">'
-            . get_string('pluginname', 'ivplugin_' . $subplugin) . '</span>'
-            . '<small class="text-muted">' . $version->version . '</small>';
-    } else {
-        $contenttypes['ivplugin_' . $subplugin] = '<span class="ivname">'
-            . get_string('pluginname', 'ivplugin_' . $subplugin) . '</span>';
-    }
-}
-
-// Custom content types.
-$customs = get_plugins_with_function('ivplugin');
-$hasplugindata = isset($plugins['subplugins']);
-$customarray = [];
-foreach ($customs as $custom) {
-    foreach ($custom as $function) {
-        $function = str_replace('_ivplugin', '', $function);
-        $version = get_config($function);
-        if (!empty($version->version)) {
-            $version = $version->version;
-            $newversion = $version;
-            $updateavailable = false;
-            if ($hasplugindata) {
-                $plugininfo = array_filter($plugins['subplugins'], function ($plugin) use ($function) {
-                    return $plugin['component'] === $function;
-                });
-                if (!empty($plugininfo)) {
-                    $plugininfo = reset($plugininfo);
-                    $newversion = $plugininfo['version'];
-                    if ($newversion > $version) {
-                        $updateavailable = true;
-                        $updatelink = $plugininfo['type'] && $plugininfo['type'] == 'paid' ?
-                            $plugininfo['download_url'] : $plugininfo['git'];
-                    }
-                }
-            }
-
-            $interaction = '<span class="ivname">' . get_string('pluginname', $function)
-                . '<span class="badge alert-primary mx-1">' . get_string('external', 'mod_interactivevideo')
-                . '</span></span><small class="text-muted">' . $version . '</small>'
-                . ($updateavailable ? ($updatelink
-                    ? '<a href="' . $updatelink . '" class="badge badge-success mx-1" target="_blank">'
-                    . get_string('updateavailable', 'mod_interactivevideo') . '</a>' : '<span class="badge iv-badge-warning mx-1">'
-                    . get_string('updateavailable', 'mod_interactivevideo') . '</span>') : '');
-        } else {
-            $interaction = '<span class="ivname">' . get_string('pluginname', $function)
-                . '<span class="badge alert-primary mx-1">' . get_string('external', 'mod_interactivevideo')
-                . '</span></span>';
-        }
-        $contenttypes[$function] = $interaction;
-        $customarray[] = [
-            'component' => $function,
-            'version' => $version,
-            'newversion' => $newversion,
-            'updateavailable' => $updateavailable,
-        ];
-    }
-}
-
-// Sort the content types by name a-z.
-asort($contenttypes);
-
-$gsettings->add(new admin_setting_configmulticheckbox(
-    'mod_interactivevideo/enablecontenttypes',
-    get_string('enablecontenttypes', 'mod_interactivevideo'),
-    get_string('enablecontenttypes_desc', 'mod_interactivevideo'),
-    $contenttypes,
-    $contenttypes,
+$gsettings->add(new \mod_interactivevideo\admin_setting_infonotice(
+    'mod_interactivevideo/paidcontenttypesactivationnotice',
+    get_string('paidcontenttypesactivationnoticeheading', 'mod_interactivevideo'),
+    get_string('paidcontenttypesactivationnotice', 'mod_interactivevideo')
 ));
 
-// More content types (html).
-if ($hasplugindata) {
-    $gsettings->add(new admin_setting_description(
-        'mod_interactivevideo/morecontenttypes',
-        '',
-        '<button id="ivplugin_checkupdate" class="btn btn-primary mb-5">External interaction types</button>
-        <textarea id="ivplugin_updateinfo" class="d-none" rows="5">
-        ' . json_encode($plugins['subplugins'], JSON_PRETTY_PRINT) . '
-        </textarea>
-        <textarea id="ivplugin_installed" class="d-none">
-        ' . json_encode($customarray, JSON_PRETTY_PRINT) . '
-        </textarea>'
-    ));
+$enablecontenttypes = get_config('mod_interactivevideo', 'enablecontenttypes');
+if ($enablecontenttypes === false || $enablecontenttypes === '') {
+    $enablecontenttypes = \mod_interactivevideo\local\installed_contenttypes::get_default_enabled();
 }
+
+$installedtypes = \mod_interactivevideo\local\installed_contenttypes::get_all();
+$enabledcomponents = array_filter(array_map('trim', explode(',', (string) $enablecontenttypes)));
+$enabledcount = count($enabledcomponents);
+$totalcount = count($installedtypes);
+$summary = get_string('contenttypesenabledcount', 'mod_interactivevideo', (object) [
+    'enabled' => $enabledcount,
+    'total' => $totalcount,
+]);
+
+$editbutton = '<button class="btn btn-secondary" type="button" name="enablecontenttypes" data-origin="settingspage">'
+    . '<i class="fa fa-cog fa-fw"></i> ' . get_string('manage', 'mod_interactivevideo') . '</button>';
+
+$gsettings->add(new admin_setting_configtextarea(
+    'mod_interactivevideo/enablecontenttypes',
+    get_string('enablecontenttypes', 'mod_interactivevideo'),
+    '<div class="d-flex align-items-center flex-wrap gap-2">'
+        . $editbutton
+        . '<span class="text-muted iv-enablecontenttypes-summary">' . $summary . '</span>'
+    . '</div>',
+    $enablecontenttypes,
+));
+
+$gsettings->add(new admin_setting_description(
+    'mod_interactivevideo/enablecontenttypeshelper',
+    '',
+    '<div id="iv-m-version" class="d-none" data-value="' . $CFG->branch . '"></div>'
+        . '<script type="application/json" id="iv-installed-contenttypes">'
+        . json_encode($installedtypes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)
+        . '</script>'
+));
 
 // Enable source selector.
 $sources = [
@@ -414,11 +340,3 @@ $providerapis->add(new admin_setting_configtext(
 ));
 
 $ADMIN->add('modivfolder', $providerapis);
-
-// Content types node.
-$modcontenttype = new admin_category(
-    'modivcontenttype',
-    get_string('contenttype', 'mod_interactivevideo'),
-    $module->is_enabled() === false
-);
-$ADMIN->add('modivfolder', $modcontenttype);

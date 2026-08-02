@@ -4,13 +4,17 @@
             "name": "question",
             "title": "Question",
             "component": "local_ivquestion",
-            "description": "Add a single MCQ to the video.",
+            "description": "Add a single MCQ to the interactive video/flexbook.",
             "icon": "bi bi-question",
             "version": "2026060801",
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/509257",
-            "git": "https://github.com/sokunthearithmakara/local_ivquestion/archive/refs/heads/main.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivquestion/archive/refs/heads/main.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "quiz",
@@ -22,7 +26,11 @@
             "type": "paid",
             "description_url": "https://youtu.be/Et4MFEjCUH0",
             "download_url": "https://buymeacoffee.com/tsmakara/e/520376",
-            "git": "https://github.com/sokunthearithmakara/ivquiz/archive/refs/heads/main.zip"
+            "git": "https://github.com/sokunthearithmakara/ivquiz/archive/refs/heads/main.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "videotrack",
@@ -34,7 +42,10 @@
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/433444",
-            "git": "https://github.com/sokunthearithmakara/local_ivvideotrack/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivvideotrack/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "audiotrack",
@@ -46,7 +57,10 @@
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/433470",
-            "git": "https://github.com/sokunthearithmakara/local_ivaudiotrack/archive/refs/heads/main.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivaudiotrack/archive/refs/heads/main.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "rajabsgames",
@@ -58,7 +72,10 @@
             "type": "free",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/433492",
-            "git": "https://github.com/sokunthearithmakara/block_rajabsgames/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/block_rajabsgames/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "reaction",
@@ -70,19 +87,26 @@
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/422448",
-            "git": "https://github.com/sokunthearithmakara/local_ivreaction/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivreaction/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "form",
             "title": "Form",
             "component": "local_ivform",
-            "description": "Collect form responses from viewers",
+            "description": "Collect form responses from users in interactive video/flexbook.",
             "icon": "bi bi-bar-chart-line-fill",
             "version": "2026060810",
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/403225",
-            "git": "https://github.com/sokunthearithmakara/local_ivform/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivform/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "ggb",
@@ -91,82 +115,108 @@
             "description": "Embed GeoGebra applets with completion rules, analytics, and Flexbook support.",
             "icon": "bi bi-bezier2",
             "version": "2026061000",
-            "type": "free",
+            "type": "paid",
             "description_url": "",
             "download_url": "",
-            "git": "https://github.com/sokunthearithmakara/local_ivggb/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivggb/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "courseactivity",
             "title": "Course Activity",
             "component": "local_ivcourseactivity",
-            "description": "Provide links to existing course activities and track completion.",
+            "description": "Link or embed an existing course activity and track completion.",
             "icon": "bi bi-plugin",
             "version": "2026060801",
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/407501",
-            "git": "https://github.com/sokunthearithmakara/local_ivcourseactivity/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivcourseactivity/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "poll",
             "title": "Poll",
             "component": "local_ivpoll",
-            "description": "Create a poll to gather feedback from viewers.",
+            "description": "Create a poll to gather feedback from users in interactive video/flexbook.",
             "icon": "bi bi-bar-chart-line-fill",
             "version": "2026060801",
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/402674",
-            "git": "https://github.com/sokunthearithmakara/moodle-local_ivpoll/archive/refs/heads/main.zip"
+            "git": "https://github.com/sokunthearithmakara/moodle-local_ivpoll/archive/refs/heads/main.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "transcript",
             "title": "Interactive Transcript",
             "component": "local_ivtranscript",
-            "description": "Upload and display a transcript of the video.",
+            "description": "Upload and display a transcript of the video. Supports multiple languages.",
             "icon": "bi bi-badge-cc",
             "version": "2026060800",
             "type": "paid",
             "description_url": "https://buymeacoffee.com/tsmakara/ivtranscript",
             "download_url": "https://buymeacoffee.com/tsmakara/e/391901",
-            "git": "https://github.com/sokunthearithmakara/moodle-local_ivtranscript/archive/refs/heads/main.zip"
+            "git": "https://github.com/sokunthearithmakara/moodle-local_ivtranscript/archive/refs/heads/main.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "scorm",
             "title": "SCORM Content",
             "component": "local_ivscorm",
-            "description": "Embed SCORM-compliant content",
+            "description": "Embed SCORM-compliant content in interactive video/flexbook. Track completion.",
             "icon": "bi bi-box2",
             "version": "2026060800",
             "type": "paid",
             "description_url": "https://buymeacoffee.com/tsmakara/ivscorm",
             "download_url": "https://buymeacoffee.com/tsmakara/e/391059",
-            "git": "https://github.com/sokunthearithmakara/moodle-local_ivscorm/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/moodle-local_ivscorm/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "aigame",
             "title": "Mini Game",
             "component": "local_ivaigame",
-            "description": "Add an AI-generated HTML mini game interaction with prompt builder and Flexbook support.",
+            "description": "Add an AI-generated HTML mini game interaction with prompt builder in interactive video/flexbook.",
             "icon": "bi bi-bullseye",
             "version": "2026060801",
             "type": "paid",
             "description_url": "",
             "download_url": "https://buymeacoffee.com/tsmakara/e/548615",
-            "git": "https://github.com/sokunthearithmakara/local_ivaigame/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivaigame/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "analytics",
             "title": "Analytics",
             "component": "local_ivanalytics",
-            "description": "Track user interactions with the video.",
+            "description": "Track user interactions with the video. Prevent learners from skipping ahead.",
             "icon": "bi bi-graph-up",
             "version": "2026060800",
             "type": "paid",
             "description_url": "https://buymeacoffee.com/tsmakara/ivanalytics",
             "download_url": "https://buymeacoffee.com/tsmakara/e/373340",
-            "git": "https://github.com/sokunthearithmakara/local_ivanalytics/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivanalytics/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "annotation",
@@ -178,7 +228,10 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivannotation",
             "download_url": "https://buymeacoffee.com/tsmakara/e/355182",
-            "git": "https://github.com/sokunthearithmakara/local_ivannotation/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivannotation/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "decision",
@@ -190,7 +243,10 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivdecision",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371274",
-            "git": "https://github.com/sokunthearithmakara/local_ivdecision/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivdecision/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "h5pupload",
@@ -202,7 +258,11 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivh5pupload",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371285",
-            "git": "https://github.com/sokunthearithmakara/local_ivh5pupload/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivh5pupload/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "htmlviewer",
@@ -214,7 +274,11 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivhtmlviewer",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371717",
-            "git": "https://github.com/sokunthearithmakara/local_ivhtmlviewer/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivhtmlviewer/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "inlineannotation",
@@ -226,7 +290,10 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivinlineannotation",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371268",
-            "git": "https://github.com/sokunthearithmakara/local_ivinlineannotation/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivinlineannotation/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+            ]
         },
         {
             "name": "officeviewer",
@@ -238,7 +305,11 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivofficeviewer",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371733",
-            "git": "https://github.com/sokunthearithmakara/local_ivofficeviewer/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivofficeviewer/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "pdfviewer",
@@ -250,7 +321,11 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivpdfviewer",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371724",
-            "git": "https://github.com/sokunthearithmakara/local_ivpdfviewer/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivpdfviewer/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo",
+                "mod_flexbook"
+            ]
         },
         {
             "name": "playlist",
@@ -262,7 +337,10 @@
             "type": "paid",
             "description_url": "https://buymeacoffee.com/tsmakara/ivplaylist",
             "download_url": "https://buymeacoffee.com/tsmakara/e/373332",
-            "git": "https://github.com/sokunthearithmakara/local_ivplaylist/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivplaylist/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         },
         {
             "name": "xpreward",
@@ -274,7 +352,10 @@
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivxpreward",
             "download_url": "https://buymeacoffee.com/tsmakara/e/371736",
-            "git": "https://github.com/sokunthearithmakara/local_ivxpreward/archive/refs/heads/master.zip"
+            "git": "https://github.com/sokunthearithmakara/local_ivxpreward/archive/refs/heads/master.zip",
+            "support": [
+                "mod_interactivevideo"
+            ]
         }
     ]
 }

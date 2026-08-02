@@ -25,6 +25,28 @@ namespace mod_interactivevideo;
  */
 class hook_callbacks {
     /**
+     * Load AMD for Interactive Video admin settings pages.
+     *
+     * Must not run from settings.php because that file is included while the admin tree is building.
+     *
+     * @param \core\hook\output\before_http_headers $hook
+     */
+    public static function init_plugin_admin_settings(\core\hook\output\before_http_headers $hook): void {
+        global $PAGE;
+
+        $allowedpagetypes = [
+            'admin-setting-modivfolder',
+            'admin-setting-modsettinginteractivevideo',
+            'admin-setting-upgradesettings',
+        ];
+        if (!in_array($PAGE->pagetype, $allowedpagetypes, true)) {
+            return;
+        }
+
+        $PAGE->requires->js_call_amd('mod_interactivevideo/settings', 'init');
+    }
+
+    /**
      * Add messaging widgets after the main region content.
      *
      * @param \core\hook\output\after_standard_main_region_html_generation $hook
