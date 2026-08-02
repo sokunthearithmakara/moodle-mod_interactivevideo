@@ -91,6 +91,7 @@ $string['edit'] = 'Editar';
 $string['editinteractiontitle'] = 'Editar {$a->name} em {$a->time}';
 $string['email'] = 'Email';
 $string['enablecontenttypes'] = 'Tipos de conteúdo habilitados';
+$string['enablecontenttypes_desc'] = 'Escolha quais tipos de conteúdo estão disponíveis ao editar conteúdo interativo.';
 $string['end'] = 'Tempo final';
 $string['endscreentext'] = 'Texto da tela final';
 $string['endtime'] = 'Tempo final';

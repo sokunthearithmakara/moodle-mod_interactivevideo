@@ -27,31 +27,104 @@ use mod_interactivevideo\local\contenttype_activation;
  */
 class admin_setting_ivpurchaseemail extends \admin_setting_configtext {
     /** @var string Target plugin component for activation. */
-    protected string $component;
+    protected $component;
 
     /**
      * Constructor.
      *
+     * Short form: (name, component, default='', size=null)
+     * Legacy form: (name, visiblename, description, default, component, size=null)
+     * Legacy form without component: (name, visiblename, description, default) — component inferred from name.
+     *
      * @param string $name Setting name, e.g. local_ivform/purchaseemail.
-     * @param string $component Plugin component to activate, e.g. local_ivform.
-     * @param string $defaultsetting Default value.
-     * @param int|null $size Field size.
+     * @param string $second Plugin component (short form) or visible name (legacy form).
+     * @param string $third Default value (short form) or description (legacy form).
+     * @param mixed $fourth Field size (short form) or default value (legacy form).
+     * @param string|null $fifth Plugin component (legacy form).
+     * @param int|null $sixth Field size (legacy form).
      */
     public function __construct(
-        string $name,
-        string $component,
-        string $defaultsetting = '',
-        ?int $size = null
+        $name,
+        $second,
+        $third = '',
+        $fourth = null,
+        $fifth = null,
+        $sixth = null
     ) {
+        $visiblename = get_string('purchaseemail', 'mod_interactivevideo');
+        $description = get_string('purchaseemail_desc', 'mod_interactivevideo');
+        $defaultsetting = '';
+        $size = null;
+
+        if ($fifth !== null && self::looks_like_component($fifth)) {
+            $visiblename = (string) $second;
+            $description = (string) $third;
+            $defaultsetting = (string) $fourth;
+            $component = (string) $fifth;
+            $size = self::normalize_size($sixth);
+        } else if (self::looks_like_component($second)) {
+            $component = (string) $second;
+            $defaultsetting = (string) $third;
+            $size = self::normalize_size($fourth);
+        } else {
+            $visiblename = (string) $second;
+            $description = (string) $third;
+            $defaultsetting = (string) $fourth;
+            $component = self::component_from_setting_name($name);
+        }
+
         $this->component = clean_param($component, PARAM_COMPONENT);
         parent::__construct(
             $name,
-            get_string('purchaseemail', 'mod_interactivevideo'),
-            get_string('purchaseemail_desc', 'mod_interactivevideo'),
+            $visiblename,
+            $description,
             $defaultsetting,
             PARAM_EMAIL,
             $size
         );
+    }
+
+    /**
+     * Whether a value looks like a Moodle plugin component name.
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    protected static function looks_like_component($value): bool {
+        if (!is_string($value) || $value === '') {
+            return false;
+        }
+        return (bool) preg_match('/^(local|ivplugin|block|mod)_[a-z][a-z0-9_]*$/', $value);
+    }
+
+    /**
+     * Derive plugin component from a plugin setting name.
+     *
+     * @param string $name Setting name, e.g. local_ivform/purchaseemail.
+     * @return string
+     */
+    protected static function component_from_setting_name($name): string {
+        $parts = explode('/', (string) $name, 2);
+        return $parts[0];
+    }
+
+    /**
+     * Normalize an optional admin text field size.
+     *
+     * @param mixed $size
+     * @return int|null
+     */
+    protected static function normalize_size($size): ?int {
+        if ($size === null || $size === '') {
+            return null;
+        }
+        if (is_int($size)) {
+            return $size;
+        }
+        if (is_numeric($size)) {
+            return (int) $size;
+        }
+        return null;
     }
 
     /**

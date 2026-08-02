@@ -197,6 +197,29 @@ class plugins_catalog {
     }
 
     /**
+     * Decode a plugins catalog JSON payload.
+     *
+     * @param string $response Raw JSON response.
+     * @return array<string, mixed>|null Decoded catalog or null on failure.
+     */
+    private static function decode_catalog_json(string $response): ?array {
+        $attempts = [$response];
+        $sanitized = preg_replace('/,\s*([}\]])/', '$1', $response);
+        if (is_string($sanitized) && $sanitized !== $response) {
+            $attempts[] = $sanitized;
+        }
+
+        foreach ($attempts as $payload) {
+            $data = json_decode($payload, true);
+            if (!empty($data['subplugins']) && is_array($data['subplugins'])) {
+                return $data;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Fetch the raw catalog from GitHub.
      *
      * @return array<string, mixed>|null Decoded catalog or null on failure.
@@ -207,19 +230,18 @@ class plugins_catalog {
         require_once($CFG->libdir . '/filelib.php');
 
         $curl = new \curl();
-        $curl->setopt(['CURLOPT_TIMEOUT' => 10, 'CURLOPT_CONNECTTIMEOUT' => 5]);
+        $curl->setopt([
+            'CURLOPT_TIMEOUT' => 15,
+            'CURLOPT_CONNECTTIMEOUT' => 10,
+            'CURLOPT_USERAGENT' => 'Moodle mod_interactivevideo plugins catalog',
+        ]);
         $response = $curl->get(self::REMOTE_URL);
 
         if ($response === false || $response === '') {
             return null;
         }
 
-        $data = json_decode($response, true);
-        if (empty($data['subplugins']) || !is_array($data['subplugins'])) {
-            return null;
-        }
-
-        return $data;
+        return self::decode_catalog_json($response);
     }
 
     /**
@@ -235,8 +257,8 @@ class plugins_catalog {
             return ['subplugins' => []];
         }
 
-        $data = json_decode(file_get_contents($bundled), true);
-        if (empty($data['subplugins']) || !is_array($data['subplugins'])) {
+        $data = self::decode_catalog_json((string) file_get_contents($bundled));
+        if ($data === null) {
             return ['subplugins' => []];
         }
 

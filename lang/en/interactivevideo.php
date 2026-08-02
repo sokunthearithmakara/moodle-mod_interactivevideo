@@ -208,6 +208,7 @@ $string['editinteractiontitlenotime'] = 'Edit {$a}';
 $string['editwithctrlclick'] = 'Edit (ctrl/cmd + click for quick edit)';
 $string['email'] = 'Email';
 $string['enablecontenttypes'] = 'Enabled content types';
+$string['enablecontenttypes_desc'] = 'Choose which content types are available when editing interactive content.';
 $string['enablecoursesettings'] = 'Enable course-level settings';
 $string['enablecoursesettings_desc'] = 'Check to enable course-level settings for the interactive video instances.';
 $string['enableembedly'] = 'Enable Embedly player library';

@@ -185,6 +185,7 @@ $string['editinteractiontitlenotime'] = 'កែសម្រួល {$a}';
 $string['editwithctrlclick'] = 'កែសម្រួល';
 $string['email'] = 'អ៊ីមែល';
 $string['enablecontenttypes'] = 'ប្រភេទមាតិកាដែលបានបើក';
+$string['enablecontenttypes_desc'] = 'ជ្រើសរើសប្រភេទមាតិកាដែលមាន នៅពេលកែសម្រួលមាតិកាអន្តរកម្ម។';
 $string['enablecoursesettings'] = 'បើកការកំណត់កម្រិតវគ្គសិក្សា';
 $string['enablecoursesettings_desc'] = 'សូមធីកដើម្បីបើកការកំណត់កម្រិតវគ្គសិក្សា។';
 $string['enableembedly'] = 'បើកបណ្ណាល័យ Embedly';
