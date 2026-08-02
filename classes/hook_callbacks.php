@@ -29,9 +29,9 @@ class hook_callbacks {
      *
      * Must not run from settings.php because that file is included while the admin tree is building.
      *
-     * @param \core\hook\output\before_http_headers $hook
+     * @param \core\hook\output\before_http_headers|null $hook Unused; present for hook registration.
      */
-    public static function init_plugin_admin_settings(\core\hook\output\before_http_headers $hook): void {
+    public static function init_plugin_admin_settings(?\core\hook\output\before_http_headers $hook = null): void {
         global $PAGE;
 
         $allowedpagetypes = [

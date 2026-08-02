@@ -93,6 +93,16 @@ define([
     };
 
     /**
+     * Load an AMD module via RequireJS (compatible with Moodle 4.1).
+     *
+     * @param {string} moduleName
+     * @return {Promise<object>}
+     */
+    const loadAmdModule = (moduleName) => new Promise((resolve, reject) => {
+        require([moduleName], resolve, reject);
+    });
+
+    /**
      * Load core/modal or core/modal_factory depending on Moodle branch / theme.
      *
      * @return {Promise<object>}
@@ -101,9 +111,13 @@ define([
         if (!ModalFactory) {
             const branch = getMoodleBranch();
             if (branch >= 403 || isBS5()) {
-                ModalFactory = await import('core/modal');
+                try {
+                    ModalFactory = await loadAmdModule('core/modal');
+                } catch (error) {
+                    ModalFactory = await loadAmdModule('core/modal_factory');
+                }
             } else {
-                ModalFactory = await import('core/modal_factory');
+                ModalFactory = await loadAmdModule('core/modal_factory');
             }
         }
         return resolveModalClass(ModalFactory);
@@ -423,9 +437,14 @@ define([
             body: '',
             show: false,
             large: true,
-            isVerticallyCentered: true,
             removeOnClose: true,
         };
+        if (getMoodleBranch() >= 403 || isBS5()) {
+            modalConfig.isVerticallyCentered = true;
+        }
+        if (ModalClass.types && !modalConfig.type) {
+            modalConfig.type = ModalClass.types.DEFAULT;
+        }
         if (trigger) {
             modalConfig.returnElement = trigger;
         }
@@ -542,12 +561,31 @@ define([
     };
 
     /**
+     * Hide the raw enablecontenttypes textarea on admin settings pages.
+     *
+     * @param {object} config Plugin-specific configuration.
+     */
+    const hideEnabledField = (config) => {
+        const $textarea = $('[name="' + config.textareaName + '"]');
+        if (!$textarea.length) {
+            return;
+        }
+
+        $textarea.addClass('iv-enablecontenttypes-hidden');
+        $textarea.closest('.form-textarea').addClass('iv-enablecontenttypes-hidden');
+        $('#admin-enablecontenttypes .form-defaultinfo').addClass('iv-enablecontenttypes-hidden');
+        $('#admin-enablecontenttypeshelper').addClass('iv-enablecontenttypes-hidden');
+    };
+
+    /**
      * Initialise settings page handlers.
      *
      * @param {object} config Plugin-specific configuration.
      */
     const init = (config) => {
         pluginConfig = config;
+        getMoodleBranch();
+        hideEnabledField(config);
         const selector = 'button[name="enablecontenttypes"]';
         const namespace = config.clickNamespace || 'ivcontenttypes';
 

@@ -2980,10 +2980,12 @@ html:has(.path-mod-interactivevideo) {
     display: none;
 }
 
-body.path-admin-setting #admin-enablecontenttypes .form-defaultinfo,
+#admin-enablecontenttypes .form-defaultinfo,
 #admin-enablecontenttypes .form-textarea,
-#admin-enablecontenttypes .textarea {
-    display: none;
+#admin-enablecontenttypes textarea,
+#admin-enablecontenttypes .textarea,
+.iv-enablecontenttypes-hidden {
+    display: none !important;
 }
 
 #admin-enablecontenttypes .form-text {

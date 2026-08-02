@@ -1024,6 +1024,15 @@ function interactivevideo_displayinline(cm_info $cm) {
     return $OUTPUT->render_from_template('mod_interactivevideo/activitycard', $datafortemplate);
 }
 
+/**
+ * Load admin settings AMD on Moodle versions without hook support.
+ *
+ * Legacy callback for Moodle versions before core hooks (4.4). Not called when hooks are available.
+ */
+function interactivevideo_before_http_headers() {
+    \mod_interactivevideo\hook_callbacks::init_plugin_admin_settings();
+}
+
 if ($CFG->branch <= 403) {
     /**
      * Adds JavaScript before the footer is rendered.
