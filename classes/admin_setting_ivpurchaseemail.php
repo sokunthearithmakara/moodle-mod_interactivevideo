@@ -94,7 +94,7 @@ class admin_setting_ivpurchaseemail extends \admin_setting_configtext {
         if (!is_string($value) || $value === '') {
             return false;
         }
-        return (bool) preg_match('/^(local|ivplugin|block|mod)_[a-z][a-z0-9_]*$/', $value);
+        return (bool) preg_match('/^(local|ivplugin|block|mod|tiny)_[a-z][a-z0-9_]*$/', $value);
     }
 
     /**

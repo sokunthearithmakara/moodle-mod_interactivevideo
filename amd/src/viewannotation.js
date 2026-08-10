@@ -1986,7 +1986,9 @@ define([
                         return;
                     }
                     // If the tab is not active and pauseonblur is enabled, pause the video.
-                    if (!document.hasFocus() && displayoptions.pauseonblur == 1) {
+                    // Get document visibility.
+                    const isVisible = document.visibilityState === 'visible';
+                    if (!isVisible && displayoptions.pauseonblur == 1) {
                         player.pause();
                         return;
                     }
