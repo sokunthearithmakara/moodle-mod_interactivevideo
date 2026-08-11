@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 - Removed empty folders that might cause errors on new installs on some Moodle versions.
-- Swoped plugin urls to our new shop page.
+- Swapped plugin urls to our new shop page.
 
 ## [1.9.3] - 2026-08-01
 https://buymeacoffee.com/tsmakara/interactive-video-1-9-3
