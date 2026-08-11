@@ -1,6 +1,13 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.9.4] - 2026-08-11
+### Fixed
+- Videos were paused on start due to recent changed behavior to prevent learners from playing videos outside the video tab.
+
+### Improved
+- Removed empty folders that might cause errors on new installs on some Moodle versions.
+- Swoped plugin urls to our new shop page.
 
 ## [1.9.3] - 2026-08-01
 https://buymeacoffee.com/tsmakara/interactive-video-1-9-3
