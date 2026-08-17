@@ -278,6 +278,7 @@ $string['interactivevideo:manage'] = 'Manage interactive video activities';
 $string['interactivevideo:view'] = 'View interactive video module';
 $string['interactivevideo:viewreport'] = 'View interactive video report';
 $string['interactivevideoname'] = 'Name';
+$string['invalidcolumn'] = 'The uploaded file must contain a videourl column.';
 $string['invaliddefaults'] = 'Invalid defaults data.';
 $string['invalidtimeformat'] = 'Please enter a valid time.';
 $string['invalidtimestamp'] = 'Invalid timestamp';
