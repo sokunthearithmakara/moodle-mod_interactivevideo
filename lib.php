@@ -24,8 +24,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core\exception\moodle_exception;
-
 define('INTERACTIVEVIDEO_DISPLAY_INLINE', 1);
 define('INTERACTIVEVIDEO_EVENT_TYPE_DUE', 'due');
 
