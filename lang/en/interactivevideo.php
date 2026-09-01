@@ -25,9 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['activationnoticeaction'] = 'Activate each one in the Content types section of the Interactive Video plugin settings, using the email address you purchased it with.';
-$string['activationnoticemessage'] = 'These content types are enabled but not activated, so they cannot be added to activities, and their existing interactions are hidden from learners and locked for editing: {$a}. Existing grades are not affected.';
-$string['activationnoticetitle'] = 'Content types awaiting activation';
 $string['activationerror_generic'] = 'Activation failed. Please check your purchase email and try again.';
 $string['activationerror_invalid_date'] = 'Activation request expired. Save the setting again.';
 $string['activationerror_invalid_hash'] = 'Activation was rejected by the license server.';
@@ -39,6 +36,9 @@ $string['activationerror_purchase_refunded'] = 'The purchase for this email and 
 $string['activationerror_quantity_exceeded'] = 'All purchased activation slots are already in use.';
 $string['activationerror_ratelimited'] = 'Too many activation attempts. Please try again later.';
 $string['activationerror_upstream_error'] = 'Could not connect to the license server.';
+$string['activationnoticeaction'] = 'Activate each one in the Content types section of the Interactive Video plugin settings, using the email address you purchased it with.';
+$string['activationnoticemessage'] = 'These content types are enabled but not activated, so they cannot be added to activities, and their existing interactions are hidden from learners and locked for editing: {$a}. Existing grades are not affected.';
+$string['activationnoticetitle'] = 'Content types awaiting activation';
 $string['activitycard'] = "Activity card";
 $string['add'] = 'Add';
 $string['addinteractiontitle'] = 'Add {$a->name} at {$a->time}';
@@ -136,13 +136,13 @@ $string['contenttypeactivated'] = 'Activated';
 $string['contenttypefree'] = 'Free';
 $string['contenttypenotactivated'] = 'Not activated';
 $string['contenttypenotusable'] = 'This interaction type is not activated on this site. Activate it under Content types to use it again.';
-$string['contenttypeunknown'] = 'This interaction type is not available on this site.';
 $string['contenttypescatalogerror'] = 'Could not load the content types catalog.';
 $string['contenttypesenabledcount'] = '{$a->enabled} of {$a->total} content types enabled';
 $string['contenttypesexploremoreplugins'] = 'Explore more plugins';
 $string['contenttypesinstalled'] = 'Installed';
 $string['contenttypesmore'] = 'More';
 $string['contenttypesmoreempty'] = 'No additional content types to show.';
+$string['contenttypeunknown'] = 'This interaction type is not available on this site.';
 $string['contenttypeupdateavailable'] = 'Update available';
 $string['contentuploaded'] = 'Content uploaded successfully.';
 $string['contentuploaderror'] = 'Error uploading content';
