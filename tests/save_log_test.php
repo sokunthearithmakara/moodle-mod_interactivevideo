@@ -120,7 +120,9 @@ final class save_log_test extends \advanced_testcase {
         $this->assertEquals($instance->id, $stored->cmid);
         $this->assertEquals($item->id, $stored->annotationid);
         $this->assertGreaterThan(1, $stored->timecreated);
-        $this->assertObjectNotHasProperty('notacolumn', $stored);
+        // Uses property_exists() rather than assertObjectNotHasProperty(), which is PHPUnit 10+
+        // while the oldest supported Moodle ships PHPUnit 9.5.
+        $this->assertFalse(property_exists($stored, 'notacolumn'));
     }
 
     /**

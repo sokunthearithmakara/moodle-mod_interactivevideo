@@ -81,7 +81,9 @@ final class refresh_licensing_test extends \advanced_testcase {
         $this->resetAfterTest();
 
         // Installed components that are definitely not interactive video content types.
-        $survivors = ['mod_flexbook', 'tool_task', 'core'];
+        // mod_flexbook is deliberately included but filtered below: it is absent from a plugin
+        // CI checkout, and the point is that whatever IS installed survives.
+        $survivors = ['mod_flexbook', 'tool_task', 'core', 'mod_interactivevideo'];
         $installed = array_values(array_filter($survivors, function ($component) {
             return \core_component::get_component_directory($component) !== null;
         }));
@@ -105,7 +107,9 @@ final class refresh_licensing_test extends \advanced_testcase {
     public function test_unchanged_registry_is_not_rewritten(): void {
         $this->resetAfterTest();
 
-        $this->set_registry(['mod_interactivevideo', 'mod_flexbook']);
+        // Only components that are certainly present: mod_flexbook is a separate plugin and is
+        // absent from a plugin CI checkout, where pruning it would rewrite the registry.
+        $this->set_registry(['mod_interactivevideo']);
         $before = get_config('mod_interactivevideo', contenttype_activation::CONFIG_PAIDCOMPONENTS);
 
         $this->run_prune();

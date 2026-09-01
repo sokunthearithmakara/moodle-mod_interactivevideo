@@ -46,6 +46,10 @@ final class fragment_getcontent_test extends \advanced_testcase {
             'id' => 1,
             'type' => 'richtext',
             'prop' => json_encode(['class' => $class]),
+            // A built content type reads these; omitting them is an undefined index on PHP 7.x,
+            // which Moodle's PHPUnit promotes to an error.
+            'content' => '<p>Body</p>',
+            'contextid' => \context_system::instance()->id,
         ];
     }
 

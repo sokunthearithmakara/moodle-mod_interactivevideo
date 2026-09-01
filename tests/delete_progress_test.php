@@ -53,9 +53,9 @@ final class delete_progress_test extends \advanced_testcase {
     /**
      * Create a completion row, with one log and one attached file.
      *
-     * @param stdClass $instance The instance.
-     * @param stdClass $context The module context.
-     * @param stdClass $item The interaction.
+     * @param \stdClass $instance The instance.
+     * @param \context $context The module context.
+     * @param \stdClass $item The interaction.
      * @param int $userid The owner.
      * @return array [int completionid, int logid]
      */

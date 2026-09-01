@@ -93,7 +93,8 @@ class registration_client {
         }
 
         $url = IV_LICENSE_PROXY;
-        // strpos rather than str_contains: this plugin supports Moodle 4.0, which runs on PHP 7.3.
+        // Deliberately strpos(): str_contains() is PHP 8.0+, and this plugin supports Moodle 4.0,
+        // which runs on PHP 7.3 and up.
         if (strpos($url, '?') !== false) {
             $url .= '&action=unregister';
         } else {
@@ -165,7 +166,8 @@ class registration_client {
             return '';
         }
 
-        // strpos rather than str_contains: this plugin supports Moodle 4.0, which runs on PHP 7.3.
+        // Deliberately strpos(): str_contains() is PHP 8.0+, and this plugin supports Moodle 4.0,
+        // which runs on PHP 7.3 and up.
         if (strpos($sitename, '://') === false) {
             $sitename = 'https://' . $sitename;
         }

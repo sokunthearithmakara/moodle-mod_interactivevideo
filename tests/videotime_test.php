@@ -74,6 +74,8 @@ final class videotime_test extends \advanced_testcase {
      * This is the consequence that matters: the column is only the mechanism.
      */
     public function test_narrowing_would_drop_gradable_items(): void {
+        global $DB;
+
         $this->resetAfterTest();
         $course = $this->getDataGenerator()->create_course();
         $gen = $this->getDataGenerator()->get_plugin_generator('mod_interactivevideo');
@@ -96,7 +98,6 @@ final class videotime_test extends \advanced_testcase {
 
         // Demonstrate what the refusal prevents: applied, it drops every gradable interaction,
         // leaving an empty denominator and nothing for the learner to complete.
-        $DB = \core\di::get(\moodle_database::class);
         $DB->set_field('interactivevideo', 'endtime', 1, ['id' => $instance->id]);
         \cache::make('mod_interactivevideo', 'iv_items_by_cmid')->delete($instance->id);
         $this->assertEquals(
