@@ -8,7 +8,9 @@ jobs:
 
     services:
       postgres:
-        image: postgres:13
+        # Must satisfy the newest Moodle branch in the matrix: 5.0 needs 14, 5.1 needs 15,
+        # 5.2 needs 16. Only minimums are declared, so a newer server suits every branch.
+        image: postgres:16
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
