@@ -961,7 +961,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo .toast-wrapper,
-.path-course-view:has(.modtype_interactivevideo) .toast-wrapper {
+body:has(.modtype_interactivevideo) .toast-wrapper {
     z-index: 2056 !important;
 }
 
@@ -2215,7 +2215,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo .modal-fullscreen > .modal-dialog,
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog,
+#playermodal.modal-fullscreen > .modal-dialog,
 .iv-modal.modal-fullscreen > .modal-dialog {
     max-width: 100% !important;
     width: 100% !important;
@@ -2234,18 +2234,18 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo .modal-fullscreen > .modal-dialog .modal-body,
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-body,
+#playermodal.modal-fullscreen > .modal-dialog .modal-body,
 .iv-modal.modal-fullscreen > .modal-dialog .modal-body {
     height: var(--ivdvh);
     padding: 1rem;
     scrollbar-width: thin;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog {
+#playermodal.modal-fullscreen > .modal-dialog {
     transition: all ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog:not(:has(.modal-content.show-control)) {
+#playermodal.modal-fullscreen > .modal-dialog:not(:has(.modal-content.show-control)) {
     max-width: 100% !important;
     width: 100% !important;
     justify-content: start;
@@ -3200,22 +3200,22 @@ html:has(.path-mod-interactivevideo) {
     background-image: url([[pix:mod_interactivevideo|checkbox-checked]]);
 }
 
-.path-course-view .modtype_interactivevideo .interactivevideo-card {
+.activity.modtype_interactivevideo .interactivevideo-card {
     display: flex;
     align-items: flex-start;
 }
 
-.path-course-view .modtype_interactivevideo .interactivevideo-card.no-pointer {
+.activity.modtype_interactivevideo .interactivevideo-card.no-pointer {
     pointer-events: none;
     opacity: 0.6;
 }
 
-.path-course-view .modtype_interactivevideo .interactivevideo-card .name {
+.activity.modtype_interactivevideo .interactivevideo-card .name {
     font-size: 1rem;
     font-weight: 600;
 }
 
-.path-course-view .modtype_interactivevideo .image-container {
+.activity.modtype_interactivevideo .image-container {
     position: relative;
     width: 100%;
     max-width: 200px;
@@ -3225,7 +3225,7 @@ html:has(.path-mod-interactivevideo) {
     transition: all ease-in-out 0.3s;
 }
 
-.path-course-view .modtype_interactivevideo .image-container .poster {
+.activity.modtype_interactivevideo .image-container .poster {
     width: 100%;
     border-radius: 0.5rem;
     height: 0;
@@ -3239,7 +3239,7 @@ html:has(.path-mod-interactivevideo) {
     z-index: 1;
 }
 
-.path-course-view .modtype_interactivevideo .image-container img {
+.activity.modtype_interactivevideo .image-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -3249,31 +3249,31 @@ html:has(.path-mod-interactivevideo) {
     border-radius: 0;
 }
 
-.path-course-view .modtype_interactivevideo .image-container .poster.square {
+.activity.modtype_interactivevideo .image-container .poster.square {
     background-color: var(--ivgray-dark);
 }
 
-.path-course-view .modtype_interactivevideo .image-container .poster.square img {
+.activity.modtype_interactivevideo .image-container .poster.square img {
     object-fit: contain;
     height: 80%;
     top: 10%;
 }
 
-.path-course-view .modtype_interactivevideo .image-container:hover,
-.path-course-view .modtype_interactivevideo .image-container.hovered {
+.activity.modtype_interactivevideo .image-container:hover,
+.activity.modtype_interactivevideo .image-container.hovered {
     transform: scale3d(1.05, 1.05, 1.05);
     z-index: 3;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .activity-altcontent .no-overflow {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-altcontent .no-overflow {
     overflow: visible;
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-basis {
+body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-basis {
     display: none !important;
 }
 
-.path-course-view .modtype_interactivevideo .image-container a.overlay {
+.activity.modtype_interactivevideo .image-container a.overlay {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -3287,25 +3287,25 @@ html:has(.path-mod-interactivevideo) {
     border-radius: 0.5rem;
 }
 
-.path-course-view .modtype_interactivevideo .image-container:hover a.overlay,
-.path-course-view .modtype_interactivevideo .image-container.hovered a.overlay {
+.activity.modtype_interactivevideo .image-container:hover a.overlay,
+.activity.modtype_interactivevideo .image-container.hovered a.overlay {
     background: rgba(0, 0, 0, 0.15);
 }
 
-.path-course-view .modtype_interactivevideo .image-container:hover a.overlay i,
-.path-course-view .modtype_interactivevideo .image-container.hovered a.overlay i {
+.activity.modtype_interactivevideo .image-container:hover a.overlay i,
+.activity.modtype_interactivevideo .image-container.hovered a.overlay i {
     display: block;
 }
 
-.path-course-view .modtype_interactivevideo .image-container a.overlay i {
+.activity.modtype_interactivevideo .image-container a.overlay i {
     font-size: 1.5rem;
     color: #fff;
     transition: all ease-in-out 300ms;
     display: none;
 }
 
-.path-course-view .modtype_interactivevideo .image-container .duration,
-.path-course-view .modtype_interactivevideo .image-container .new-badge {
+.activity.modtype_interactivevideo .image-container .duration,
+.activity.modtype_interactivevideo .image-container .new-badge {
     position: absolute;
     bottom: 0.5em;
     right: 0.5em;
@@ -3314,47 +3314,47 @@ html:has(.path-mod-interactivevideo) {
     mix-blend-mode: normal !important;
 }
 
-.path-course-view .modtype_interactivevideo .image-container .percentage-badge,
-.path-course-view .modtype_interactivevideo .image-container.card-only .badge {
+.activity.modtype_interactivevideo .image-container .percentage-badge,
+.activity.modtype_interactivevideo .image-container.card-only .badge {
     mix-blend-mode: normal !important;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.hasanalytics .duration {
+.activity.modtype_interactivevideo .image-container.hasanalytics .duration {
     transition: all ease-in-out 300ms;
     bottom: 0.75em;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.hasanalytics.card-only:hover .duration {
+.activity.modtype_interactivevideo .image-container.hasanalytics.card-only:hover .duration {
     bottom: 0.5em;
 }
 
-.path-course-view .modtype_interactivevideo .image-container .new-badge {
+.activity.modtype_interactivevideo .image-container .new-badge {
     top: 0.5em;
     right: 0;
     bottom: unset;
     border-radius: 0.25em 0 0 0.25em;
 }
 
-.path-course-view .modtype_interactivevideo .image-container .duration,
-.path-course-view .modtype_interactivevideo .image-container .percentage-badge,
-.path-course-view .modtype_interactivevideo .image-container .password {
+.activity.modtype_interactivevideo .image-container .duration,
+.activity.modtype_interactivevideo .image-container .percentage-badge,
+.activity.modtype_interactivevideo .image-container .password {
     background: rgba(0, 0, 0, 0.5);
     color: #fff;
     font-weight: 500;
 }
 
-.path-course-view .modtype_interactivevideo .image-container .password {
+.activity.modtype_interactivevideo .image-container .password {
     position: absolute;
     top: 0.25rem;
     left: 0.25rem;
     z-index: 2;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only {
+.activity.modtype_interactivevideo .image-container.card-only {
     transition: all ease-in-out 300ms;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info {
+.activity.modtype_interactivevideo .image-container.card-only .info {
     display: flex;
     flex-direction: column;
     top: 1rem;
@@ -3367,7 +3367,7 @@ html:has(.path-mod-interactivevideo) {
     justify-content: center;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info a.title {
+.activity.modtype_interactivevideo .image-container.card-only .info a.title {
     font-size: 1em;
     font-weight: bold;
     display: -webkit-box;
@@ -3378,104 +3378,104 @@ html:has(.path-mod-interactivevideo) {
     line-height: 1.5;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .progress {
+.activity.modtype_interactivevideo .image-container.card-only .info .progress {
     background-color: rgba(255, 255, 255, 0.5);
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .btn.btn-outline-secondary {
+.activity.modtype_interactivevideo .image-container.card-only .info .btn.btn-outline-secondary {
     color: #fff;
     border-color: #fff;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .btn {
+.activity.modtype_interactivevideo .image-container.card-only .info .btn {
     display: flex;
     align-items: center;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .btn i,
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .badge i,
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .badge-sm i {
+.activity.modtype_interactivevideo .image-container.card-only .info .btn i,
+.activity.modtype_interactivevideo .image-container.card-only .info .badge i,
+.activity.modtype_interactivevideo .image-container.card-only .info .badge-sm i {
     margin-inline-end: 0.25rem;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .badge-sm,
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .badge {
+.activity.modtype_interactivevideo .image-container.card-only .info .badge-sm,
+.activity.modtype_interactivevideo .image-container.card-only .info .badge {
     display: inline-block;
     background: transparent !important;
     color: #fff !important;
     padding: 0;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only .info .automatic-completion-conditions {
+.activity.modtype_interactivevideo .image-container.card-only .info .automatic-completion-conditions {
     margin: 0;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only:hover,
-.path-course-view .modtype_interactivevideo .image-container.card-only.hovered {
+.activity.modtype_interactivevideo .image-container.card-only:hover,
+.activity.modtype_interactivevideo .image-container.card-only.hovered {
     transform: scale3d(1.2, 1.2, 1.2) translateY(-2rem);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
     overflow: visible;
     border-radius: 0.5rem 0.5rem 0 0;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only:hover .info,
-.path-course-view .modtype_interactivevideo .image-container.card-only.hovered .info {
+.activity.modtype_interactivevideo .image-container.card-only:hover .info,
+.activity.modtype_interactivevideo .image-container.card-only.hovered .info {
     top: 100%;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
     transition: top ease-in-out 500ms, box-shadow ease-in-out 1s;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only:hover .poster,
-.path-course-view .modtype_interactivevideo .image-container.card-only.hovered .poster {
+.activity.modtype_interactivevideo .image-container.card-only:hover .poster,
+.activity.modtype_interactivevideo .image-container.card-only.hovered .poster {
     border-radius: 0.5rem 0.5rem 0 0;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only:hover .poster a,
-.path-course-view .modtype_interactivevideo .image-container.card-only.hovered .poster a {
+.activity.modtype_interactivevideo .image-container.card-only:hover .poster a,
+.activity.modtype_interactivevideo .image-container.card-only.hovered .poster a {
     border-radius: 0.5rem 0.5rem 0 0;
 }
 
-.path-course-view .modtype_interactivevideo .image-container.card-only:hover .poster .percentage-badge,
-.path-course-view .modtype_interactivevideo .image-container.card-only.hovered .poster .percentage-badge,
-.path-course-view .modtype_interactivevideo .image-container.card-only:hover .poster .progress,
-.path-course-view .modtype_interactivevideo .image-container.card-only.hovered .poster .progress {
+.activity.modtype_interactivevideo .image-container.card-only:hover .poster .percentage-badge,
+.activity.modtype_interactivevideo .image-container.card-only.hovered .poster .percentage-badge,
+.activity.modtype_interactivevideo .image-container.card-only:hover .poster .progress,
+.activity.modtype_interactivevideo .image-container.card-only.hovered .poster .progress {
     display: none !important;
 }
 
-.path-course-view .modtype_interactivevideo .description-container {
+.activity.modtype_interactivevideo .description-container {
     flex-grow: 1;
     width: 100%;
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
 }
 
-.path-course-view .modtype_interactivevideo .description-container:has(.bottom-section div) {
+.activity.modtype_interactivevideo .description-container:has(.bottom-section div) {
     margin-top: 0;
 }
 
-.path-course-view .modtype_interactivevideo .description-container .cursor-pointer {
+.activity.modtype_interactivevideo .description-container .cursor-pointer {
     cursor: pointer;
 }
 
-.path-course-view .modtype_interactivevideo .description-container .fa {
+.activity.modtype_interactivevideo .description-container .fa {
     transition: transform ease-in-out 300ms;
 }
 
-.path-course-view .modtype_interactivevideo .description-container .fa.rotate {
+.activity.modtype_interactivevideo .description-container .fa.rotate {
     transform: rotate(90deg);
 
 }
 
-.path-course-view.dir-rtl .modtype_interactivevideo .description-container .fa.rotate {
+body.dir-rtl .modtype_interactivevideo .description-container .fa.rotate {
     transform: rotate(-90deg);
 }
 
-.path-course-view .modtype_interactivevideo .interactivevideo-card .progress {
+.activity.modtype_interactivevideo .interactivevideo-card .progress {
     height: 0.25rem;
     background-color: var(--ivprimaryalt);
 }
 
-.path-course-view .modtype_interactivevideo .interactivevideo-card .analytics.progress {
+.activity.modtype_interactivevideo .interactivevideo-card .analytics.progress {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -3484,23 +3484,23 @@ html:has(.path-mod-interactivevideo) {
     z-index: 4;
 }
 
-.path-course-view .modtype_interactivevideo .interactivevideo-card .analytics.progress .progress-bar {
+.activity.modtype_interactivevideo .interactivevideo-card .analytics.progress .progress-bar {
     background: linear-gradient(to right, #f04 60%, #ff2792 100%);
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) {
+body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) {
     transition: background-color ease-in-out 300ms;
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-completion,
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .activity-name-area,
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .activity-icon,
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) [data-region="completionrequirements"] strong,
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .activity-info {
+body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-completion,
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-name-area,
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-icon,
+.activity.modtype_interactivevideo:has(.interactivevideo-card) [data-region="completionrequirements"] strong,
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-info {
     display: none !important;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .activity-item .activity-altcontent {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-item .activity-altcontent {
     border-top: 0;
     font-size: unset;
     margin-top: 0;
@@ -3508,229 +3508,229 @@ html:has(.path-mod-interactivevideo) {
     background: transparent;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) [data-region="completionrequirements"] .badge {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) [data-region="completionrequirements"] .badge {
     margin-bottom: 0.25rem;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .card-only [data-region="completionrequirements"] .badge {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .card-only [data-region="completionrequirements"] .badge {
     margin-bottom: 0.25rem;
     font-size: 0.76rem;
     opacity: 0.85;
     display: inline-flex;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .card-only [data-region="completionrequirements"] {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .card-only [data-region="completionrequirements"] {
     overflow: hidden;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card).highlighted {
+.activity.modtype_interactivevideo:has(.interactivevideo-card).highlighted {
     border-radius: 0.5rem;
     background: rgb(0 128 255 / 11%) !important;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card).highlighted .tasks.progress {
+.activity.modtype_interactivevideo:has(.interactivevideo-card).highlighted .tasks.progress {
     background-color: var(--ivsecondary) !important;
 }
 
-.path-course-view .activity.modtype_interactivevideo {
+.activity.modtype_interactivevideo {
     transition: background-color ease-in-out 300ms;
 }
 
-.path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+.activity.modtype_interactivevideo .interactivevideo-card {
     flex-direction: row;
 }
 
-.path-course-view .activity.modtype_interactivevideo .interactivevideo-card .image-container {
+.activity.modtype_interactivevideo .interactivevideo-card .image-container {
     margin-inline-end: 1rem;
     margin-bottom: 0.5rem;
 }
 
-.path-course-view .activity.modtype_interactivevideo .interactivevideo-card.columnlayout {
+.activity.modtype_interactivevideo .interactivevideo-card.columnlayout {
     flex-direction: column;
 }
 
-.path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+.activity.modtype_interactivevideo .interactivevideo-card.poster-right {
     flex-direction: row-reverse;
 }
 
-.path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .image-container {
+.activity.modtype_interactivevideo .interactivevideo-card.poster-right .image-container {
     margin-inline-end: 0;
 }
 
-.path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .description-container {
+.activity.modtype_interactivevideo .interactivevideo-card.poster-right .description-container {
     margin-inline-end: 1rem;
 }
 
-.path-course-view ul.section {
+ul.section:has(.modtype_interactivevideo) {
     container-type: inline-size;
     container-name: section;
 }
 
 @container section (max-width: 400px) {
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card {
         flex-direction: column;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .image-container,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .description-container {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card .image-container,
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card .description-container {
         margin-inline-end: 0;
         margin-inline-start: 0;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.columnlayout {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card.columnlayout {
         flex-direction: column;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
         flex-direction: column;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .image-container,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right .description-container {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card.poster-right .image-container,
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card.poster-right .description-container {
         margin-inline-end: 0;
         margin-inline-start: 0;
         margin-top: 0;
     }
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card) .card-only {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .card-only {
     max-width: 300px;
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.card-medium),
-.path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
-.path-course-view .activity.modtype_interactivevideo:has(.card-small),
-.path-course-view .activity.modtype_interactivevideo:has(.card-largemedium),
-.path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
+.activity.modtype_interactivevideo:has(.card-medium),
+.activity.modtype_interactivevideo:has(.card-mediumlarge),
+.activity.modtype_interactivevideo:has(.card-small),
+.activity.modtype_interactivevideo:has(.card-largemedium),
+.activity.modtype_interactivevideo:has(.card-tiny) {
     display: inline-block;
     vertical-align: top;
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.card-medium) {
+.activity.modtype_interactivevideo:has(.card-medium) {
     width: calc(50% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) {
+.activity.modtype_interactivevideo:has(.card-largemedium) {
     width: calc(75% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) {
+.activity.modtype_interactivevideo:has(.card-mediumlarge) {
     width: calc(66.67% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.card-small) {
+.activity.modtype_interactivevideo:has(.card-small) {
     width: calc(33.33% - 0.5rem);
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
+.activity.modtype_interactivevideo:has(.card-tiny) {
     width: calc(25% - 0.5rem);
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-item {
+body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activity-item {
     border: 0;
     background-color: transparent;
 }
 
-.path-course-view .activity.modtype_interactivevideo:has(.interactivevideo-card) .contentafterlink {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .contentafterlink {
     margin: 0;
 }
 
-.path-course-view:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card):not(:first-child) {
+body:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card):not(:first-child) {
     border-top: 1px solid #dee2e6;
 
 }
 
-.path-course-view:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card) {
+body:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card) {
     margin-top: 0.25rem;
     padding-top: 0.25rem;
 }
 
 @container section (width < 750px) {
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) {
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-medium),
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-mediumlarge),
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-largemedium) {
         width: calc(50% - 0.5rem);
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card {
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
 @container section (width < 650px) {
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-small),
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-tiny) {
         width: calc(50% - 0.5rem);
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
 @container section (max-width: 400px) {
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium),
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-medium),
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-mediumlarge),
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-small),
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-largemedium),
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-tiny) {
         width: 100%;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card,
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card,
+    [dir="ltr"] .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
-.path-course-view ul.section .activity.modtype_interactivevideo {
+ul.section .activity.modtype_interactivevideo {
     container-type: inline-size;
     container-name: activity;
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card):not(:has(.card-only)):hover {
+body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card):not(:has(.card-only)):hover {
     background-color: rgba(155, 155, 155, 0.1);
     border-radius: 0.5rem;
     border-color: var(--ivlight) !important;
     transition: background-color ease-in-out 300ms;
 }
 
-.path-course-view:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card):hover a.h5::after {
+body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card):hover a.h5::after {
     width: 100%;
 }
 
 @container activity (max-width: 400px) {
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card {
         flex-direction: column;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
         flex-direction: column;
     }
 
-    [dir="ltr"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .card-only {
+    [dir="ltr"] .activity.modtype_interactivevideo .interactivevideo-card .card-only {
         max-width: 100%;
     }
 }
 
-.path-course-view #playermodal .modal-dialog {
+#playermodal .modal-dialog {
     max-width: 1200px;
     width: calc(100% - 0.5rem);
     margin-inline-start: auto;
     margin-inline-end: auto;
 }
 
-.path-course-view #playermodal .modal-dialog img.icon {
+#playermodal .modal-dialog img.icon {
     width: 30px;
     height: 30px;
     max-width: 30px;
@@ -3738,16 +3738,16 @@ html:has(.path-mod-interactivevideo) {
     filter: invert(1);
 }
 
-.path-course-view #playermodal .modal-header .btn-outline-secondary {
+#playermodal .modal-header .btn-outline-secondary {
     border-color: #fff;
     color: #fff;
 }
 
-.path-course-view #playermodal .modal-header .completion-info strong {
+#playermodal .modal-header .completion-info strong {
     display: none !important;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .image-container .percentage-badge {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .image-container .percentage-badge {
     bottom: 0.5em;
     left: 0.5em;
     z-index: 2;
@@ -3755,70 +3755,70 @@ html:has(.path-mod-interactivevideo) {
 }
 
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .hasanalytics .percentage-badge {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .hasanalytics .percentage-badge {
     bottom: 0.75em;
 }
 
 @media (max-width: 768px) {
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-small),
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-tiny) {
         width: calc(50% - 0.5rem);
     }
 }
 
-[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
-[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card,
-[dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card {
+[dir="rtl"] .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+[dir="rtl"] .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card,
+[dir="rtl"] .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card {
     flex-direction: column;
 }
 
 @media (max-width: 575.98px) {
-    .path-course-view .modtype_interactivevideo .image-container {
+    .activity.modtype_interactivevideo .image-container {
         max-width: 100%;
     }
 
-    [dir="rtl"] body.path-course-view .activity.modtype_interactivevideo .interactivevideo-card {
+    [dir="rtl"] body.activity.modtype_interactivevideo .interactivevideo-card {
         flex-direction: column;
     }
 
-    [dir="rtl"] body.path-course-view .activity.modtype_interactivevideo .interactivevideo-card.poster-right {
+    [dir="rtl"] body.activity.modtype_interactivevideo .interactivevideo-card.poster-right {
         flex-direction: column;
     }
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo .interactivevideo-card .card-only {
+    [dir="rtl"] .activity.modtype_interactivevideo .interactivevideo-card .card-only {
         max-width: 100%;
     }
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium),
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) {
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-medium),
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-mediumlarge),
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-small),
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-largemedium),
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-tiny) {
         width: 100%;
     }
 
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card,
-    [dir="rtl"] .path-course-view .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-medium) .interactivevideo-card,
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-mediumlarge) .interactivevideo-card,
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-small) .interactivevideo-card,
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-largemedium) .interactivevideo-card,
+    [dir="rtl"] .activity.modtype_interactivevideo:has(.card-tiny) .interactivevideo-card {
         flex-direction: column;
     }
 }
 
-.path-course-view.editing .modtype_interactivevideo:has(.interactivevideo-card) .contentwithoutlink,
-.path-course-view.editing .modtype_interactivevideo:has(.interactivevideo-card) .section .activity .activityinstance {
+body.editing .modtype_interactivevideo:has(.interactivevideo-card) .contentwithoutlink,
+body.editing .modtype_interactivevideo:has(.interactivevideo-card) .section .activity .activityinstance {
     padding-inline-end: 0;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .automatic-completion-conditions {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .automatic-completion-conditions {
     flex-direction: row;
     margin: 0;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .automatic-completion-conditions .badge,
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .automatic-completion-conditions .badge-sm {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .automatic-completion-conditions .badge,
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .automatic-completion-conditions .badge-sm {
     margin-bottom: 0.25rem;
     margin-inline-end: 0.25rem;
     font-size: small;
@@ -3827,8 +3827,8 @@ html:has(.path-mod-interactivevideo) {
     align-items: center;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .clamp-2,
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .clamp-7 {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .clamp-2,
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .clamp-7 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -3840,21 +3840,21 @@ html:has(.path-mod-interactivevideo) {
     font-size: 1rem;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .clamp-7 {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .clamp-7 {
     -webkit-line-clamp: 7;
     line-clamp: 7;
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card.full-width-poster) .image-container {
+.activity.modtype_interactivevideo:has(.interactivevideo-card.full-width-poster) .image-container {
     max-width: 100%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) {
     width: 100% !important;
     max-width: 100% !important;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card {
     flex-direction: column;
     margin-inline-start: auto;
     margin-inline-end: auto;
@@ -3862,37 +3862,37 @@ html:has(.path-mod-interactivevideo) {
     max-width: unset;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card .image-container {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card .image-container {
     max-width: 100%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-medium .image-container {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-medium .image-container {
     max-width: 50%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-mediumlarge .image-container {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-mediumlarge .image-container {
     max-width: 66.67%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-largemedium .image-container {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-largemedium .image-container {
     max-width: 75%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-small .image-container {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-small .image-container {
     max-width: 33.33%;
 }
 
-.path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-tiny .image-container {
+.activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card.card-tiny .image-container {
     max-width: 25%;
 }
 
 @media (max-width: 575.98px) {
-    .path-course-view .modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card .image-container {
+    .activity.modtype_interactivevideo:has(.iv-aligncenter) .interactivevideo-card .image-container {
         max-width: 100% !important;
     }
 }
 
-.path-course-view #playermodal .modal-header {
+#playermodal .modal-header {
     display: flex;
     left: 0;
     right: 0;
@@ -3904,16 +3904,16 @@ html:has(.path-mod-interactivevideo) {
     transition: top ease-in-out 500ms;
 }
 
-.path-course-view #playermodal .modal-header:hover,
-.path-course-view #playermodal .modal-header.show {
+#playermodal .modal-header:hover,
+#playermodal .modal-header.show {
     top: 0;
 }
 
-.path-course-view #playermodal .modal-content {
+#playermodal .modal-content {
     background-color: #000;
 }
 
-.path-course-view #playermodal .modal-background {
+#playermodal .modal-background {
     height: 75px;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent);
     z-index: 1;
@@ -3921,13 +3921,13 @@ html:has(.path-mod-interactivevideo) {
     left: 0;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content {
+#playermodal.modal-fullscreen > .modal-dialog .modal-content {
     height: calc(var(--ivdvh) + 55px);
     transition: height ease-in-out 300ms;
     max-height: unset;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content .toggle-controls {
+#playermodal.modal-fullscreen > .modal-dialog .modal-content .toggle-controls {
     position: absolute;
     bottom: calc(55px + 0.25rem);
     left: 0.25rem;
@@ -3939,29 +3939,29 @@ html:has(.path-mod-interactivevideo) {
     opacity: 0.4;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content .toggle-controls:hover {
+#playermodal.modal-fullscreen > .modal-dialog .modal-content .toggle-controls:hover {
     background: rgba(0, 0, 0, 0.5);
     opacity: 1;
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content.show-control {
+#playermodal.modal-fullscreen > .modal-dialog .modal-content.show-control {
     height: var(--ivdvh);
 }
 
-.path-course-view #playermodal.modal-fullscreen > .modal-dialog .modal-content.show-control .toggle-controls {
+#playermodal.modal-fullscreen > .modal-dialog .modal-content.show-control .toggle-controls {
     transform: rotate(180deg);
     transition: transform ease-in-out 300ms;
 }
 
-.path-course-view #playermodal:not(.modal-fullscreen) .toggle-controls {
+#playermodal:not(.modal-fullscreen) .toggle-controls {
     display: none !important;
 }
 
-.path-course-view #playermodal > .modal-dialog .automatic-completion-conditions .badge {
+#playermodal > .modal-dialog .automatic-completion-conditions .badge {
     font-size: 100%;
 }
 
-.path-course-view #playermodal {
+#playermodal {
     overflow: hidden;
     top: 0;
     left: 0;
@@ -3969,37 +3969,37 @@ html:has(.path-mod-interactivevideo) {
     bottom: 0;
 }
 
-.path-course-view #playermodal > .modal-dialog .modal-body {
+#playermodal > .modal-dialog .modal-body {
     transition: all ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.locked .modal-header {
+#playermodal.locked .modal-header {
     top: 0;
     display: flex !important;
 }
 
-.path-course-view #playermodal.locked > .modal-dialog .modal-body {
+#playermodal.locked > .modal-dialog .modal-body {
     margin-top: 50px;
     height: calc(var(--ivdvh) - 50px);
     transition: all ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.locked .modal-background {
+#playermodal.locked .modal-background {
     height: 50px;
     background: rgba(255, 255, 255, 0.05);
     transition: all ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.modal-resized > .modal-dialog .modal-body {
+#playermodal.modal-resized > .modal-dialog .modal-body {
     height: calc(var(--ivdvh) - 50px);
     transition: all ease-in-out 300ms;
 }
 
-.path-course-view #playermodal.modal-resized > .modal-dialog .modal-body iframe {
+#playermodal.modal-resized > .modal-dialog .modal-body iframe {
     top: 0;
 }
 
-.path-course-view #playermodal.modal-resized .modal-header {
+#playermodal.modal-resized .modal-header {
     margin-top: 0;
     height: unset;
 }
@@ -4008,11 +4008,11 @@ html:has(.path-mod-interactivevideo) {
     margin-inline-end: 0.25rem;
 }
 
-.path-course-view:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card):hover {
+body:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card):hover {
     z-index: 3;
 }
 
-.path-course-view .section .activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-item .activity-grid {
+.section .activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-item .activity-grid {
     grid-template-columns: min-content 1fr min-content min-content;
     grid-template-areas:
         "groupmode groupmode completion actions"
@@ -4022,7 +4022,7 @@ html:has(.path-mod-interactivevideo) {
         "visibility visibility visibility visibility";
 }
 
-.path-course-view .modtype_interactivevideo:has(.interactivevideo-card) .activity-instance.d-flex {
+.activity.modtype_interactivevideo:has(.interactivevideo-card) .activity-instance.d-flex {
     display: none !important;
 }
 
@@ -4041,7 +4041,7 @@ html:has(.path-mod-interactivevideo) {
     background: rgba(0, 0, 0, 0.15);
 }
 
-.path-course-view:has(.interactivevideo-card) #format_tiles_overlay {
+body:has(.interactivevideo-card) #format_tiles_overlay {
     z-index: 1;
 }
 
@@ -4315,7 +4315,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 .path-mod-interactivevideo .modal-title,
-.path-course-view #playermodal .modal-title {
+#playermodal .modal-title {
     flex-grow: 1;
 }
 
@@ -4439,7 +4439,7 @@ html:has(.path-mod-interactivevideo) {
     position: relative;
 }
 
-.path-course-view button.description-toggle {
+.interactivevideo-card button.description-toggle {
     border-radius: 50%;
     background-color: var(--ivprimaryalt);
     font-size: small;
@@ -4536,4 +4536,15 @@ html:has(.path-mod-interactivevideo) {
 
 .path-mod-interactivevideo #message[data-placement="popup"] .modal-content {
     height: var(--ivdvh);
+}
+
+/* An interaction whose content type is not activated: visible, but inert. */
+.iv-type-inactive .title,
+.iv-type-inactive .timestamp,
+.iv-type-inactive .xp {
+    opacity: .55;
+}
+
+.iv-type-inactive .type-icon {
+    color: var(--warning, #f0ad4e);
 }

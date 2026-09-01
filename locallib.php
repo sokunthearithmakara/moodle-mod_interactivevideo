@@ -90,7 +90,10 @@ class interactivevideo_util {
      */
     public static function copy_item($id, $contextid, $timestamp): mixed {
         global $DB, $CFG;
-        $record = $DB->get_record('interactivevideo_items', ['id' => $id]);
+        $record = $DB->get_record('interactivevideo_items', ['id' => $id], '*', MUST_EXIST);
+        // Copying creates a new interaction, so it is subject to the same activation rule as
+        // authoring one from scratch.
+        self::require_usable_type($record->type);
         if ($timestamp == $record->timestamp) {
             $record->timestamp = $record->timestamp + 0.01; // Make sure the timestamp isn't the same.
         } else {
@@ -137,6 +140,364 @@ class interactivevideo_util {
     }
 
     /**
+     * The configured list of enabled content types, as stored.
+     *
+     * Overridable because mod_flexbook extends this class and keeps its own enabled list. Any
+     * inherited method that memoises per configuration must go through this, and must key on
+     * static::class as well: a static inside a method is shared by every class that inherits it,
+     * so without both the subclass would read this class's answer.
+     *
+     * @return string Raw comma separated component list.
+     */
+    protected static function enabled_types_config() {
+        return (string) get_config('mod_interactivevideo', 'enablecontenttypes');
+    }
+
+    /**
+     * The short type names of the content types currently enabled site-wide.
+     *
+     * Matched the same way the player does in viewannotation.js::filterAnnotations(): an
+     * exact comparison against each content type's own reported name. The stored config is
+     * a list of component names, so a substring test against it over-matches whenever one
+     * short name happens to appear inside an unrelated component name.
+     *
+     * Activation is deliberately NOT enforced here. This list feeds
+     * get_reachable_gradable_items(), and therefore grading, completion and the activity card.
+     * Dropping a deactivated type from it would silently rebase every affected learner's grade:
+     * somebody who had completed 3 of 5 interactions would become 3 of 3. Deactivation hides
+     * interactions from learners; it must not move anybody's existing grade.
+     *
+     * @return array Short type names, e.g. ['richtext', 'chapter'].
+     */
+    public static function get_enabled_type_names() {
+        // Memoised against the configured list itself, so enabling or disabling a content
+        // type takes effect immediately rather than being masked until the next request.
+        static $cache = [];
+
+        $key = static::class . '|' . static::enabled_types_config();
+        if (!array_key_exists($key, $cache)) {
+            $cache[$key] = array_column(static::get_all_activitytypes_unfiltered(), 'name');
+        }
+
+        return $cache[$key];
+    }
+
+    /**
+     * Map an interaction type name to the component that provides it.
+     *
+     * Built from the unenforced list so a deactivated type still resolves; callers need the
+     * component precisely in order to ask whether it is usable.
+     *
+     * @param string $type Interaction type name, e.g. 'form'.
+     * @return string Component name, or '' when the type is unknown.
+     */
+    public static function get_component_for_type($type) {
+        // Keyed on the configured list, not a bare static: a plain static survives between tests
+        // in one process and masks a changed configuration.
+        static $maps = [];
+
+        $key = static::class . '|' . static::enabled_types_config();
+        if (!array_key_exists($key, $maps)) {
+            $map = [];
+            foreach (static::get_all_activitytypes_unfiltered() as $properties) {
+                $component = $properties['component'] ?? ($properties['stringcomponent'] ?? '');
+                if ($component !== '') {
+                    $map[$properties['name']] = $component;
+                }
+            }
+            $maps[$key] = $map;
+        }
+
+        return $maps[$key][$type] ?? '';
+    }
+
+    /**
+     * Activity types with the unusable ones removed rather than merely flagged.
+     *
+     * get_all_activitytypes() keeps a deactivated type in the authoring list, flagged 'inactive',
+     * so a teacher can still see their content. That is wrong for the class allow lists, which
+     * decide what may actually be instantiated and rendered — there a deactivated type must be
+     * absent, or the licence could be bypassed by driving the content type directly.
+     *
+     * @return array
+     */
+    public static function get_usable_activitytypes() {
+        return array_values(array_filter(static::get_all_activitytypes(), function ($properties) {
+            return empty($properties['inactive']);
+        }));
+    }
+
+    /**
+     * Whether an interaction type may be created or edited on this site.
+     *
+     * Non-throwing form of {@see self::require_usable_type()}, for bulk paths that should skip
+     * an unusable interaction rather than abort everything around it.
+     *
+     * @param string $type Interaction type name.
+     * @return bool
+     */
+    public static function type_is_usable($type) {
+        $component = static::get_component_for_type($type);
+
+        return $component !== ''
+            && \mod_interactivevideo\local\contenttype_activation::is_usable($component);
+    }
+
+    /**
+     * Assert that an interaction type may be created or edited on this site.
+     *
+     * Hiding a type from the chooser is presentation; this is the enforcement. Called from every
+     * path that writes an interactivevideo_items row.
+     *
+     * @param string $type Interaction type name.
+     * @throws moodle_exception When the type belongs to a content type that is not activated.
+     */
+    public static function require_usable_type($type) {
+        $component = static::get_component_for_type($type);
+        if ($component === '') {
+            // Unknown type: not something this site can author, whatever the reason.
+            throw new \moodle_exception('contenttypeunknown', 'mod_interactivevideo');
+        }
+
+        if (!\mod_interactivevideo\local\contenttype_activation::is_usable($component)) {
+            throw new \moodle_exception('contenttypenotusable', 'mod_interactivevideo');
+        }
+    }
+
+    /**
+     * The gradable interactions a learner can actually reach in an activity.
+     *
+     * Three things put an interaction out of reach, and all must be excluded from any XP
+     * total or the learner is measured against work the player never shows them:
+     *
+     * - Its content type has been disabled site-wide.
+     * - It sits outside the activity's trimmed start/end window.
+     * - It sits inside a skipped segment, which the player jumps over.
+     *
+     * This is the single definition of reachability, mirroring what the player does in
+     * viewannotation.js::filterAnnotations() and getRelevantAnnotations(). Note the window
+     * rule differs for skip segments: one is relevant when it *overlaps* the window, since
+     * a segment starting before the trim point still hides what follows it.
+     *
+     * @param int $interactivevideo The instance id.
+     * @param int $contextid The module context id.
+     * @param stdClass|null $instance The instance record, fetched if not supplied.
+     * @return array Reachable gradable items, keyed by item id.
+     */
+    public static function get_reachable_gradable_items($interactivevideo, $contextid, $instance = null) {
+        global $DB;
+
+        if ($instance === null) {
+            $instance = $DB->get_record(
+                'interactivevideo',
+                ['id' => $interactivevideo],
+                'id, starttime, endtime',
+                MUST_EXIST
+            );
+        }
+        $start = (float) $instance->starttime;
+        $end = (float) $instance->endtime;
+        $enabled = self::get_enabled_type_names();
+
+        // Unfiltered: the skip segments themselves are needed to work out what they hide.
+        $items = (array) self::get_items($interactivevideo, $contextid);
+
+        $inwindow = array_filter($items, function ($item) use ($start, $end, $enabled) {
+            // An empty list means the enabled types could not be resolved. Excluding
+            // everything would silently zero every learner's denominator, so fail open.
+            if (!empty($enabled) && !in_array($item->type, $enabled, true)) {
+                return false;
+            }
+            if ($item->type === 'skipsegment') {
+                // A skip segment counts when it overlaps the window, not only when it is
+                // wholly inside it. Its end timestamp lives in the title column.
+                return !((float) $item->timestamp > $end || (float) $item->title < $start);
+            }
+            // A negative timestamp means "not tied to a point on the timeline".
+            if ((float) $item->timestamp < 0) {
+                return true;
+            }
+            return (float) $item->timestamp >= $start && (float) $item->timestamp <= $end;
+        });
+
+        $skipsegments = array_filter($inwindow, function ($item) {
+            return $item->type === 'skipsegment';
+        });
+
+        return array_filter($inwindow, function ($item) use ($skipsegments) {
+            if ($item->type === 'skipsegment' || $item->hascompletion != 1) {
+                return false;
+            }
+            foreach ($skipsegments as $ss) {
+                if (
+                    (float) $item->timestamp > (float) $ss->timestamp
+                    && (float) $item->timestamp < (float) $ss->title
+                    && (float) $item->timestamp >= 0
+                ) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    /**
+     * Resolve the user a self-service request may act on.
+     *
+     * The client sends the user id it believes it is acting for. Acting on anybody other
+     * than the current user is a report-level operation, so it requires a report capability
+     * rather than the view capability that guards the endpoints themselves. Writes ask for
+     * editreport; reads pass viewreport, which is what the report page itself enforces.
+     *
+     * @param context $context The module context the request was authorised against.
+     * @param int $requesteduserid The user id supplied by the client.
+     * @param string $capability The capability that permits acting on another user.
+     * @return int The user id the caller is permitted to act on.
+     * @throws moodle_exception If the caller may not act on the requested user.
+     */
+    public static function resolve_target_userid(
+        $context,
+        $requesteduserid,
+        $capability = 'mod/interactivevideo:editreport'
+    ) {
+        global $USER;
+
+        if ((int) $requesteduserid === (int) $USER->id) {
+            return (int) $USER->id;
+        }
+
+        if (has_capability($capability, $context)) {
+            return (int) $requesteduserid;
+        }
+
+        throw new \moodle_exception('nopermission', 'error');
+    }
+
+    /**
+     * Assert the caller may read interaction logs for the requested set of users.
+     *
+     * Reading only your own logs is the ordinary learner path. Any other set is a report
+     * operation. Note this guards the request, not interactivevideo_util::get_logs_by_userids()
+     * itself, which is called directly by other plugins that authorise their own callers.
+     *
+     * @param context $context The module context the request was authorised against.
+     * @param array $userids Normalised list of requested user ids.
+     * @throws required_capability_exception If the caller may not read other users' logs.
+     */
+    public static function require_log_read_access($context, array $userids) {
+        global $USER;
+
+        if ($userids !== [(int) $USER->id]) {
+            require_capability('mod/interactivevideo:viewreport', $context);
+        }
+    }
+
+    /**
+     * Confirm an instance id belongs to the context the request was authorised against.
+     *
+     * Without this the instance id, course id and context id are independent request
+     * parameters, so a caller with view access to one activity can direct a write at
+     * another one anywhere on the site.
+     *
+     * @param context $context The context the capability check was made against.
+     * @param int $instanceid The interactivevideo instance id supplied by the client.
+     * @return stdClass The course module, so callers can take an authoritative course id.
+     * @throws moodle_exception If the context is not a module context or does not match.
+     */
+    public static function validate_module_instance($context, $instanceid) {
+        if ($context->contextlevel != CONTEXT_MODULE) {
+            throw new \moodle_exception('invalidcontext', 'error');
+        }
+
+        $cm = get_coursemodule_from_id('interactivevideo', $context->instanceid, 0, false, MUST_EXIST);
+        if ((int) $cm->instance !== (int) $instanceid) {
+            throw new \moodle_exception('invalidcoursemodule', 'error');
+        }
+
+        return $cm;
+    }
+
+    /**
+     * Whether a proposed start/end pair may be written by a caller without edit rights.
+     *
+     * The player reports the video's real duration on first view and persists it, and the
+     * first viewer may be anyone, so this cannot be gated on a capability. But start and end
+     * define the window that decides which interactions count towards completion and grade,
+     * so a learner must never be able to narrow it: posting end=1 would otherwise complete
+     * the activity trivially and change what it is worth for everybody.
+     *
+     * Widening is always safe, which covers both legitimate cases: capturing the duration
+     * into an empty end, and resetting a start that sits beyond the video's real length.
+     *
+     * @param float $currentstart The stored start time.
+     * @param float $currentend The stored end time.
+     * @param float $newstart The proposed start time.
+     * @param float $newend The proposed end time.
+     * @return bool True when the write only widens or leaves the window unchanged.
+     */
+    public static function videotime_change_is_widening($currentstart, $currentend, $newstart, $newend) {
+        return (float) $newstart <= (float) $currentstart && (float) $newend >= (float) $currentend;
+    }
+
+    /**
+     * Assert that a learner is permitted to reset their own progress on this activity.
+     *
+     * The reset control is offered only when the activity enables allowdeleteprogress and
+     * the viewer is not a guest, but that is a client-side decision; the server has to
+     * apply the same policy or the button being hidden means nothing.
+     *
+     * @param context $context The module context.
+     * @throws moodle_exception If self-service deletion is not permitted here.
+     */
+    public static function require_own_progress_deletion_allowed($context) {
+        global $DB;
+
+        if (is_guest($context) || !isloggedin()) {
+            throw new \moodle_exception('nopermission', 'error');
+        }
+
+        if ($context->contextlevel != CONTEXT_MODULE) {
+            throw new \moodle_exception('invalidcontext', 'error');
+        }
+        $cm = get_coursemodule_from_id('interactivevideo', $context->instanceid, 0, false, MUST_EXIST);
+
+        $displayoptions = $DB->get_field('interactivevideo', 'displayoptions', ['id' => $cm->instance], MUST_EXIST);
+        $options = json_decode((string) $displayoptions, true);
+
+        if (empty($options['allowdeleteprogress'])) {
+            throw new \moodle_exception('nopermission', 'error');
+        }
+    }
+
+    /**
+     * Load a completion record, confirming it belongs where the caller says it does.
+     *
+     * Deletions key on a client-supplied record id, so the record has to be fetched and
+     * checked before anything is removed: it must belong to the activity the capability
+     * was checked against, and for a self-service call it must belong to the caller.
+     *
+     * @param int $recordid The interactivevideo_completion id supplied by the client.
+     * @param context $context The context the capability check was made against.
+     * @param int|null $requireuserid When set, the record must belong to this user.
+     * @return array [stdClass $record, stdClass $cm]
+     * @throws moodle_exception If the record is missing, out of context, or not owned.
+     */
+    public static function get_owned_completion_record($recordid, $context, $requireuserid = null) {
+        global $DB;
+
+        $record = $DB->get_record('interactivevideo_completion', ['id' => $recordid], '*', MUST_EXIST);
+
+        // The completion table stores the module instance id in its cmid column.
+        $cm = self::validate_module_instance($context, $record->cmid);
+
+        if ($requireuserid !== null && (int) $record->userid !== (int) $requireuserid) {
+            throw new \moodle_exception('nopermission', 'error');
+        }
+
+        return [$record, $cm];
+    }
+
+    /**
      * Get progress data per user.
      *
      * @param int $interactivevideo
@@ -145,7 +506,7 @@ class interactivevideo_util {
      * @return stdClass
      */
     public static function get_progress($interactivevideo, $userid, $preview = false) {
-        global $DB;
+        global $DB, $USER;
         if ($userid == 1 || $preview || isguestuser()) {
             global $SESSION;
             $progress = isset($SESSION->ivprogress) ? $SESSION->ivprogress : null;
@@ -178,29 +539,75 @@ class interactivevideo_util {
             $record->completeditems = '[]';
             $record->completionpercentage = 0;
             $record->completiondetails = '[]';
-            $record->id = $DB->insert_record('interactivevideo_completion', $record);
+            // Only ever materialise a row for the current user. Reading somebody else's
+            // progress must not create state on their behalf.
+            if ((int) $userid === (int) $USER->id) {
+                $record->id = $DB->insert_record('interactivevideo_completion', $record);
+            } else {
+                $record->id = 0;
+                $record->xp = 0;
+            }
         }
         return $record;
     }
 
 
     /**
+     * Constrain a client-supplied completion detail to what the interaction can award.
+     *
+     * Interactions tracked as manual or view are not scored, so completing one is worth
+     * exactly its configured XP and no client value is accepted. Scored interactions do
+     * report a score from the browser, which is clamped to the configured maximum.
+     *
+     * @param stdClass $detail Decoded completion detail from the request.
+     * @param array $itemmax Configured XP keyed by interaction id.
+     * @param array $itemtracking Completion tracking mode keyed by interaction id.
+     * @return stdClass The constrained detail.
+     */
+    private static function constrain_completion_detail($detail, array $itemmax, array $itemtracking) {
+        $itemid = (string) $detail->id;
+        $max = $itemmax[$itemid];
+        $originalxp = isset($detail->xp) ? (float) $detail->xp : 0.0;
+
+        if (in_array($itemtracking[$itemid], ['manual', 'view'], true)) {
+            $detail->xp = $max;
+        } else {
+            $detail->xp = min(max($originalxp, 0.0), $max);
+        }
+        $detail->percent = $max > 0 ? ($detail->xp / $max) : 0;
+
+        // The report view embeds the XP as display text, so keep it in step.
+        if ((float) $detail->xp !== $originalxp && isset($detail->reportView)) {
+            $detail->reportView = \mod_interactivevideo\report_helper::patch_report_view_xp(
+                $detail->reportView,
+                $detail->xp
+            );
+        }
+
+        return $detail;
+    }
+
+    /**
      * Save the progress of an interactive video for a user.
+     *
+     * The gradebook grade, earned XP, completion percentage and completion flag are all
+     * recomputed here from the activity's stored interactions. The corresponding request
+     * values are accepted for backwards compatibility with existing callers but ignored.
      *
      * @param int $interactivevideo The ID of the interactive video.
      * @param int $userid The ID of the user.
-     * @param int $completeditems The number of completed items.
+     * @param string $completeditems JSON encoded list of completed interaction ids.
      * @param string $completiondetails JSON encoded string of completion details.
      * @param bool $markdone Whether to mark the item as done.
      * @param string $type The type of the interactive video.
      * @param string $details Additional details (optional).
-     * @param int $completed Whether the interactive video is completed (optional, default is 0).
-     * @param float $percentage The completion percentage (optional, default is 0).
-     * @param float $grade The grade achieved (optional, default is 0).
-     * @param int $gradeiteminstance The grade item instance (optional, default is 0).
-     * @param int $xp The experience points earned (optional, default is 0).
+     * @param int $completed Ignored; recomputed from the completion threshold.
+     * @param float $percentage Ignored; recomputed from the completed interactions.
+     * @param float $grade Ignored; recomputed from the stored XP.
+     * @param int $gradeiteminstance Ignored; resolved from the activity's own grade item.
+     * @param int $xp Ignored; recomputed from the stored completion details.
      * @param bool $updatestate Whether to update the completion state (optional, default is true).
-     * @param int $courseid The ID of the course (optional, default is 0).
+     * @param int $courseid Ignored; resolved from the course module.
      * @return stdClass The updated progress record.
      */
     public static function save_progress(
@@ -250,13 +657,53 @@ class interactivevideo_util {
             $SESSION->ivprogress[$interactivevideo] = $progress;
             return $SESSION->ivprogress[$interactivevideo];
         }
+        // Resolve the activity from the instance so the course id and grade item are taken
+        // from the server's view of it rather than from the request.
+        $cm = get_coursemodule_from_instance('interactivevideo', $interactivevideo, 0, false, MUST_EXIST);
+        $courseid = $cm->course;
+        $contextid = \context_module::instance($cm->id)->id;
+
         $record = $DB->get_record('interactivevideo_completion', ['cmid' => $interactivevideo, 'userid' => $userid]);
-        $record->completeditems = $completeditems;
-        $record->timecompleted = $completed ? time() : 0;
-        $record->completionpercentage = round($percentage);
-        $record->xp = $xp;
+        if (!$record) {
+            // Normally created by get_progress(); create it here rather than fatal on false.
+            $record = self::get_progress($interactivevideo, $userid);
+            if (empty($record->id)) {
+                throw new \moodle_exception('nopermission', 'error');
+            }
+        }
+
+        // What this activity's interactions are actually worth, according to the server.
+        // The client's grade, XP, percentage and completion flag are all recomputed from
+        // this rather than trusted. Only interactions the learner can actually reach count:
+        // anything outside the trim window or buried in a skipped segment is excluded, or
+        // the learner would be graded against work the player never shows them.
+        $instancerecord = $DB->get_record(
+            'interactivevideo',
+            ['id' => $interactivevideo],
+            'id, starttime, endtime, completionpercentage',
+            MUST_EXIST
+        );
+        $items = self::get_reachable_gradable_items($interactivevideo, $contextid, $instancerecord);
+        $itemmax = [];
+        $itemtracking = [];
+        $totalmax = 0;
+        foreach ($items as $item) {
+            $itemmax[(string) $item->id] = (float) $item->xp;
+            $itemtracking[(string) $item->id] = $item->completiontracking;
+            $totalmax += (float) $item->xp;
+        }
+
         $completion = json_decode($completiondetails);
+        if (!$completion || !isset($completion->id) || !isset($itemmax[(string) $completion->id])) {
+            throw new \moodle_exception('invalidcoursemodule', 'error');
+        }
+        $completion = self::constrain_completion_detail($completion, $itemmax, $itemtracking);
+        $completiondetails = json_encode($completion);
+
         $cdetails = json_decode($record->completiondetails);
+        if (!is_array($cdetails)) {
+            $cdetails = [];
+        }
         // Remove the detail item with the same id.
         $cdetails = array_filter($cdetails, function ($item) use ($completion) {
             $item = json_decode($item);
@@ -267,6 +714,36 @@ class interactivevideo_util {
         }
         $cdetails = array_values($cdetails);
         $record->completiondetails = json_encode($cdetails);
+
+        // Only interactions that belong to this activity and are gradable may count.
+        $completeditemsarr = json_decode($completeditems);
+        if (!is_array($completeditemsarr)) {
+            $completeditemsarr = [];
+        }
+        $completeditemsarr = array_values(array_intersect(
+            array_map('strval', $completeditemsarr),
+            array_keys($itemmax)
+        ));
+        $record->completeditems = json_encode($completeditemsarr);
+
+        // Re-sum the earned XP from the stored, constrained details.
+        $decodeddetails = array_map(fn($entry) => json_decode($entry), $cdetails);
+        $earned = \mod_interactivevideo\report_helper::sum_earned_xp($decodeddetails, $completeditemsarr);
+        $record->xp = $earned;
+
+        $gradablecount = count($itemmax);
+        $record->completionpercentage = $gradablecount > 0
+            ? round(count($completeditemsarr) / $gradablecount * 100)
+            : 0;
+
+        // Mirror the client's completion rule: the configured threshold when one is set,
+        // otherwise every gradable interaction.
+        $threshold = (int) $instancerecord->completionpercentage;
+        $iscomplete = $threshold > 0
+            ? ($record->completionpercentage >= $threshold)
+            : ($gradablecount > 0 && count($completeditemsarr) === $gradablecount);
+        $record->timecompleted = $iscomplete ? time() : 0;
+
         $DB->update_record('interactivevideo_completion', $record);
 
         // Add/delete details to interactivevideo_log table.
@@ -303,25 +780,33 @@ class interactivevideo_util {
             }
         }
 
-        // Update grade.
-        if ($gradeiteminstance > 0) {
-            require_once($CFG->libdir . '/gradelib.php');
+        // Update grade. The gradebook value is derived from the stored XP, never from the
+        // request, and always targets this activity's own grade item.
+        require_once($CFG->libdir . '/gradelib.php');
+        $activitygradeitem = \grade_item::fetch([
+            'iteminstance' => $interactivevideo,
+            'itemtype' => 'mod',
+            'itemmodule' => 'interactivevideo',
+            'courseid' => $courseid,
+        ]);
+        if ($activitygradeitem) {
+            $computedgrade = \mod_interactivevideo\report_helper::calculate_grade(
+                $earned,
+                $totalmax,
+                (float) $activitygradeitem->grademax
+            );
             $gradeitem = new stdClass();
             $gradeitem->userid = $userid;
-            $gradeitem->rawgrade = $grade;
-            if ($grade <= 0) {
-                $gradeitem->rawgrade = null;
-            }
-            grade_update('mod/interactivevideo', $courseid, 'mod', 'interactivevideo', $gradeiteminstance, 0, $gradeitem);
+            $gradeitem->rawgrade = ($computedgrade === null || $computedgrade <= 0) ? null : $computedgrade;
+            grade_update('mod/interactivevideo', $courseid, 'mod', 'interactivevideo', $interactivevideo, 0, $gradeitem);
 
-            $record->grade = $grade;
-            $record->gradeiteminstance = $gradeiteminstance;
+            $record->grade = $computedgrade;
+            $record->gradeiteminstance = $interactivevideo;
             $record->gradeitem = $gradeitem;
         }
 
         // Update completion state.
         if ($updatestate) {
-            $cm = get_coursemodule_from_instance('interactivevideo', $interactivevideo);
             if ($cm->completion > 1) {
                 require_once($CFG->libdir . '/completionlib.php');
                 $course = new stdClass();
@@ -493,10 +978,45 @@ class interactivevideo_util {
     /**
      * Get all activity types.
      *
+     * Paid content types that are not activated on this site are enforced here, because this is
+     * the single list the editor chooser, the player payload, the report and the class allow
+     * lists are all built from. Enforcement is deliberately shaped by the caller:
+     *
+     * - The player ($fromview) drops them entirely, so learners never see the interactions.
+     * - The editor keeps them, flagged 'inactive', so a teacher's authored content does not
+     *   silently vanish. They are marked 'hideonchooser' so no new ones can be added.
+     *
      * @param bool $fromview from view.php
      * @return array
      */
     public static function get_all_activitytypes($fromview = false) {
+        return self::build_activitytypes($fromview, true);
+    }
+
+    /**
+     * The same list with activation NOT enforced.
+     *
+     * Kept separate rather than as an argument to get_all_activitytypes(), because mod_flexbook
+     * overrides that method and adding a parameter breaks its signature.
+     *
+     * Only the grade and completion path uses this, so that deactivating a content type cannot
+     * silently rebase everybody's existing grade. See get_enabled_type_names().
+     *
+     * @param bool $fromview from view.php
+     * @return array
+     */
+    public static function get_all_activitytypes_unfiltered($fromview = false) {
+        return self::build_activitytypes($fromview, false);
+    }
+
+    /**
+     * Build the activity type list.
+     *
+     * @param bool $fromview from view.php
+     * @param bool $enforceactivation Whether unactivated paid content types are enforced.
+     * @return array
+     */
+    private static function build_activitytypes($fromview, $enforceactivation) {
         $subplugins = get_config('mod_interactivevideo', 'enablecontenttypes');
         $subplugins = explode(',', $subplugins);
         // If fromview, make sure to include ivplugin_chapter.
@@ -556,6 +1076,18 @@ class interactivevideo_util {
                 if (!isset($properties['preloadstrings'])) {
                     $properties['preloadstrings'] = true;
                 }
+
+                if ($enforceactivation && !\mod_interactivevideo\local\contenttype_activation::is_usable($subplugin['name'])) {
+                    if ($fromview) {
+                        // Learners must not be shown interactions of a type the site may not use.
+                        continue;
+                    }
+                    // Authoring side: keep it visible so existing content is still accounted for,
+                    // but locked. addcontenttype.mustache already skips hideonchooser entries.
+                    $properties['inactive'] = true;
+                    $properties['hideonchooser'] = true;
+                }
+
                 if ($fromview) { // Remove unneeded properties.
                     unset($properties['form']);
                     unset($properties['description']);
@@ -606,6 +1138,10 @@ class interactivevideo_util {
         global $DB, $PAGE, $CFG;
         $context = \context::instance_by_id($contextid);
         $PAGE->set_context($context);
+        // Editing an interaction of a deactivated content type is blocked the same way creating
+        // one is; the editor shows these rows read only.
+        $type = $DB->get_field('interactivevideo_items', 'type', ['id' => $id], MUST_EXIST);
+        self::require_usable_type($type);
         if ($field == 'content') { // Inline annnotation contenttype.
             require_once($CFG->libdir . '/filelib.php');
             // Delete the old files before saving the new files.
@@ -691,7 +1227,31 @@ class interactivevideo_util {
      */
     public static function save_log($userid, $annotationid, $cmid, $data, $contextid, $replace) {
         global $DB;
-        $record = json_decode($data);
+
+        // Build the row from an allow list taken from the table itself rather than trusting
+        // the decoded payload, which would otherwise set every column it is handed.
+        $submitted = json_decode($data);
+        $writable = array_diff(
+            array_keys($DB->get_columns('interactivevideo_log')),
+            ['id', 'userid', 'cmid', 'annotationid', 'timecreated', 'timemodified']
+        );
+
+        $record = new stdClass();
+        foreach ($writable as $field) {
+            if (isset($submitted->$field)) {
+                $record->$field = $submitted->$field;
+            }
+        }
+
+        // A completion record named by the client must belong to the same learner, or a log
+        // could be attached to somebody else's progress.
+        if (!empty($record->completionid)) {
+            $owner = $DB->get_field('interactivevideo_completion', 'userid', ['id' => $record->completionid]);
+            if ($owner === false || (int) $owner !== (int) $userid) {
+                throw new \moodle_exception('nopermission', 'error');
+            }
+        }
+
         $record->userid = $userid;
         $record->annotationid = $annotationid;
         $record->cmid = $cmid;
@@ -848,25 +1408,22 @@ class interactivevideo_util {
     public static function get_logs_by_userids($userids, $annotationid, $contextid, $type, $cmid) {
         global $DB, $CFG;
         require_once($CFG->libdir . '/filelib.php');
-        $inparams = $DB->get_in_or_equal($userids)[1];
-        $inparams = implode(',', $inparams);
-        $where = '';
+        $userids = array_filter(array_map('intval', (array) $userids));
+        if (empty($userids)) {
+            return [];
+        }
+        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'userid');
+        $where = ["userid $insql"];
         if ($annotationid != 0) {
-            $where = "annotationid = ? ";
+            $where[] = "annotationid = :annotationid";
+            $params['annotationid'] = $annotationid;
         }
         if ($type) {
-            $where .= "char1 = ? AND cmid = ?";
+            $where[] = "char1 = :char1 AND cmid = :cmid";
+            $params['char1'] = $type;
+            $params['cmid'] = $cmid;
         }
-        $sql = "SELECT * FROM {interactivevideo_log} WHERE {$where} AND userid IN ($inparams) ORDER BY
-        timecreated DESC";
-        $params = [];
-        if ($annotationid != 0) {
-            $params[] = $annotationid;
-        }
-        if ($type) {
-            $params[] = $type;
-            $params[] = $cmid;
-        }
+        $sql = "SELECT * FROM {interactivevideo_log} WHERE " . implode(' AND ', $where) . " ORDER BY timecreated DESC";
         $records = $DB->get_records_sql($sql, $params);
         foreach ($records as $record) {
             $record->formattedtimecreated = userdate($record->timecreated, get_string('strftimedatetime'));
@@ -982,8 +1539,11 @@ class interactivevideo_util {
             $annotation->id = $DB->insert_record('interactivevideo_items', $annotation);
             $idmap[(int) $annotation->oldid] = (int) $annotation->id;
             $prop = json_decode($annotation->prop);
-            $class = $prop->class;
-            if (class_exists($class)) {
+            $class = $prop->class ?? '';
+            // Same constraint as the fragment callback: the class name comes from the
+            // imported payload, so only a class a content type declares may be built.
+            $allowed = array_column(self::get_usable_activitytypes(), 'class');
+            if (in_array($class, $allowed, true) && class_exists($class)) {
                 $contenttype = new $class($annotation);
                 $annotation = $contenttype->copy($fromcourse, $tocourse, $fromcm, $tocm, $annotation, $oldcontextid);
             }
@@ -1061,12 +1621,21 @@ class interactivevideo_util {
      *
      * @param int $contextid The context ID.
      * @param int $recordid The record ID.
-     * @param int $courseid The course ID.
-     * @param int $cmid The course module ID.
+     * @param int $courseid Ignored; resolved from the record's course module.
+     * @param int $cmid Ignored; resolved from the record's course module.
      * @return string The result of the deletion.
      */
     public static function delete_progress_by_id($contextid, $recordid, $courseid, $cmid) {
         global $DB, $CFG;
+
+        // Confirm the record belongs to this activity before anything is removed. Ownership
+        // for self-service deletes is asserted by the caller, which knows whose request it is.
+        [$record, $cm] = self::get_owned_completion_record(
+            $recordid,
+            \context::instance_by_id($contextid)
+        );
+        $courseid = $cm->course;
+
         // Delete completion record.
         $DB->delete_records('interactivevideo_completion', ['id' => $recordid]);
         // Delete logs.
@@ -1083,12 +1652,12 @@ class interactivevideo_util {
             $DB->delete_records('interactivevideo_log', ['completionid' => $recordid]);
         }
 
+        // The record's own owner is authoritative; logs only add users if any exist.
         $userids = array_column($logs, 'userid');
-        $userids = array_unique($userids);
-        $userids = array_values($userids);
+        $userids[] = $record->userid;
+        $userids = array_values(array_unique($userids));
 
         // Update completion state.
-        $cm = get_coursemodule_from_instance('interactivevideo', $cmid);
         require_once($CFG->libdir . '/completionlib.php');
         if ($cm->completion == COMPLETION_TRACKING_AUTOMATIC) {
             $course = new stdClass();
@@ -1113,6 +1682,23 @@ class interactivevideo_util {
      */
     public static function delete_progress_by_ids($contextid, $recordids, $courseid, $cmid) {
         global $DB, $CFG;
+
+        $recordids = array_values(array_filter(array_map('intval', (array) $recordids)));
+        if (empty($recordids)) {
+            return 'deleted';
+        }
+
+        // Validate every record before removing any of them, so a batch containing one
+        // record the caller may not touch cannot destroy the rest on its way to failing.
+        $context = \context::instance_by_id($contextid);
+        $owners = [];
+        $cm = null;
+        foreach ($recordids as $recordid) {
+            [$record, $cm] = self::get_owned_completion_record($recordid, $context);
+            $owners[] = $record->userid;
+        }
+        $courseid = $cm->course;
+
         // Delete completion record.
         $DB->delete_records_list('interactivevideo_completion', 'id', $recordids);
         // Delete logs.
@@ -1130,15 +1716,13 @@ class interactivevideo_util {
         }
 
         // Update completion state.
-        $cm = get_coursemodule_from_instance('interactivevideo', $cmid);
         require_once($CFG->libdir . '/completionlib.php');
         if ($cm->completion == COMPLETION_TRACKING_AUTOMATIC) {
             $course = new stdClass();
             $course->id = $courseid;
             $completion = new completion_info($course);
-            $userids = array_column($logs, 'userid');
-            $userids = array_unique($userids);
-            $userids = array_values($userids);
+            $userids = array_merge(array_column($logs, 'userid'), $owners);
+            $userids = array_values(array_unique($userids));
             foreach ($userids as $userid) {
                 $completion->update_state($cm, null, $userid);
             }
@@ -1392,7 +1976,16 @@ class interactivevideo_util {
      */
     public static function delete_completion_data($id, $itemid, $userid, $contextid) {
         global $DB;
-        $completion = $DB->get_record('interactivevideo_completion', ['id' => $id]);
+
+        // Confirm the record belongs to this activity before rewriting it. Ownership for
+        // self-service calls is asserted by the caller, which knows whose request it is.
+        [$completion] = self::get_owned_completion_record(
+            $id,
+            \context::instance_by_id($contextid)
+        );
+        // The logs removed below are keyed on the record's owner, not on a request value.
+        $userid = $completion->userid;
+
         if ($completion) {
             $completeditems = json_decode($completion->completeditems);
             $key = array_search($itemid, $completeditems);
@@ -1463,8 +2056,9 @@ class interactivevideo_util {
         $userid = $record->userid;
         $cmid = $record->cmid;
 
-        // Gradable items for this activity (cmid here is the module instance id).
-        $items = (array) self::get_items($cmid, $contextid, true);
+        // Gradable items for this activity (cmid here is the module instance id). Only
+        // reachable ones count, matching how the learner's own grade is calculated.
+        $items = self::get_reachable_gradable_items($cmid, $contextid);
         $itemmaxmap = [];
         $totalmax = 0;
         foreach ($items as $item) {

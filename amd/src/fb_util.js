@@ -102,6 +102,19 @@ const videoTypeRegexes = [
         {
             'type': 'viostream',
             'regex': /(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i,
+        },
+        {
+            'type': 'spotlightr',
+            'regex': /(?:https?:\/\/)?(?:[a-z0-9-]+\.)?cdn\.spotlightr\.com\/watch\/([A-Za-z0-9=]+)/i,
+        },
+        {
+            // Watch URL only; stream.mux.com/*.m3u8 stays with html5video.
+            'type': 'mux',
+            'regex': /(?:https?:\/\/)?player\.mux\.com\/([A-Za-z0-9]+)(?:[/?#]|$)/i,
+        },
+        {
+            'type': 'gumlet',
+            'regex': /(?:https?:\/\/)?(?:play\.gumlet\.io\/embed|gumlet\.tv\/watch)\/([A-Za-z0-9]+)/i,
         }
     ];
 

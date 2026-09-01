@@ -118,6 +118,9 @@ $sources = [
     'vidyard' => get_string('vidyard', 'mod_interactivevideo'),
     'bunnystream' => get_string('bunnystream', 'mod_interactivevideo'),
     'viostream' => get_string('viostream', 'mod_interactivevideo'),
+    'spotlightr' => get_string('spotlightr', 'mod_interactivevideo'),
+    'mux' => get_string('mux', 'mod_interactivevideo'),
+    'gumlet' => get_string('gumlet', 'mod_interactivevideo'),
 ];
 // Sort the sources by name a-z.
 asort($sources);
@@ -144,6 +147,15 @@ $gsettings->add(new admin_setting_configselect(
         'url' => get_string('url', 'mod_interactivevideo'),
         'file' => get_string('file', 'mod_interactivevideo'),
     ],
+));
+
+// Additional provider hosts the plugin may fetch video metadata from.
+$gsettings->add(new admin_setting_configtextarea(
+    'mod_interactivevideo/allowedfetchhosts',
+    get_string('allowedfetchhosts', 'mod_interactivevideo'),
+    get_string('allowedfetchhosts_desc', 'mod_interactivevideo'),
+    '',
+    PARAM_RAW,
 ));
 
 // Disable custom time.

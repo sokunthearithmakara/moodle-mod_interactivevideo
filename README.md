@@ -28,9 +28,24 @@ Transform your video/audio content into an interactive learning adventure! Add d
 - SproutVideo (public/password protected**)
 - Spotify (Podcast episode) (public)
 - SoundCloud (public)
+- Mux (public/signed playback***)
+- Gumlet (public/signed playback***)
 
 * Password-protected Dailymotion video must play with original player controls.
 ** You must use the embed link for the password protected video to work.
+*** Signed URLs are passed through as-is. Paste the fully signed watch URL; the plugin does
+not mint or refresh tokens, so playback stops when the token expires.
+
+Mux publishes no per-asset title, so the activity name is prefilled with the playback ID
+rather than the video's real name - rename it after pasting. Add `?title=Your%20Title` to the
+URL to prefill something meaningful instead.
+
+Mux expects the watch URL (`https://player.mux.com/{playbackId}`). A raw
+`https://stream.mux.com/{playbackId}.m3u8` still works, but as a plain direct link through the
+HTML5 player, without Mux Data analytics, DRM, storyboards or the poster image.
+
+Sites that enforce a Content Security Policy need `cdn.jsdelivr.net` allowed, which is where
+both Mux Player and Gumlet's player.js are loaded from.
 
 ## Out-of-the-box interaction/content types: ##
 - Chapter: Break video/audio into segments.

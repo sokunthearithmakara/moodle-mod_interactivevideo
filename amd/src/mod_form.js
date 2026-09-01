@@ -369,6 +369,33 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                     }
                 }
 
+                // MUX:: Check if the link is a mux watch link.
+                // E.g. https://player.mux.com/{playbackId}
+                // A raw https://stream.mux.com/{playbackId}.m3u8 stays with html5video on purpose.
+                if (videotypes.includes('mux') || currenttype == 'mux') {
+                    let regex = /(?:https?:\/\/)?player\.mux\.com\/([A-Za-z0-9]+)(?:[/?#]|$)/i;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('mux');
+                        defaultLoadFunction('mux');
+                        return;
+                    }
+                }
+
+                // GUMLET:: Check if the link is a gumlet link.
+                // E.g. https://play.gumlet.io/embed/{assetId} or https://gumlet.tv/watch/{id}
+                if (videotypes.includes('gumlet') || currenttype == 'gumlet') {
+                    let regex = /(?:https?:\/\/)?(?:play\.gumlet\.io\/embed|gumlet\.tv\/watch)\/([A-Za-z0-9]+)/i;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('gumlet');
+                        defaultLoadFunction('gumlet');
+                        return;
+                    }
+                }
+
                 // VIDEO URL:: Check if the link is a direct video link and video is "canplay".
                 if (videotypes.includes('videolink') || currenttype == 'html5video') {
                     if (await checkVideo(url)) {
@@ -456,6 +483,19 @@ define(['jquery', 'core/notification', 'core_form/modalform', 'core/str'], funct
                         videowrapper.show();
                         videotype.val('dyntube');
                         defaultLoadFunction('dyntube');
+                        return;
+                    }
+                }
+
+                // Spotlightr:: Check if the link is a Spotlightr watch/embed URL.
+                // e.g. https://account.cdn.spotlightr.com/watch/MTM1MjA5MA==
+                if (videotypes.includes('spotlightr') || currenttype == 'spotlightr') {
+                    let regex = /(?:https?:\/\/)?(?:[a-z0-9-]+\.)?cdn\.spotlightr\.com\/watch\/([A-Za-z0-9=]+)/i;
+                    let match = regex.exec(url);
+                    if (match) {
+                        videowrapper.show();
+                        videotype.val('spotlightr');
+                        defaultLoadFunction('spotlightr');
                         return;
                     }
                 }

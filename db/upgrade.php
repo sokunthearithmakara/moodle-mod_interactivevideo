@@ -32,7 +32,7 @@
  * @return bool
  */
 function xmldb_interactivevideo_upgrade($oldversion) {
-    global $DB;
+    global $DB, $OUTPUT;
     $dbman = $DB->get_manager();
     if ($oldversion < 2024092204) {
         // Changing type of field start on table interactivevideo to number.
@@ -328,5 +328,72 @@ function xmldb_interactivevideo_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026080103, 'interactivevideo');
     }
 
+    if ($oldversion < 2026081002) {
+        // Earned XP is fractional whenever an interaction awards partial credit, so the
+        // integer column was rounding it. The per-interaction values in completiondetails
+        // were always stored as decimals, so widening this loses nothing.
+        $table = new xmldb_table('interactivevideo_completion');
+        $field = new xmldb_field('xp', XMLDB_TYPE_NUMBER, '10, 2', null, XMLDB_NOTNULL, null, '0', 'cmid');
+
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026081002, 'interactivevideo');
+    }
+
+    if ($oldversion < 2026082810) {
+        // Activation used to live only in a cache with no TTL, so purging caches made every paid
+        // content type read as inactive. Seed the durable confirmation for components that are
+        // demonstrably activated here, and queue a background re-confirmation for the rest, so
+        // upgrading sites do not all fall into the grace path at once.
+        foreach (\mod_interactivevideo\local\contenttype_activation::get_paid_components() as $component) {
+            if (!get_config($component, \mod_interactivevideo\local\contenttype_activation::CONFIG_HASHKEY)) {
+                continue;
+            }
+            if (\mod_interactivevideo\local\contenttype_activation::is_active($component)) {
+                set_config(
+                    \mod_interactivevideo\local\contenttype_activation::CONFIG_CONFIRMED,
+                    time(),
+                    $component
+                );
+                continue;
+            }
+            \mod_interactivevideo\local\contenttype_activation::queue_confirmation($component);
+        }
+
+        upgrade_mod_savepoint(true, 2026082810, 'interactivevideo');
+    }
+
+    // Enforcement is otherwise silent: an unactivated content type simply stops appearing. Say so
+    // while the administrator is looking at the upgrade output.
+    interactivevideo_report_unactivated_contenttypes($OUTPUT);
+
     return true;
+}
+
+/**
+ * Print a warning naming content types that are installed but cannot be used.
+ *
+ * Shared by install and upgrade. Prints nothing when every installed paid content type is
+ * activated, so it does not become noise on a healthy site.
+ *
+ * @param \renderer_base $output The page renderer.
+ */
+function interactivevideo_report_unactivated_contenttypes($output) {
+    $message = \mod_interactivevideo\local\activation_notice::message(
+        \mod_interactivevideo\local\activation_notice::MODULE_INTERACTIVEVIDEO
+    );
+
+    if ($message === null) {
+        return;
+    }
+
+    echo $output->notification(
+        $message,
+        \core\output\notification::NOTIFY_WARNING,
+        false,
+        get_string('activationnoticetitle', 'mod_interactivevideo'),
+        'i/warning'
+    );
 }

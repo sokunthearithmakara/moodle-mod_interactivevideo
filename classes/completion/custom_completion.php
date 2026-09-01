@@ -60,7 +60,7 @@ class custom_completion extends activity_custom_completion {
      * @return int The completion state.
      */
     public function get_state(string $rule): int {
-        global $DB;
+        global $DB, $CFG;
 
         if (!$this->is_defined($rule)) {
             return COMPLETION_COMPLETE;
@@ -75,41 +75,13 @@ class custom_completion extends activity_custom_completion {
             $cm = $this->cm;
             $completionpercentage = $cm->customdata['customcompletionrules']['completionpercentage'];
             // We must take into account the start and end times of the video as well.
-            // Interactions outside of start and end times OR skipped should not be considered for completion.
-            $startendtimes = explode("-", $cm->customdata['startendtime']);
-            $start = $startendtimes[0];
-            $end = $startendtimes[1];
-
-            $cache = \cache::make('mod_interactivevideo', 'iv_items_by_cmid');
-            $items = $cache->get($cm->instance);
-            if (empty($items)) {
-                $items = $DB->get_records(
-                    'interactivevideo_items',
-                    ['annotationid' => $cm->instance]
-                );
-                $cache->set($cm->instance, $items);
-            }
-
-            $relevantitems = array_filter($items, function ($item) use ($start, $end) {
-                return (($item->timestamp >= $start && $item->timestamp <= $end)
-                    || $item->timestamp < 0) && ($item->hascompletion == 1 || $item->type == 'skipsegment');
-            });
-
-            $skipsegment = array_filter($relevantitems, function ($item) {
-                return $item->type === 'skipsegment';
-            });
-
-            $relevantitems = array_filter($relevantitems, function ($item) use ($skipsegment) {
-                foreach ($skipsegment as $ss) {
-                    if ($item->timestamp > $ss->timestamp && $item->timestamp < $ss->title && $item->timestamp >= 0) {
-                        return false;
-                    }
-                }
-                if ($item->type === 'skipsegment') {
-                    return false;
-                }
-                return true;
-            });
+            // Interactions the learner cannot reach must not count towards completion. The
+            // rule is shared with the grade calculation so the two can never disagree.
+            require_once($CFG->dirroot . '/mod/interactivevideo/locallib.php');
+            $relevantitems = \interactivevideo_util::get_reachable_gradable_items(
+                $cm->instance,
+                \context_module::instance($cm->id)->id
+            );
 
             $relevantitems = array_map(function ($item) {
                 return $item->id;

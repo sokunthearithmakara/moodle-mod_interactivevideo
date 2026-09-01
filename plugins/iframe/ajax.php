@@ -27,20 +27,17 @@ require_once('../../../../config.php');
 $action = required_param('action', PARAM_TEXT);
 $contextid = required_param('contextid', PARAM_INT);
 $context = context::instance_by_id($contextid);
+require_sesskey();
 require_login();
 switch ($action) {
     case 'getoembedinfo':
         require_capability('mod/interactivevideo:edit', $context);
         $url = required_param('url', PARAM_URL);
-        // Send get request to the URL.
-        $response = file_get_contents($url);
-        if (!$response) {
-            require_once($CFG->libdir . '/filelib.php');
-            $curl = new curl(['ignoresecurity' => true]);
-            $curl->setHeader('Content-Type: application/json');
-            $response = $curl->get($url);
-        }
-        echo $response;
+        // Only the oEmbed endpoints named in providers.json may be fetched.
+        echo \mod_interactivevideo\local\remote_fetcher::fetch(
+            $url,
+            \mod_interactivevideo\local\remote_fetcher::get_oembed_provider_hosts()
+        );
         break;
     case 'getproviders':
         require_capability('mod/interactivevideo:edit', $context);

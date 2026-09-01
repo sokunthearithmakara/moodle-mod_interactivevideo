@@ -131,6 +131,53 @@ class plugins_catalog {
     }
 
     /**
+     * Resolve a component catalog type without ever going to the network.
+     *
+     * {@see self::get_component_type()} calls ensure_catalog(), which fetches the remote catalog
+     * whenever its cache is cold — a 10s connect / 15s total request. That is fine on an admin
+     * page and unacceptable on the enforcement path, which runs on every player and course page.
+     * This variant reads a warm cache if there is one and otherwise the bundled file, and is
+     * memoised for the request.
+     *
+     * The bundled file is a bootstrap, not an authority; it is editable on disk. Callers treat
+     * this as one of two independent paid markers, never as the only one.
+     *
+     * @param string $component Plugin component.
+     * @return string Empty string when unknown.
+     */
+    public static function get_component_type_local(string $component): string {
+        // Only the bundled file is memoised, because it cannot change within a request. The cache
+        // is re-read every call: a plain static over the resolved map survives between tests in
+        // one process and makes a changed catalog invisible, which is exactly how this went wrong
+        // once already. The MUC definition is statically accelerated, so the read is in-process,
+        // and rebuilding a map of a couple of dozen entries is not worth caching around.
+        static $bundled = null;
+
+        $component = clean_param($component, PARAM_COMPONENT);
+        if ($component === '') {
+            return '';
+        }
+
+        $cached = self::get_catalog_cache()->get(self::CACHE_KEY);
+        if (is_array($cached) && !empty($cached['subplugins'])) {
+            $data = $cached;
+        } else {
+            if ($bundled === null) {
+                $bundled = self::read_bundled_catalog();
+            }
+            $data = $bundled;
+        }
+
+        foreach ($data['subplugins'] ?? [] as $plugin) {
+            if (($plugin['component'] ?? '') === $component) {
+                return (string) ($plugin['type'] ?? '');
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Resolve a component catalog type from the cached catalog.
      *
      * @param string $component Plugin component.

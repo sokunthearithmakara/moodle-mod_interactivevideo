@@ -41,11 +41,25 @@ const fetchOembed = async(url) => {
         }
     });
 
-    if (typeof response === 'string') {
-        return JSON.parse(response);
+    if (typeof response !== 'string') {
+        return response;
     }
 
-    return response;
+    const text = response.trim();
+    if (text === '') {
+        // Moodle returns an empty body when the provider responds with a non-200 status.
+        return {error: true};
+    }
+
+    try {
+        const data = JSON.parse(text);
+        if (data && data.error) {
+            return {error: true};
+        }
+        return data;
+    } catch (e) {
+        return {error: true};
+    }
 };
 
 export default fetchOembed;

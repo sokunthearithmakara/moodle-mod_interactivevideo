@@ -24,6 +24,12 @@ namespace mod_interactivevideo\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class registration_client {
+    /** @var int Seconds to wait for the license server to accept a connection. */
+    private const CONNECT_TIMEOUT = 5;
+
+    /** @var int Seconds to wait for the whole license server request. */
+    private const TIMEOUT = 10;
+
     /**
      * Register an activation with the license server.
      *
@@ -87,7 +93,8 @@ class registration_client {
         }
 
         $url = IV_LICENSE_PROXY;
-        if (str_contains($url, '?')) {
+        // strpos rather than str_contains: this plugin supports Moodle 4.0, which runs on PHP 7.3.
+        if (strpos($url, '?') !== false) {
             $url .= '&action=unregister';
         } else {
             $url .= '?action=unregister';
@@ -158,7 +165,8 @@ class registration_client {
             return '';
         }
 
-        if (!str_contains($sitename, '://')) {
+        // strpos rather than str_contains: this plugin supports Moodle 4.0, which runs on PHP 7.3.
+        if (strpos($sitename, '://') === false) {
             $sitename = 'https://' . $sitename;
         }
 
@@ -259,24 +267,22 @@ class registration_client {
      * @return array{success: bool, hashkey?: string, error?: string, errorcode?: string}
      */
     protected static function post_json(string $url, array $payload): array {
-        if (!function_exists('curl_init')) {
-            return self::failure('upstream_error');
-        }
+        global $CFG;
+        require_once($CFG->libdir . '/filelib.php');
 
-        $curl = curl_init($url);
-        curl_setopt_array($curl, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 30,
+        // Moodle's client rather than a raw curl handle, so the request honours the site
+        // proxy configuration and core's egress policy. The timeouts are deliberately short:
+        // this runs synchronously while an admin page is rendering, so an unreachable
+        // license server must fail quickly rather than stall the request.
+        $curl = new \curl();
+        $curl->setHeader('Content-Type: application/json');
+        $curl->setHeader('Accept: application/json');
+        $body = $curl->post($url, json_encode($payload), [
+            'CURLOPT_CONNECTTIMEOUT' => self::CONNECT_TIMEOUT,
+            'CURLOPT_TIMEOUT' => self::TIMEOUT,
         ]);
 
-        $body = curl_exec($curl);
-        $errno = curl_errno($curl);
-        curl_close($curl);
-
-        if ($errno || $body === false || trim((string) $body) === '') {
+        if ($curl->get_errno() || $body === false || trim((string) $body) === '') {
             return self::failure('upstream_error');
         }
 

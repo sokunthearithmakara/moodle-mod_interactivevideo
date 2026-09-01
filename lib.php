@@ -24,7 +24,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core\exception\moodle_exception;
+use mod_interactivevideo\local\remote_fetcher;
 
 define('INTERACTIVEVIDEO_DISPLAY_INLINE', 1);
 define('INTERACTIVEVIDEO_EVENT_TYPE_DUE', 'due');
@@ -274,6 +274,8 @@ function interactivevideo_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->id = $moduleinstance->instance;
     // Before we do anything, we need to check if the module instance has any video file, so we can delete it later.
     $oldvideo = $DB->get_field('interactivevideo', 'video', ['id' => $moduleinstance->id]);
+    // The previous grade maximum decides how existing grades are brought back into step.
+    $oldgrademax = (float) $DB->get_field('interactivevideo', 'grade', ['id' => $moduleinstance->id]);
     $moduleinstance->timemodified = time();
     $cmid = $moduleinstance->coursemodule;
     $draftitemid = $moduleinstance->endscreentext['itemid'];
@@ -360,7 +362,27 @@ function interactivevideo_update_instance($moduleinstance, $mform = null) {
 
     // Let's update the grade item.
     interactivevideo_grade_item_update($moduleinstance);
-    interactivevideo_update_grades($moduleinstance);
+
+    // Bring existing grades back into step, out of band. Note this is deliberately not an
+    // unconditional recalculation: adding or removing an interaction changes what the
+    // activity is worth, but must not move anybody's grade until they next attempt it.
+    $newgrademax = (float) $moduleinstance->grade;
+    if ($oldgrademax <= 0 && $newgrademax > 0) {
+        // Grading has just been switched on, so nobody has a grade yet even though
+        // learners may already have earned XP.
+        \mod_interactivevideo\local\grade_sync::queue(
+            $moduleinstance->id,
+            \mod_interactivevideo\local\grade_sync::MODE_BACKFILL
+        );
+    } else if ($oldgrademax > 0 && $newgrademax > 0 && abs($oldgrademax - $newgrademax) > 0.00001) {
+        // The maximum moved: keep every learner's percentage rather than recomputing.
+        \mod_interactivevideo\local\grade_sync::queue(
+            $moduleinstance->id,
+            \mod_interactivevideo\local\grade_sync::MODE_RESCALE,
+            $oldgrademax,
+            $newgrademax
+        );
+    }
 
     // Handle external plugins.
     $subplugins = interactivevideo_get_subplugins('ivmform');
@@ -465,6 +487,42 @@ function interactivevideo_get_file_info($browser, $areas, $course, $cm, $context
 }
 
 /**
+ * Whether a file area holds a learner's own submitted answers.
+ *
+ * These areas are keyed by interactivevideo_log id, so serving one discloses that learner's
+ * submission. Every other area of this module holds authored content, which stays readable
+ * to anyone who can view the activity.
+ *
+ * @param string $filearea The file area being served.
+ * @return bool
+ */
+function interactivevideo_is_user_owned_filearea($filearea) {
+    return in_array($filearea, ['attachments', 'text1', 'text2', 'text3'], true);
+}
+
+/**
+ * Whether the current user may read the files attached to a given interaction log.
+ *
+ * @param int $logid The interactivevideo_log id used as the file itemid.
+ * @param context $context The module context the file lives in.
+ * @return bool
+ */
+function interactivevideo_can_access_log_file($logid, $context) {
+    global $DB, $USER;
+
+    $log = $DB->get_record('interactivevideo_log', ['id' => $logid], 'id, userid');
+    if (!$log) {
+        return false;
+    }
+
+    if ((int) $log->userid === (int) $USER->id) {
+        return true;
+    }
+
+    return has_capability('mod/interactivevideo:viewreport', $context);
+}
+
+/**
  * Serves the files from the mod_interactivevideo file areas.
  *
  * @package     mod_interactivevideo
@@ -491,6 +549,14 @@ function interactivevideo_pluginfile($course, $cm, $context, $filearea, $args, $
     } else {
         $filepath = '/' . implode('/', $args) . '/';
     }
+
+    if (
+        interactivevideo_is_user_owned_filearea($filearea)
+        && !interactivevideo_can_access_log_file($itemid, $context)
+    ) {
+        send_file_not_found();
+    }
+
     // Retrieve the file from the Files API.
     $fs = get_file_storage();
     $file = $fs->get_file($context->id, 'mod_interactivevideo', $filearea, $itemid, $filepath, $filename);
@@ -647,19 +713,71 @@ function interactivevideo_afterlink(cm_info $cm) {
 }
 
 /**
+ * Whether this page is the one that renders the course's activity listing.
+ *
+ * The inline card replaces the activity's own link, so set_no_view_link() may only be applied
+ * where the card is actually drawn. Everywhere else — navigation, the course index, blocks,
+ * the activity chooser — still needs cm_info::$url, and nulling it there is fatal as soon as
+ * anything casts the URL to a string.
+ *
+ * Covers course/view.php and the site home, which is the same listing rendered at a different
+ * page type.
+ *
+ * @return bool
+ */
+function interactivevideo_page_lists_activities() {
+    global $PAGE;
+
+    // Deliberately a body-class test rather than a page-type or WS_SERVER one. Body classes
+    // derive from the page type, so a web service request carries neither of these, which is
+    // what keeps the activity URL intact for the mobile app. A page-type test would be
+    // equivalent here, but WS_SERVER is not: format_mtube renders its sections through a web
+    // service and does want the cards, so web services cannot be excluded as a class.
+    $classes = (string) $PAGE->bodyclasses;
+
+    return strpos($classes, 'path-course-view') !== false || strpos($classes, 'path-site') !== false;
+}
+
+/**
+ * Whether the current page shows any interactive video, so page assets are worth loading.
+ *
+ * Asks about the page's content rather than its type: the cards render wherever Moodle lists
+ * activities, which includes the site home, not only course/view.php.
+ *
+ * @return bool
+ */
+function interactivevideo_page_has_instances() {
+    global $PAGE;
+
+    if (empty($PAGE->course->id)) {
+        return false;
+    }
+
+    try {
+        $modinfo = get_fast_modinfo($PAGE->course);
+    } catch (moodle_exception $e) {
+        return false;
+    }
+
+    return !empty($modinfo->get_instances_of('interactivevideo'));
+}
+
+/**
  * Dynamically updates the course module information.
  *
  * @param cm_info $cm The course module information object.
  */
 function interactivevideo_cm_info_dynamic(cm_info $cm) {
-    global $PAGE;
-    if (strpos($PAGE->bodyclasses, 'path-course-view') === false) { // MUST be in course view only.
+    if (!interactivevideo_page_lists_activities()) {
         return;
     }
 
     $afterlink = interactivevideo_afterlink($cm);
 
-    $customdata = $cm->customdata;
+    // Must be the method, not the ->customdata property: this callback runs while dynamic data
+    // is being built, and the property form would re-enter __get() and fail. Core documents
+    // get_custom_data() as the form to use when it may be reached recursively.
+    $customdata = $cm->get_custom_data();
     $displayoptions = json_decode($customdata['displayoptions']);
     if ((isset($displayoptions->displayinline) && $displayoptions->displayinline == INTERACTIVEVIDEO_DISPLAY_INLINE)) {
         $cm->set_no_view_link();
@@ -683,7 +801,11 @@ function interactivevideo_cm_info_view(cm_info $cm) {
     if ($displayoptions->launchinpopup) {
         $cm->set_extra_classes('launchinpopup');
     }
-    if ($displayinline && strpos($PAGE->bodyclasses, 'format-') !== false) { // MUST be in course view only.
+    // Deliberately broader than the link-suppression test in cm_info_dynamic. A course context
+    // is enough, because renderers other than course/view.php draw these cards too, notably
+    // format_mtube fetching its sections over a web service. Narrowing this to the listing
+    // pages stops those cards rendering at all.
+    if ($displayinline && strpos((string) $PAGE->bodyclasses, 'format-') !== false) {
         $cm->set_content(interactivevideo_displayinline($cm));
     }
 }
@@ -880,37 +1002,25 @@ function interactivevideo_displayinline(cm_info $cm) {
         $hasalternative = true;
     }
 
-    $relevantitems = array_filter($items, function ($item) use ($interactivevideo) {
-        return (($item->timestamp >= $interactivevideo->starttime && $item->timestamp <= $interactivevideo->endtime)
-            || $item->timestamp < 0) && ($item->hascompletion == 1 || $item->type == 'skipsegment' || $item->type == 'analytics');
-    });
-
-    if (!$includeanalytics) {
-        $relevantitems = array_filter($relevantitems, function ($item) {
-            return $item->type != 'analytics';
+    // The analytics interaction is not gradable, so it is picked up separately from the
+    // reachable-items rule below; it only tells the card whether to load detail data.
+    $analytics = false;
+    if ($includeanalytics) {
+        $analytics = array_filter($items, function ($item) use ($interactivevideo) {
+            return $item->type === 'analytics'
+                && ((($item->timestamp >= $interactivevideo->starttime
+                    && $item->timestamp <= $interactivevideo->endtime)) || $item->timestamp < 0);
         });
+        $analytics = reset($analytics);
     }
 
-    $skipsegment = array_filter($relevantitems, function ($item) {
-        return $item->type === 'skipsegment';
-    });
-
-    $analytics = array_filter($relevantitems, function ($item) {
-        return $item->type === 'analytics';
-    });
-    $analytics = reset($analytics);
-
-    $relevantitems = array_filter($relevantitems, function ($item) use ($skipsegment) {
-        foreach ($skipsegment as $ss) {
-            if ($item->timestamp > $ss->timestamp && $item->timestamp < $ss->title && $item->timestamp >= 0) {
-                return false;
-            }
-        }
-        if ($item->type === 'skipsegment') {
-            return false;
-        }
-        return true;
-    });
+    // Shared with completion and grading so the counts on the card cannot drift from them.
+    require_once($CFG->dirroot . '/mod/interactivevideo/locallib.php');
+    $relevantitems = interactivevideo_util::get_reachable_gradable_items(
+        $cm->instance,
+        \context_module::instance($cm->id)->id,
+        $interactivevideo
+    );
 
     if (!isguestuser()) {
         $usercompletion = $DB->get_records(
@@ -927,7 +1037,10 @@ function interactivevideo_displayinline(cm_info $cm) {
         $usercompletion = interactivevideo_util::get_progress($cm->instance, 1, false);
     }
 
-    if (!$relevantitems) {
+    // Only bail when there is genuinely nothing to draw. An analytics interaction is not
+    // gradable, so it never appears in the reachable-gradable set, but it still renders the
+    // watch progress bar further down and must not be short-circuited away here.
+    if (!$relevantitems && !$analytics) {
         $datafortemplate['noitems'] = true;
         if (!$usercompletion) {
             $datafortemplate['new'] = true;
@@ -963,16 +1076,13 @@ function interactivevideo_displayinline(cm_info $cm) {
     $completeditems = array_unique($completeditems);
     $datafortemplate['completeditems'] = count($completeditems);
 
-    // Remove analytics that does not have completion.
-    $relevantitems = array_filter($relevantitems, function ($item) {
-        return $item->hascompletion == 1;
-    });
-
     $datafortemplate['noitems'] = count($relevantitems) == 0;
 
     if (!$datafortemplate['noitems']) {
         $datafortemplate['totalitems'] = count($relevantitems);
-        $datafortemplate['totalxp'] = array_sum(array_column($relevantitems, 'xp'));
+        // XP is stored as decimal(10,2), so it arrives as '5.00'. Cast to float so the card
+        // shows 5 and 2.5 rather than 5.00 and 2.50.
+        $datafortemplate['totalxp'] = (float) array_sum(array_column($relevantitems, 'xp'));
 
         if ((float) $datafortemplate['totalxp'] == 0) {
             $datafortemplate['noxp'] = true;
@@ -981,6 +1091,7 @@ function interactivevideo_displayinline(cm_info $cm) {
         // Get completion information.
         $usercompletion['completionpercentage'] = round(($datafortemplate['completeditems'] / $datafortemplate['totalitems'])
             * 100);
+        $usercompletion['xp'] = (float) $usercompletion['xp'];
         $datafortemplate['usercompletion'] = $usercompletion;
         $datafortemplate['completed'] = $usercompletion['completionpercentage'] == 100
             || ($interactivevideo->completionpercentage > 0
@@ -1042,7 +1153,7 @@ if ($CFG->branch <= 403) {
      */
     function interactivevideo_before_footer() {
         global $PAGE, $CFG;
-        if (strpos($PAGE->bodyclasses, 'path-course-view') === false) {
+        if (!interactivevideo_page_has_instances()) {
             return;
         }
         echo '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>';
@@ -1151,23 +1262,62 @@ function interactivevideo_update_grades($moduleinstance, $userid = 0) {
 function interactivevideo_get_user_grades($moduleinstance, $userid = 0) {
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
-    // Get user grades from the grade_grades table with key as userid.
-    $grades = [];
-    if ($userid) {
-        $sql = "SELECT g.userid AS userid, g.rawgrade AS rawgrade, g.usermodified AS usermodified
-                FROM {grade_grades} g
-                LEFT JOIN {grade_items} gi ON g.itemid = gi.id
-                WHERE gi.iteminstance = :iteminstance AND gi.itemmodule = :itemmodule AND g.userid = :userid";
-        $params = ['iteminstance' => $moduleinstance->id, 'itemmodule' => 'interactivevideo', 'userid' => $userid];
-        $grades = $DB->get_records_sql($sql, $params);
-    } else {
-        $sql = "SELECT g.userid AS userid, g.rawgrade AS rawgrade, g.usermodified AS usermodified
-                FROM {grade_grades} g
-                LEFT JOIN {grade_items} gi ON g.itemid = gi.id
-                WHERE gi.iteminstance = :iteminstance AND gi.itemmodule = :itemmodule";
-        $params = ['iteminstance' => $moduleinstance->id, 'itemmodule' => 'interactivevideo'];
-        $grades = $DB->get_records_sql($sql, $params);
+    require_once($CFG->dirroot . '/mod/interactivevideo/locallib.php');
+
+    // Derive grades from the module's own completion records. Reading them back out of
+    // grade_grades, as this once did, meant a freshly created grade item had nothing to
+    // report and a changed grade max reinterpreted old raw values against a new maximum.
+    if (empty($moduleinstance->grade) || $moduleinstance->grade <= 0) {
+        return [];
     }
+
+    $cm = get_coursemodule_from_instance('interactivevideo', $moduleinstance->id, 0, false, IGNORE_MISSING);
+    if (!$cm) {
+        return [];
+    }
+    $contextid = context_module::instance($cm->id)->id;
+
+    // Only interactions the learner can reach count towards the maximum.
+    $items = interactivevideo_util::get_reachable_gradable_items($moduleinstance->id, $contextid);
+    $totalmax = 0;
+    foreach ($items as $item) {
+        $totalmax += (float) $item->xp;
+    }
+    if ($totalmax <= 0) {
+        return [];
+    }
+
+    $params = ['cmid' => $moduleinstance->id];
+    if ($userid) {
+        $params['userid'] = $userid;
+    }
+    $records = $DB->get_records('interactivevideo_completion', $params);
+
+    $grades = [];
+    foreach ($records as $record) {
+        $completeditems = json_decode($record->completeditems);
+        if (!is_array($completeditems)) {
+            $completeditems = [];
+        }
+        $details = json_decode($record->completiondetails);
+        if (!is_array($details)) {
+            $details = [];
+        }
+        $details = array_map(fn($entry) => json_decode($entry), $details);
+
+        $earned = \mod_interactivevideo\report_helper::sum_earned_xp($details, $completeditems);
+        $grade = \mod_interactivevideo\report_helper::calculate_grade(
+            $earned,
+            $totalmax,
+            (float) $moduleinstance->grade
+        );
+
+        $grades[$record->userid] = (object) [
+            'userid' => $record->userid,
+            'rawgrade' => ($grade === null || $grade <= 0) ? null : $grade,
+        ];
+    }
+
     return $grades;
 }
 
@@ -1256,12 +1406,27 @@ function interactivevideo_reset_userdata($data) {
  * @param mixed $arg
  */
 function interactivevideo_output_fragment_getcontent($arg) {
-    $prop = json_decode($arg['prop']);
-    $class = $prop->class;
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/interactivevideo/locallib.php');
 
-    if (!class_exists($class)) {
+    if (!is_array($arg) || !isset($arg['prop'])) {
         return json_encode($arg);
     }
+
+    $prop = json_decode($arg['prop']);
+    $class = $prop->class ?? '';
+
+    // The class name arrives from the browser, so it is only ever accepted when it is one a
+    // content type actually declares. Without this, any autoloadable class in the tree could
+    // be instantiated by anyone able to view the activity: core_get_fragment, which is what
+    // reaches this callback, performs only validate_context().
+    // A content type that is not activated must not be instantiable either, so this uses the
+    // list with unusable types removed, not the authoring list that merely flags them.
+    $allowed = array_column(interactivevideo_util::get_usable_activitytypes(), 'class');
+    if (!in_array($class, $allowed, true) || !class_exists($class)) {
+        return json_encode($arg);
+    }
+
     $arg['plugin'] = 'interactivevideo';
     $contenttype = new $class($arg);
     return $contenttype->get_content($arg);
@@ -1308,7 +1473,7 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         ];
         foreach ($requiredfields as $field) {
             if (!in_array($field, $headers)) {
-                throw new moodle_exception('invalidcolumn', 'mod_interactivevideo');
+                throw new moodle_exception('invalidcolumn', 'mod_interactivevideo', null, ['field' => $field]);
             }
         }
     } else {
@@ -1371,7 +1536,9 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             $video->posterimage = 'https://img.youtube.com/vi/' . $matches[1] . '/hqdefault.jpg';
             if (!isset($video->name) || empty($video->name)) {
                 // Call oembed.
-                $response = file_get_contents('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=' . $videoid);
+                $response = remote_fetcher::fetch_provider(
+                    'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=' . $videoid
+                );
                 $response = json_decode($response);
                 $video->name = $response->title ?? 'Untitled';
             }
@@ -1385,7 +1552,7 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         if (preg_match($vimeoregex, $video->videourl, $matches) && in_array('vimeo', $videotypes)) {
             $video->type = 'vimeo';
             // Make request to oembed api to get the thumbnail.
-            $response = file_get_contents('https://vimeo.com/api/oembed.json?url=' . urlencode($video->videourl));
+            $response = remote_fetcher::fetch_provider('https://vimeo.com/api/oembed.json?url=' . urlencode($video->videourl));
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1409,8 +1576,9 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             $videoid = explode(',', $matches[1])[0];
             $video->videourl = 'https://www.dailymotion.com/video/' . $videoid;
             $video->type = 'dailymotion';
-            $response = file_get_contents('https://api.dailymotion.com/video/' . $videoid
-                . '?fields=thumbnail_720_url,title,duration');
+            $response = remote_fetcher::fetch_provider(
+                'https://api.dailymotion.com/video/' . $videoid . '?fields=thumbnail_720_url,title,duration'
+            );
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_720_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1430,7 +1598,7 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         $wistiaregex = '/(?:https?:\/\/)?(?:www\.)?(?:wistia\.com)\/medias\/([a-zA-Z0-9]+)/i';
         if (preg_match($wistiaregex, $video->videourl, $matches) && in_array('wistia', $videotypes)) {
             $video->type = 'wistia';
-            $response = file_get_contents('https://fast.wistia.com/oembed?url=' . $video->videourl);
+            $response = remote_fetcher::fetch_provider('https://fast.wistia.com/oembed?url=' . $video->videourl);
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1455,7 +1623,9 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             if (strpos($id, 'embed') === false) {
                 $id = explode('/', $id)[0];
             }
-            $response = file_get_contents('https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/' . $id);
+            $response = remote_fetcher::fetch_provider(
+                'https://sproutvideo.com/oembed.json?url=https://sproutvideo.com/videos/' . $id
+            );
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1476,7 +1646,9 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         if (preg_match($rumbleregex, $video->videourl, $matches) && in_array('rumble', $videotypes)) {
             $video->type = 'rumble';
             $id = explode('/', $matches[1])[0];
-            $response = file_get_contents('https://rumble.com/api/Media/oembed.json?url=' . urlencode($video->videourl));
+            $response = remote_fetcher::fetch_provider(
+                'https://rumble.com/api/Media/oembed.json?url=' . urlencode($video->videourl)
+            );
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1497,12 +1669,16 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         if (preg_match($kinescoperegex, $video->videourl, $matches) && in_array('kinescope', $videotypes)) {
             $video->type = 'kinescope';
             $id = $matches[1];
-            $response = file_get_contents('https://kinescope.io/embed/' . $id);
+            $response = remote_fetcher::fetch_provider('https://kinescope.io/embed/' . $id);
             $title = '';
             $posterimage = '';
             $duration = 0;
             $doc = new DOMDocument();
-            @$doc->loadHTML($response);
+            if (trim((string) $response) !== '') {
+                // An unreachable provider leaves the metadata at its defaults rather than
+                // failing the import; loadHTML() rejects an empty string outright.
+                @$doc->loadHTML($response);
+            }
             $metatags = $doc->getElementsByTagName('meta');
             foreach ($metatags as $tag) {
                 if ($tag->getAttribute('property') == 'og:title') {
@@ -1533,18 +1709,16 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         // Ex. https://upenn.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=f4f968b2-eb20-4972-9ec1-XXXXXXXX.
         $panoptoregex = '/(?:https?:\/\/)?(?:www\.)?(?:[^\/]*panopto\.[^\/]+)\/Panopto\/.+\?id=([^\/]+)/i';
         if (preg_match($panoptoregex, $video->videourl, $matches) && in_array('panopto', $videotypes)) {
-            $response = file_get_contents($video->videourl);
-            if (!$response) {
-                require_once($CFG->libdir . '/filelib.php');
-                $curl = new curl(['ignoresecurity' => true]);
-                $curl->setHeader('Content-Type: application/json');
-                $response = $curl->get($video->videourl);
-            }
+            $response = remote_fetcher::fetch_provider($video->videourl);
             $title = '';
             $posterimage = '';
             $duration = 0;
             $doc = new DOMDocument();
-            @$doc->loadHTML($response);
+            if (trim((string) $response) !== '') {
+                // An unreachable provider leaves the metadata at its defaults rather than
+                // failing the import; loadHTML() rejects an empty string outright.
+                @$doc->loadHTML($response);
+            }
             $metatags = $doc->getElementsByTagName('meta');
             foreach ($metatags as $tag) {
                 if ($tag->getAttribute('property') == 'og:title') {
@@ -1574,7 +1748,7 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         if (preg_match($rutuberegex, $video->videourl, $matches) && in_array('rutube', $videotypes)) {
             $video->type = 'rutube';
             $id = $matches[1];
-            $response = file_get_contents('https://rutube.ru/api/play/options/' . $id);
+            $response = remote_fetcher::fetch_provider('https://rutube.ru/api/play/options/' . $id);
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1595,13 +1769,9 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         $peertuberegex = '~^https?://([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/w/([A-Za-z0-9]+)(?:/)?(?:\?.*)?$~';
         if (preg_match($peertuberegex, $video->videourl, $matches) && in_array('peertube', $videotypes)) {
             $video->type = 'peertube';
-            $response = file_get_contents('https://' . $matches[1] . '/api/v1/videos/' . $matches[2]);
-            if (!$response) {
-                require_once($CFG->libdir . '/filelib.php');
-                $curl = new curl(['ignoresecurity' => true]);
-                $curl->setHeader('Content-Type: application/json');
-                $response = $curl->get('https://' . $matches[1] . '/api/v1/videos/' . $matches[2]);
-            }
+            // PeerTube is federated, so the instance host cannot be allow listed; the curl
+            // security helper is what stops this reaching an internal address.
+            $response = remote_fetcher::fetch_federated('https://' . $matches[1] . '/api/v1/videos/' . $matches[2]);
             $response = json_decode($response);
             if (!$response || !isset($response->thumbnailPath)) { // Make sure the video exists or accessible.
                 continue;
@@ -1622,13 +1792,7 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         $spotifyregex = '/(?:https?:\/\/)?(?:open\.spotify\.com)\/(episode|track)\/([^\/\?]+)(?:\?.*)?/i';
         if (preg_match($spotifyregex, $video->videourl, $matches) && in_array('spotify', $videotypes)) {
             $video->type = 'spotify';
-            $response = file_get_contents('https://open.spotify.com/oembed?url=' . urlencode($video->videourl));
-            if (!$response) {
-                require_once($CFG->libdir . '/filelib.php');
-                $curl = new curl(['ignoresecurity' => true]);
-                $curl->setHeader('Content-Type: application/json');
-                $response = $curl->get('https://open.spotify.com/oembed?url=' . urlencode($video->videourl));
-            }
+            $response = remote_fetcher::fetch_provider('https://open.spotify.com/oembed?url=' . urlencode($video->videourl));
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1643,13 +1807,7 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         $soundcloudregex = '/(?:https?:\/\/)?(?:www\.)?(?:soundcloud\.com)\/([^\/\?]+)/i';
         if (preg_match($soundcloudregex, $video->videourl, $matches) && in_array('soundcloud', $videotypes)) {
             $video->type = 'soundcloud';
-            $response = file_get_contents('https://soundcloud.com/oembed?url=' . $video->videourl . '&format=json');
-            if (!$response) {
-                require_once($CFG->libdir . '/filelib.php');
-                $curl = new curl(['ignoresecurity' => true]);
-                $curl->setHeader('Content-Type: application/json');
-                $response = $curl->get('https://soundcloud.com/oembed?url=' . $video->videourl . '&format=json');
-            }
+            $response = remote_fetcher::fetch_provider('https://soundcloud.com/oembed?url=' . $video->videourl . '&format=json');
             if (!$response) {
                 continue;
             }
@@ -1668,8 +1826,9 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             $video->type = 'dyntube';
             // Get info from OEmbed endpoint.
             $videoid = $matches[1];
-            $response = file_get_contents('https://videos.dyntube.com/oembed/oembed.json?url='
-                . urlencode('https://videos.dyntube.com/videos/' . $videoid));
+            $response = remote_fetcher::fetch_provider(
+                'https://videos.dyntube.com/oembed/oembed.json?url=' . urlencode('https://videos.dyntube.com/videos/' . $videoid)
+            );
             $response = json_decode($response);
             $video->posterimage = $response->thumbnail_url;
             if (!isset($video->name) || empty($video->name)) {
@@ -1693,7 +1852,8 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             $key = get_config('mod_interactivevideo', 'auth_vdocipher');
             $videoid = explode('/', $matches[1])[0];
             require_once($CFG->libdir . '/filelib.php');
-            $curl = new curl(['ignoresecurity' => true]);
+            // The VdoCipher host is fixed, so the security helper must stay enabled.
+            $curl = new curl();
             $curl->setHeader('Accept: application/json');
             $curl->setHeader('Authorization: Apisecret ' . $key);
             $curl->setHeader('Content-Type: application/json');
@@ -1718,18 +1878,16 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         $vidyardregex = '/(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i';
         if (preg_match($vidyardregex, $video->videourl, $matches) && in_array('vidyard', $videotypes)) {
             $video->type = 'vidyard';
-            $response = file_get_contents($video->videourl);
-            if (!$response) {
-                require_once($CFG->libdir . '/filelib.php');
-                $curl = new curl(['ignoresecurity' => true]);
-                $curl->setHeader('Content-Type: application/json');
-                $response = $curl->get($video->videourl);
-            }
+            $response = remote_fetcher::fetch_provider($video->videourl);
             $title = '';
             $posterimage = '';
             $duration = 0;
             $doc = new DOMDocument();
-            @$doc->loadHTML($response);
+            if (trim((string) $response) !== '') {
+                // An unreachable provider leaves the metadata at its defaults rather than
+                // failing the import; loadHTML() rejects an empty string outright.
+                @$doc->loadHTML($response);
+            }
             $metatags = $doc->getElementsByTagName('meta');
             foreach ($metatags as $tag) {
                 if ($tag->getAttribute('property') == 'og:title') {
@@ -1761,18 +1919,16 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
         $viostreamregex = '/(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i';
         if (preg_match($viostreamregex, $video->videourl, $matches) && in_array('viostream', $videotypes)) {
             $video->type = 'viostream';
-            $response = file_get_contents($video->videourl);
-            if (!$response) {
-                require_once($CFG->libdir . '/filelib.php');
-                $curl = new curl(['ignoresecurity' => true]);
-                $curl->setHeader('Content-Type: application/json');
-                $response = $curl->get($video->videourl);
-            }
+            $response = remote_fetcher::fetch_provider($video->videourl);
             $title = '';
             $posterimage = '';
             $duration = 0;
             $doc = new DOMDocument();
-            @$doc->loadHTML($response);
+            if (trim((string) $response) !== '') {
+                // An unreachable provider leaves the metadata at its defaults rather than
+                // failing the import; loadHTML() rejects an empty string outright.
+                @$doc->loadHTML($response);
+            }
             $metatags = $doc->getElementsByTagName('meta');
             foreach ($metatags as $tag) {
                 if ($tag->getAttribute('property') == 'og:title') {
@@ -1796,18 +1952,35 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             continue;
         }
 
+        // Check if it is a Spotlightr url.
+        // E.g. https://account.cdn.spotlightr.com/watch/MTM1MjA5MA== .
+        $spotlightrregex = '/(?:https?:\/\/)?(?:[a-z0-9-]+\.)?cdn\.spotlightr\.com\/watch\/([A-Za-z0-9=]+)/i';
+        if (preg_match($spotlightrregex, $video->videourl, $matches) && in_array('spotlightr', $videotypes)) {
+            $video->type = 'spotlightr';
+            $oembedurl = 'https://api.spotlightr.com/getOEmbed?format=json&url=' . urlencode($video->videourl);
+            $response = remote_fetcher::fetch_provider($oembedurl);
+            $response = json_decode($response);
+            $video->posterimage = $response->thumbnail_url ?? '';
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            $duration = isset($response->duration) ? (int)$response->duration : 0;
+            if ($video->endtime == 0 || ($duration > 0 && $video->endtime > $duration)) {
+                $video->endtime = $duration;
+            }
+            if ($video->starttime >= $video->endtime) {
+                $video->starttime = 0;
+            }
+            $videoinfo[] = $video;
+            continue;
+        }
+
         // Check if it is a bunnystream url.
         $bunnyregex = '/https?:\/\/iframe|player\.mediadelivery\.net\/(?:embed|watch|play)\/\d+\/([a-zA-Z0-9-]+)/i';
         if (preg_match($bunnyregex, $video->videourl, $matches) && in_array('bunnystream', $videotypes)) {
             $video->type = 'bunnystream';
             $oembedurl = 'https://video.bunnycdn.com/OEmbed?url=' . urlencode($video->videourl);
-            $response = file_get_contents($oembedurl);
-            if (!$response) {
-                require_once($CFG->libdir . '/filelib.php');
-                $curl = new curl(['ignoresecurity' => true]);
-                $curl->setHeader('Content-Type: application/json');
-                $response = $curl->get($oembedurl);
-            }
+            $response = remote_fetcher::fetch_provider($oembedurl);
 
             $response = json_decode($response);
             $title = $response->title;
@@ -1825,10 +1998,50 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             continue;
         }
 
+        // Check if it is a mux url.
+        // E.g. https://player.mux.com/qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4 .
+        // Only the watch URL is handled here; a raw stream.mux.com/*.m3u8 is left to the
+        // direct file check below so it keeps playing through html5video.
+        $muxregex = '/(?:https?:\/\/)?player\.mux\.com\/([A-Za-z0-9]+)(?:[\/?#]|$)/i';
+        if (preg_match($muxregex, $video->videourl, $matches) && in_array('mux', $videotypes)) {
+            $video->type = 'mux';
+            // Mux publishes no metadata endpoint, so the poster is derived from the playback id
+            // and the duration is resolved client side once the player has its metadata.
+            $video->posterimage = 'https://image.mux.com/' . $matches[1] . '/thumbnail.jpg';
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $matches[1];
+            }
+            $video->endtime = 0;
+            $video->starttime = 0;
+            $videoinfo[] = $video;
+            continue;
+        }
+
+        // Check if it is a gumlet url.
+        // E.g. https://play.gumlet.io/embed/6740b1e4b0e0f0a1b2c3d4e5 .
+        $gumletregex = '/(?:https?:\/\/)?(?:play\.gumlet\.io\/embed|gumlet\.tv\/watch)\/([A-Za-z0-9]+)/i';
+        if (preg_match($gumletregex, $video->videourl, $matches) && in_array('gumlet', $videotypes)) {
+            $video->type = 'gumlet';
+            $oembedurl = 'https://api.gumlet.com/v1/oembed?url='
+                . urlencode('https://gumlet.tv/watch/' . $matches[1]);
+            $response = json_decode(remote_fetcher::fetch_provider($oembedurl));
+            $video->posterimage = $response->thumbnail_url ?? '';
+            if (!isset($video->name) || empty($video->name)) {
+                $video->name = $response->title ?? 'Untitled';
+            }
+            // The duration is not part of the oEmbed payload; the player resolves it.
+            $video->endtime = 0;
+            $video->starttime = 0;
+            $videoinfo[] = $video;
+            continue;
+        }
+
         // Check if it is a direct video/audio file using mime type.
-        $fileinfo = pathinfo($video->videourl);
-        $fileextension = $fileinfo['extension'];
-        if (!isset($fileextension) || empty($fileextension)) {
+        // Read the extension off the path only: pathinfo() on the whole URL reports
+        // "mp4?token=x" for a signed link, which matches nothing in the list below.
+        $filepath = parse_url($video->videourl, PHP_URL_PATH) ?: '';
+        $fileextension = pathinfo($filepath, PATHINFO_EXTENSION);
+        if (empty($fileextension)) {
             continue;
         }
         $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac', 'mpd', 'm3u8'];
@@ -1836,7 +2049,8 @@ function interactivevideo_dndupload_handle($uploadinfo, ?string $videodata = nul
             $video->type = 'html5video';
             $video->posterimage = '';
             if (!isset($video->name) || empty($video->name)) {
-                $video->name = basename($video->videourl);
+                // Name from the path too, so a query string cannot leak into the activity title.
+                $video->name = basename($filepath);
                 // Take into account the name that was encoded in the url.
                 $video->name = urldecode($video->name);
                 // Remove the extension.
@@ -2755,6 +2969,10 @@ function interactivevideo_get_type_from_url($url) {
         'vidyard' => '/(?:https?:\/\/)?(?:share\.vidyard\.com)\/watch\/([a-zA-Z0-9]+)/i',
         'viostream' => '/(?:https?:\/\/)?(?:share\.viostream\.com)\/([a-zA-Z0-9]+)/i',
         'bunnystream' => '/(?:https?:\/\/)?(?:www\.)?(?:bunnystream\.com)\/embed\/([a-zA-Z0-9]+)/i',
+        'spotlightr' => '/(?:https?:\/\/)?(?:[a-z0-9-]+\.)?cdn\.spotlightr\.com\/watch\/([A-Za-z0-9=]+)/i',
+        // Mux watch URL only; a raw stream.mux.com/*.m3u8 falls through to html5video below.
+        'mux' => '/(?:https?:\/\/)?player\.mux\.com\/([A-Za-z0-9]+)(?:[\/?#]|$)/i',
+        'gumlet' => '/(?:https?:\/\/)?(?:play\.gumlet\.io\/embed|gumlet\.tv\/watch)\/([A-Za-z0-9]+)/i',
     ];
 
     foreach ($patterns as $type => $regex) {
@@ -2763,17 +2981,18 @@ function interactivevideo_get_type_from_url($url) {
         }
     }
 
-    $fileinfo = pathinfo($url);
-    if (isset($fileinfo)) {
-        $fileextension = $fileinfo['extension'];
-        if (!isset($fileextension) || empty($fileextension)) {
-            return '';
-        }
+    // Read the extension off the path only: pathinfo() on the whole URL reports
+    // "mp4?token=x" for a signed link, which matches nothing in the list below.
+    $filepath = parse_url($url, PHP_URL_PATH) ?: '';
+    $fileextension = pathinfo($filepath, PATHINFO_EXTENSION);
+    if (empty($fileextension)) {
+        return '';
+    }
 
-        $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac', '.mpd', '.m3u8'];
-        if (in_array($fileextension, $acceptedextensions)) {
-            return 'html5video';
-        }
+    // Must stay in step with the list in interactivevideo_dndupload_handle().
+    $acceptedextensions = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'm4a', 'flac', 'aac', 'wma', 'aiff', 'alac', 'mpd', 'm3u8'];
+    if (in_array($fileextension, $acceptedextensions)) {
+        return 'html5video';
     }
 
     return '';

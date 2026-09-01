@@ -1157,6 +1157,16 @@ define([
                 }
             };
 
+            // Hidden-tab position enforcement. Pausing on blur is not enough on its own: the
+            // learner can still scrub from Chrome's global media controls, the OS media overlay or
+            // hardware media keys, none of which require the tab to be focused.
+            let lastKnownTime = 0; // Freshest observed time, readable without awaiting the provider.
+            let hiddenAtTime = null; // Position frozen while the tab is hidden; null when visible.
+            let programmaticSeek = false; // True while a seek the plugin itself started is in flight.
+            let programmaticSeekTimer = null;
+            let pendingRestoreTime = null; // One-shot re-check on the first playing tick after return.
+            let restoring = false; // Re-entrancy guard: a restore must not trigger another restore.
+
             /**
              * Handles the seek event for the video player.
              *
@@ -1175,6 +1185,7 @@ define([
                 } else {
                     t = await player.getCurrentTime();
                 }
+                lastKnownTime = Number(t) || 0;
                 if (!firstPlay) {
                     // If seeking before the first play, then we need to set the resumetime to the current time.
                     window.resumetime = t;
@@ -1273,6 +1284,7 @@ define([
                     }
 
                     videoEnded = false;
+                    lastKnownTime = t;
 
                     dispatchEvent('timeupdate', {'time': t});
 
@@ -1578,6 +1590,109 @@ define([
                 $wrapper.find('#fullscreen i').toggleClass('bi-fullscreen bi-fullscreen-exit');
             });
 
+            // Actions that can move the playback position from outside the page.
+            const MEDIA_SEEK_ACTIONS = ['seekto', 'seekbackward', 'seekforward', 'previoustrack', 'nexttrack'];
+
+            /**
+             * Suppress or restore seeking from the browser and OS media controls.
+             *
+             * Registering a no-op handler makes the browser stop performing its own default action,
+             * which is what actually blocks the media-hub scrubber. Passing null does the opposite:
+             * it removes our handler and hands seeking back to the browser, so it is the right way
+             * to restore normal behaviour when the learner returns.
+             *
+             * This only reaches media living in this document (html5video, mux). The iframe players
+             * own their own media session in the embedded document, so for them this is a no-op and
+             * the revert paths below are what does the work.
+             *
+             * @param {boolean} suppress
+             */
+            const suppressOsSeeking = (suppress) => {
+                if (!('mediaSession' in navigator) || typeof navigator.mediaSession.setActionHandler !== 'function') {
+                    return;
+                }
+                MEDIA_SEEK_ACTIONS.forEach(action => {
+                    try {
+                        navigator.mediaSession.setActionHandler(action, suppress ? () => {
+                            // Deliberately empty: swallow the request.
+                        } : null);
+                    } catch (e) {
+                        // Action unsupported in this browser; there is nothing to suppress.
+                    }
+                });
+            };
+
+            /**
+             * Flag the next iv:playerSeek as one the plugin started itself.
+             *
+             * Every player emits iv:playerSeekStart from inside its own seek() and nowhere else, so
+             * subscribing to it distinguishes our seeks from a learner scrubbing the provider's own
+             * controls, without having to wrap the many player.seek() call sites.
+             */
+            const markProgrammaticSeek = () => {
+                programmaticSeek = true;
+                clearTimeout(programmaticSeekTimer);
+                // Some players never emit the confirming seek - seeking to the current position is a
+                // no-op for yt - so the flag must not be able to stay armed indefinitely and let a
+                // later learner-initiated seek through.
+                programmaticSeekTimer = setTimeout(() => {
+                    programmaticSeek = false;
+                }, 1500);
+            };
+
+            /**
+             * How far the reported time may drift before it counts as a seek.
+             *
+             * @returns {number}
+             */
+            const seekTolerance = () => Math.max(1, (player.frequency || 0.25) * 2);
+
+            /**
+             * Put the head back where it was when the tab was hidden.
+             *
+             * @param {number} time
+             * @returns {Promise<void>}
+             */
+            const restorePosition = async(time) => {
+                if (restoring || !playerReady || player.live || !Number.isFinite(Number(time))) {
+                    return;
+                }
+                restoring = true;
+                // Never restore behind the clip start, which also covers the case where the tab was
+                // hidden before playback began and no time had been observed yet. The 0.01 floor is
+                // because RuTube's seek() early-returns on a falsy time, dropping a restore to 0.
+                const target = Math.max(Number(time), Number(start) || 0, 0.01);
+                markProgrammaticSeek();
+                await player.seek(target);
+                lastKnownTime = target;
+                // Position first, then pause: pause() is void for most players and must not be
+                // awaited as though it settles once the provider has actually stopped.
+                player.pause();
+                // Released on a short delay so the provider's own follow-up seeked event, which some
+                // players emit more than once per seek, cannot be read as a fresh learner seek.
+                setTimeout(() => {
+                    restoring = false;
+                }, 500);
+            };
+
+            /**
+             * Correct the position if it moved away from the value captured on hide.
+             *
+             * @param {number} expected
+             * @returns {Promise<boolean>} Whether a correction was applied.
+             */
+            const correctDrift = async(expected) => {
+                if (!playerReady || player.live || !Number.isFinite(Number(expected))) {
+                    return false;
+                }
+                const now = Number(await player.getCurrentTime());
+                if (Number.isFinite(now) && Math.abs(now - expected) <= seekTolerance()) {
+                    return false;
+                }
+                await restorePosition(expected);
+                return true;
+            };
+
             $(document).on('visibilitychange', async function() {
                 // Pause video when the tab is not visible and the pauseonblur option is enabled.
                 if (displayoptions.pauseonblur && displayoptions.pauseonblur == 1) {
@@ -1585,8 +1700,26 @@ define([
                         return;
                     }
                     if (document.visibilityState == 'hidden') {
+                        // Captured synchronously on purpose: getCurrentTime() is a cross-origin round
+                        // trip for most providers, and awaiting it here would let a seek land first
+                        // and be recorded as the original position. Only meaningful once playback has
+                        // begun; before that the resume position is still being resolved.
+                        hiddenAtTime = firstPlay ? lastKnownTime : null;
                         player.pause();
                         onPaused(true);
+                        suppressOsSeeking(true);
+                    } else {
+                        suppressOsSeeking(false);
+                        const expected = hiddenAtTime;
+                        hiddenAtTime = null;
+                        if (expected !== null) {
+                            const corrected = await correctDrift(expected);
+                            // Several players report a cached time that only refreshes on a provider
+                            // timeupdate, which never arrives while the video is paused and hidden.
+                            // The read above can therefore echo back the captured value even though
+                            // the head moved, so re-check once on the first real playing tick.
+                            pendingRestoreTime = corrected ? null : expected;
+                        }
                     }
                 }
             });
@@ -1978,6 +2111,17 @@ define([
                     if (!isMainPlayerEvent(e)) {
                         return;
                     }
+                    if (pendingRestoreTime !== null) {
+                        const expected = pendingRestoreTime;
+                        pendingRestoreTime = null;
+                        // First provider-reported time since the learner came back, so this is the
+                        // earliest point at which a cached getCurrentTime() is trustworthy again.
+                        const now = Number(e.detail && e.detail.time);
+                        if (Number.isFinite(now) && Math.abs(now - expected) > seekTolerance()) {
+                            restorePosition(expected);
+                            return;
+                        }
+                    }
                     onPlaying();
                 });
 
@@ -2003,12 +2147,35 @@ define([
                     onEnded();
                 });
 
+                $(document).on('iv:playerSeekStart', function(e) {
+                    if (!isMainPlayerEvent(e)) {
+                        return;
+                    }
+                    markProgrammaticSeek();
+                });
+
                 $(document).on('iv:playerSeek', function(e) {
                     if (!isMainPlayerEvent(e)) {
                         return;
                     }
                     if (player.live) {
                         return;
+                    }
+                    if (hiddenAtTime === null) {
+                        // Seeking with the tab visible is legitimate and supersedes any deferred
+                        // re-check left armed from a previous hide.
+                        pendingRestoreTime = null;
+                    } else {
+                        if (programmaticSeek) {
+                            programmaticSeek = false;
+                            clearTimeout(programmaticSeekTimer);
+                        } else {
+                            // A seek the learner started from outside the page while the tab is
+                            // hidden. Undo it, and return without running onSeek(), which would
+                            // rewrite viewedAnno and so mark uncompleted interactions as passed.
+                            restorePosition(hiddenAtTime);
+                            return;
+                        }
                     }
                     onSeek(e.detail.time);
                 });

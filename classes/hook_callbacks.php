@@ -53,7 +53,8 @@ class hook_callbacks {
      */
     public static function launch_player_modal(\core\hook\output\after_standard_main_region_html_generation $hook): void {
         global $PAGE, $CFG;
-        if (strpos($PAGE->bodyclasses, 'path-course-view') === false) {
+        require_once($CFG->dirroot . '/mod/interactivevideo/lib.php');
+        if (!interactivevideo_page_has_instances()) {
             return;
         }
 

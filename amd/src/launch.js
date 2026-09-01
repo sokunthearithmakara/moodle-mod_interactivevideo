@@ -353,7 +353,9 @@ export default {
                             $card.find('.percentage')
                                 .text(percentage);
                             $card.find('.items').text(`(${details.completed}/${details.total})`);
-                            $card.find('.xp').text(details.xp);
+                            // Server sends XP as a decimal(10,2) string; Number drops the
+                            // trailing zeros so the card reads 5 rather than 5.00.
+                            $card.find('.xp').text(Number(details.xp));
                         }
                     }
                 }

@@ -161,9 +161,16 @@ class base_form extends \core_form\dynamic_form {
      * @return \stdClass
      */
     public function process_dynamic_submission() {
-        global $DB;
+        global $CFG, $DB;
         // We're going to submit the data to database. If id is not 0, we're updating an existing record.
         $fromform = $this->get_data();
+
+        // The chooser hides interaction types whose content type is not activated, but the form
+        // class is named by the browser, so the check has to happen here too. This is the shared
+        // parent of every content type form, so one call covers them all.
+        require_once($CFG->dirroot . '/mod/interactivevideo/locallib.php');
+        \interactivevideo_util::require_usable_type($fromform->type ?? '');
+
         $fromform = $this->pre_processing_data($fromform);
         $fromform->advanced = $this->process_advanced_settings($fromform);
         if ($fromform->id > 0) {

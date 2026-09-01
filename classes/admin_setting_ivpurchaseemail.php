@@ -74,6 +74,10 @@ class admin_setting_ivpurchaseemail extends \admin_setting_configtext {
         }
 
         $this->component = clean_param($component, PARAM_COMPONENT);
+        // Registering this setting is what marks a content type as paid, and nothing else does
+        // it. Record the component so the enforcement path can answer "is this paid?" from
+        // config, with no catalog lookup and no network.
+        contenttype_activation::note_paid_component($this->component);
         parent::__construct(
             $name,
             $visiblename,

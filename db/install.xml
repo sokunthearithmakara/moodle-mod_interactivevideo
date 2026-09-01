@@ -81,7 +81,7 @@
         <FIELD NAME="timeended" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Time the user watched video till the end"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="course module"/>
-        <FIELD NAME="xp" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="XP"/>
+        <FIELD NAME="xp" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="Earned XP, fractional for partially scored interactions"/>
         <FIELD NAME="completeditems" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="array of completed annotation ids"/>
         <FIELD NAME="completionpercentage" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="completiondetails" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON formatted completion details"/>

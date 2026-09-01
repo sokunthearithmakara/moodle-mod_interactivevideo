@@ -135,7 +135,11 @@ class installed_contenttypes {
      * @return array Paid and activated flags for the installed row.
      */
     private static function resolve_activation_fields(string $component): array {
-        if (!plugins_catalog::is_paid_component($component)) {
+        // Deliberately the local paid lookup, not plugins_catalog::is_paid_component(): that one
+        // goes through ensure_catalog(), which fetches the remote catalog on a cold cache with a
+        // 10s connect / 15s total timeout. This list is rendered on the settings page and on the
+        // admin notifications page, neither of which may wait on the network.
+        if (!contenttype_activation::is_paid($component)) {
             return ['paid' => false, 'activated' => false];
         }
 
@@ -143,6 +147,8 @@ class installed_contenttypes {
 
         return [
             'paid' => true,
+            // Strict: whether the license server's answer is currently held. This is what the
+            // badge reports.
             'activated' => !empty($status['active']),
         ];
     }

@@ -61,6 +61,8 @@ class getitem extends external_api {
      * @return array
      */
     public static function execute($id, $contextid) {
+        global $DB;
+
         // Parameter validation.
         $params = self::validate_parameters(self::execute_parameters(), [
             'id' => $id,
@@ -73,6 +75,14 @@ class getitem extends external_api {
         $context = \context::instance_by_id($contextid);
         self::validate_context($context);
         require_capability('moodle/contentbank:access', $context);
+
+        // The item id is resolved by content bank regardless of the context supplied above,
+        // so authorise against the context the item actually lives in. Items inherited from
+        // a parent context stay reachable; an unrelated course's items do not.
+        $itemcontextid = $DB->get_field('contentbank_content', 'contextid', ['id' => $params['id']], MUST_EXIST);
+        if ((int) $itemcontextid !== (int) $context->id) {
+            require_capability('moodle/contentbank:access', \context::instance_by_id($itemcontextid));
+        }
 
         $item = \ivplugin_contentbank\main::get_contentbank_content($id, $contextid);
         return [

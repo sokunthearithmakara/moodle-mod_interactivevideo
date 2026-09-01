@@ -1,6 +1,61 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [2.0.0] - 2026-09-01
+
+### Added
+- **Mux:** New video source driven by the Mux Player web component, so playback keeps Mux Data
+  analytics, DRM, signed thumbnails/storyboards, rendition limits and the generated poster image.
+  Paste the watch URL (`https://player.mux.com/{playbackId}`); raw HLS links are unchanged.
+- **Gumlet:** New video source driven through Gumlet's own player.js fork, which adds playback
+  rate control on top of the base Player.js spec. Paste the embed URL
+  (`https://play.gumlet.io/embed/{assetId}`) or the watch URL
+  (`https://gumlet.tv/watch/{id}`).
+- **Spotlightr:** New video source. Paste the account watch URL
+  (`https://{account}.cdn.spotlightr.com/watch/{id}`).
+- **Additional provider hosts:** Site administration setting for extra hostnames the plugin may
+  fetch video metadata from (one per line, `*.` prefix for subdomains). Needed for self-hosted
+  providers on a custom domain, such as a Panopto server that is not on panopto.com or panopto.eu.
+- **Grade sync:** When grading is switched on, existing XP is written to the gradebook in the
+  background. When the grade maximum changes, existing grades are rescaled to keep each learner's
+  percentage. Adding or removing interactions still leaves grades alone until the learner next
+  attempts the activity.
+- **License re-enforcement:** License activation is now required to continue using the paid interaction types. Existing interactions created using the paid interaction types will be gracefully excluded (not removed) until the activation is confirmed.
+
+### Updated
+- **Pause on tab inactive:** this option now also protects playback position, which means users cannot seek the video from outside the Interactive Video tab.
+- **Partial-credit XP:** earned XP is stored as a decimal, so a scored interaction that awards
+  a fraction of its maximum is no longer rounded to an integer.
+- **Progress, completion and grade:** XP, completion percentage, completion state and the
+  gradebook grade are computed on the server from reachable interactions, not from values the
+  player posts. Manual/view interactions always award their configured XP; scored interactions
+  are clamped to that maximum. Completion and the activity card use the same reachable-item
+  rule (enabled types, start/end window, skip segments), so the three can no longer disagree.
+- **Inline activity card:** cards were styled strictly with .path-course-view, which means the visual broke when the cards were added elsewhere like site home. Now, card style no longer binds with .path-course-view.
+- **Paid content type activation:** license-server calls use Moodle's HTTP client with short
+  timeouts. A failed background repair is not retried on every admin page load; an explicit
+  activate/deactivate still contacts the server immediately.
+
+### Fixed
+- **Video metadata fetches** no longer retrieve arbitrary URLs. Only supported provider hosts
+  (plus any extra hosts the administrator has listed) are requested, through Moodle's HTTP
+  client and site egress policy. The same constraint applies to iframe oEmbed lookups.
+- **Progress and reports:** a learner can only read or write their own progress. Acting on
+  another user requires the matching report capability. The instance in the request must be
+  the activity the capability was checked against.
+- **Start and end times:** a learner viewing the activity can still capture the video duration
+  into an empty end time, but cannot narrow the window (which would change completion and
+  grade for everyone).
+- **Delete own progress:** the server now enforces the "allow deleting own progress" setting,
+  rather than only hiding the button.
+- **Learner submission files** (log attachments and text areas) are served only to the owner
+  or to someone who can view the report.
+- **Content bank items** are authorised against the context the item actually lives in, so an
+  item from another course cannot be loaded by guessing its id.
+- **Interaction import** only instantiates classes a content type actually declares.
+- **Signed and tokenised direct links** are detected from the URL path, so a query string no
+  longer breaks file-type detection. Example: https://myvideo.com/photosynthesis.m3u8?token=xyz321
+
 ## [1.9.4] - 2026-08-11
 ### Fixed
 - Videos were paused on start due to recent changed behavior to prevent learners from playing videos outside the video tab.

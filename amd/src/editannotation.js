@@ -236,6 +236,22 @@ export default {
                 }
             });
 
+            // Interactions of a content type that is not activated stay listed, so a teacher can
+            // see their content is intact, but everything that edits them is switched off. The
+            // server refuses these writes as well; this only removes the affordance.
+            const inactiveTypes = (contentTypes || []).filter(x => x.inactive).map(x => x.name);
+            if (inactiveTypes.length > 0) {
+                const notice = M.util.get_string('contenttypenotusable', 'mod_interactivevideo');
+                inactiveTypes.forEach(function(type) {
+                    const $rows = $annotationlist.find(`tr.annotation[data-type="${type}"]`);
+                    $rows.addClass('iv-type-inactive');
+                    // Inline editing is driven off data-editable, so dropping it disables it.
+                    $rows.find('[data-editable]').removeAttr('data-editable');
+                    $rows.find('.copy, .edit').prop('disabled', true).addClass('disabled');
+                    $rows.find('.type-icon').attr('title', notice);
+                });
+            }
+
             let xp = annotations.filter(x => x.xp).map(x => Number(x.xp)).reduce((a, b) => a + b, 0);
             $("#xp span").text(xp);
 
@@ -486,6 +502,7 @@ export default {
                 $('#video-block').removeClass('no-pointer bg-transparent');
             }
             if (player.type != 'vimeo'
+                && player.type != 'mux'
                 && player.type != 'html5video'
                 && player.type != 'panopto'
                 && player.type != "peertube"

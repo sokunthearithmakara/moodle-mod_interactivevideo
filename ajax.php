@@ -37,6 +37,7 @@ require_login();
 
 switch ($action) {
     case 'get_all_contenttypes':
+        require_capability('mod/interactivevideo:view', $context);
         echo json_encode(interactivevideo_util::get_all_activitytypes(optional_param('fromview', 0, PARAM_INT)));
         break;
     case 'format_text':
@@ -46,27 +47,43 @@ switch ($action) {
     case 'get_from_url':
         require_capability('mod/interactivevideo:view', $context);
         $url = required_param('url', PARAM_URL);
-        // Send get request to the URL.
-        $response = file_get_contents($url);
-        if (!$response) {
-            require_once($CFG->libdir . '/filelib.php');
-            $curl = new curl(['ignoresecurity' => true]);
-            $curl->setHeader('Content-Type: application/json');
-            $response = $curl->get($url);
-        }
-        echo $response;
+        // Only the metadata endpoints of the supported video providers may be fetched.
+        echo \mod_interactivevideo\local\remote_fetcher::fetch(
+            $url,
+            \mod_interactivevideo\local\remote_fetcher::get_provider_hosts()
+        );
         break;
     case 'update_videotime':
         require_capability('mod/interactivevideo:view', $context);
         $id = required_param('id', PARAM_INT);
+        interactivevideo_util::validate_module_instance($context, $id);
         $start = required_param('start', PARAM_FLOAT);
         $end = required_param('end', PARAM_FLOAT);
-        $DB->set_field('interactivevideo', 'starttime', $start, ['id' => $id]);
-        $DB->set_field('interactivevideo', 'endtime', $end, ['id' => $id]);
-        $courseid = required_param('courseid', PARAM_INT);
-        $cmid = required_param('cmid', PARAM_INT);
-        // Purge the course module cache after update action.
-        \course_modinfo::purge_course_module_cache($courseid, $cmid);
+
+        $current = $DB->get_record('interactivevideo', ['id' => $id], 'id, starttime, endtime', MUST_EXIST);
+
+        // The player re-posts this on almost every view, so a refused write is a silent no-op
+        // rather than an error. Without edit rights the window may only be widened.
+        $maywrite = has_capability('mod/interactivevideo:edit', $context)
+            || interactivevideo_util::videotime_change_is_widening(
+                $current->starttime,
+                $current->endtime,
+                $start,
+                $end
+            );
+
+        if ($maywrite) {
+            $DB->set_field('interactivevideo', 'starttime', $start, ['id' => $id]);
+            $DB->set_field('interactivevideo', 'endtime', $end, ['id' => $id]);
+            $courseid = required_param('courseid', PARAM_INT);
+            $cmid = required_param('cmid', PARAM_INT);
+            // Purge the course module cache after update action.
+            \course_modinfo::purge_course_module_cache($courseid, $cmid);
+        } else {
+            $start = $current->starttime;
+            $end = $current->endtime;
+        }
+
         echo json_encode(['id' => $id, 'start' => $start, 'end' => $end]);
         break;
     case 'get_items':
@@ -130,7 +147,8 @@ switch ($action) {
     case 'get_progress':
         require_capability('mod/interactivevideo:view', $context);
         $id = required_param('id', PARAM_INT);
-        $userid = required_param('uid', PARAM_INT);
+        $userid = interactivevideo_util::resolve_target_userid($context, required_param('uid', PARAM_INT));
+        interactivevideo_util::validate_module_instance($context, $id);
         $previewmode = required_param('previewmode', PARAM_BOOL);
         $progress = interactivevideo_util::get_progress($id, $userid, $previewmode);
         echo json_encode($progress);
@@ -138,7 +156,10 @@ switch ($action) {
     case 'save_progress':
         require_capability('mod/interactivevideo:view', $context);
         $id = required_param('id', PARAM_INT);
-        $userid = required_param('uid', PARAM_INT);
+        $userid = interactivevideo_util::resolve_target_userid($context, required_param('uid', PARAM_INT));
+        // Bind the instance to the context the capability was checked against; the course
+        // id and grade item are then resolved server-side inside save_progress().
+        interactivevideo_util::validate_module_instance($context, $id);
         $c = required_param('c', PARAM_INT);
         $percentage = required_param('percentage', PARAM_FLOAT);
         $completeditems = required_param('completeditems', PARAM_TEXT);
@@ -179,7 +200,11 @@ switch ($action) {
         break;
     case 'get_log':
         require_capability('mod/interactivevideo:view', $context);
-        $userid = required_param('userid', PARAM_INT);
+        $userid = interactivevideo_util::resolve_target_userid(
+            $context,
+            required_param('userid', PARAM_INT),
+            'mod/interactivevideo:viewreport'
+        );
         $cmid = required_param('cm', PARAM_INT);
         $annotationid = required_param('annotationid', PARAM_INT);
         $log = interactivevideo_util::get_log($userid, $cmid, $annotationid, $contextid);
@@ -187,9 +212,11 @@ switch ($action) {
         break;
     case 'save_log':
         require_capability('mod/interactivevideo:view', $context);
-        $userid = required_param('userid', PARAM_INT);
+        $userid = interactivevideo_util::resolve_target_userid($context, required_param('userid', PARAM_INT));
         $annotationid = required_param('annotationid', PARAM_INT);
+        // The cmid in this payload is the instance id, so it binds like any other.
         $cmid = required_param('cmid', PARAM_INT);
+        interactivevideo_util::validate_module_instance($context, $cmid);
         $data = required_param('data', PARAM_RAW);
         $replaceexisting = optional_param('replaceexisting', 0, PARAM_INT);
         $log = interactivevideo_util::save_log($userid, $annotationid, $cmid, $data, $contextid, $replaceexisting);
@@ -197,8 +224,10 @@ switch ($action) {
         break;
     case 'get_logs_by_userids':
         require_capability('mod/interactivevideo:view', $context);
-        $userids = required_param('userids', PARAM_TEXT);
-        $userids = explode(',', $userids);
+        $userids = required_param('userids', PARAM_SEQUENCE);
+        // Keys matter here: array_filter preserves them and the comparison below is strict.
+        $userids = array_values(array_filter(array_map('intval', explode(',', $userids))));
+        interactivevideo_util::require_log_read_access($context, $userids);
         $annotationid = required_param('annotationid', PARAM_INT);
         $type = optional_param('type', '', PARAM_TEXT);
         $cmid = optional_param('cmid', 0, PARAM_INT);
@@ -217,16 +246,16 @@ switch ($action) {
         $recordid = required_param('recordid', PARAM_INT);
         $courseid = required_param('courseid', PARAM_INT);
         $cmid = required_param('cmid', PARAM_INT);
-        $userid = required_param('userid', PARAM_INT);
-        if ($userid != $USER->id) {
-            throw new \moodle_exception('error', 'error');
-        }
+        // The activity must actually offer self-service resets, not just hide the button.
+        interactivevideo_util::require_own_progress_deletion_allowed($context);
+        // Ownership is enforced against the stored record, not the supplied user id.
+        interactivevideo_util::get_owned_completion_record($recordid, $context, $USER->id);
         echo interactivevideo_util::delete_progress_by_id($contextid, $recordid, $courseid, $cmid);
         break;
     case 'delete_progress_by_ids':
         require_capability('mod/interactivevideo:editreport', $context);
-        $ids = required_param('completionids', PARAM_TEXT);
-        $ids = explode(',', $ids);
+        $ids = required_param('completionids', PARAM_SEQUENCE);
+        $ids = array_filter(array_map('intval', explode(',', $ids)));
         $courseid = required_param('courseid', PARAM_INT);
         $cmid = required_param('cmid', PARAM_INT);
         echo interactivevideo_util::delete_progress_by_ids($contextid, $ids, $courseid, $cmid);
@@ -275,7 +304,20 @@ switch ($action) {
     case 'get_cm_completion':
         require_capability('mod/interactivevideo:view', $context);
         $cmid = required_param('cmid', PARAM_INT);
+        // The cmid here is a real course module id, so bind it to the checked context
+        // directly rather than via validate_module_instance(), which compares instances.
+        if ($context->contextlevel != CONTEXT_MODULE || (int) $context->instanceid !== $cmid) {
+            throw new \moodle_exception('invalidcoursemodule', 'error');
+        }
         $userid = required_param('userid', PARAM_INT);
+        // Completion lookup falls back to the current user when handed 0; preserve that.
+        if ($userid) {
+            $userid = interactivevideo_util::resolve_target_userid(
+                $context,
+                $userid,
+                'mod/interactivevideo:viewreport'
+            );
+        }
         $courseid = required_param('courseid', PARAM_INT);
         $completion = interactivevideo_util::get_cm_completion($cmid, $userid, $courseid, $contextid);
         echo json_encode($completion);
@@ -283,6 +325,8 @@ switch ($action) {
     case 'update_watchedpoint':
         require_capability('mod/interactivevideo:view', $context);
         $id = required_param('completionid', PARAM_INT);
+        // The watch point belongs to whoever owns the completion row, not to whoever asks.
+        interactivevideo_util::get_owned_completion_record($id, $context, $USER->id);
         $watchedpoint = required_param('watchedpoint', PARAM_INT);
         $DB->set_field('interactivevideo_completion', 'lastviewed', $watchedpoint, ['id' => $id]);
         echo json_encode(['id' => $id, 'watchedpoint' => $watchedpoint]);
@@ -291,13 +335,13 @@ switch ($action) {
         require_capability('mod/interactivevideo:view', $context);
         $id = required_param('completionid', PARAM_INT);
         $updatestate = required_param('updatestate', PARAM_INT);
-        $courseid = required_param('courseid', PARAM_INT);
-        $userid = required_param('userid', PARAM_INT);
-        $interactivevideo = required_param('interactivevideo', PARAM_INT);
+        // The owner, activity and course all come from the stored record, not the request.
+        [$completionrecord, $cm] = interactivevideo_util::get_owned_completion_record($id, $context, $USER->id);
+        $courseid = $cm->course;
+        $userid = $completionrecord->userid;
         $DB->set_field('interactivevideo_completion', 'timeended', time(), ['id' => $id]);
         $overallcomplete = false;
         if ($updatestate) {
-            $cm = get_coursemodule_from_instance('interactivevideo', $interactivevideo);
             if ($cm->completion > 1) {
                 require_once($CFG->libdir . '/completionlib.php');
                 $course = new stdClass();
@@ -326,11 +370,9 @@ switch ($action) {
         require_capability('mod/interactivevideo:view', $context);
         $id = required_param('id', PARAM_INT);
         $itemid = required_param('itemid', PARAM_INT);
-        $userid = required_param('userid', PARAM_INT);
-        if ($userid != $USER->id) {
-            throw new \moodle_exception('error', 'error');
-        }
-        echo interactivevideo_util::delete_completion_data($id, $itemid, $userid, $contextid);
+        // Ownership is enforced against the stored record, not the supplied user id.
+        interactivevideo_util::get_owned_completion_record($id, $context, $USER->id);
+        echo interactivevideo_util::delete_completion_data($id, $itemid, $USER->id, $contextid);
         break;
     case 'override_completion_xp':
         require_capability('mod/interactivevideo:editreport', $context);
@@ -367,10 +409,12 @@ switch ($action) {
     case 'get_vdocipher':
         require_capability('mod/interactivevideo:view', $context);
         $key = get_config('mod_interactivevideo', 'auth_vdocipher');
-        $videoid = required_param('videoid', PARAM_TEXT);
-        $info = required_param('info', PARAM_TEXT);
+        // Constrain the id to the documented format so it cannot alter the request path.
+        $videoid = required_param('videoid', PARAM_ALPHANUMEXT);
+        $info = required_param('info', PARAM_ALPHA);
         require_once($CFG->libdir . '/filelib.php');
-        $curl = new curl(['ignoresecurity' => true]);
+        // The VdoCipher host is fixed, so the security helper must stay enabled.
+        $curl = new curl();
         $curl->setHeader('Accept: application/json');
         $curl->setHeader('Authorization: Apisecret ' . $key);
         $curl->setHeader('Content-Type: application/json');
@@ -389,12 +433,5 @@ switch ($action) {
         }
 
         echo $response;
-        break;
-    case 'fragment_getcontent':
-        require_capability('mod/interactivevideo:view', $context);
-        require_once($CFG->dirroot . '/mod/interactivevideo/lib.php');
-        $arg = required_param('arg', PARAM_RAW);
-        $content = interactivevideo_output_fragment_getcontent($arg);
-        echo $content;
         break;
 }

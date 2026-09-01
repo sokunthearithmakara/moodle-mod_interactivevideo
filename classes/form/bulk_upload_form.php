@@ -67,7 +67,7 @@ class bulk_upload_form extends \core_form\dynamic_form {
      * @return \stdClass
      */
     public function process_dynamic_submission() {
-        global $USER, $DB;
+        global $CFG, $USER, $DB;
         $fromform = $this->get_data();
         $prevent = explode(',', $fromform->prevent);
         $usercontextid = \context_user::instance($USER->id)->id;
@@ -111,10 +111,16 @@ class bulk_upload_form extends \core_form\dynamic_form {
         $cleaned = str_replace('&gt;', '>', $cleaned);
         $annotations = json_decode($cleaned);
         $newannotations = [];
+        require_once($CFG->dirroot . '/mod/interactivevideo/locallib.php');
         // Add each annotation to the database.
         foreach ($annotations as $annotation) {
             if (in_array($annotation->type, $prevent)) {
                 // Skip this annotation.
+                continue;
+            }
+            // The archive names its own types, so a bundle can carry interactions of a content
+            // type this site may not use. Skip those rather than failing the whole import.
+            if (!\interactivevideo_util::type_is_usable($annotation->type)) {
                 continue;
             }
             $newannotation = $annotation;
