@@ -66,6 +66,31 @@ class interactivevideo_util {
     }
 
     /**
+     * Interactions for an activity, without touching the page or formatting anything.
+     *
+     * get_items() sets $PAGE->context so that format_string() can run over each title. That is
+     * wrong for callers reached while a course page is rendering: with two interactive videos in
+     * a course, the second call switches the page context from one module to another and Moodle
+     * reports "unsupported modification of PAGE->context". The reachability rule needs only ids,
+     * types, timestamps and xp, so it reads the same cache directly.
+     *
+     * @param int $interactivevideo The instance id.
+     * @return array Raw item records keyed by id.
+     */
+    private static function get_raw_items($interactivevideo) {
+        global $DB;
+
+        $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
+        $items = $cache->get($interactivevideo);
+        if (!$items) {
+            $items = $DB->get_records('interactivevideo_items', ['annotationid' => $interactivevideo]);
+            $cache->set($interactivevideo, $items);
+        }
+
+        return (array) $items;
+    }
+
+    /**
      * Get one interaction by id.
      *
      * @param int $id
@@ -280,7 +305,8 @@ class interactivevideo_util {
      * a segment starting before the trim point still hides what follows it.
      *
      * @param int $interactivevideo The instance id.
-     * @param int $contextid The module context id.
+     * @param int $contextid Unused since the item read stopped going through get_items(); kept so
+     *      the signature stays stable for existing callers.
      * @param stdClass|null $instance The instance record, fetched if not supplied.
      * @return array Reachable gradable items, keyed by item id.
      */
@@ -300,7 +326,7 @@ class interactivevideo_util {
         $enabled = self::get_enabled_type_names();
 
         // Unfiltered: the skip segments themselves are needed to work out what they hide.
-        $items = (array) self::get_items($interactivevideo, $contextid);
+        $items = self::get_raw_items($interactivevideo);
 
         $inwindow = array_filter($items, function ($item) use ($start, $end, $enabled) {
             // An empty list means the enabled types could not be resolved. Excluding
