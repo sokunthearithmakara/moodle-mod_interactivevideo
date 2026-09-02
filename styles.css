@@ -3449,10 +3449,6 @@ body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activi
     margin-bottom: 0.5rem;
 }
 
-.activity.modtype_interactivevideo .description-container:has(.bottom-section div) {
-    margin-top: 0;
-}
-
 .activity.modtype_interactivevideo .description-container .cursor-pointer {
     cursor: pointer;
 }
@@ -4547,4 +4543,8 @@ body:has(.interactivevideo-card) #format_tiles_overlay {
 
 .iv-type-inactive .type-icon {
     color: var(--warning, #f0ad4e);
+}
+
+.spotlightr-id {
+    max-height: 100%;
 }

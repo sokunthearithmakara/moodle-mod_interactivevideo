@@ -139,6 +139,14 @@ const loadSdk = () => new Promise((resolve, reject) => {
 const canonicalUrl = (assetId) => `https://play.gumlet.io/embed/${assetId}`;
 
 /**
+ * Build the Gumlet watch URL used for oEmbed (matches lib.php).
+ *
+ * @param {string} assetId
+ * @returns {string}
+ */
+const watchUrl = (assetId) => `https://gumlet.tv/watch/${assetId}`;
+
+/**
  * Build the iframe src for the player.
  *
  * @param {string} assetId
@@ -189,8 +197,9 @@ const injectIframe = (node, src) => {
  * @returns {Promise<object|null>}
  */
 const fetchMeta = async(assetId) => {
-    const oembedUrl = 'https://api.gumlet.com/v1/oembed?format=json&url='
-        + encodeURIComponent(canonicalUrl(assetId));
+    // Gumlet returns JSON by default; format=json causes HTTP 400 invalid_url.
+    const oembedUrl = 'https://api.gumlet.com/v1/oembed?url='
+        + encodeURIComponent(watchUrl(assetId));
     try {
         return await fetchOembed(oembedUrl);
     } catch (e) {
@@ -258,10 +267,10 @@ class Gumlet {
      * @returns {boolean}
      */
     applyMeta(data) {
-        if (!data) {
+        if (!data || data.error) {
             return false;
         }
-        this.title = data.title || '';
+        this.title = (data.title || '').trim();
         this.posterImage = data.thumbnail_url || '';
         if (data.duration) {
             this.oembedDuration = Number(data.duration) || 0;

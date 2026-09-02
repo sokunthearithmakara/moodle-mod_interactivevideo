@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - **Paid content type activation:** license-server calls use Moodle's HTTP client with short
   timeouts. A failed background repair is not retried on every admin page load; an explicit
   activate/deactivate still contacts the server immediately.
+- **Grade scale:** Removed unsupported "Scale" grade type.
 
 ### Fixed
 - **Video metadata fetches** no longer retrieve arbitrary URLs. Only supported provider hosts

@@ -2309,6 +2309,50 @@ function interactivevideo_default_appearance() {
 }
 
 /**
+ * Remove Scale from the modgrade group; these modules only support None and Point.
+ *
+ * @param MoodleQuickForm $mform
+ * @return void
+ */
+function interactivevideo_remove_scale_grade_option(MoodleQuickForm $mform): void {
+    global $CFG;
+    require_once($CFG->dirroot . '/lib/form/modgrade.php');
+
+    $gradefieldname = \core_grades\component_gradeitems::get_field_name_for_itemnumber('mod_interactivevideo', 0, 'grade');
+    if (!$mform->elementExists($gradefieldname)) {
+        return;
+    }
+    $group = $mform->getElement($gradefieldname);
+    if (!$group instanceof MoodleQuickForm_modgrade) {
+        return;
+    }
+
+    $elements = $group->getElements();
+    $scaleindex = null;
+    foreach ($elements as $i => $element) {
+        $name = $element->getName();
+        if ($name === 'modgrade_scale') {
+            $scaleindex = $i;
+        } else if ($name === 'modgrade_type' && method_exists($element, 'removeOption')) {
+            $element->removeOption('scale');
+        }
+    }
+    if ($scaleindex !== null) {
+        $drop = [$scaleindex];
+        if (isset($elements[$scaleindex - 1]) && $elements[$scaleindex - 1]->getName() === 'scalelabel') {
+            $drop[] = $scaleindex - 1;
+        }
+        if (isset($elements[$scaleindex + 1]) && $elements[$scaleindex + 1]->getName() === 'scalespacer') {
+            $drop[] = $scaleindex + 1;
+        }
+        foreach ($drop as $i) {
+            unset($elements[$i]);
+        }
+        $group->setElements(array_values($elements));
+    }
+}
+
+/**
  * Form elements for appearance and behavior settings.
  *
  * @param mixed $mform

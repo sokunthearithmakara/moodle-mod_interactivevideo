@@ -392,6 +392,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
 
         // Add standard grade elements.
         $this->standard_grading_coursemodule_elements();
+        interactivevideo_remove_scale_grade_option($this->_form);
 
         // Add standard elements.
         $this->standard_coursemodule_elements();
@@ -613,6 +614,11 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
      * @param array $defaultvalues
      */
     public function data_preprocessing(&$defaultvalues) {
+        $gradefieldname = \core_grades\component_gradeitems::get_field_name_for_itemnumber('mod_interactivevideo', 0, 'grade');
+        if (isset($defaultvalues[$gradefieldname]) && (int) $defaultvalues[$gradefieldname] < 0) {
+            $defaultvalues[$gradefieldname] = 0;
+        }
+
         if ($this->current->instance) {
             $suffix = '';
             if (method_exists($this, 'get_suffix')) {

@@ -632,8 +632,12 @@ class Mux {
         if (!players[this.node]) {
             return;
         }
-        players[this.node].muted = false;
-        players[this.node].volume = 1;
+        const el = players[this.node];
+        if (el.getAttribute('autoplay') === 'muted') {
+            el.setAttribute('autoplay', 'any');
+        }
+        el.muted = false;
+        el.volume = 1;
         this.muted = false;
         this.sendEvent('iv:playerVolumeChange', {volume: 1}, this.node);
     }
