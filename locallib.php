@@ -113,7 +113,7 @@ class interactivevideo_util {
      * @param float $timestamp
      * @return mixed
      */
-    public static function copy_item($id, $contextid, $timestamp): mixed {
+    public static function copy_item($id, $contextid, $timestamp) {
         global $DB, $CFG;
         $record = $DB->get_record('interactivevideo_items', ['id' => $id], '*', MUST_EXIST);
         // Copying creates a new interaction, so it is subject to the same activation rule as
