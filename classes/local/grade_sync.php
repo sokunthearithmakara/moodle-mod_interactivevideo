@@ -93,10 +93,13 @@ class grade_sync {
         }
 
         if ($mode === self::MODE_RESCALE) {
+            // Item number 0 is the activity's own grade item; outcomes attached to
+            // this activity add sibling items that fetch() would refuse to choose between.
             $gradeitem = \grade_item::fetch([
                 'iteminstance' => $instanceid,
                 'itemtype' => 'mod',
                 'itemmodule' => 'interactivevideo',
+                'itemnumber' => 0,
                 'courseid' => $instance->course,
             ]);
             if (!$gradeitem) {

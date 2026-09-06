@@ -809,10 +809,13 @@ class interactivevideo_util {
         // Update grade. The gradebook value is derived from the stored XP, never from the
         // request, and always targets this activity's own grade item.
         require_once($CFG->libdir . '/gradelib.php');
+        // Item number 0 is the activity's own grade item; outcomes attached to this
+        // activity add sibling items that fetch() would refuse to choose between.
         $activitygradeitem = \grade_item::fetch([
             'iteminstance' => $interactivevideo,
             'itemtype' => 'mod',
             'itemmodule' => 'interactivevideo',
+            'itemnumber' => 0,
             'courseid' => $courseid,
         ]);
         if ($activitygradeitem) {
@@ -2168,10 +2171,13 @@ class interactivevideo_util {
             $courseid = $cm->course;
         }
         $grade = null;
+        // Item number 0 is the activity's own grade item; outcomes attached to this
+        // activity add sibling items that fetch() would refuse to choose between.
         $gradeitem = \grade_item::fetch([
             'iteminstance' => $cmid,
             'itemtype' => 'mod',
             'itemmodule' => 'interactivevideo',
+            'itemnumber' => 0,
             'courseid' => $courseid,
         ]);
         if ($gradeitem) {
