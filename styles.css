@@ -4505,6 +4505,7 @@ body:has(.interactivevideo-card) #format_tiles_overlay {
 
 .path-mod-interactivevideo.path-mod-flexbook #video-wrapper.fb-interaction iframe {
     width: 100% !important;
+    height: 100% !important;
 }
 
 .path-mod-interactivevideo.path-mod-flexbook #video-info-wrapper iframe,
