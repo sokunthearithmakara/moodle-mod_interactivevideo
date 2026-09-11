@@ -1043,12 +1043,60 @@ define([
              * - Sets the tooltip of the play/pause button to 'play'.
              */
             let lastSaved;
-            const onPaused = async(savepoint = false) => {
+            let leaveWatchedPointPending = false;
+            /**
+             * Persist lastviewed synchronously (safe for page unload).
+             *
+             * @param {number} time Observed playback time in seconds.
+             * @param {Object} [options]
+             * @param {boolean} [options.force=false] Skip the 5-second throttle.
+             * @returns {boolean} Whether a save was sent.
+             */
+            const saveWatchedPoint = (time, options = {}) => {
+                const force = options.force === true;
+                if (force && leaveWatchedPointPending) {
+                    return false;
+                }
+                if (!playerReady || player.live || subvideo) {
+                    return false;
+                }
+                const watchedpoint = Math.round(Number(time));
+                if (!Number.isFinite(watchedpoint)) {
+                    return false;
+                }
+                if (!force && ((Math.abs(watchedpoint - lastSaved) < 5 && watchedpoint != Math.round(end))
+                    || watchedpoint < start + 5)) {
+                    return false;
+                }
+                lastSaved = watchedpoint;
+                if (force) {
+                    leaveWatchedPointPending = true;
+                }
+                fetch(M.cfg.wwwroot + '/mod/interactivevideo/ajax.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'update_watchedpoint',
+                        sesskey: M.cfg.sesskey,
+                        completionid: completionid,
+                        watchedpoint: watchedpoint,
+                        contextid: M.cfg.contextid
+                    }).toString(),
+                    keepalive: true
+                });
+                return true;
+            };
+
+            const onPaused = async(savepoint = false, knownTime = null) => {
                 if (!playerReady) {
                     return;
                 }
                 $('#playpause').find('i').removeClass('bi-pause-fill').addClass('bi-play-fill');
-                $('#playpause').attr('data-original-title', await getString('playtooltip', 'mod_interactivevideo'));
+                getString('playtooltip', 'mod_interactivevideo').then((label) => {
+                    $('#playpause').attr('data-original-title', label);
+                });
                 if (player.live) {
                     return;
                 }
@@ -1060,27 +1108,12 @@ define([
                 }
                 if (savepoint || $body.hasClass('embed-mode') || $body.hasClass('iframe')
                     || $body.hasClass('mobileapp') || navigator.userAgent.includes('MoodleMobile') || $body.hasClass('embed')) {
-                    let t = await player.getCurrentTime();
-                    let watchedpoint = Math.round(t);
-                    // Make sure the watchedpoint is not the same as the last saved point or so close to it.
-                    if ((Math.abs(watchedpoint - lastSaved) < 5 && watchedpoint != Math.round(end)) || watchedpoint < start + 5) {
+                    if (knownTime !== null && Number.isFinite(Number(knownTime))) {
+                        saveWatchedPoint(knownTime, {force: savepoint});
                         return;
                     }
-                    lastSaved = watchedpoint;
-                    fetch(M.cfg.wwwroot + '/mod/interactivevideo/ajax.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({
-                            action: 'update_watchedpoint',
-                            sesskey: M.cfg.sesskey,
-                            completionid: completionid,
-                            watchedpoint: watchedpoint,
-                            contextid: M.cfg.contextid
-                        }).toString(),
-                        keepalive: true
-                    });
+                    let t = await player.getCurrentTime();
+                    saveWatchedPoint(t);
                 }
             };
 
@@ -1694,32 +1727,34 @@ define([
             };
 
             $(document).on('visibilitychange', async function() {
-                // Pause video when the tab is not visible and the pauseonblur option is enabled.
-                if (displayoptions.pauseonblur && displayoptions.pauseonblur == 1) {
-                    if (!playerReady) {
-                        return;
-                    }
-                    if (document.visibilityState == 'hidden') {
+                if (!playerReady || player.live || subvideo) {
+                    return;
+                }
+                if (document.visibilityState == 'hidden') {
+                    // Pause video when the tab is not visible and the pauseonblur option is enabled.
+                    if (displayoptions.pauseonblur && displayoptions.pauseonblur == 1) {
                         // Captured synchronously on purpose: getCurrentTime() is a cross-origin round
                         // trip for most providers, and awaiting it here would let a seek land first
                         // and be recorded as the original position. Only meaningful once playback has
                         // begun; before that the resume position is still being resolved.
                         hiddenAtTime = firstPlay ? lastKnownTime : null;
                         player.pause();
-                        onPaused(true);
+                        onPaused(true, hiddenAtTime !== null ? hiddenAtTime : lastKnownTime);
                         suppressOsSeeking(true);
                     } else {
-                        suppressOsSeeking(false);
-                        const expected = hiddenAtTime;
-                        hiddenAtTime = null;
-                        if (expected !== null) {
-                            const corrected = await correctDrift(expected);
-                            // Several players report a cached time that only refreshes on a provider
-                            // timeupdate, which never arrives while the video is paused and hidden.
-                            // The read above can therefore echo back the captured value even though
-                            // the head moved, so re-check once on the first real playing tick.
-                            pendingRestoreTime = corrected ? null : expected;
-                        }
+                        saveWatchedPoint(lastKnownTime, {force: true});
+                    }
+                } else if (displayoptions.pauseonblur && displayoptions.pauseonblur == 1) {
+                    suppressOsSeeking(false);
+                    const expected = hiddenAtTime;
+                    hiddenAtTime = null;
+                    if (expected !== null) {
+                        const corrected = await correctDrift(expected);
+                        // Several players report a cached time that only refreshes on a provider
+                        // timeupdate, which never arrives while the video is paused and hidden.
+                        // The read above can therefore echo back the captured value even though
+                        // the head moved, so re-check once on the first real playing tick.
+                        pendingRestoreTime = corrected ? null : expected;
                     }
                 }
             });
@@ -2285,11 +2320,17 @@ define([
                 $this.tooltip('hide');
             });
 
+            const flushLeaveWatchedPoint = () => {
+                saveWatchedPoint(lastKnownTime, {force: true});
+            };
+
+            window.addEventListener('pagehide', function() {
+                flushLeaveWatchedPoint();
+            });
+
             window.addEventListener('beforeunload', function() {
                 player.pause();
-                onPaused(true);
-                // Remove all event listeners before unload.
-                $(document).off();
+                flushLeaveWatchedPoint();
                 cancelAnimationFrame(playingInterval);
             });
 
