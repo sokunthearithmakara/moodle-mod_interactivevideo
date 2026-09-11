@@ -225,7 +225,7 @@
             "component": "local_ivanalytics",
             "description": "Track user interactions with the video. Prevent learners from skipping ahead.",
             "icon": "bi bi-graph-up",
-            "version": "2026080500",
+            "version": "2026091100",
             "type": "paid",
             "description_url": "https://buymeacoffee.com/tsmakara/ivanalytics",
             "download_url": "https://tmakara.com/shop/item/local_ivanalytics",
