@@ -1,6 +1,21 @@
 {
     "subplugins": [
         {
+            "name": "fbvdopro",
+            "title": "Video Pro",
+            "component": "local_fbvdopro",
+            "description": "A video interaction with custom player controls, uploadable subtitles, and playback locked to the active tab.",
+            "icon": "bi bi-play-btn-fill",
+            "version": "2026091200",
+            "type": "paid",
+            "description_url": "",
+            "download_url": "https://tmakara.com/shop/item/local_fbvdopro",
+            "git": "https://github.com/sokunthearithmakara/local_fbvdopro/archive/refs/heads/master.zip",
+            "support": [
+                "mod_flexbook"
+            ]
+        },
+        {
             "name": "modelviewer",
             "title": "3D Model Viewer",
             "component": "local_ivmodelviewer",
@@ -258,7 +273,7 @@
             "version": "2026080500",
             "type": "free",
             "description_url": "https://buymeacoffee.com/tsmakara/ivdecision",
-                "download_url": "https://tmakara.com/shop/item/local_ivdecision",
+            "download_url": "https://tmakara.com/shop/item/local_ivdecision",
             "git": "https://github.com/sokunthearithmakara/local_ivdecision/archive/refs/heads/master.zip",
             "support": [
                 "mod_interactivevideo"
