@@ -44,6 +44,86 @@ class VdoCipher {
         this.live = false; // Added flag for live video support
     }
     /**
+     * Extract the video id from a VdoCipher dashboard URL.
+     *
+     * Accepts https://www.vdocipher.com/dashboard/video/{videoId}/tab/settings and
+     * https://www.vdocipher.com/dashboard/video/embed/{videoId}. Activities saved by
+     * versions before 2.0.3 carry a player URL after a '|', which is ignored.
+     *
+     * @param {string} url
+     * @return {string|null}
+     */
+    parseVideoId(url) {
+        url = url.split('|')[0];
+        const regex = /(?:https?:\/\/)?(?:www\.)?vdocipher\.com\/dashboard\/video\/(?:embed\/|)([a-zA-Z0-9_-]+)/i;
+        const match = regex.exec(url);
+        return match ? match[1] : null;
+    }
+    /**
+     * Ask the site for one of the two VdoCipher API answers it relays.
+     *
+     * 'otp' mints a playback OTP for the current user, watermark included, so it must be
+     * requested on every load and never stored. 'info' returns the video metadata.
+     *
+     * @param {string} videoId
+     * @param {string} info 'otp' or 'info'
+     * @return {Promise<Object>} The parsed answer, or {error: true} when it is not JSON.
+     */
+    async fetchVdoCipher(videoId, info) {
+        const data = await $.ajax({
+            url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+            type: 'POST',
+            dataType: 'text',
+            data: {
+                action: 'get_vdocipher',
+                sesskey: M.cfg.sesskey,
+                videoid: videoId,
+                contextid: M.cfg.contextid,
+                info,
+            },
+        });
+        try {
+            return JSON.parse(data);
+        } catch {
+            return {error: true};
+        }
+    }
+    /**
+     * Mint the OTP for the current user and remember the player URL it authorises.
+     *
+     * @param {string} videoId
+     * @return {Promise<boolean>} False when the OTP could not be minted (an error event is sent).
+     */
+    async authorisePlayback(videoId) {
+        const data = await this.fetchVdoCipher(videoId, 'otp');
+        if (data.error) {
+            this.sendEvent('iv:playerError', {error: data}, this.node);
+            return false;
+        }
+        this.otp = data.otp;
+        this.playbackInfo = data.playbackInfo;
+        this.iframesrc = `https://player.vdocipher.com/v2/?otp=${this.otp}&playbackInfo=${this.playbackInfo}`;
+        return true;
+    }
+    /**
+     * Read the title, poster and duration from the VdoCipher API.
+     *
+     * @param {string} videoId
+     * @return {Promise<boolean>} False when the metadata could not be read (an error event is sent).
+     */
+    async readVideoInfo(videoId) {
+        const info = await this.fetchVdoCipher(videoId, 'info');
+        if (info.error) {
+            this.sendEvent('iv:playerError', {error: info}, this.node);
+            return false;
+        }
+        this.title = info.title;
+        this.posterImage = info.posters[0] ? info.posters[0].posterUrl : info.poster;
+        this.aspectratio = info.posters[0].width / info.posters[0].height;
+        this.duration = info.length; // Duration in seconds.
+        return true;
+    }
+    /**
      * Get information about the video
      * @param {string} url
      * @param {string} node
@@ -51,79 +131,14 @@ class VdoCipher {
      */
     async getInfo(url, node) {
         this.node = node;
-        const _this = this;
         let self = this;
 
-        url = url.split('|')[0];
-
-        let regex = /(?:https?:\/\/)?(?:www\.)?vdocipher\.com\/dashboard\/video\/(?:embed\/|)([a-zA-Z0-9_-]+)/i;
-        var match = regex.exec(url);
-        var videoId = match ? match[1] : null;
+        const videoId = this.parseVideoId(url);
         this.videoId = videoId;
 
-        const getData = async() => {
-            const data = await $.ajax({
-                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                type: 'POST',
-                dataType: 'text',
-                data: {
-                    action: 'get_vdocipher',
-                    sesskey: M.cfg.sesskey,
-                    videoid: videoId,
-                    contextid: M.cfg.contextid,
-                    info: 'otp',
-                },
-            });
-            return data;
-        };
-
-        let data = await getData();
-        try {
-            data = JSON.parse(data);
-        } catch {
-            data = {error: true};
-        }
-
-        if (data.error) {
-            _this.sendEvent('iv:playerError', {error: data}, _this.node);
+        if (!await this.authorisePlayback(videoId) || !await this.readVideoInfo(videoId)) {
             return;
         }
-
-        self.otp = data.otp;
-        self.playbackInfo = data.playbackInfo;
-
-        // Get video info.
-        const getVideoInfo = async() => {
-            const data = await $.ajax({
-                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                type: 'POST',
-                dataType: 'text',
-                data: {
-                    action: 'get_vdocipher',
-                    sesskey: M.cfg.sesskey,
-                    videoid: videoId,
-                    contextid: M.cfg.contextid,
-                    info: 'info',
-                },
-            });
-            return data;
-        };
-
-        let info = await getVideoInfo();
-        try {
-            info = JSON.parse(info);
-        } catch {
-            info = {error: true};
-        }
-        if (info.error) {
-            this.sendEvent('iv:playerError', {error: info}, this.node);
-            return;
-        }
-        self.title = info.title;
-        self.posterImage = info.posters[0] ? info.posters[0].posterUrl : info.poster;
-        self.aspectratio = info.posters[0].width / info.posters[0].height;
-        self.duration = info.length; // Duration in seconds.
-        self.iframesrc = `https://player.vdocipher.com/v2/?otp=${self.otp}&playbackInfo=${self.playbackInfo}`;
         // Load the Dyntube API script.
         var tag = document.createElement('script');
         tag.src = "https://player.vdocipher.com/v2/api.js";
@@ -193,84 +208,16 @@ class VdoCipher {
         this.start = start;
         this.end = end;
 
-        // URL: https://www.vdocipher.com/dashboard/video/{videoId}/tab/settings
-        // URL: https://www.vdocipher.com/dashboard/video/embed/{videoId}
-        if (opts.editform) {
-            url = url.split('|')[0];
-
-            let regex = /(?:https?:\/\/)?(?:www\.)?vdocipher\.com\/dashboard\/video\/(?:embed\/|)([a-zA-Z0-9_-]+)/i;
-            var match = regex.exec(url);
-            var videoId = match ? match[1] : null;
-            this.videoId = videoId;
-
-            const getData = async() => {
-                const data = await $.ajax({
-                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                    type: 'POST',
-                    dataType: 'text',
-                    data: {
-                        action: 'get_vdocipher',
-                        sesskey: M.cfg.sesskey,
-                        videoid: videoId,
-                        contextid: M.cfg.contextid,
-                        info: 'otp',
-                    },
-                });
-                return data;
-            };
-
-            let data = await getData();
-            try {
-                data = JSON.parse(data);
-            } catch {
-                data = {error: true};
-            }
-
-            if (data.error) {
-                this.sendEvent('iv:playerError', {error: data}, this.node);
-                return;
-            }
-
-            self.otp = data.otp;
-            self.playbackInfo = data.playbackInfo;
-
-            // Get video info.
-            const getVideoInfo = async() => {
-                const data = await $.ajax({
-                    url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                    type: 'POST',
-                    dataType: 'text',
-                    data: {
-                        action: 'get_vdocipher',
-                        sesskey: M.cfg.sesskey,
-                        videoid: videoId,
-                        contextid: M.cfg.contextid,
-                        info: 'info',
-                    },
-                });
-                return data;
-            };
-
-            let info = await getVideoInfo();
-            try {
-                info = JSON.parse(info);
-            } catch {
-                info = {error: true};
-            }
-            if (info.error) {
-                this.sendEvent('iv:playerError', {error: info}, this.node);
-                return;
-            }
-            self.title = info.title;
-            self.posterImage = info.posters[0] ? info.posters[0].posterUrl : info.poster;
-            self.aspectratio = info.posters[0].width / info.posters[0].height;
-            self.duration = info.length; // Duration in seconds.
-            self.iframesrc = `https://player.vdocipher.com/v2/?otp=${self.otp}&playbackInfo=${self.playbackInfo}`;
-        } else {
-            self.iframesrc = url.split('|')[1];
-            let params = new URLSearchParams(self.iframesrc);
-            self.otp = params.get('otp');
-            self.playbackInfo = params.get('playbackInfo');
+        // The OTP is minted for the current user on every load: it carries the watermark, so
+        // it is never reused between viewers or kept in the activity.
+        const videoId = this.parseVideoId(url);
+        this.videoId = videoId;
+        if (!await this.authorisePlayback(videoId)) {
+            return;
+        }
+        // The edit form prefills the name and duration from the video metadata.
+        if (opts.editform && !await this.readVideoInfo(videoId)) {
+            return;
         }
 
         // Load the Dyntube API script.
@@ -338,9 +285,6 @@ class VdoCipher {
                 reloaded
             }, self.node);
             self.sendEvent('iv:playerReady', null, self.node);
-            if (opts.editform && !self.url.includes('|')) {
-                $('#id_videourl').val(self.url + '|' + self.iframesrc);
-            }
 
             // Remove the start screen on chrome.
             if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {

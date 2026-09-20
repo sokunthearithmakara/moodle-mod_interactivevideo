@@ -530,6 +530,8 @@ $string['usecustomposterimage'] = 'Use custom poster image';
 $string['usefixedratio'] = 'Force 16:9 aspect ratio';
 $string['useoriginalvideocontrols'] = 'Use original video controls';
 $string['vdocipher'] = 'VdoCipher';
+$string['vdocipher_annotate'] = 'VdoCipher watermark statement';
+$string['vdocipher_annotate_desc'] = 'Dynamic watermark burnt into VdoCipher playback, in VdoCipher\'s annotation syntax (see <a href="https://www.vdocipher.com/docs/server/playbackauth/anno/">Generating annotation code</a>). Leave empty for no watermark. Placeholders, the same as in the official VdoCipher filter plugin: {name}, {email}, {username}, {id}, {ip} and {date.FORMAT} with a PHP date format, for example {date.d/m/Y}. Example: <code>[{\'type\':\'rtext\',\'text\':\'{name} {email}\',\'alpha\':\'0.6\',\'color\':\'0xFFFFFF\',\'size\':\'14\',\'interval\':\'8000\'}]</code>';
 $string['video'] = 'Video';
 $string['videocontrols'] = 'Video controls';
 $string['videodisplayoptions'] = 'Player options';

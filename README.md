@@ -30,11 +30,15 @@ Transform your video/audio content into an interactive learning adventure! Add d
 - SoundCloud (public)
 - Mux (public/signed playback***)
 - Gumlet (public/signed playback***)
+- VdoCipher (DRM, per-viewer dynamic watermark****)
 
 * Password-protected Dailymotion video must play with original player controls.
 ** You must use the embed link for the password protected video to work.
 *** Signed URLs are passed through as-is. Paste the fully signed watch URL; the plugin does
 not mint or refresh tokens, so playback stops when the token expires.
+**** The watermark statement configured under Site administration > Plugins > Activity modules >
+Interactive Video > Provider APIs is sent with every OTP request, so each viewer sees their own
+watermark. Leave it empty for none.
 
 Mux publishes no per-asset title, so the activity name is prefilled with the playback ID
 rather than the video's real name - rename it after pasting. Add `?title=Your%20Title` to the
