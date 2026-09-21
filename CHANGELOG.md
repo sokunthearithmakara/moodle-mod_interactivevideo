@@ -1,6 +1,21 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [2.0.3] - 2026-09-21
+
+### Added
+- **VdoCipher watermark:** New site setting "VdoCipher watermark statement" under Provider APIs.
+  The statement is sent as the `annotate` field of every OTP request, so VdoCipher burns the
+  viewer's name, email, username, id, address or the date into playback. Same syntax and
+  placeholders as the official filter_vdocipher plugin, so one statement serves both.
+
+### Updated
+- **VdoCipher playback authorisation:** The OTP is now minted for the viewer on every player load,
+  from the same `ajax.php` action the edit form already used, instead of once at authoring time.
+  The OTP that used to be stored in the activity URL with a 30 year lifetime is no longer written
+  or read, and the TTL is now one hour. Existing activities keep working: the stored dashboard URL
+  is all the player needs.
+
 ## [2.0.0] - 2026-09-01
 
 ### Added

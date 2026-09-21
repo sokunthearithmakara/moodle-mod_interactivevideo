@@ -420,12 +420,13 @@ switch ($action) {
         $curl->setHeader('Content-Type: application/json');
 
         if ($info == 'otp') {
+            // Minted per viewer on every load: the watermark rides on the OTP and names $USER.
             $url = "https://www.vdocipher.com/api/videos/$videoid/otp";
-
-            $payload = json_encode([
-                "ttl" => // 30 years in seconds.
-                30 * 365 * 24 * 60 * 60,
-            ]);
+            $payload = json_encode(\mod_interactivevideo\local\vdocipher_otp::build_payload(
+                $USER,
+                (string) get_config('mod_interactivevideo', 'vdocipher_annotate'),
+                getremoteaddr()
+            ));
             $response = $curl->post($url, $payload);
         } else {
             $url = "https://www.vdocipher.com/api/videos/$videoid";

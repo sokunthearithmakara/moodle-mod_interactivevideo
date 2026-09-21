@@ -351,4 +351,12 @@ $providerapis->add(new admin_setting_configtext(
     PARAM_TEXT
 ));
 
+$providerapis->add(new admin_setting_configtextarea(
+    'mod_interactivevideo/vdocipher_annotate',
+    get_string('vdocipher_annotate', 'mod_interactivevideo'),
+    get_string('vdocipher_annotate_desc', 'mod_interactivevideo'),
+    '',
+    PARAM_RAW
+));
+
 $ADMIN->add('modivfolder', $providerapis);
