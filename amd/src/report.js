@@ -39,18 +39,32 @@ import ModalEvents from 'core/modal_events';
 import Base from 'mod_interactivevideo/type/base';
 
 /**
+ * Parse annotation prop JSON, accepting a JSON string or an already-decoded object.
+ *
+ * @param {Object} annotation
+ * @returns {Object}
+ */
+const parseAnnotationProp = (annotation) => {
+    const raw = annotation?.prop;
+    if (raw && typeof raw === 'object') {
+        return raw;
+    }
+    try {
+        const prop = JSON.parse(raw || '{}');
+        return prop && typeof prop === 'object' ? prop : {};
+    } catch (e) {
+        return {};
+    }
+};
+
+/**
  * Resolve the interaction type icon class from annotation prop JSON.
  *
  * @param {Object} annotation
  * @returns {string}
  */
 const getAnnotationTypeIcon = (annotation) => {
-    try {
-        const prop = JSON.parse(annotation.prop || '{}');
-        return prop.icon || 'bi bi-info-circle';
-    } catch (e) {
-        return 'bi bi-info-circle';
-    }
+    return parseAnnotationProp(annotation).icon || 'bi bi-info-circle';
 };
 
 /**
@@ -108,9 +122,16 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
     });
 
     let itemsdata = $('#itemsdata').text();
-    itemsdata = JSON.parse(itemsdata);
+    try {
+        itemsdata = JSON.parse(itemsdata || '[]');
+    } catch (e) {
+        itemsdata = [];
+    }
+    if (!Array.isArray(itemsdata)) {
+        itemsdata = [];
+    }
     // Init the contenttypes that has initonreport.
-    let initonreport = itemsdata.filter(x => JSON.parse(x.prop).initonreport);
+    let initonreport = itemsdata.filter(x => parseAnnotationProp(x).initonreport);
     initonreport = [...new Set(initonreport.map(x => x.type))];
 
     let contentTypes;
@@ -118,7 +139,7 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
     let tabledata;
 
     $.when(getReportData).done(async(data) => {
-        contentTypes = itemsdata.map(x => JSON.parse(x.prop));
+        contentTypes = itemsdata.map(x => parseAnnotationProp(x));
         // Unique content types based on name.
         contentTypes = contentTypes.filter((value, index, self) =>
             index === self.findIndex((t) => (
@@ -128,6 +149,10 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
         // Require[] all AMD modules that are used in the report.
         const loadPromises = contentTypes.map(contentType => {
             return new Promise((resolve) => {
+                if (!contentType.amdmodule) {
+                    resolve();
+                    return;
+                }
                 require([contentType.amdmodule], (Module) => {
                     relContentTypeAmd[contentType.name] = new Module(player, itemsdata, cmid, courseid, null,
                         completionpercentage, null, grademax, videotype, null,
@@ -534,7 +559,10 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
                 return;
             }
             let matchingContentTypes = contentTypes.find(x => x.name === type);
-            let amdmodule = matchingContentTypes.amdmodule;
+            let amdmodule = matchingContentTypes?.amdmodule;
+            if (!amdmodule) {
+                return;
+            }
             require([amdmodule], function(Module) {
                 new Module(player, itemsdata, cmid, courseid, null,
                     completionpercentage, null, grademax, videotype, null,
@@ -633,7 +661,10 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
                     module.displayReportView(theAnnotation, tabledatajson, ReportBase, root);
                 } else {
                     let matchingContentTypes = contentTypes.find(x => x.name === theAnnotation.type);
-                    let amdmodule = matchingContentTypes.amdmodule;
+                    let amdmodule = matchingContentTypes?.amdmodule;
+                    if (!amdmodule) {
+                        return;
+                    }
                     require([amdmodule], function(Module) {
                         theAnnotation.completed = true;
                         new Module(player, itemsdata, cmid, courseid, null,
@@ -667,7 +698,10 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
                 return module.getCompletionData(theAnnotation, userid);
             }
             let matchingContentTypes = contentTypes.find(x => x.name === type);
-            let amdmodule = matchingContentTypes.amdmodule;
+            let amdmodule = matchingContentTypes?.amdmodule;
+            if (!amdmodule) {
+                return Promise.resolve();
+            }
             // Get column header with the item id.
             return new Promise((resolve, reject) => {
                 require([amdmodule], function(Module) {

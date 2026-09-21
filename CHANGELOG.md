@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
   or read, and the TTL is now one hour. Existing activities keep working: the stored dashboard URL
   is all the player needs.
 
+### Fixed
+- Fixed report page crash when disabled or unknown types still appear in allitems; keep prop JSON-parseable.
+
 ## [2.0.0] - 2026-09-01
 
 ### Added

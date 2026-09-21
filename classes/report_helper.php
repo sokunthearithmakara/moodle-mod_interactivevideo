@@ -147,6 +147,11 @@ class report_helper {
                 $item['prop'] = json_encode($relatedct);
                 $item['typetitle'] = $relatedct["title"];
                 $item['icon'] = $relatedct["icon"];
+            } else {
+                // Disabled or unknown types still appear in allitems; keep prop JSON-parseable.
+                $item['prop'] = json_encode(['name' => $item['type'] ?? '']);
+                $item['typetitle'] = $item['typetitle'] ?? ($item['type'] ?? '');
+                $item['icon'] = $item['icon'] ?? 'bi bi-cursor';
             }
             return $item;
         }, $items);
