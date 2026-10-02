@@ -145,6 +145,10 @@ final class outcome_screen_test extends \advanced_testcase {
         $this->rate($rated, (int) $this->student->id, 2);
 
         $rows = $this->rows();
+        usort($rows, function($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
+
         $this->assertCount(2, $rows);
         $this->assertSame('Outcome o1', $rows[0]['name']);
         $this->assertSame('o1', $rows[0]['shortname']);
@@ -381,7 +385,7 @@ final class outcome_screen_test extends \advanced_testcase {
         $foreign = json_encode(['autolaunch' => 1, 'outcomes' => [($mine->outcomeid + 500) => $entry]]);
         $result = outcome_mapping::restrict_to_course($foreign, (int) $this->course->id);
         $this->assertSame([], outcome_mapping::parse_advanced($result));
-        $this->assertObjectNotHasProperty('outcomes', json_decode($result));
+        $this->assertFalse(property_exists(json_decode($result), 'outcomes'));
 
         // Interactions with no links, and empty input, are handled.
         $this->assertSame('{"autolaunch":1}', outcome_mapping::restrict_to_course('{"autolaunch":1}', (int) $this->course->id));
