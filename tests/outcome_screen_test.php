@@ -145,7 +145,7 @@ final class outcome_screen_test extends \advanced_testcase {
         $this->rate($rated, (int) $this->student->id, 2);
 
         $rows = $this->rows();
-        usort($rows, function($a, $b) {
+        usort($rows, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
 

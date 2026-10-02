@@ -336,6 +336,8 @@ final class outcome_rating_test extends \advanced_testcase {
         $gradeitem = \grade_item::fetch(['id' => $this->outcomeitem->id]);
         $gradeitem->set_locked(true);
 
+        \cache::make_from_params(\cache_store::MODE_REQUEST, 'mod_interactivevideo', 'outcomeitems')->purge();
+
         $item = $this->create_item([$this->outcome->id => self::SCORE]);
         $this->complete($item, ['xp' => 9]);
         $this->assertDebuggingCalled();
