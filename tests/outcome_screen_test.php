@@ -250,7 +250,9 @@ final class outcome_screen_test extends \advanced_testcase {
 
         $before = $DB->perf_get_reads();
         $ratings = outcome_mapping::report_ratings('interactivevideo', (int) $this->instance->id);
-        $this->assertSame(1, $DB->perf_get_reads() - $before);
+        // A recordset costs 1 read on MySQL/MariaDB but 3 on Postgres (DECLARE, FETCH, CLOSE).
+        $expectedreads = $DB->get_dbfamily() === 'postgres' ? 3 : 1;
+        $this->assertSame($expectedreads, $DB->perf_get_reads() - $before);
 
         $this->assertCount(5, $ratings);
         $this->assertSame(2, count($ratings[$this->student->id]));
