@@ -196,10 +196,15 @@ class restore_interactivevideo_activity_structure_step extends restore_activity_
     /**
      * Decodes the given text.
      *
-     * @param string $text The text to be decoded.
+     * @param string|null $text The text to be decoded.
      * @return string The decoded text.
      */
     protected function decode_text($text) {
+        // Backup XML may omit optional text fields. Do not pass null to the PCRE
+        // callbacks on newer PHP versions.
+        if ($text === null) {
+            return '';
+        }
         // Annotation id.
         $search = '/@@ANNOID#([0-9]+)/';
         $text = preg_replace_callback($search, function ($matches) {
@@ -246,6 +251,11 @@ class restore_interactivevideo_activity_structure_step extends restore_activity_
         foreach ($items as $item) {
             $item->content = $this->decode_text($item->content);
             $item->advanced = $this->decode_text($item->advanced);
+            // Outcome links point at the outcomes of the source course; follow them to the
+            // restored ones, dropping any that did not come across.
+            $item->advanced = \mod_interactivevideo\local\outcome_mapping::remap_for_restore($item->advanced, function ($oldid) {
+                return (int) $this->get_mappingid('outcome', $oldid);
+            });
             $item->text1 = $this->decode_text($item->text1);
             $item->text2 = $this->decode_text($item->text2);
             $item->text3 = $this->decode_text($item->text3);

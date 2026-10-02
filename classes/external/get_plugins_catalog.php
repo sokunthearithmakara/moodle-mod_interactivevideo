@@ -16,15 +16,16 @@
 
 namespace mod_interactivevideo\external;
 
-use external_api;
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use mod_interactivevideo\local\external_compat;
 use mod_interactivevideo\local\plugins_catalog;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/externallib.php');
+external_compat::load();
 
 /**
  * Web service to fetch the content types catalog.

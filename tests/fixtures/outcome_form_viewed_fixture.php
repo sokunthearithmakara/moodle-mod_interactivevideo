@@ -15,18 +15,35 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Interactivevideo
+ * Test fixture: a completion-only content type form.
  *
  * @package    mod_interactivevideo
- * @copyright  2024 Sokunthearith Makara <sokunthearithmakara@gmail.com>
+ * @category   test
+ * @copyright  2026 Sokunthearith Makara <sokunthearithmakara@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace mod_interactivevideo\fixtures;
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_interactivevideo';
-$plugin->release = '2.2';
-$plugin->version = 2026100100;
-$plugin->requires = 2021112800;
-$plugin->supported = [400, 503];
-$plugin->maturity = MATURITY_STABLE;
+require_once(__DIR__ . '/outcome_form_scored_fixture.php');
+
+/**
+ * A completion-only content type form without an advanced section.
+ *
+ * @package    mod_interactivevideo
+ * @copyright  2026 Sokunthearith Makara <sokunthearithmakara@gmail.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class outcome_form_viewed_fixture extends outcome_form_scored_fixture {
+    /**
+     * Form definition.
+     */
+    public function definition() {
+        $this->standard_elements();
+        $this->completion_tracking_field('view');
+        $this->xp_form_field();
+        $this->close_form();
+    }
+}

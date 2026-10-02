@@ -24,12 +24,12 @@
     }
 }}
 
-{{#displayasstartscreen}}
+{{#startscreendocument}}
 <div id="start-screen"
      class="w-100 position-absolute h-100 bg-white bottom-0"
      role="region"
      aria-label="{{#str}}startscreen, mod_interactivevideo{{/str}}">
-    <div class="intro-content {{#hasintro}}hasintro{{/hasintro}} bg-light w-100 p-0 align-items-start">
+    <div class="intro-content {{#hascontent}}hasintro{{/hascontent}} bg-light w-100 p-0 align-items-start">
         <div id="title-section"
              class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky"
              role="banner">
@@ -56,16 +56,20 @@
             </button>
         </div>
 
-        {{#hasintro}}
+        {{#showintro}}
         <div class="p-2 p-md-3" id="intro-text" role="document">
             {{{intro}}}
         </div>
-        {{/hasintro}}
+        {{/showintro}}
+
+        {{#showoutcomesonstartscreen}}
+        {{> mod_interactivevideo/player/outcomelist}}
+        {{/showoutcomesonstartscreen}}
     </div>
 </div>
-{{/displayasstartscreen}}
+{{/startscreendocument}}
 
-{{^displayasstartscreen}}
+{{^startscreendocument}}
 <div id="start-screen"
      class="w-100 position-absolute h-100 bottom-0 {{#square}}square{{/square}}"
      role="region"
@@ -106,4 +110,4 @@
         </button>
     </div>
 </div>
-{{/displayasstartscreen}}
+{{/startscreendocument}}

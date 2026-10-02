@@ -258,6 +258,18 @@ class report_helper {
             'courseindex' => $courseindex,
         ];
 
+        // The outcome column, when the activity asks for it and has outcomes to show.
+        $outcomes = [];
+        if (!empty($displayoptions['showoutcomesonreport'])) {
+            $outcomes = \mod_interactivevideo\local\outcome_mapping::report_definitions(
+                str_replace('mod_', '', $component),
+                (int) $cm->instance,
+                $context
+            );
+        }
+        $reporttabledata['showoutcomes'] = !empty($outcomes);
+        $reporttabledata['outcomesjson'] = json_encode($outcomes);
+
         return ['pagenav' => $pagenavdata, 'reporttable' => $reporttabledata];
     }
 
@@ -322,6 +334,28 @@ class report_helper {
             return (string)(int)$xp;
         }
         return (string)(round($xp * 100) / 100);
+    }
+
+    /**
+     * Mark a completion detail as graded by the teacher: work that waited for a grade (such
+     * as a recorded or written answer from H5P content) no longer shows as waiting.
+     *
+     * @param \stdClass $detail A decoded completion detail.
+     * @return \stdClass
+     */
+    public static function mark_graded($detail) {
+        if (empty($detail->pending)) {
+            return $detail;
+        }
+        unset($detail->pending);
+        if (isset($detail->reportView) && is_string($detail->reportView) && strpos($detail->reportView, '##') === 0) {
+            $parts = explode('|', $detail->reportView);
+            if (isset($parts[3]) && strpos($parts[3], 'fa-hourglass-half') !== false) {
+                $parts[3] = 'bi bi-check2-all text-success';
+                $detail->reportView = implode('|', $parts);
+            }
+        }
+        return $detail;
     }
 
     /**

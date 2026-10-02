@@ -13,7 +13,7 @@
     --ivinfo: #008196;
     --ivwarning: #f0ad4e;
     --ivdanger: #ca3120;
-    --ivlight: #f8f9fa;
+    --ivlight: #f2f5f8;
     --ivdark: #343a40;
     --ivblack: #000;
     --ivdarker: #263238;
@@ -27,6 +27,20 @@
     --ivrounded-lg: 0.6rem;
     --ivrounded-circle: 50%;
     --ivdvh: 100dvh;
+}
+
+[data-bs-theme="dark"] {
+    --ivwhite: #121212;
+    --ivgray: #6a737b;
+    --ivgray-dark: #343a40;
+    --ivprimary: #0f6cbf;
+    --ivsecondary: #535d66;
+    --ivsuccess: #357a32;
+    --ivinfo: #008196;
+    --ivlight: #121212;
+    --ivdark: #15181a;
+    --ivblack: #000;
+    --ivdarker: #263238;
 }
 
 [dir="rtl"] {
@@ -788,7 +802,7 @@ html:has(.path-mod-interactivevideo) {
 }
 
 #page-mod-interactivevideo-interactions {
-    background: #edf0f2;
+    background: var(--bs-body-bg, #edf0f2);
 }
 
 .path-mod-interactivevideo #annotation-canvas {
@@ -1215,7 +1229,7 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     align-items: center;
     justify-content: space-between;
     height: 50px;
-    background-color: #f8f9fa;
+    background-color: var(--bs-body-bg, #f8f9fa);
     z-index: 1;
 }
 
@@ -1224,14 +1238,14 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     padding: 1rem;
     overflow: auto;
     height: calc(100% - 50px);
-    background-color: #fff !important;
+    background-color: var(--bs-white, #fff) !important;
 }
 
 .path-mod-interactivevideo #annotation-content #message #content {
     margin: 0;
     padding: 1rem;
     overflow: auto;
-    background-color: #fff;
+    background-color: var(--bs-white, #fff);
 }
 
 .path-mod-interactivevideo #start-screen,
@@ -1407,11 +1421,11 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
 }
 
 .path-mod-interactivevideo .contentbank-item:nth-child(odd) {
-    background-color: #f8f9fa;
+    background-color: var(--bs-body-bg, #f8f9fa);
 }
 
 .path-mod-interactivevideo .contentbank-item:hover {
-    background-color: #ddd;
+    background-color: var(--bs-gray-300, #ddd);
 }
 
 .path-mod-interactivevideo .contentbank-item.selected {
@@ -1648,6 +1662,7 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     border: 0;
     background: #fff;
     border-radius: 0.25rem;
+    color: #000;
 }
 
 #page-mod-interactivevideo-report #annotation-modal .completion-detail-nav-xp-edit,
@@ -1756,8 +1771,8 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     z-index: 4;
 }
 
-#page-mod-interactivevideo-view #page.drawers .main-inner {
-    max-width: unset;
+#page-mod-interactivevideo-view.default-mode #page.drawers .main-inner {
+    max-width: 950px;
 }
 
 #page-mod-interactivevideo-view #toast:not(.show) {
@@ -1836,7 +1851,7 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
 }
 
 .path-mod-interactivevideo [data-region="chapterwrapper"] {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--bs-body-bg, #fff);
     top: 0;
     z-index: 100;
     overflow: auto;
@@ -1876,7 +1891,7 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
 
 .page-interactions tr.annotation.chapter {
     background-color: var(--ivsecondary);
-    border-top: 4px double #fff;
+    border-top: 4px double var(--bs-white, #fff);
 }
 
 .page-interactions tr.annotation.chapter .type-icon,
@@ -2117,31 +2132,6 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     border-radius: 10rem;
 }
 
-.path-mod-interactivevideo #message .decision .btn {
-    max-width: 400px;
-    width: calc(100% - 3rem);
-}
-
-.path-mod-interactivevideo #message .decision #decision-q {
-    position: sticky;
-    top: 0;
-}
-
-.path-mod-interactivevideo #message .decision .decision-option:hover,
-.path-mod-interactivevideo #message .decision .decision-option:focus {
-    transform: scale(1.1);
-}
-
-.path-mod-interactivevideo #message .decision .decision-option {
-    transition: transform ease-in-out 0.3s;
-}
-
-.path-mod-interactivevideo #video-nav li.annotation.decision i {
-    font-size: 10px;
-    color: #fff;
-    position: absolute;
-}
-
 .path-mod-interactivevideo .ui-icon-gripsmall-diagonal-se {
     background-image: none !important;
 }
@@ -2260,7 +2250,7 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
 }
 
 .path-mod-interactivevideo #form-field-list .list-group-item:hover {
-    background: #fff;
+    background: var(--bs-white, #fff);
 }
 
 .path-mod-interactivevideo #form-field-list .list-group-item.field-highlight {
@@ -2413,7 +2403,7 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     bottom: 0;
     z-index: 1032;
     padding: 1rem;
-    background-color: #fff;
+    background-color: var(--bs-white, #fff);
     overflow: visible;
     transition: right ease-in-out 0.3s;
     display: block;
@@ -2645,6 +2635,7 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     background-color: #328cdb;
     z-index: 105;
     margin-inline-start: -2.5px;
+    border: 0 !important;
 }
 
 #page-mod-interactivevideo-interactions #timeline-wrapper {
@@ -3633,7 +3624,7 @@ body:not(.editing) .modtype_interactivevideo:has(.interactivevideo-card) .activi
 }
 
 body:not(.editing) .section .activity.modtype_interactivevideo:has(.interactivevideo-card):not(:first-child) {
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid var(--bs-border-color, #dee2e6);
 
 }
 
@@ -4097,12 +4088,12 @@ body:has(.interactivevideo-card) #format_tiles_overlay {
 }
 
 #page-mod-interactivevideo-manage td.alert-success {
-    background: #d4edda !important;
+    background: var(--bs-success-bg-subtle, #d4edda) !important;
 }
 
 #page-mod-interactivevideo-manage th.poster,
 #page-mod-interactivevideo-manage td.poster {
-    background: #fff;
+    background: var(--bs-body-bg, #fff);
     position: sticky;
     left: 0;
     z-index: 1;
@@ -4210,7 +4201,7 @@ body:has(.interactivevideo-card) #format_tiles_overlay {
 
 .path-mod-interactivevideo #completiontable tfoot {
     font-weight: bold;
-    background: #fff;
+    background: var(--bs-body-bg, #fff);
     position: sticky;
     bottom: 0;
     z-index: 1;
@@ -4265,7 +4256,7 @@ body:has(.interactivevideo-card) #format_tiles_overlay {
     display: none;
 }
 
-.path-mod-interactivevideo.darkmode [data-region=chapterlists] .list-group-item {
+:not([data-bs-theme="dark"]) .path-mod-interactivevideo.darkmode [data-region=chapterlists] .list-group-item {
     color: var(--ivwhite) !important;
 }
 
@@ -4289,16 +4280,17 @@ body:has(.interactivevideo-card) #format_tiles_overlay {
     background-image: url([[pix:mod_interactivevideo|checkbox-checked]]);
 }
 
-.path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):not(:checked):before {
-    background-image: url([[pix:mod_interactivevideo|checkbox-unchecked]]);
-}
-
 .path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):checked:before {
     background-image: url([[pix:mod_interactivevideo|radio-checked]]);
 }
 
 .path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):not(:checked):before {
     background-image: url([[pix:mod_interactivevideo|radio-unchecked]]);
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo [type="radio"]:not(.custom-control-input, [role="switch"]):not(:checked):before,
+[data-bs-theme="dark"] .path-mod-interactivevideo [type="checkbox"]:not(.custom-control-input, [role="switch"]):not(:checked):before {
+    filter: invert(1);
 }
 
 .path-mod-interactivevideo .form-check-input:checked[type="checkbox"]:not([role="switch"]),
@@ -4548,4 +4540,129 @@ body:has(.interactivevideo-card) #format_tiles_overlay {
 
 .spotlightr-id {
     max-height: 100%;
+}
+
+/* Learning outcomes shown on the start and end screens. */
+.iv-outcome-list .list-group-item {
+    background: transparent;
+}
+
+.iv-outcome-list .iv-outcome-list-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/** Moodle 5.3 styles. */
+
+.path-mod-interactivevideo.hasstickyfooter:is(.pagelayout-embedded) .stickyfooter {
+    display: none;
+}
+
+.path-mod-interactivevideo .hasstickyfooter .stickyfooter {
+    z-index: 1050;
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo.darkmode #user-action-menu,
+[data-bs-theme="dark"] .path-mod-interactivevideo.pagelayout-embedded.darkmode .drawer.drawer-left,
+[data-bs-theme="dark"] .path-mod-interactivevideo.pagelayout-embedded.darkmode .courseindex .courseindex-item.pageitem,
+[data-bs-theme="dark"] .path-mod-interactivevideo.pagelayout-embedded.darkmode .courseindex .courseindex-item .completioninfo.completion_complete {
+    filter: none;
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo .dropdown-menu .dropdown-item:hover {
+    background-color: var(--bs-dropdown-link-hover-bg, #f8f9fa);
+    color: var(--bs-dropdown-link-hover-color, #000);
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo .dropdown-menu {
+    scrollbar-color: var(--bs-gray-300, #ddd) var(--bs-body-bg, #121212);
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo .text-dark,
+[data-bs-theme="dark"] .interactivevideo-card .text-dark {
+    color: #fff !important;
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo.darkmode .navbar .dropdown-menu:has([data-region="activity-information"]) {
+    filter: none;
+}
+
+.path-mod-interactivevideo.distraction-free .navbar .dropdown-menu:has([data-region="activity-information"]) {
+    min-width: 200px;
+}
+
+.navbar .dropdown-menu:has([data-region="activity-information"]) .automatic-completion-title {
+    display: none;
+}
+
+:is(.interactivevideo-card, #playermodal) .activity-completion-list {
+    padding: 0;
+    margin: 0;
+}
+
+#playermodal .activity-completion-list {
+    display: flex;
+    gap: 1rem;
+}
+
+:is(.interactivevideo-card, #playermodal) .activity-completion-list li {
+    list-style: none;
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo .tablewrapper,
+[data-bs-theme="dark"] .path-mod-interactivevideo .table-responsive {
+    scrollbar-color: var(--bs-gray-300, #ddd) var(--bs-body-bg, #121212);
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo .select2-container--default .select2-selection--multiple {
+    background-color: var(--bs-body-bg, #121212);
+    border-color: var(--bs-gray-500, #ddd);
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: var(--bs-body-bg, #ddd);
+}
+
+[data-bs-theme="dark"] .path-mod-interactivevideo:not(.bg-dark) #toolbar .btn {
+    color: #fff;
+}
+
+/* btn-light dark mode support */
+[data-bs-theme="dark"] :is(.path-mod-interactivevideo, #playermodal, .interactivevideo-card) .btn-light {
+    --bs-btn-color: var(--bs-body-color, #dee2e6);
+    --bs-btn-bg: var(--bs-tertiary-bg, #2b3035);
+    --bs-btn-border-color: var(--bs-border-color, rgba(255, 255, 255, 0.15));
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--bs-secondary-bg, #343a40);
+    --bs-btn-hover-border-color: rgba(255, 255, 255, 0.25);
+    --bs-btn-focus-shadow-rgb: 255, 255, 255;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--bs-secondary-bg, #3a3f44);
+    --bs-btn-active-border-color: rgba(255, 255, 255, 0.3);
+    --bs-btn-disabled-color: var(--bs-secondary-color, #6c757d);
+    --bs-btn-disabled-bg: var(--bs-tertiary-bg, #2b3035);
+    --bs-btn-disabled-border-color: transparent;
+    color: var(--bs-body-color, #dee2e6);
+    background-color: var(--bs-tertiary-bg, #2b3035);
+    border-color: var(--bs-border-color, rgba(255, 255, 255, 0.15));
+}
+
+[data-bs-theme="dark"] :is(.path-mod-interactivevideo, #playermodal, .interactivevideo-card) .btn-light:hover:not(:disabled) {
+    color: #fff;
+    background-color: var(--bs-secondary-bg, #343a40);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+[data-bs-theme="dark"] :is(.path-mod-interactivevideo, #playermodal, .interactivevideo-card) .btn-light:is(:active, .active, .show):not(:disabled),
+[data-bs-theme="dark"] :is(.path-mod-interactivevideo, #playermodal, .interactivevideo-card) .btn-check:checked + .btn-light {
+    color: #fff;
+    background-color: var(--bs-secondary-bg, #3a3f44);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+[data-bs-theme="dark"] :is(.path-mod-interactivevideo, #playermodal, .interactivevideo-card) .btn-light:disabled,
+[data-bs-theme="dark"] :is(.path-mod-interactivevideo, #playermodal, .interactivevideo-card) .btn-light.disabled {
+    color: var(--bs-secondary-color, #6c757d);
+    background-color: var(--bs-tertiary-bg, #2b3035);
+    border-color: transparent;
 }

@@ -120,6 +120,7 @@ switch ($action) {
     case 'delete_item':
         require_capability('mod/interactivevideo:edit', $context);
         $id = required_param('id', PARAM_INT);
+        $deleteditem = $DB->get_record('interactivevideo_items', ['id' => $id], 'id, annotationid, advanced', IGNORE_MISSING);
         $DB->delete_records('interactivevideo_items', ['id' => $id]);
         $logs = $DB->get_records('interactivevideo_log', ['annotationid' => $id]);
         $fs = get_file_storage();
@@ -134,6 +135,9 @@ switch ($action) {
         if ($logs) {
             foreach ($logs as $log) {
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments', $log->id);
+                if (class_exists(\local_ivpeerwork\service::class)) {
+                    \local_ivpeerwork\service::delete_public_copies($contextid, 'mod_interactivevideo', (int) $log->id);
+                }
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text1', $log->id);
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2', $log->id);
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3', $log->id);
@@ -142,6 +146,10 @@ switch ($action) {
         }
         $cache = cache::make('mod_interactivevideo', 'iv_items_by_cmid');
         $cache->delete($cmid);
+        // An interaction that fed outcomes leaves ratings behind that no longer add up.
+        if ($deleteditem && \mod_interactivevideo\local\outcome_mapping::parse_mapping($deleteditem)) {
+            \mod_interactivevideo\local\outcome_mapping::queue_backfill('interactivevideo', (int) $deleteditem->annotationid);
+        }
         echo $id;
         break;
     case 'get_progress':
@@ -221,6 +229,27 @@ switch ($action) {
         $replaceexisting = optional_param('replaceexisting', 0, PARAM_INT);
         $log = interactivevideo_util::save_log($userid, $annotationid, $cmid, $data, $contextid, $replaceexisting);
         echo json_encode($log);
+        break;
+    case 'upload_recording':
+        // A recording from H5P content, such as a spoken answer a teacher grades. It's
+        // stored as a file of the current user's log for the interaction.
+        require_capability('mod/interactivevideo:view', $context);
+        // The cmid in this payload is the instance id, as in save_log.
+        $cmid = required_param('cmid', PARAM_INT);
+        interactivevideo_util::validate_module_instance($context, $cmid);
+        $annotationid = required_param('annotationid', PARAM_INT);
+        if (!$DB->record_exists('interactivevideo_items', ['id' => $annotationid, 'annotationid' => $cmid])) {
+            throw new moodle_exception('invalidrecord', 'error');
+        }
+        $logid = \mod_interactivevideo\local\recording_store::get_log_id('interactivevideo', $USER->id, $annotationid, $cmid);
+        $url = \mod_interactivevideo\local\recording_store::save(
+            $context,
+            'mod_interactivevideo',
+            $logid,
+            required_param('extension', PARAM_ALPHANUM),
+            required_param('data', PARAM_RAW)
+        );
+        echo json_encode(['url' => $url]);
         break;
     case 'get_logs_by_userids':
         require_capability('mod/interactivevideo:view', $context);

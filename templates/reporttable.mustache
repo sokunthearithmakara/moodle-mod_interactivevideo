@@ -30,6 +30,7 @@ Example context (json):
 
     {{> mod_interactivevideo/backgroundloading}}
 
+    {{#showoutcomes}}<textarea class="d-none" id="outcomesdata">{{outcomesjson}}</textarea>{{/showoutcomes}}
     <table id="completiontable" class="table table-sm table-bordered table-striped w-100 m-0 border invisible">
         <thead class="sticky-top bg-white">
             <tr>
@@ -122,6 +123,28 @@ Example context (json):
                 <th id="xp" scope="col">
                     {{#str}}xp, mod_interactivevideo{{/str}} / {{totalxp}}
                 </th>
+
+                {{#showoutcomes}}
+                <th id="outcomes" scope="col">
+                    <a class="text-link cursor-pointer" data-region="outcomesummary" role="button" tabindex="0">
+                        {{#str}}outcomes, grades{{/str}}
+                    </a>
+                    <div class="position-absolute iv-font-weight-normal controls d-none" style="bottom: 0">
+                        <div class="d-flex align-items-center">
+                            <input type="checkbox" checked data-rated="true">
+                            <small class="mx-2">
+                                {{#str}}outcomesreportrated, mod_interactivevideo{{/str}}
+                            </small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <input type="checkbox" checked data-rated="false">
+                            <small class="iv-ml-2">
+                                {{#str}}outcomesreportunrated, mod_interactivevideo{{/str}}
+                            </small>
+                        </div>
+                    </div>
+                </th>
+                {{/showoutcomes}}
 
                 {{#items}}
                     <th class="rotate"

@@ -1,6 +1,46 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [2.2.0] - 2026-10-01
+### Added
+- **Moodle 5.3 compatibility:** The plugin now supports Moodle 5.3 including BS5's dark mode. The plugin is now compatible with Moodle 5.3's new external plugins API.
+
+## [2.1.0] - 2026-09-22
+
+### Added
+- **Outcome links survive copying safely:** An interaction copied or imported into a course
+  keeps only the outcome links that course can honour, so a pack from another site cannot
+  attach an interaction to an unrelated outcome. Backup and restore continue to remap links
+  properly. Attaching an outcome to an activity now queues a rating pass, so learners who
+  already have progress are rated without having to attempt the activity again.
+- **Outcomes on the report:** A third setting adds an outcome column to the report, showing
+  how many of the activity's outcomes each learner has been rated on. Selecting the column
+  heading opens a summary of how the learners currently in the table are spread across each
+  outcome's scale, and selecting a cell shows that learner's rating on every outcome with
+  their result on each interaction feeding it. Both modals name the interactions each
+  outcome is rated from. The heading also filters the table by rated or unrated, and the
+  footer gives the share of learners rated. Outcome short names are shown in brackets
+  throughout. The column costs one extra query for the whole report, whatever the
+  number of learners.
+- **Outcomes on the start and end screens:** Two new activity settings, in the Outcomes
+  section of the activity form, list the outcomes attached to the activity and the learner's
+  current rating on each. Where the description (start screen) or the end screen text is
+  shown, the list follows it; otherwise the screen shows the list on its own. The list is
+  redrawn as the learner completes interactions, so the end screen reflects what they just
+  earned.
+- **Outcome rating from interactions:** When the site has outcomes enabled, every scored
+  interaction form gains an "Outcomes" section listing the outcomes attached to the activity.
+  Tick one to rate it from the interaction, either from the learner's score through per-level
+  percentage thresholds or as a fixed level awarded on completion (for interactions that only
+  track completion). Several interactions may feed one outcome; their levels are averaged,
+  weighted by XP. Ratings are written to the outcome grade items whenever progress is saved,
+  overridden or deleted, so teachers no longer rate outcomes by hand. Editing a mapping queues
+  an ad hoc task (`rate_outcomes`) that re-rates everyone with existing progress. Mappings
+  survive backup and restore, and course reset clears the ratings with the completion data.
+  The score used is the learner's share of the interaction's XP (the detail's `percent`),
+  so an H5P needs "Award partial points" on to be rated from its actual result; without it,
+  completing counts as 100 %, as it does for XP.
+
 ## [2.0.3] - 2026-09-21
 
 ### Added
@@ -17,6 +57,7 @@ All notable changes to this project will be documented in this file.
   is all the player needs.
 
 ### Fixed
+- Use `core_external\*` web service classes (with Moodle 4.0/4.1 aliases) to clear deprecation debugging on Moodle 4.2+.
 - Fixed report page crash when disabled or unknown types still appear in allitems; keep prop JSON-parseable.
 
 ## [2.0.0] - 2026-09-01

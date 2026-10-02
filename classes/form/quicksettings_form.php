@@ -237,7 +237,11 @@ class quicksettings_form extends \core_form\dynamic_form {
         }
         $data = new \stdClass();
         $data->displayinline = $fromform->displayinline; // Get this value so we can use it later in get_cm_html.
-        $displayoptions = interactivevideo_display_options($fromform);
+        // This form does not offer every display option, so the stored ones are passed
+        // in to keep the settings it does not show.
+        $stored = $DB->get_field('interactivevideo', 'displayoptions', ['id' => $fromform->interaction]);
+        $stored = $stored ? (json_decode($stored, true) ?: []) : [];
+        $displayoptions = interactivevideo_display_options($fromform, $stored);
         $fromform->displayoptions = json_encode($displayoptions);
         $data->displayoptions = $fromform->displayoptions;
         $data->id = $fromform->interaction;
@@ -326,8 +330,9 @@ class quicksettings_form extends \core_form\dynamic_form {
         global $CFG, $PAGE;
         require_once($CFG->dirroot . '/course/format/lib.php');
         $courseid = $data->courseid;
-        $context = \context_course::instance($courseid);
-        $PAGE->set_context($context);
+        // Dynamic forms have already established the module context. Changing the global
+        // page context to its parent course context here triggers Moodle's unsupported
+        // context-switch warning and can leave the response in the wrong context.
         $format = course_get_format($courseid);
         $renderer = $format->get_renderer($PAGE);
         // Rebuid the course cache.

@@ -24,6 +24,12 @@ namespace mod_interactivevideo\form;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class base_form extends \core_form\dynamic_form {
+    /** @var bool Whether the outcomes section has been added to this form. */
+    protected $outcomesectionadded = false;
+
+    /** @var string[] Keys of the completion tracking options this form offers. */
+    protected $completiontrackingoptions = [];
+
     /**
      * Returns form context
      *
@@ -91,7 +97,7 @@ class base_form extends \core_form\dynamic_form {
             $data->requiremintimeview = $this->optional_param('requiremintime', 0, PARAM_INT);
             $data->requiremintime = 0;
         }
-        $advancedsettings = json_decode($this->optional_param('advanced', null, PARAM_RAW));
+        $advancedsettings = json_decode($this->optional_param('advanced', '', PARAM_RAW) ?: '{}');
         // Getting the course defaults if it is a new item.
         if ($data->id == 0) {
             $courseid = $data->courseid;
@@ -106,14 +112,14 @@ class base_form extends \core_form\dynamic_form {
                 foreach ($defaults as $key => $value) {
                     $data->{$key} = $value;
                 }
+                if ($defaults->completiontracking == 'view') {
+                    $data->requiremintimeview = $defaults->requiremintime;
+                    $data->requiremintime = 0;
+                }
             }
             $data->id = 0; // Reset id to 0 for new item.
             $advancedsettings = json_decode($defaults->advanced ?? '{}');
             // Remove the advanced field from the data, it will be processed later.
-            if ($defaults->completiontracking == 'view') {
-                $data->requiremintimeview = $defaults->requiremintime;
-                $data->requiremintime = 0;
-            }
             unset($data->advanced);
         }
 
@@ -126,6 +132,11 @@ class base_form extends \core_form\dynamic_form {
                 $data->{$key} = $value;
             }
         }
+        $data = \mod_interactivevideo\local\outcome_mapping::flatten_for_form(
+            $data,
+            'interactivevideo',
+            (int) ($data->annotationid ?? 0)
+        );
         return $data;
     }
 
@@ -143,13 +154,16 @@ class base_form extends \core_form\dynamic_form {
      * @return \stdClass
      */
     public function pre_processing_data($data) {
-        if (!isset($data->completiontracking) || $data->completiontracking == 'none') {
+        // Some interaction types do not expose completion tracking. Treat an omitted
+        // value as "none" rather than reading an undefined submitted property.
+        $completiontracking = $data->completiontracking ?? 'none';
+        if ($completiontracking == 'none') {
             $data->xp = 0;
             $data->hascompletion = 0;
         } else {
             $data->hascompletion = 1;
         }
-        if ($data->completiontracking == 'view') {
+        if ($completiontracking == 'view' && isset($data->requiremintimeview)) {
             $data->requiremintime = $data->requiremintimeview;
         }
         return $data;
@@ -192,6 +206,7 @@ class base_form extends \core_form\dynamic_form {
      * @return string
      */
     public function process_advanced_settings($data) {
+        global $DB;
         $advancedsettings = new \stdClass();
         $advancedsettings->deletebeforecomplete = isset($data->deletebeforecomplete) ? $data->deletebeforecomplete : 0;
         $advancedsettings->deleteaftercomplete = isset($data->deleteaftercomplete) ? $data->deleteaftercomplete : 0;
@@ -203,6 +218,28 @@ class base_form extends \core_form\dynamic_form {
         $advancedsettings->replaybehavior = isset($data->replaybehavior) ? $data->replaybehavior : 1;
         $advancedsettings->advdismissible = isset($data->advdismissible) ? $data->advdismissible : 1;
         $advancedsettings->advskippable = isset($data->advskippable) ? $data->advskippable : 1;
+
+        // Outcome links. The stored row is read back so a changed mapping can queue a rating
+        // pass over everyone's existing progress.
+        $instanceid = (int) ($data->annotationid ?? 0);
+        $old = !empty($data->id)
+            ? $DB->get_record('interactivevideo_items', ['id' => $data->id], 'id, advanced, xp', IGNORE_MISSING)
+            : null;
+        $mapping = \mod_interactivevideo\local\outcome_mapping::collect_from_form(
+            $data,
+            'interactivevideo',
+            $instanceid,
+            $old ? $old->advanced : null
+        );
+        \mod_interactivevideo\local\outcome_mapping::encode($advancedsettings, $mapping);
+        \mod_interactivevideo\local\outcome_mapping::queue_backfill_if_changed(
+            'interactivevideo',
+            $instanceid,
+            $old ? $old->advanced : null,
+            $mapping,
+            $old ? $old->xp : null,
+            $data->xp ?? null
+        );
         return json_encode($advancedsettings);
     }
 
@@ -287,6 +324,7 @@ class base_form extends \core_form\dynamic_form {
                 'view' => get_string('completiononview', 'mod_interactivevideo'),
             ];
         }
+        $this->completiontrackingoptions = array_keys($options);
         $this->render_dropdown(
             'completiontracking',
             '<i class="bi bi-check2-square iv-mr-2"></i>' . get_string('completiontracking', 'mod_interactivevideo'),
@@ -371,6 +409,10 @@ class base_form extends \core_form\dynamic_form {
         ];
 
         $mform = &$this->_form;
+
+        if ($options['hascompletion']) {
+            $this->outcome_form_fields();
+        }
 
         $mform->addElement('header', 'advanced', get_string('advanced', 'mod_interactivevideo'));
         // Collapse the advanced fields by default.
@@ -519,9 +561,11 @@ class base_form extends \core_form\dynamic_form {
                 '<span class="text-muted small w-100 d-block">' . get_string('rerun_desc', 'mod_interactivevideo') . '</span>'
             );
             $mform->addGroup($elementarray, '', get_string('replaybehavior', 'mod_interactivevideo'));
+            $mform->setType('replaybehavior', PARAM_BOOL);
             $mform->setDefault('replaybehavior', 0);
         } else if ($options['rerun'] && !$options['hascompletion']) {
             $mform->addElement('hidden', 'replaybehavior', 1);
+            $mform->setType('replaybehavior', PARAM_BOOL);
         }
 
         if ($options['hascompletion']) {
@@ -557,12 +601,39 @@ class base_form extends \core_form\dynamic_form {
     }
 
     /**
+     * Adds the "Outcomes" section, once, when the site has outcomes enabled.
+     *
+     * Called from advanced_form_fields() so the section sits before "Advanced", and from
+     * close_form() for the few scored types that never add an advanced section.
+     *
+     * @return void
+     */
+    public function outcome_form_fields() {
+        if ($this->outcomesectionadded || !\mod_interactivevideo\local\outcome_mapping::is_enabled()) {
+            return;
+        }
+        $this->outcomesectionadded = true;
+
+        \mod_interactivevideo\local\outcome_mapping::add_form_fields(
+            $this->_form,
+            'interactivevideo',
+            (int) $this->optional_param('annotationid', 0, PARAM_INT),
+            (int) $this->optional_param('cmid', 0, PARAM_INT),
+            \mod_interactivevideo\local\outcome_mapping::default_mode_for_tracking($this->completiontrackingoptions),
+            \mod_interactivevideo\local\outcome_mapping::has_mapping($this->optional_param('advanced', null, PARAM_RAW))
+        );
+    }
+
+    /**
      * Standard close form element
      *
      * @return void
      */
     public function close_form() {
         $mform = &$this->_form;
+        if ($mform->elementExists('xp') || $mform->elementExists('completiontracking')) {
+            $this->outcome_form_fields();
+        }
         $mform->addElement('static', 'buttonar', '');
         $mform->closeHeaderBefore('buttonar');
         $this->set_display_vertical();
@@ -571,13 +642,16 @@ class base_form extends \core_form\dynamic_form {
     /**
      * Validation
      *
-     * @param mixed $data
-     * @param mixed $files
-     * @return void
+     * @param array $data
+     * @param array $files
+     * @return array
      */
     public function validation($data, $files) {
-        $errors = [];
-        return $errors;
+        return \mod_interactivevideo\local\outcome_mapping::validate_form(
+            (array) $data,
+            'interactivevideo',
+            (int) ($data['annotationid'] ?? 0)
+        );
     }
 
     /**

@@ -378,6 +378,26 @@ export default class ReportBase {
             }
         });
 
+        $('#reporttable th#outcomes input').on('click', function(e) {
+            e.stopPropagation();
+            let index = columns.findIndex(x => x.data === 'outcomes');
+            if (index < 0) {
+                return;
+            }
+            // The column filters on the number of outcomes rated, so nothing rated is zero.
+            let rated = $('th#outcomes input[data-rated=true]').is(':checked');
+            let unrated = $('th#outcomes input[data-rated=false]').is(':checked');
+            if (rated && unrated) {
+                tabledata.column(index).search('', true, false).draw();
+            } else if (rated) {
+                tabledata.column(index).search('^(?!0$)', true, false).draw();
+            } else if (unrated) {
+                tabledata.column(index).search('^0$', true, false).draw();
+            } else {
+                tabledata.column(index).search('-', true, false).draw();
+            }
+        });
+
         $('#reporttable th[data-type] input').on('click', function(e) {
             e.stopPropagation();
             let index = columns.findIndex(x => x.itemid == $(this).data('item'));
@@ -1209,6 +1229,22 @@ export default class ReportBase {
                         + ' (' + M.util.get_string('min', 'mod_interactivevideo') + '/' +
                         M.util.get_string('max', 'mod_interactivevideo')
                         + ')</small>' + '<br>' + avgCp + ' (' + minCp + '/' + maxCp + ')';
+                }
+
+                // Outcomes: how many learners have been rated on at least one.
+                var outcomesIdx = findColIndex('outcomes');
+                if (outcomesIdx >= 0 && api.column(outcomesIdx).footer()) {
+                    var outcomesData = api.column(outcomesIdx, {filter: 'applied'}).data();
+                    var countRated = outcomesData.reduce(function(acc, val) {
+                        return acc + ((val && val.rated > 0) ? 1 : 0);
+                    }, 0);
+                    var ratedPerc = '0%';
+                    if (rowCount > 0) {
+                        ratedPerc = ((countRated / rowCount) * 100).toFixed(1) + '%';
+                    }
+                    api.column(outcomesIdx).footer().innerHTML = '<small>'
+                        + M.util.get_string('outcomesreportrated', 'mod_interactivevideo')
+                        + '</small>' + '<br>' + ratedPerc + ' (' + countRated + '/' + rowCount + ')';
                 }
 
                 columns.forEach(function(column) {

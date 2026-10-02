@@ -23,9 +23,9 @@
  */
 
 define([
-    'jquery', 'core/str', 'core/event_dispatcher', 'core/toast', 'mod_interactivevideo/quickform',
-    'mod_interactivevideo/libraries/jquery-ui'
-], function($, str, eventDispatcher, Toast, quickform) {
+    'jquery', 'core/str', 'core/event_dispatcher', 'core/toast', 'core/templates',
+    'mod_interactivevideo/quickform', 'mod_interactivevideo/libraries/jquery-ui'
+], function($, str, eventDispatcher, Toast, Templates, quickform) {
     const getString = str.get_string;
     const {dispatchEvent} = eventDispatcher;
     const ctRenderer = {};
@@ -42,6 +42,59 @@ define([
         player, // Video player instance.
         lastrun, // Last run annotation.
         subvideo; // For multiple videos.
+
+    /**
+     * The outcome rows a save_progress response carries, if any.
+     *
+     * The two modules answer differently: one returns the record as a JSON string, the
+     * other wraps it in a web service envelope.
+     *
+     * @param {Object|String} response The response passed on the completionupdated event.
+     * @returns {Array|null} The rows, or null when the response holds none.
+     */
+    const outcomeRowsFrom = (response) => {
+        let payload = response;
+        if (payload && typeof payload === 'object' && typeof payload.data === 'string') {
+            payload = payload.data;
+        }
+        if (typeof payload === 'string') {
+            try {
+                payload = JSON.parse(payload);
+            } catch (e) {
+                return null;
+            }
+        }
+        return payload && payload.outcomes ? payload.outcomes : null;
+    };
+
+    /**
+     * Redraws the outcome lists on the start and end screens.
+     *
+     * Both screens were rendered before this attempt, so the ratings they show are stale as
+     * soon as the learner completes anything.
+     *
+     * @param {Object|String} response The response passed on the completionupdated event.
+     * @returns {void}
+     */
+    const refreshOutcomeLists = (response) => {
+        const $lists = $('[data-region="outcomelist"]');
+        if ($lists.length === 0) {
+            return;
+        }
+        const rows = outcomeRowsFrom(response);
+        if (!rows) {
+            return;
+        }
+        Templates.render('mod_interactivevideo/player/outcomelist', {outcomes: rows})
+            .then((html) => {
+                $('[data-region="outcomelist"]').replaceWith(html);
+                return html;
+            })
+            .catch(() => {
+                // Leave the list as it was rendered on load.
+                return false;
+            });
+    };
 
     window.M.version = $('#iv-m-version').data('value');
 
@@ -1057,7 +1110,10 @@ define([
                 if (force && leaveWatchedPointPending) {
                     return false;
                 }
-                if (!playerReady || player.live || subvideo) {
+                // Guest and preview progress is held in the session and deliberately has no
+                // interactivevideo_completion row to update.
+                if (!playerReady || player.live || subvideo || !Number.isInteger(Number(completionid))
+                    || Number(completionid) < 1) {
                     return false;
                 }
                 const watchedpoint = Math.round(Number(time));
@@ -1156,7 +1212,8 @@ define([
                 viewedAnno = [];
 
                 // Update the timeended field in the database if it is not already set.
-                if (!timeended) {
+                // Guest and preview progress has no persistent completion record.
+                if (!timeended && Number.isInteger(Number(completionid)) && Number(completionid) > 0) {
                     $.ajax({
                         url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
                         method: "POST",
@@ -2368,6 +2425,7 @@ define([
             });
 
             $(document).on('completionupdated', async function(e) {
+                refreshOutcomeLists(e.originalEvent.detail.response);
                 let overallcomplete = JSON.parse(e.originalEvent.detail.response).overallcomplete;
                 if (overallcomplete) {
                     if (JSON.parse(e.originalEvent.detail.response).overallcomplete > 0) {

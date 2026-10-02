@@ -139,6 +139,7 @@ class fbform extends \mod_flexbook\form\base_form {
         $mform->setDefault('char3', 0);
 
         $mform->addElement('hidden', 'char1', 'html5video');
+        $mform->setType('char1', PARAM_TEXT);
 
         $mform->addElement('hidden', 'content');
         $mform->setType('content', PARAM_TEXT);
@@ -160,17 +161,5 @@ class fbform extends \mod_flexbook\form\base_form {
         $this->jump_section_fields(true);
 
         $this->close_form();
-    }
-
-    /**
-     * Validation
-     *
-     * @param array $data
-     * @param array $files
-     * @return array
-     */
-    public function validation($data, $files) {
-        $errors = [];
-        return $errors;
     }
 }

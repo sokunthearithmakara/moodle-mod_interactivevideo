@@ -1,0 +1,59 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/player/outcomelist
+
+    The activity's learning outcomes and the learner's standing on each.
+
+    Shown on the start and end screens of an interactive video or a flexbook when the
+    teacher has switched the matching setting on. Re-rendered in place after the learner
+    saves progress, so the wrapper keeps a stable data-region hook.
+
+    Context variables required for this template:
+    * outcomes - array of rows, each with:
+      * name - the outcome's name
+      * shortname - its short name, shown in brackets
+      * rating - the learner's level on it, or the "No outcome" label
+      * notrated - whether the learner has no rating yet
+
+    Example context (json):
+    {
+        "outcomes": [
+            {"name": "Describes the stages of the water cycle", "shortname": "WC-1",
+                "rating": "Competent", "notrated": false},
+            {"name": "Interprets a precipitation chart", "shortname": "WC-2",
+                "rating": "No outcome", "notrated": true}
+        ]
+    }
+}}
+<div class="iv-outcome-list p-2 p-md-3" data-region="outcomelist">
+    <h3 class="h5 iv-outcome-list-title d-flex align-items-center mb-2">
+        <i class="bi bi-list-check iv-mr-2" aria-hidden="true"></i>{{#str}}outcomes, grades{{/str}}
+    </h3>
+    <ul class="list-group" aria-label="{{#str}}outcomes, grades{{/str}}">
+        {{#outcomes}}
+        <li class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
+            <span class="iv-outcome-list-name iv-mr-2">
+                {{name}}{{#shortname}} <span class="text-muted">({{shortname}})</span>{{/shortname}}
+            </span>
+            <span class="badge iv-rounded-pill {{#notrated}}bg-secondary{{/notrated}}{{^notrated}}bg-success{{/notrated}}">
+                {{rating}}
+            </span>
+        </li>
+        {{/outcomes}}
+    </ul>
+</div>

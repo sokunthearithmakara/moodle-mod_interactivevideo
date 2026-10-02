@@ -291,6 +291,11 @@ export const initH5PIntegration = (instance, annotation, $message, log, saveStat
                 }
                 H5PIntegration.contents[id].contentUserData[0].state = log;
             }
+            // Where H5P content stores recordings, such as a spoken answer a teacher grades:
+            // as a file of the learner's log, not in the saved state.
+            if (typeof instance.uploadRecording === 'function' && !instance.isEditMode()) {
+                H5PIntegration.llUploadRecording = (blob, info) => instance.uploadRecording(annotation, blob, info);
+            }
             window.H5P = H5P;
 
             try {
@@ -343,6 +348,28 @@ export const resizeIframe = (annotation) => {
 };
 
 /**
+ * The learner's saved H5P state, marked as checked, for the report: content that keeps its
+ * answers with a "checked" flag (such as H5P question types and Language Lesson exercises)
+ * then shows the result, or the work as it was sent, instead of answers waiting for a check.
+ * States that aren't objects (some content types save a list) are left as they are.
+ *
+ * @param {string|Object} state The saved state, as JSON or parsed
+ * @returns {string|Object} The same state, marked as checked, in the same form
+ */
+export const markStateChecked = (state) => {
+    try {
+        const parsed = typeof state === 'string' ? JSON.parse(state) : state;
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            return state;
+        }
+        parsed.checked = true;
+        return typeof state === 'string' ? JSON.stringify(parsed) : parsed;
+    } catch (e) {
+        return state;
+    }
+};
+
+/**
  * Common logic for rendering the report view summary.
  *
  * @param {Object} annotation
@@ -367,6 +394,10 @@ export const renderReportView = (annotation, details, data, superMethod) => {
                     <i class="${rdata[3]}"></i>
                     <br><span>${rdata[4]}</span>
                     </span>`;
+    if (details.pending) {
+        // Work a teacher grades, waiting for the XP
+        reportview += `<br><span class="badge text-bg-warning">${M.util.get_string('needsgrading', 'mod_interactivevideo')}</span>`;
+    }
     let res = `<span class="completion-detail ${details.hasDetails ? 'cursor-pointer' : ''}"` +
         ` data-id="${data.itemid}" data-userid="${data.row.id}" data-type="${data.ctype}">${reportview}</span>`;
     if (data.access.canedit == 1) {
@@ -383,5 +414,6 @@ export default {
     setupEditForm,
     initH5PIntegration,
     resizeIframe,
-    renderReportView
+    renderReportView,
+    markStateChecked
 };

@@ -26,21 +26,21 @@
 
 <div id="end-screen"
      class="w-100 position-absolute h-100 
-            {{#hasendscreentext}}bg-light{{/hasendscreentext}}
-            {{^hasendscreentext}}
+            {{#endscreendocument}}bg-light{{/endscreendocument}}
+            {{^endscreendocument}}
                 {{^darkmode}}bg-light{{/darkmode}}
                 {{#darkmode}}bg-black{{/darkmode}}
-            {{/hasendscreentext}} 
+            {{/endscreendocument}} 
             d-none bottom-0"
      role="region"
      aria-label="{{#str}}endscreen, mod_interactivevideo{{/str}}"
      tabindex="-1">
 
     <div class="end-content 
-                {{#hasendscreentext}}hascontent w-100 p-0 align-items-start{{/hasendscreentext}} 
+                {{#endscreendocument}}hascontent w-100 p-0 align-items-start{{/endscreendocument}} 
                 position-relative">
 
-        {{#hasendscreentext}}
+        {{#endscreendocument}}
         <header id="title-section"
                 class="bg-secondary w-100 d-flex align-items-center justify-content-between p-3 overflow-hidden position-sticky"
                 role="banner">
@@ -59,12 +59,18 @@
             </button>
         </header>
 
+        {{#hasendscreentext}}
         <div class="p-2 p-md-3" role="document" aria-describedby="end-title">
             {{{endscreentext}}}
         </div>
         {{/hasendscreentext}}
 
-        {{^hasendscreentext}}
+        {{#showoutcomesonendscreen}}
+        {{> mod_interactivevideo/player/outcomelist}}
+        {{/showoutcomesonendscreen}}
+        {{/endscreendocument}}
+
+        {{^endscreendocument}}
         <div class="d-flex justify-content-center align-items-center h-100">
             <button class="btn btn-flex btn-danger iv-rounded-circle pulse"
                     id="restart"
@@ -75,7 +81,7 @@
                 <span class="visually-hidden sr-only">{{#str}}restart, mod_interactivevideo{{/str}}</span>
             </button>
         </div>
-        {{/hasendscreentext}}
+        {{/endscreendocument}}
 
     </div>
 </div>

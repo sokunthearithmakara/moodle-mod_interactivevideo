@@ -160,7 +160,6 @@ class interactivevideo_util {
             'noclean' => true,
             'overflowdiv' => false,
             'context' => $context,
-            'trusttext' => true,
         ]);
     }
 
@@ -787,6 +786,17 @@ class interactivevideo_util {
                     'completionid' => $record->id,
                 ]);
                 if (!$existing) {
+                    // A log made before the completion, such as one holding a recording
+                    // from H5P content: use it, so there's one log for the interaction.
+                    $existing = $DB->get_record_select(
+                        'interactivevideo_log',
+                        'annotationid = :annotationid AND userid = :userid AND completionid IS NULL',
+                        ['annotationid' => $completion->id, 'userid' => $userid],
+                        '*',
+                        IGNORE_MULTIPLE
+                    );
+                }
+                if (!$existing) {
                     $log = new stdClass();
                     $log->userid = $userid;
                     $log->cmid = $interactivevideo;
@@ -796,9 +806,25 @@ class interactivevideo_util {
                     $log->text1 = $details;
                     $log->timemodified = time();
                     $log->completionid = $record->id;  // Store the completion id.
-                    $DB->insert_record('interactivevideo_log', $log);
+                    $log->id = $DB->insert_record('interactivevideo_log', $log);
+                    // Files of the log, such as a recording, are kept as @@PLUGINFILE@@.
+                    $encoded = \mod_interactivevideo\local\recording_store::encode_urls(
+                        $details,
+                        $contextid,
+                        'mod_interactivevideo',
+                        $log->id
+                    );
+                    if ($encoded !== $details) {
+                        $DB->set_field('interactivevideo_log', 'text1', $encoded, ['id' => $log->id]);
+                    }
                 } else {
-                    $existing->text1 = $details;
+                    // Files of the log, such as a recording, are kept as @@PLUGINFILE@@.
+                    $existing->text1 = \mod_interactivevideo\local\recording_store::encode_urls(
+                        $details,
+                        $contextid,
+                        'mod_interactivevideo',
+                        $existing->id
+                    );
                     $existing->timemodified = time();
                     $existing->completionid = $record->id;  // Store the completion id.
                     $DB->update_record('interactivevideo_log', $existing);
@@ -834,6 +860,25 @@ class interactivevideo_util {
             $record->gradeitem = $gradeitem;
         }
 
+        // Rate the activity's outcomes from the stored progress.
+        \mod_interactivevideo\local\outcome_mapping::rate_user(
+            'interactivevideo',
+            (int) $interactivevideo,
+            (int) $userid,
+            $items,
+            $decodeddetails,
+            $completeditemsarr
+        );
+
+        // The screens showing these outcomes were rendered before this attempt, so hand back
+        // the fresh standing for them to redraw with.
+        $record->outcomes = \mod_interactivevideo\local\outcome_mapping::screen_rows(
+            'interactivevideo',
+            (int) $interactivevideo,
+            (int) $userid,
+            \context_module::instance($cm->id)
+        );
+
         // Update completion state.
         if ($updatestate) {
             if ($cm->completion > 1) {
@@ -843,6 +888,13 @@ class interactivevideo_util {
                 $completion = new completion_info($course);
                 $completion->update_state($cm);
                 $record->overallcomplete = $completion->internal_get_state($cm, $userid, null);
+            }
+        }
+
+        if ($type === 'peerwork' && class_exists(\local_ivpeerwork\score::class)) {
+            $peerdetail = json_decode($completiondetails);
+            if ($peerdetail && !empty($peerdetail->id)) {
+                \local_ivpeerwork\score::sync('interactivevideo', (int) $userid, (int) $peerdetail->id);
             }
         }
 
@@ -963,6 +1015,15 @@ class interactivevideo_util {
             );
         }
 
+        // The outcome column's data, read once for the whole report rather than per row.
+        $outcometotal = count(\mod_interactivevideo\local\outcome_mapping::get_outcome_grade_items(
+            'interactivevideo',
+            (int) $interactivevideo
+        ));
+        $outcomeratings = $outcometotal > 0
+            ? \mod_interactivevideo\local\outcome_mapping::report_ratings('interactivevideo', (int) $interactivevideo)
+            : [];
+
         $records = [];
         $rs = $DB->get_recordset_sql($sql, $params);
         foreach ($rs as $record) {
@@ -995,6 +1056,13 @@ class interactivevideo_util {
                 } else {
                     $record->{$field} = '';
                 }
+            }
+
+            if ($outcometotal > 0) {
+                $record->outcomes = \mod_interactivevideo\local\outcome_mapping::report_row(
+                    $outcomeratings[$record->id] ?? [],
+                    $outcometotal
+                );
             }
 
             $records[$record->id] = $record;
@@ -1298,6 +1366,19 @@ class interactivevideo_util {
         } else {
             $record->id = $DB->insert_record('interactivevideo_log', $record);
         }
+        if (isset($record->text1)) {
+            // Files of the log, such as a recording, are kept as @@PLUGINFILE@@.
+            $encoded = \mod_interactivevideo\local\recording_store::encode_urls(
+                $record->text1,
+                (int) $contextid,
+                'mod_interactivevideo',
+                (int) $record->id
+            );
+            if ($encoded !== $record->text1) {
+                $DB->set_field('interactivevideo_log', 'text1', $encoded, ['id' => $record->id]);
+                // The caller still gets the addresses, to show the files now.
+            }
+        }
         $record->formattedtimecreated = userdate($record->timecreated, get_string('strftimedatetime'));
         $record->formattedtimemodified = userdate($record->timemodified, get_string('strftimedatetime'));
 
@@ -1565,6 +1646,10 @@ class interactivevideo_util {
             $annotation->timecreated = time();
             $annotation->timemodified = time();
             $annotation->contextid = $contextid;
+            $annotation->advanced = \mod_interactivevideo\local\outcome_mapping::restrict_to_course(
+                $annotation->advanced ?? null,
+                (int) $tocourse
+            );
             $annotation->id = $DB->insert_record('interactivevideo_items', $annotation);
             $idmap[(int) $annotation->oldid] = (int) $annotation->id;
             $prop = json_decode($annotation->prop);
@@ -1629,7 +1714,6 @@ class interactivevideo_util {
             'overallcompletion' => $completiondetails->get_overall_completion() == COMPLETION_COMPLETE ? 1 : 0,
         ];
 
-        // If moodle version is 4.4 or below, use a different completion information.
         if ($CFG->branch < 404) {
             $completion = $OUTPUT->activity_information($cm, $completiondetails, []);
             $response['completion'] = $completion;
@@ -1638,7 +1722,11 @@ class interactivevideo_util {
             $output = $PAGE->get_renderer('core');
             $activitycompletiondata = (array) $activitycompletion->export_for_template($output);
             if ($activitycompletiondata["hascompletion"]) {
-                $completion = $OUTPUT->render_from_template('core_course/activity_info', $activitycompletiondata);
+                if ($CFG->branch >= 503 && !empty($activitycompletiondata["showmanualcompletion"])) {
+                    $completion = $OUTPUT->render_from_template('core_course/completion_manual', $activitycompletiondata);
+                } else {
+                    $completion = $OUTPUT->render_from_template('core_course/activity_info', $activitycompletiondata);
+                }
                 $response['completion'] = $completion;
             }
         }
@@ -1674,6 +1762,9 @@ class interactivevideo_util {
             $fs = get_file_storage();
             foreach ($logs as $log) {
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments', $log->id);
+                if (class_exists(\local_ivpeerwork\service::class)) {
+                    \local_ivpeerwork\service::delete_public_copies($contextid, 'mod_interactivevideo', (int) $log->id);
+                }
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text1', $log->id);
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2', $log->id);
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3', $log->id);
@@ -1696,6 +1787,14 @@ class interactivevideo_util {
                 $completion->update_state($cm, null, $userid);
             }
         }
+
+        // With no progress left there is no evidence for any outcome.
+        \mod_interactivevideo\local\outcome_mapping::clear_user(
+            'interactivevideo',
+            (int) $cm->instance,
+            (int) $record->userid,
+            self::get_reachable_gradable_items($cm->instance, $contextid)
+        );
 
         return 'deleted';
     }
@@ -1737,6 +1836,9 @@ class interactivevideo_util {
             $fs = get_file_storage();
             foreach ($logs as $log) {
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments', $log->id);
+                if (class_exists(\local_ivpeerwork\service::class)) {
+                    \local_ivpeerwork\service::delete_public_copies($contextid, 'mod_interactivevideo', (int) $log->id);
+                }
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text1', $log->id);
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2', $log->id);
                 $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3', $log->id);
@@ -1755,6 +1857,12 @@ class interactivevideo_util {
             foreach ($userids as $userid) {
                 $completion->update_state($cm, null, $userid);
             }
+        }
+
+        // With no progress left there is no evidence for any outcome.
+        $items = self::get_reachable_gradable_items($cm->instance, $contextid);
+        foreach (array_values(array_unique($owners)) as $userid) {
+            \mod_interactivevideo\local\outcome_mapping::clear_user('interactivevideo', (int) $cm->instance, (int) $userid, $items);
         }
 
         return 'deleted';
@@ -2038,17 +2146,42 @@ class interactivevideo_util {
             $completion->completiondetails = json_encode(array_values($completiondetails));
             $DB->update_record('interactivevideo_completion', $completion);
 
+            // The interaction no longer counts, so the outcomes it fed are recomputed.
+            [$outcomedetails, $outcomecompleted] = \mod_interactivevideo\local\outcome_mapping::decode_progress($completion);
+            \mod_interactivevideo\local\outcome_mapping::rate_user(
+                'interactivevideo',
+                (int) $completion->cmid,
+                (int) $completion->userid,
+                self::get_reachable_gradable_items($completion->cmid, $contextid),
+                $outcomedetails,
+                $outcomecompleted
+            );
+
             // Delete associated logs.
             $logs = $DB->get_records('interactivevideo_log', ['userid' => $userid, 'annotationid' => $itemid]);
+            $reviewedauthors = [];
+            if ($logs && class_exists(\local_ivpeerwork\score::class)) {
+                $reviewedauthors = \local_ivpeerwork\score::authors_in_logs($logs);
+            }
             $fs = get_file_storage();
             if ($logs) {
                 foreach ($logs as $log) {
                     $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments', $log->id);
+                    if (class_exists(\local_ivpeerwork\service::class)) {
+                        \local_ivpeerwork\service::delete_public_copies(
+                            $contextid,
+                            'mod_interactivevideo',
+                            (int) $log->id
+                        );
+                    }
                     $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text1', $log->id);
                     $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2', $log->id);
                     $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3', $log->id);
                 }
                 $DB->delete_records('interactivevideo_log', ['userid' => $userid, 'annotationid' => $itemid]);
+            }
+            foreach ($reviewedauthors as $authorid) {
+                \local_ivpeerwork\score::sync('interactivevideo', (int) $authorid, (int) $itemid);
             }
             return json_encode(['id' => $id, 'itemid' => $itemid]);
         } else {
@@ -2146,6 +2279,8 @@ class interactivevideo_util {
                     }
                 }
                 $found = true;
+                // The teacher's XP grades work that was waiting for it.
+                $decoded = \mod_interactivevideo\report_helper::mark_graded($decoded);
                 $updateditemdetail = $decoded;
             }
             return json_encode($decoded);
@@ -2187,6 +2322,16 @@ class interactivevideo_util {
             $gradeobj->rawgrade = ($grade === null || $grade <= 0) ? null : $grade;
             grade_update('mod/interactivevideo', $courseid, 'mod', 'interactivevideo', $cmid, 0, $gradeobj);
         }
+
+        // The override is the teacher's word on the score, so the outcomes follow it too.
+        \mod_interactivevideo\local\outcome_mapping::rate_user(
+            'interactivevideo',
+            (int) $cmid,
+            (int) $userid,
+            $items,
+            $decodeddetails,
+            $completeditems
+        );
 
         return json_encode([
             'id' => $id,

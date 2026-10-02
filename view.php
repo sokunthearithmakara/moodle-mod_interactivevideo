@@ -205,7 +205,6 @@ $completion = null;
 if ($getcompletion) {
     $completionstate = $cmcompletion->internal_get_state($cm, $USER->id, true);
     $completiondetails = \core_completion\cm_completion_details::get_instance($PAGE->cm, $USER->id);
-    // If moodle version is 4.4 or below, use new completion information.
     if ($CFG->branch < 404) {
         $completion = $OUTPUT->activity_information($PAGE->cm, $completiondetails, []);
     } else {
@@ -213,7 +212,11 @@ if ($getcompletion) {
         $output = $PAGE->get_renderer('core');
         $activitycompletiondata = (array) $activitycompletion->export_for_template($output);
         if ($activitycompletiondata["hascompletion"]) {
-            $completion = $OUTPUT->render_from_template('core_course/activity_info', $activitycompletiondata);
+            if ($CFG->branch >= 503 && !empty($activitycompletiondata["showmanualcompletion"])) {
+                $completion = $OUTPUT->render_from_template('core_course/completion_manual', $activitycompletiondata);
+            } else {
+                $completion = $OUTPUT->render_from_template('core_course/activity_info', $activitycompletiondata);
+            }
         }
     }
     $completed = $completiondetails->get_overall_completion();
@@ -504,6 +507,28 @@ $datafortemplate = [
     "courseindex" => $courseindex,
     "hascourseindex" => !empty($courseindex) && $rendernav,
 ];
+
+// The activity's outcomes, and where the learner stands on each. Both screens are rendered
+// now and refreshed in place as progress is saved.
+$outcomerows = \mod_interactivevideo\local\outcome_mapping::screen_rows(
+    'interactivevideo',
+    (int) $cm->instance,
+    (int) $USER->id,
+    $modulecontext
+);
+$showoutcomesonstartscreen = !empty($outcomerows)
+    && !empty($moduleinstance->displayoptions['showoutcomesonstartscreen']);
+$showoutcomesonendscreen = !empty($outcomerows)
+    && !empty($moduleinstance->displayoptions['showoutcomesonendscreen']);
+$datafortemplate['outcomes'] = $outcomerows;
+$datafortemplate['showoutcomesonstartscreen'] = $showoutcomesonstartscreen;
+$datafortemplate['showoutcomesonendscreen'] = $showoutcomesonendscreen;
+$datafortemplate['startscreendocument'] = !empty($moduleinstance->displayasstartscreen) || $showoutcomesonstartscreen;
+$datafortemplate['endscreendocument'] = !empty($moduleinstance->endscreentext) || $showoutcomesonendscreen;
+// The description is shown on the start screen only when the teacher asked for it.
+$datafortemplate['showintro'] = !empty($moduleinstance->displayasstartscreen)
+    && !empty($datafortemplate['hasintro']);
+$datafortemplate['hascontent'] = $datafortemplate['showintro'] || $showoutcomesonstartscreen;
 echo $OUTPUT->render_from_template('mod_interactivevideo/player/player', $datafortemplate);
 
 echo '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>';

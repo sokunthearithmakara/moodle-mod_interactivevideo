@@ -83,9 +83,11 @@ function interactivevideo_get_subplugins($classname) {
  * Mod edit form display options
  *
  * @param mixed $moduleinstance
+ * @param array $current The options already stored on the activity, for settings the
+ *      submitted form does not offer.
  * @return mixed
  */
-function interactivevideo_display_options($moduleinstance) {
+function interactivevideo_display_options($moduleinstance, array $current = []) {
     $options = [];
     $options['cardsize'] = $moduleinstance->cardsize ?? 'large';
     $options['theme'] = $moduleinstance->theme ?? '';
@@ -119,6 +121,15 @@ function interactivevideo_display_options($moduleinstance) {
     ];
     foreach ($fields as $field) {
         $options[$field] = $moduleinstance->$field ?? 0;
+    }
+
+    // The outcome screen settings are offered by the activity form only. A form that
+    // does not show them, such as quick settings, must not silently switch them off, so
+    // they fall back to what is already stored rather than to zero.
+    foreach (['showoutcomesonstartscreen', 'showoutcomesonendscreen', 'showoutcomesonreport'] as $field) {
+        $options[$field] = isset($moduleinstance->$field)
+            ? (int) $moduleinstance->$field
+            : (int) ($current[$field] ?? 0);
     }
     $options['beforecompletion'] = $moduleinstance->beforecompletion ?? interactivevideo_default_appearance();
     $options['aftercompletion'] = $moduleinstance->aftercompletion ?? interactivevideo_default_appearance();
@@ -384,6 +395,13 @@ function interactivevideo_update_instance($moduleinstance, $mform = null) {
         );
     }
 
+    // Attaching an outcome here creates its grade item once this function returns, so a
+    // rating pass is queued to catch up learners who already have progress.
+    \mod_interactivevideo\local\outcome_mapping::queue_backfill_for_activity(
+        $moduleinstance,
+        'interactivevideo',
+        (int) $moduleinstance->id
+    );
     // Handle external plugins.
     $subplugins = interactivevideo_get_subplugins('ivmform');
     foreach ($subplugins as $subplugin) {
@@ -519,7 +537,16 @@ function interactivevideo_can_access_log_file($logid, $context) {
         return true;
     }
 
-    return has_capability('mod/interactivevideo:viewreport', $context);
+    if (has_capability('mod/interactivevideo:viewreport', $context)) {
+        return true;
+    }
+
+    // An allocated peer reviewer may read that submission's files.
+    if (class_exists(\local_ivpeerwork\access::class)) {
+        return \local_ivpeerwork\access::reviewer_can_read('interactivevideo', (int) $log->id, (int) $USER->id);
+    }
+
+    return false;
 }
 
 /**
@@ -962,7 +989,11 @@ function interactivevideo_displayinline(cm_info $cm) {
             $output = $PAGE->get_renderer('core');
             $activitycompletiondata = (array) $activitycompletion->export_for_template($output);
             if ($activitycompletiondata["hascompletion"]) {
-                $completion = $OUTPUT->render_from_template('core_course/activity_info', $activitycompletiondata);
+                if ($CFG->branch >= 503 && !empty($activitycompletiondata["showmanualcompletion"])) {
+                    $completion = $OUTPUT->render_from_template('core_course/completion_manual', $activitycompletiondata);
+                } else {
+                    $completion = $OUTPUT->render_from_template('core_course/activity_info', $activitycompletiondata);
+                }
             }
         }
     }
@@ -1369,12 +1400,16 @@ function interactivevideo_reset_userdata($data) {
             $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text2');
             $fs->delete_area_files($contextid, 'mod_interactivevideo', 'text3');
             $fs->delete_area_files($contextid, 'mod_interactivevideo', 'attachments');
+            if (class_exists(\local_ivpeerwork\service::class)) {
+                \local_ivpeerwork\service::delete_public_copies($contextid, 'mod_interactivevideo');
+            }
         }
 
-        // Get all related modules and reset their grades.
+        // Get all related modules and reset their grades, outcome ratings included.
         $interactivevideos = $DB->get_records('interactivevideo', ['course' => $courseid]);
         foreach ($interactivevideos as $interactivevideo) {
             interactivevideo_grade_item_update($interactivevideo, 'reset');
+            \mod_interactivevideo\local\outcome_mapping::reset_ratings('interactivevideo', (int) $interactivevideo->id);
         }
 
         $status[] = [

@@ -281,6 +281,10 @@ export default {
                 }
             });
 
+            root.on(ModalEvents.outsideClick, function(e) {
+                e.preventDefault();
+            });
+
             $(document).off('interactivevideo:closemodal');
             $(document).on('interactivevideo:closemodal', async function() {
                 $('body').removeClass('overflow-hidden');

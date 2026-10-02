@@ -168,13 +168,17 @@ export default class ContentBank extends Base {
                         let complete = false;
                         let textclass = '';
                         let result = statement.result;
+                        // Work a teacher grades, such as a recorded or written answer: it's done,
+                        // with no XP until the teacher gives it in the report.
+                        const needsGrading = !!(result && result.extensions
+                            && result.extensions['https://h5p.org/x-api/ll/needs-grading']);
                         if (annotation.completiontracking == 'completepass'
                             && result && result.score.scaled >= 0.5) {
                             complete = true;
                         } else if (annotation.completiontracking == 'completefull'
                             && result && result.score.scaled == 1) {
                             complete = true;
-                        } else if (annotation.completiontracking == 'complete') {
+                        } else if (annotation.completiontracking == 'complete' || needsGrading) {
                             complete = true;
                         }
                         if (result.score.scaled < 0.5) {
@@ -192,6 +196,11 @@ export default class ContentBank extends Base {
                             if (annotation.char1 == '1') { // Partial points.
                                 details.xp = (result.score.scaled * annotation.xp).toFixed(2);
                             }
+                            if (needsGrading) {
+                                details.xp = 0;
+                                details.pending = true;
+                                textclass = 'fa fa-hourglass-half text-warning';
+                            }
                             details.percent = details.xp / annotation.xp;
                             details.duration = windowAnno.duration + (completeTime.getTime() - windowAnno.newstarttime);
                             details.timecompleted = completeTime.getTime();
@@ -202,7 +211,7 @@ export default class ContentBank extends Base {
                                 + result.score.raw + "/" + result.score.max + "|"
                                 + textclass + "|"
                                 + Number(details.xp);
-                            const hasState = saveState == 1
+                            const hasState = (saveState == 1 || needsGrading)
                                 && H5PIntegration.contents[id]
                                 && H5PIntegration.contents[id].contentUserData
                                 && H5PIntegration.contents[id].contentUserData[0];
@@ -214,7 +223,7 @@ export default class ContentBank extends Base {
                             }, 1500);
                         }
 
-                        if (condition !== null) {
+                        if (condition !== null && !needsGrading) {
                             if (result.score.scaled < 0.5) {
                                 if (condition.gotoonfailed == 1 && condition.forceonfailed != 1) {
                                     onPassFail(false, condition.timeonfailed);
@@ -392,6 +401,8 @@ export default class ContentBank extends Base {
         let log = '';
         if (logs.length > 0) {
             log = JSON.parse(logs[0].text1);
+            // Show the learner's work as checked, as it was when it was completed
+            log = contentbankutil.markStateChecked(log);
         }
         annotation.displayoptions = 'popup';
         annotation.hascompletion = 0;

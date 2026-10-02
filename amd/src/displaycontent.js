@@ -135,6 +135,11 @@ const defaultDisplayContent = async function(annotation, player) {
             } else {
                 displayoptions = displayoptions == 'inline' ? 'inline' : 'popup';
             }
+        } else {
+            // If the #wrapper height is less than 500px, display the message as popup.
+            if ($('#wrapper').height() < 500 && displayoptions == 'inline') {
+                displayoptions = 'popup';
+            }
         }
 
         // If the wrapper is in fullscreen mode, display the message inline (on top of the video).

@@ -22,6 +22,7 @@
  */
 import $ from 'jquery';
 import ReportBase from 'mod_interactivevideo/report_base';
+import * as ReportOutcomes from 'mod_interactivevideo/report_outcomes';
 import Notification from 'core/notification';
 import {add as addToast} from 'core/toast';
 import JSZip from './libraries/jszip';
@@ -329,6 +330,12 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
             }
         ]);
 
+        // The outcome column, when the activity's report asks for one.
+        const outcomedefinitions = ReportOutcomes.getDefinitions();
+        if (outcomedefinitions.length > 0) {
+            columns.push(ReportOutcomes.column());
+        }
+
         let datatableOptions = ReportBase.getDataTableOptions({
             columns,
             exportOptions,
@@ -471,6 +478,8 @@ const init = async(cmid, groupid, grademax, itemids, completionpercentage, video
         $('#filterregion :input:not([type=date])').on('keyup change', function(e) {
             filterTimer = ReportBase.applyFilter(tabledata, $(this), e, filterTimer);
         });
+
+        ReportOutcomes.init(tabledata, ModalFactory, outcomedefinitions);
 
         ReportBase.registerSearchFilters(tabledata, columns);
         ReportBase.registerClickHandlers(tabledata, columns);
