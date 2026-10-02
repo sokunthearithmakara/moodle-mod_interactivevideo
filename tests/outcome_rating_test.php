@@ -334,7 +334,10 @@ final class outcome_rating_test extends \advanced_testcase {
      */
     public function test_locked_item_left_alone(): void {
         $gradeitem = \grade_item::fetch(['id' => $this->outcomeitem->id]);
+        $gradeitem->needsupdate = 0;
         $gradeitem->set_locked(true);
+        $gradeitem->locked = time();
+        $gradeitem->update();
 
         \cache::make_from_params(\cache_store::MODE_REQUEST, 'mod_interactivevideo', 'outcomeitems')->purge();
 
