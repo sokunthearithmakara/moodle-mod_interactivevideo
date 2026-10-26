@@ -25,8 +25,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['audiofile'] = 'ឯកសារសំឡេង';
+$string['audioprogress'] = 'វឌ្ឍនភាពសំឡេង';
+$string['autoplay'] = 'ចាក់ដោយស្វ័យប្រវត្តិ';
 $string['content'] = 'មាតិកា';
+$string['pause'] = 'ផ្អាក';
+$string['play'] = 'ចាក់';
 $string['pluginname'] = 'អត្ថបទចម្រុះ';
 $string['privacy:metadata'] = 'Rich Text មិនរក្សាទិន្នន័យបុគ្គលទេ';
 $string['richtextcontent'] = 'អត្ថបទចម្រុះ';
 $string['richtextdescription'] = 'បញ្ចូលអត្ថបទចម្រុះដោយប្រើកម្មវិធីបញ្ចូលអត្ថបទ';
+$string['speed'] = 'ល្បឿនចាក់';
+$string['stop'] = 'ឈប់';

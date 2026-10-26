@@ -114,6 +114,7 @@ function interactivevideo_display_options($moduleinstance, array $current = []) 
         'showname',
         'autoplay',
         'allowdeleteprogress',
+        'preventdevtools',
         'columnlayout',
         'showdescriptiononheader',
         'passwordprotected',
@@ -2752,6 +2753,17 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             [0, 1]
         );
         $mform->setDefault('allowdeleteprogress', 0);
+
+        // Disable right-click and detect DevTools.
+        $group[] = $mform->createElement(
+            'advcheckbox',
+            'preventdevtools',
+            '',
+            get_string('preventdevtools', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->setDefault('preventdevtools', 0);
 
         $mform->addGroup($group, 'behaviorgroup', '', '', false);
 

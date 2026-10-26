@@ -67,7 +67,7 @@ class main {
      * @return string[]
      */
     public function get_dnd_default_fields(): array {
-        return [
+        $fields = [
             'xp',
             'hascompletion',
             'completiontracking',
@@ -75,6 +75,10 @@ class main {
             'displayoptions',
             'advanced',
         ];
+        if ($this->get_content_type() === 'richtext') {
+            $fields[] = 'intg1';
+        }
+        return $fields;
     }
 
     /**
@@ -189,11 +193,12 @@ class main {
         $format = FORMAT_HTML;
         // Process the content from editor for displaying.
         require_once($CFG->libdir . '/filelib.php');
+        $component = 'mod_' . (isset($arg['plugin']) ? $arg['plugin'] : 'interactivevideo');
         $content = file_rewrite_pluginfile_urls(
             $content,
             'pluginfile.php',
             $contextid,
-            'mod_' . (isset($arg['plugin']) ? $arg['plugin'] : 'interactivevideo'),
+            $component,
             'content',
             $id
         );
@@ -202,6 +207,28 @@ class main {
         $options->overflowdiv = true;
         $options->noclean = true;
         $content = format_text($content, $format, $options);
+
+        if ($this->get_content_type() === 'richtext') {
+            $fs = get_file_storage();
+            $files = $fs->get_area_files($contextid, $component, 'itext1', $id, 'id DESC', false);
+            $file = reset($files);
+            if ($file) {
+                $audiourl = \moodle_url::make_pluginfile_url(
+                    $file->get_contextid(),
+                    $file->get_component(),
+                    $file->get_filearea(),
+                    $file->get_itemid(),
+                    $file->get_filepath(),
+                    $file->get_filename()
+                )->out(false);
+                $audiobar = \html_writer::div('', 'iv-richtext-audio-wrap d-none', [
+                    'data-audio-url' => $audiourl,
+                    'data-autoplay' => !empty($arg['intg1']) ? '1' : '0',
+                ]);
+                $content = $audiobar . $content;
+            }
+        }
+
         return $content;
     }
 

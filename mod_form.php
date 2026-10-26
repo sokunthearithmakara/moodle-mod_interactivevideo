@@ -741,6 +741,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'pauseonblur',
                 'autoplay',
                 'allowdeleteprogress',
+                'preventdevtools',
                 'columnlayout',
                 'squareposterimage',
                 'passwordprotected',

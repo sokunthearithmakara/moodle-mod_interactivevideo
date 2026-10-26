@@ -2719,6 +2719,191 @@ define([
                     );
                 }
             });
+
+            // Disable right-click and detect DevTools on learner's view mode.
+            if (displayoptions.preventdevtools == 1 && !$body.hasClass('editorview')) {
+                document.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                }, true);
+
+                document.addEventListener('keydown', function(e) {
+                    const key = (e.key || '').toUpperCase();
+                    const isF12 = e.key === 'F12' || e.keyCode === 123;
+                    const isDevShortcut = ((e.ctrlKey && e.shiftKey) || (e.metaKey && e.altKey))
+                        && ['I', 'J', 'C', 'K'].includes(key);
+                    const isViewSource = ((e.ctrlKey && !e.shiftKey && !e.altKey) || (e.metaKey && e.altKey))
+                        && key === 'U';
+                    if (isF12 || isDevShortcut || isViewSource) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                }, true);
+
+                let devToolsHandled = false;
+                let devToolsInterval = null;
+                let maxPrintTime = 0;
+                let perfMatchCount = 0;
+                const isFirefox = /firefox/i.test(navigator.userAgent) || 'InstallTrigger' in window;
+
+                const largeObjectArray = (() => {
+                    const obj = {};
+                    for (let i = 0; i < 500; i++) {
+                        obj[`${i}`] = `${i}`;
+                    }
+                    const arr = [];
+                    for (let i = 0; i < 50; i++) {
+                        arr.push(obj);
+                    }
+                    return arr;
+                })();
+
+                const destroyPlayerInstance = () => {
+                    cancelAnimationFrame(playingInterval);
+                    try {
+                        const videoEl = document.getElementById('player');
+                        if (videoEl && videoEl.tagName === 'VIDEO') {
+                            videoEl.pause();
+                            videoEl.removeAttribute('src');
+                            videoEl.load();
+                        }
+                        if (player) {
+                            if (typeof player.pause === 'function') {
+                                player.pause();
+                            }
+                            if (player.hls && typeof player.hls.destroy === 'function') {
+                                player.hls.destroy();
+                            }
+                            if (player.dash && typeof player.dash.reset === 'function') {
+                                player.dash.reset();
+                            }
+                            if (typeof player.destroy === 'function') {
+                                player.destroy();
+                            }
+                        }
+                    } catch (err) {
+                        // Ignore player teardown errors if player is not ready.
+                    }
+                    $('#player').remove();
+                    dispatchEvent('iv:playerDestroyed');
+                };
+
+                $(document).on('iv:playerReady iv:playerLoaded iv:playerPlay iv:playerPlaying', function() {
+                    if (devToolsHandled) {
+                        destroyPlayerInstance();
+                    }
+                });
+
+                const onDevToolsDetected = async() => {
+                    if (devToolsHandled) {
+                        return;
+                    }
+                    devToolsHandled = true;
+                    if (devToolsInterval) {
+                        clearInterval(devToolsInterval);
+                        devToolsInterval = null;
+                    }
+                    window.removeEventListener('resize', checkDevTools);
+                    destroyPlayerInstance();
+                    Toast.add(await getString('devtoolsdetected', 'mod_interactivevideo'), {
+                        type: 'default',
+                    });
+                };
+
+                const customFormatter = {
+                    header: function() {
+                        onDevToolsDetected();
+                        return null;
+                    }
+                };
+                window.devtoolsFormatters = window.devtoolsFormatters || [];
+                if (!window.devtoolsFormatters.includes(customFormatter)) {
+                    window.devtoolsFormatters.push(customFormatter);
+                }
+
+                const measureTime = (fn) => {
+                    const startTime = performance.now();
+                    fn();
+                    return performance.now() - startTime;
+                };
+
+                const checkDevTools = () => {
+                    if (devToolsHandled || document.visibilityState === 'hidden') {
+                        return;
+                    }
+
+                    // 1. Docked size check:
+                    // In Chromium, side panels (Ask Gemini) and Split View reduce innerWidth, so only check
+                    // vertical bottom-dock (outerHeight - innerHeight). In Firefox, check both axes.
+                    if (window.self === window.top && !$body.hasClass('mobileapp') && !$body.hasClass('mobiletheme')) {
+                        const heightDiff = window.outerHeight - window.innerHeight > 260;
+                        const widthDiff = window.outerWidth - window.innerWidth > 200;
+                        if (!(heightDiff && widthDiff)) {
+                            if (heightDiff || (isFirefox && widthDiff)) {
+                                onDevToolsDetected();
+                                return;
+                            }
+                        }
+                    }
+
+                    // 2. Console table vs log performance ratio (works in Chromium & Firefox even on Elements tab).
+                    // eslint-disable-next-line no-console
+                    const tableTime = measureTime(() => console.table(largeObjectArray));
+                    // eslint-disable-next-line no-console
+                    const logTime = measureTime(() => console.log(largeObjectArray));
+                    maxPrintTime = Math.max(maxPrintTime, logTime);
+                    if (tableTime > 0 && maxPrintTime > 0 && tableTime > maxPrintTime * 10 && tableTime > 5) {
+                        perfMatchCount++;
+                        if (perfMatchCount >= 2) {
+                            // eslint-disable-next-line no-console
+                            console.clear();
+                            onDevToolsDetected();
+                            return;
+                        }
+                    } else {
+                        perfMatchCount = 0;
+                    }
+
+                    // 3. Function / RegExp toString console serialization traps.
+                    let toStringCount = 0;
+                    const probeFn = function() {};
+                    probeFn.toString = function() {
+                        toStringCount++;
+                        return '';
+                    };
+                    // eslint-disable-next-line no-console
+                    console.log(probeFn);
+                    if (toStringCount >= 2) {
+                        // eslint-disable-next-line no-console
+                        console.clear();
+                        onDevToolsDetected();
+                        return;
+                    }
+
+                    if (isFirefox) {
+                        let regOpened = false;
+                        const reg = /./;
+                        reg.toString = function() {
+                            regOpened = true;
+                            return '';
+                        };
+                        // eslint-disable-next-line no-console
+                        console.log(reg);
+                        if (regOpened) {
+                            // eslint-disable-next-line no-console
+                            console.clear();
+                            onDevToolsDetected();
+                            return;
+                        }
+                    }
+
+                    // eslint-disable-next-line no-console
+                    console.clear();
+                };
+
+                window.addEventListener('resize', checkDevTools);
+                devToolsInterval = setInterval(checkDevTools, 1000);
+                checkDevTools();
+            }
         }
     };
 });

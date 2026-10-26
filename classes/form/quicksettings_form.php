@@ -146,6 +146,8 @@ class quicksettings_form extends \core_form\dynamic_form {
             'showname',
             'pauseonblur',
             'autoplay',
+            'allowdeleteprogress',
+            'preventdevtools',
             'columnlayout',
             'squareposterimage',
             'passwordprotected',

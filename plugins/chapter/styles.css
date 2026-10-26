@@ -48,4 +48,5 @@
 
 .path-mod-interactivevideo li.anno.active {
     background: var(--ivprimary);
+    color: #fff;
 }

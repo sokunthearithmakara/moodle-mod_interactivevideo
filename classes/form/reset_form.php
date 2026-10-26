@@ -106,6 +106,8 @@ class reset_form extends \core_form\dynamic_form {
         $behavior = [
             'autoplay',
             'pauseonblur',
+            'allowdeleteprogress',
+            'preventdevtools',
             'beforecompletionbehavior',
             'aftercompletionbehavior',
         ];

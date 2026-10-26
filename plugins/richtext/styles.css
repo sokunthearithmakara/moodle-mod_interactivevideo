@@ -1,0 +1,247 @@
+/* stylelint-disable declaration-no-important */
+.iv-richtext-audio-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    width: 100%;
+    background-color: rgba(248, 249, 250, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0.5rem 1rem;
+}
+
+.iv-rt-audio-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.iv-rt-audio-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    background-color: #fff;
+    color: #1a1a1a;
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.iv-rt-audio-btn:hover:not(:disabled),
+.iv-rt-audio-btn:focus-visible:not(:disabled) {
+    background-color: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+.iv-rt-audio-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.iv-rt-audio-bar.is-playing .iv-rt-audio-play {
+    background-color: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+.iv-rt-audio-progress-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    min-width: 80px;
+}
+
+.iv-rt-audio-slider {
+    --iv-rt-progress: 0%;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background:
+        linear-gradient(
+            to right,
+            #1a1a1a 0%,
+            #1a1a1a var(--iv-rt-progress),
+            rgba(0, 0, 0, 0.14) var(--iv-rt-progress),
+            rgba(0, 0, 0, 0.14) 100%
+        );
+    outline: none;
+    cursor: pointer;
+    margin: 0;
+}
+
+.iv-rt-audio-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+.iv-rt-audio-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+.iv-rt-audio-time {
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #555;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.iv-rt-audio-speed {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.75rem;
+    min-width: 2.5rem;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    background-color: #fff;
+    color: #333;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.iv-rt-audio-speed:hover,
+.iv-rt-audio-speed:focus-visible {
+    background-color: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+/* FlexBook kidtheme */
+.path-mod-flexbook.kidtheme .iv-richtext-audio-wrap {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-bottom: 2px solid #e5e5e5;
+    padding: 0.6rem 1.25rem;
+}
+
+.path-mod-flexbook.kidtheme .iv-rt-audio-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    background-color: #1cb0f6;
+    border: 0;
+    border-bottom: 3px solid #1899d6;
+    color: #fff;
+}
+
+.path-mod-flexbook.kidtheme .iv-rt-audio-btn:hover:not(:disabled) {
+    background-color: #1899d6;
+    color: #fff;
+}
+
+.path-mod-flexbook.kidtheme .iv-rt-audio-bar.is-playing .iv-rt-audio-play {
+    background-color: #58cc02;
+    border-bottom-color: #46a302;
+}
+
+.path-mod-flexbook.kidtheme .iv-rt-audio-slider {
+    height: 8px;
+    background: linear-gradient(to right, #58cc02 0%, #58cc02 var(--iv-rt-progress), #e5e5e5 var(--iv-rt-progress), #e5e5e5 100%);
+}
+
+.path-mod-flexbook.kidtheme .iv-rt-audio-slider::-webkit-slider-thumb {
+    background: #58cc02;
+}
+
+.path-mod-flexbook.kidtheme .iv-rt-audio-slider::-moz-range-thumb {
+    background: #58cc02;
+}
+
+/* Dark mode */
+[data-bs-theme="dark"] .iv-richtext-audio-wrap,
+.darkmode .iv-richtext-audio-wrap {
+    background-color: rgba(30, 34, 38, 0.92);
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-bs-theme="dark"] .iv-rt-audio-btn,
+.darkmode .iv-rt-audio-btn,
+[data-bs-theme="dark"] .iv-rt-audio-speed,
+.darkmode .iv-rt-audio-speed {
+    background-color: var(--bs-tertiary-bg, #2b2b2b);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--bs-body-color, #dee2e6);
+}
+
+[data-bs-theme="dark"] .iv-rt-audio-btn:hover:not(:disabled),
+.darkmode .iv-rt-audio-btn:hover:not(:disabled),
+[data-bs-theme="dark"] .iv-rt-audio-speed:hover,
+.darkmode .iv-rt-audio-speed:hover,
+[data-bs-theme="dark"] .iv-rt-audio-bar.is-playing .iv-rt-audio-play,
+.darkmode .iv-rt-audio-bar.is-playing .iv-rt-audio-play {
+    background-color: var(--bs-body-color, #dee2e6);
+    border-color: var(--bs-body-color, #dee2e6);
+    color: var(--bs-body-bg, #121212);
+}
+
+[data-bs-theme="dark"] .iv-rt-audio-time,
+.darkmode .iv-rt-audio-time {
+    color: var(--bs-secondary-color, #adb5bd);
+}
+
+[data-bs-theme="dark"] .iv-rt-audio-slider,
+.darkmode .iv-rt-audio-slider {
+    background:
+        linear-gradient(
+            to right,
+            #dee2e6 0%,
+            #dee2e6 var(--iv-rt-progress),
+            rgba(255, 255, 255, 0.18) var(--iv-rt-progress),
+            rgba(255, 255, 255, 0.18) 100%
+        );
+}
+
+[data-bs-theme="dark"] .iv-rt-audio-slider::-webkit-slider-thumb,
+.darkmode .iv-rt-audio-slider::-webkit-slider-thumb {
+    background: #dee2e6;
+    border-color: #1e2226;
+}
+
+[data-bs-theme="dark"] .iv-rt-audio-slider::-moz-range-thumb,
+.darkmode .iv-rt-audio-slider::-moz-range-thumb {
+    background: #dee2e6;
+    border-color: #1e2226;
+}
+
+#message.richtext .no-overflow,
+.path-mod-interactivevideo.embed-mode #message[data-placement="inline"].richtext .no-overflow {
+    max-width: 770px;
+    margin: 0 auto;
+}
+
+@media (max-width: 575.98px) {
+    .iv-rt-audio-progress-wrap {
+        display: none;
+    }
+}

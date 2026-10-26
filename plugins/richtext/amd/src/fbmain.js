@@ -25,17 +25,20 @@ import $ from 'jquery';
 import {notifyFilterContentUpdated as notifyFilter} from 'core_filters/events';
 import Ajax from 'core/ajax';
 import {safeParse} from 'mod_flexbook/utils';
+import {initPlayer} from 'ivplugin_richtext/player';
 export default class RichText extends Base {
     /**
      * Post-processes the content after rendering an annotation.
      *
      * @param {Object} annotation - The annotation object.
-     * @param {number} annotation.id - The ID of the annotation.
+     * @param {jQuery} [$message] - The message element.
      */
-    postContentRender(annotation) {
-        let $body = $(`#message[data-id='${annotation.id}'] .modal-body`);
+    postContentRender(annotation, $message = null) {
+        const $root = $message && $message.length ? $message : $(`#message[data-id='${annotation.id}']`);
+        let $body = $root.find('.modal-body');
         notifyFilter($body);
         $body.addClass('bg-white p-0');
+        void initPlayer(annotation, $body, !this.isEditMode());
     }
 
     /**

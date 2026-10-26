@@ -25,6 +25,22 @@ namespace ivplugin_richtext;
  */
 class helper {
     /**
+     * Filemanager options for uploaded audio files.
+     *
+     * @return array
+     */
+    public static function audio_filemanager_options(): array {
+        global $COURSE, $PAGE;
+        $maxbytes = $COURSE->maxbytes ?? $PAGE->course->maxbytes ?? 0;
+        return [
+            'maxbytes' => $maxbytes,
+            'subdirs' => 0,
+            'maxfiles' => 1,
+            'accepted_types' => ['html_audio'],
+        ];
+    }
+
+    /**
      * Adds the richtext elements to a moodleform.
      *
      * @param \MoodleQuickForm $mform The form to add elements to.
@@ -45,6 +61,27 @@ class helper {
         );
         $mform->setType('content', PARAM_RAW);
         $mform->addRule('content', get_string('required'), 'required', null, 'client');
+
+        // Audio file upload.
+        $mform->addElement(
+            'filemanager',
+            'audiofile',
+            '<i class="bi bi-file-earmark-music iv-mr-2"></i>' . get_string('audiofile', 'ivplugin_richtext'),
+            null,
+            self::audio_filemanager_options()
+        );
+
+        // Autoplay checkbox.
+        $mform->addElement(
+            'advcheckbox',
+            'intg1',
+            '',
+            get_string('autoplay', 'ivplugin_richtext'),
+            null,
+            [0, 1]
+        );
+        $mform->setType('intg1', PARAM_INT);
+        $mform->setDefault('intg1', 0);
     }
 
     /**
@@ -56,6 +93,8 @@ class helper {
      * @return object The prepared data.
      */
     public static function prepare_editor_data($data, $component, $forminstance) {
+        global $CFG;
+        require_once($CFG->libdir . '/filelib.php');
         if (!empty($data->contentform)) {
             $draftideditor = file_get_submitted_draft_itemid('content');
             $data->content = [];
@@ -71,6 +110,20 @@ class helper {
             $data->content["format"] = FORMAT_HTML;
             $data->content["itemid"] = $data->id;
         }
+
+        $data->intg1 = !empty($data->intg1) ? 1 : 0;
+
+        $draftidaudio = file_get_submitted_draft_itemid('audiofile');
+        file_prepare_draft_area(
+            $draftidaudio,
+            $data->contextid,
+            $component,
+            'itext1',
+            $data->id,
+            self::audio_filemanager_options()
+        );
+        $data->audiofile = $draftidaudio;
+
         return $data;
     }
 
@@ -84,8 +137,11 @@ class helper {
      * @return object The saved data.
      */
     public static function save_editor_data($fromform, $component, $tablename, $forminstance) {
-        global $DB;
-        $draftitemid = $fromform->content["itemid"];
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/filelib.php');
+        $draftitemid = $fromform->content["itemid"] ?? null;
+        $fromform->intg1 = !empty($fromform->intg1) ? 1 : 0;
+
         if ($fromform->id > 0) {
             $fromform->timemodified = time();
             $fromform->content = $fromform->content["text"];
@@ -109,6 +165,18 @@ class helper {
             );
             $DB->update_record($tablename, $fromform);
         }
+
+        if (!empty($fromform->audiofile)) {
+            file_save_draft_area_files(
+                $fromform->audiofile,
+                $fromform->contextid,
+                $component,
+                'itext1',
+                $fromform->id,
+                self::audio_filemanager_options()
+            );
+        }
+
         return $fromform;
     }
 }

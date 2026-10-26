@@ -188,6 +188,7 @@ $string['deletethiscompletiondesc'] = 'Are you sure you want to delete completio
 $string['deletevideo'] = 'Delete video/audio';
 $string['deletevideobutton'] = '<i class="fa fa-trash fa-fw iv-mr-2"></i>Delete video/audio';
 $string['deletevideoconfirm'] = 'Are you sure you want to delete this file?';
+$string['devtoolsdetected'] = 'Developer tools detected. The video player has been removed.';
 $string['disablechapternavigation'] = 'Disable chapter menu';
 $string['disablecustomtime'] = 'Disable custom video time';
 $string['disablecustomtime_desc'] = 'If checked, users will not be able to set a start time and end time for the video on the activity editing form.';
@@ -382,6 +383,7 @@ $string['playvideo'] = 'Play video';
 $string['pluginadministration'] = 'Interactive Video administration';
 $string['pluginname'] = 'Interactive Video';
 $string['posterimage'] = 'Poster image';
+$string['preventdevtools'] = 'Disable right-click and detect DevTools';
 $string['preventseeking'] = 'Prevent seeking';
 $string['preventskipping'] = 'Prevent skipping';
 $string['preview'] = 'Preview';

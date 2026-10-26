@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [2.3.0] - 2026-10-26
+### Added
+- New behavior setting: Disable right-clicking and devTools detection to safeguard the video.
+- New setting on Richtext interaction type: Upload an audio file to accompany the text.
+
 ## [2.2.0] - 2026-10-01
 ### Added
 - **Moodle 5.3 compatibility:** The plugin now supports Moodle 5.3 including BS5's dark mode. The plugin is now compatible with Moodle 5.3's new external plugins API.

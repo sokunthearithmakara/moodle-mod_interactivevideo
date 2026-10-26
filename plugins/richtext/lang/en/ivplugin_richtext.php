@@ -25,9 +25,16 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['audiofile'] = 'Audio file';
+$string['audioprogress'] = 'Audio progress';
+$string['autoplay'] = 'Autoplay';
 $string['content'] = 'Content';
+$string['pause'] = 'Pause';
+$string['play'] = 'Play';
 $string['pluginname'] = 'Rich Text';
 $string['privacy:metadata'] = 'The Rich Text plugin doesn\'t store any personal data.';
 $string['richtextcontent'] = 'Rich text';
 $string['richtextdescription'] = 'Add rich text content using the built-in text editor.';
+$string['speed'] = 'Playback speed';
+$string['stop'] = 'Stop';
 $string['tutorialurl'] = 'https://youtu.be/aZxcnsmyWDk';

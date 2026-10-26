@@ -23,6 +23,7 @@
 import Base from 'mod_interactivevideo/type/base';
 import $ from 'jquery';
 import {notifyFilterContentUpdated as notifyFilter} from 'core_filters/events';
+import {initPlayer} from 'ivplugin_richtext/player';
 export default class RichText extends Base {
     /**
      * Post-processes the content after rendering an annotation.
@@ -34,5 +35,6 @@ export default class RichText extends Base {
         let $body = $(`#message[data-id='${annotation.id}'] .modal-body`);
         notifyFilter($body);
         $body.addClass('bg-white p-0');
+        void initPlayer(annotation, $body, !this.isEditMode());
     }
 }
