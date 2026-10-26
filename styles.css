@@ -30,7 +30,7 @@
 }
 
 [data-bs-theme="dark"] {
-    --ivwhite: #121212;
+    --ivwhite: #343a40;
     --ivgray: #6a737b;
     --ivgray-dark: #343a40;
     --ivprimary: #0f6cbf;
