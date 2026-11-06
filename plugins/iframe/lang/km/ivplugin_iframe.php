@@ -31,3 +31,4 @@ $string['iframedescription'] = 'បង្កប់មាតិកាខាងក
 $string['iframeurl'] = 'ប្រើតំណ ឬបញ្ចូលកូដបង្កប់';
 $string['pluginname'] = 'មាតិកាក្រៅ';
 $string['privacy:metadata'] = 'មិនរក្សាទុកព័ត៌មានបុគ្គលទេ';
+$string['tutorialurl'] = 'https://youtu.be/O83Iy3y5RgA';

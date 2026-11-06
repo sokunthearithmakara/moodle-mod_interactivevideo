@@ -24,6 +24,7 @@ import $ from 'jquery';
 import Ajax from 'core/ajax';
 import ModalForm from 'core_form/modalform';
 import {get_string as getString} from 'core/str';
+import {play as playSound} from 'mod_interactivevideo/sound';
 
 /**
  * Fetches content from the content bank and updates the target element if provided.
@@ -117,8 +118,7 @@ export const init = (contextid) => {
                                 .prepend(`<div class="xapi iv-float-right alert-success d-inline
                                      px-2 text-center iv-rounded-pill mb-2"><i class="fa fa-check iv-mr-2"></i>
                                      ${await getString('xapieventdetected', 'ivplugin_contentbank')}</div>`);
-                            const audio = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
-                            audio.play();
+                            playSound('pop');
                         }
                     });
                 } else {

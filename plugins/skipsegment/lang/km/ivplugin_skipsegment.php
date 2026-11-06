@@ -26,10 +26,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['endtime'] = 'ពេលបញ្ចប់';
+$string['force'] = 'បង្ខំ';
+$string['force_desc'] = 'បើបើក អ្នកប្រើប្រាស់នឹងត្រូវបង្ខំឱ្យរំលងផ្នែកនេះ ហើយមិនអាចមើលវាបានទេ។ បើបិទ អ្នកប្រើប្រាស់អាចជ្រើសរើសរំលង ឬមើលផ្នែកនេះ។';
 $string['invalidtimestampformat'] = 'ទម្រង់ពេលមិនត្រឹមត្រូវ';
 $string['pluginname'] = 'កំណាត់រំលង';
 $string['privacy:metadata'] = 'កំណាត់រំលងមិនផ្ទុកទិន្នន័យបុគ្គលទេ';
 $string['skipped'] = 'រំលង';
 $string['skipsegmentcontent'] = 'កំណាត់រំលង';
 $string['skipsegmentdescription'] = 'រំលងផ្នែកណាមួយនៃវីដេអូ';
+$string['tutorialurl'] = 'https://youtu.be/tRiW09XazJk';
 $string['untiltimemustbegreaterthantimestamp'] = 'ពេលបញ្ចប់ត្រូវធំជាងពេលចាប់ផ្តើម';

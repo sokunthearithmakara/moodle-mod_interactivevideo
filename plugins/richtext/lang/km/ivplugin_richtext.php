@@ -37,3 +37,4 @@ $string['richtextcontent'] = 'អត្ថបទចម្រុះ';
 $string['richtextdescription'] = 'បញ្ចូលអត្ថបទចម្រុះដោយប្រើកម្មវិធីបញ្ចូលអត្ថបទ';
 $string['speed'] = 'ល្បឿនចាក់';
 $string['stop'] = 'ឈប់';
+$string['tutorialurl'] = 'https://youtu.be/aZxcnsmyWDk';

@@ -2016,6 +2016,16 @@ body:has(.modtype_interactivevideo) .toast-wrapper {
     .path-mod-interactivevideo:has(#toolbar:empty) #interactivevideo-container.chapter-open {
         width: calc(100% - 400px);
     }
+
+    /* Outside distraction-free mode the page makes room for the panel, as it does for the sidebar. */
+    .path-mod-interactivevideo.default-mode:has(#interactivevideo-container.chapter-open) #page {
+        margin-inline-start: 400px;
+    }
+
+    .path-mod-interactivevideo.default-mode #interactivevideo-container.chapter-open {
+        left: 0;
+        width: 100%;
+    }
 }
 
 .path-mod-interactivevideo #interactivevideo-container.chapter-open.fullscreen #chapter-container-left {

@@ -24,8 +24,8 @@
 
 define([
     'jquery', 'core/str', 'core/event_dispatcher', 'core/toast', 'core/templates',
-    'mod_interactivevideo/quickform', 'mod_interactivevideo/libraries/jquery-ui'
-], function($, str, eventDispatcher, Toast, Templates, quickform) {
+    'mod_interactivevideo/quickform', 'mod_interactivevideo/sound', 'mod_interactivevideo/libraries/jquery-ui'
+], function($, str, eventDispatcher, Toast, Templates, quickform, Sound) {
     const getString = str.get_string;
     const {dispatchEvent} = eventDispatcher;
     const ctRenderer = {};
@@ -251,13 +251,8 @@ define([
 
     window.fireConfetti = fireConfetti;
 
-    // Preload audio.
-    const pop = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/pop.mp3');
-    const point = new Audio(M.cfg.wwwroot + '/mod/interactivevideo/sounds/point-awarded.mp3');
-    window.IVAudio = {
-        pop,
-        point
-    };
+    // Sound effects, for the interaction plugins too.
+    window.IVAudio = Sound.effects();
 
     return {
         /**

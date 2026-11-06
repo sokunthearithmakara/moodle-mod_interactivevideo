@@ -1042,8 +1042,8 @@ class Base {
         } else if (action == 'mark-undone') {
             $toggleButton
                 .removeClass('btn-success mark-undone').addClass('btn-secondary mark-done');
-            // Play a popup sound.
-            window.IVAudio?.pop.play();
+            // Play the undo sound.
+            window.IVAudio?.undo.play();
             $badge.removeClass('alert-success').addClass('iv-badge-secondary');
             $delete.addClass('d-none');
         }
