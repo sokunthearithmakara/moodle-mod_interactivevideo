@@ -38,6 +38,7 @@
                 <h2 class="line-height-100 mb-0 title">{{{title}}}</h2>
             </div>
 
+            {{^startscreenonly}}
             <div id="spinner"
                  class="spinner-border text-danger"
                  style="width: 3rem; height: 3rem;"
@@ -46,9 +47,10 @@
                  aria-label="{{#str}}loading, core{{/str}}">
                 <span class="visually-hidden sr-only">{{#str}}loading, core{{/str}}</span>
             </div>
+            {{/startscreenonly}}
 
             <button id="play"
-                    class="btn btn-flex iv-rounded-circle d-none pulse bg-white position-sticky"
+                    class="btn btn-flex iv-rounded-circle {{^startscreenonly}}d-none{{/startscreenonly}} pulse bg-white position-sticky"
                     type="button"
                     aria-label="{{#str}}playvideo, mod_interactivevideo{{/str}}">
                 <i class="bi bi-play-circle-fill text-danger" aria-hidden="true"></i>
@@ -92,6 +94,7 @@
             {{/title}}
         </div>
 
+        {{^startscreenonly}}
         <div id="spinner"
              class="spinner-border text-danger position-absolute"
              role="status"
@@ -100,9 +103,10 @@
              style="width: 3rem; height: 3rem; left: calc(50% - 1.5rem); top: calc(50% - 1.5rem);">
             <span class="visually-hidden sr-only">{{#str}}loading, core{{/str}}</span>
         </div>
+        {{/startscreenonly}}
 
         <button id="play"
-                class="btn btn-flex bg-white iv-rounded-circle d-none position-absolute pulse"
+                class="btn btn-flex bg-white iv-rounded-circle {{^startscreenonly}}d-none{{/startscreenonly}} position-absolute pulse"
                 type="button"
                 aria-label="{{#str}}playvideo, mod_interactivevideo{{/str}}">
             <i class="bi bi-play-circle-fill text-danger" aria-hidden="true"></i>

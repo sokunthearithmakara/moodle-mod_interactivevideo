@@ -91,6 +91,7 @@ class reset_form extends \core_form\dynamic_form {
             'usecustomdescription',
             'customdescription',
             'distractionfreemode',
+            'startscreenonly',
             'darkmode',
             'usefixedratio',
             'autohidecontrols',

@@ -361,8 +361,6 @@ $string['outcomethresholdlowest'] = 'ចាប់ពី 0 %';
 $string['outcomethresholds_desc'] = 'តម្លៃនីមួយៗគឺជាភាគរយទាបបំផុតនៃ XP របស់មាតិកា ដែលទទួលបានកម្រិតនោះ។ ការបញ្ចប់មាតិកាដែលផ្តល់ XP ពេញនៅពេលបញ្ចប់ ដូចជា H5P ដែលគ្មាន "Award partial points" ឬមាតិកាដែលតាមដានតាមការមើល ត្រូវរាប់ជា 100 %។';
 $string['overridexperror'] = 'មិនអាចរក្សាទុក XP ដែលបានកែបានទេ។ សូមព្យាយាមម្តងទៀត។';
 $string['overridexpsaved'] = 'បានធ្វើបច្ចុប្បន្នភាព XP។';
-$string['paidcontenttypesactivationnotice'] = 'ប្រភេទមាតិកាបង់ប្រាក់ពី <a href="https://tmakara.com/shop" target="_blank" rel="noopener noreferrer">https://tmakara.com/shop</a> តម្រូវឱ្យបើកដំណើរការដោយប្រើអាសយដ្ឋានអ៊ីមែលដែលអ្នកបានប្រើទិញ។ រហូតដល់ប្រភេទមាតិកាត្រូវបានបើកដំណើរការ វាមិនអាចបន្ថែមទៅក្នុងសកម្មភាពបានទេ ហើយមាតិកាដែលមានស្រាប់ត្រូវបានលាក់ពីសិស្ស និងចាក់សោមិនឱ្យកែសម្រួល។ ពិន្ទុដែលមានស្រាប់មិនរងផលប៉ះពាល់ទេ។ ប្រភេទមាតិកាឥតគិតថ្លៃ និងមាតិកាពីប្រភពផ្សេងទៀតមិនតម្រូវឱ្យបើកដំណើរការទេ។';
-$string['paidcontenttypesactivationnoticeheading'] = 'សំខាន់';
 $string['panopto'] = 'Panopto';
 $string['participant'] = 'អ្នកចូលរួម';
 $string['passwordprotected'] = 'ការពារដោយពាក្យសម្ងាត់';

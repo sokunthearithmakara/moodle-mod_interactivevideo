@@ -1,0 +1,64 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_interactivevideo/sidepanel_head
+
+    The shared head of a side panel (.iv-sidebar.iv-panel): the header row and an optional toolbar row.
+    See docs/design-system.md for an example. Panels extend this template and fill in its blocks.
+
+    Blocks:
+    * icon - the leading icon (default: the "icon" class from the context).
+    * title - the title text (default: "title" from the context).
+    * meta - muted text or a badge after the title.
+    * actions - extra .iv-panel-btn buttons before the close button.
+    * close - the close button. Override to replace it.
+    * toolbar - the optional second row, a div.iv-panel-toolbar.
+
+    Context variables required for this template:
+    * icon - Bootstrap icon classes, such as "bi bi-lightbulb".
+    * title - The panel title.
+    * headingid - Optional id for the heading, for aria-labelledby on the panel.
+    * closeid - Optional id for the close button (kept for existing JS hooks).
+    * closeclass - Optional extra classes for the close button.
+    * closelabel - Optional label of the close button (default: core "Close").
+
+    Example context (json):
+    {
+        "icon": "bi bi-lightbulb",
+        "title": "To know",
+        "headingid": "ivtoknow-heading",
+        "closeclass": "ivtoknow-close"
+    }
+}}
+<div class="iv-panel-head">
+    <div class="iv-panel-header">
+        <h5 class="iv-panel-title"{{#headingid}} id="{{.}}"{{/headingid}}>
+            {{$icon}}{{#icon}}<i class="{{icon}}" aria-hidden="true"></i>{{/icon}}{{/icon}}
+            <span>{{$title}}{{title}}{{/title}}</span>
+        </h5>
+        {{$meta}}{{/meta}}
+        {{$actions}}{{/actions}}
+        {{$close}}
+        <button type="button" class="btn iv-panel-btn {{closeclass}}"{{#closeid}} id="{{.}}"{{/closeid}}
+            title="{{#closelabel}}{{.}}{{/closelabel}}{{^closelabel}}{{#str}} closebuttontitle, core {{/str}}{{/closelabel}}"
+            aria-label="{{#closelabel}}{{.}}{{/closelabel}}{{^closelabel}}{{#str}} closebuttontitle, core {{/str}}{{/closelabel}}">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+        {{/close}}
+    </div>
+    {{$toolbar}}{{/toolbar}}
+</div>

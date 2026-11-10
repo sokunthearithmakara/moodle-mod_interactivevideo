@@ -2025,7 +2025,7 @@ export default {
             const importmodal = await ModalFactory.create({
                 body: ``,
                 title: M.util.get_string('importcontent', 'mod_interactivevideo'),
-                footer: `<button type="button" class="btn btn-secondary border-0" data${bsAffix}-dismiss="modal">
+                footer: `<button type="button" class="btn btn-secondary border-0" data-action="hide" data${bsAffix}-dismiss="modal">
                         ${M.util.get_string('cancel', 'mod_interactivevideo')}</button>
                         <button type="button" class="btn btn-primary border-0" id="importcontentbutton">
                         ${M.util.get_string('import', 'mod_interactivevideo')}</button>`,

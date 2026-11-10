@@ -114,6 +114,15 @@ if (optional_param('mobileapp', 0, PARAM_INT)) {
     $PAGE->add_body_class('mobiletheme mobileapp');
 }
 
+// In default mode the page can show just the start screen, with the video opening in a popup on play.
+// Embedding sets distraction-free mode above, and a link to a moment should go straight to the player.
+$startscreenonly = !empty($moduleinstance->displayoptions['startscreenonly'])
+    && empty($moduleinstance->displayoptions['distractionfreemode'])
+    && !$preview && !$moment && !optional_param('mobileapp', 0, PARAM_INT);
+if ($startscreenonly) {
+    $PAGE->add_body_class('iv-startscreenonly');
+}
+
 $preloadsubplugins = interactivevideo_util::get_activitytypes_by_property('preloadstrings', true);
 if (count($preloadsubplugins) > 0) { // Subplugins that have preloadstrings set to true.
     // Prepare strings for js files using string manager.
@@ -161,8 +170,10 @@ if ($cm->completion != COMPLETION_TRACKING_NONE) {
     $cmcompletion = new completion_info($course);
 }
 
-// Log view.
-if (!$preview) {
+// Log view. On the start screen page that waits for the popup, which loads this page embedded.
+if ($preview) {
+    $getcompletion = false;
+} else if (!$startscreenonly) {
     $event = \mod_interactivevideo\event\course_module_viewed::create([
         'objectid' => $moduleinstance->id,
         'context' => $modulecontext,
@@ -176,8 +187,6 @@ if (!$preview) {
         $cmcompletion = new completion_info($course);
         $cmcompletion->set_module_viewed($cm);
     }
-} else {
-    $getcompletion = false;
 }
 
 if ($cm->completion == COMPLETION_TRACKING_NONE) {
@@ -529,6 +538,20 @@ $datafortemplate['endscreendocument'] = !empty($moduleinstance->endscreentext) |
 $datafortemplate['showintro'] = !empty($moduleinstance->displayasstartscreen)
     && !empty($datafortemplate['hasintro']);
 $datafortemplate['hascontent'] = $datafortemplate['showintro'] || $showoutcomesonstartscreen;
+$posterurl = $moduleinstance->posterimage != "" ? $moduleinstance->posterimage : $OUTPUT->get_generated_image_for_id($cm->id);
+
+if ($startscreenonly) {
+    $datafortemplate['startscreenonly'] = true;
+    $datafortemplate['posterimage'] = $posterurl;
+    $datafortemplate['cmid'] = $cm->id;
+    $datafortemplate['courseid'] = $course->id;
+    $datafortemplate['contextid'] = $modulecontext->id;
+    echo $OUTPUT->render_from_template('mod_interactivevideo/player/startscreenpage', $datafortemplate);
+    // The launch module that handles play is loaded by hook_callbacks::launch_player_modal().
+    echo $OUTPUT->footer();
+    die;
+}
+
 echo $OUTPUT->render_from_template('mod_interactivevideo/player/player', $datafortemplate);
 
 echo '<div id="iv-m-version" data-value="' . $CFG->branch . '"></div>';
@@ -558,6 +581,5 @@ $PAGE->requires->js_call_amd('mod_interactivevideo/viewannotation', 'init', [
 ]);
 echo '<textarea id="doptions" style="display: none;">' . json_encode($moduleinstance->displayoptions) . '</textarea>';
 echo '<textarea id="titlehidden" style="display: none;">' . format_string($moduleinstance->name) . '</textarea>';
-$posterurl = $moduleinstance->posterimage != "" ? $moduleinstance->posterimage : $OUTPUT->get_generated_image_for_id($cm->id);
 echo '<img id="posterimagehidden" style="display: none;" src="' . $posterurl . '">';
 echo $OUTPUT->footer();

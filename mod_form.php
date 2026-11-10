@@ -725,6 +725,7 @@ class mod_interactivevideo_mod_form extends moodleform_mod {
                 'autohidecontrols',
                 'theme',
                 'distractionfreemode',
+                'startscreenonly',
                 'usecustomposterimage',
                 'displayinline',
                 'launchinpopup',

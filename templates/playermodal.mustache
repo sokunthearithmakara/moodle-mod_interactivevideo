@@ -27,7 +27,7 @@
 <div id="body">
 {{> mod_interactivevideo/backgroundloading}}
 <iframe id="ivplayer"
-    src="{{wwwroot}}/mod/interactivevideo/view.php?id={{id}}&embed=1"
+    src="{{wwwroot}}/mod/interactivevideo/view.php?id={{id}}&embed=1{{#autostart}}&autostart=1{{/autostart}}"
     class="w-100 position-absolute h-100 border-0"
     allow="autoplay"
     title="{{{title}}}">
@@ -75,6 +75,7 @@
                 aria-hidden="true"></i>
         </button>
 
+        {{^autostart}}
         <a href="{{wwwroot}}/mod/interactivevideo/view.php?id={{id}}"
             target="_blank"
             rel="noopener noreferrer"
@@ -83,5 +84,6 @@
             title="{{#str}}openinnewtab, mod_interactivevideo{{/str}}">
             <i class="fa fa-external-link text-white m-0 fa-xl" aria-hidden="true"></i>
         </a>
+        {{/autostart}}
     </div>
 </div>

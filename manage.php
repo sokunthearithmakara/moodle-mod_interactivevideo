@@ -90,6 +90,8 @@ if ($tab == 'list') {
 }
 
 echo $OUTPUT->header();
+// The container class lines it up with the tabs below, which sit in a container of their own.
+echo $OUTPUT->heading(get_string('managevideos', 'mod_interactivevideo'), 2, 'container');
 echo '<div class="container">' . $tabmenu . '</div>';
 if ($tab === 'settings' && get_config('mod_interactivevideo', 'enablecoursesettings')) {
     $form = new \mod_interactivevideo\form\settings_form(

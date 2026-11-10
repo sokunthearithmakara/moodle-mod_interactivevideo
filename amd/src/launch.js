@@ -40,7 +40,7 @@ export default {
                 ModalFactory = await import('core/modal_factory');
             }
         }
-        const launchVideo = async($card, course, contextid, id) => {
+        const launchVideo = async($card, course, contextid, id, startscreenonly = false) => {
             // Save the current document title.
             let title = document.title;
             // Get current url.
@@ -50,7 +50,7 @@ export default {
 
             // Get fullscreen from cache.
             let resized = localStorage.getItem('resized') ? true : false;
-            let fullscreen = resized ? false : true;
+            let fullscreen = startscreenonly || !resized;
 
             if (playerModal) {
                 playerModal.destroy();
@@ -62,6 +62,7 @@ export default {
                     wwwroot: M.cfg.wwwroot,
                     title: title,
                     fullscreen,
+                    autostart: startscreenonly,
                 }),
                 large: true,
                 show: false,
@@ -270,6 +271,11 @@ export default {
                     });
 
 
+                // The start screen page is already the activity, with the right url and title.
+                if (startscreenonly) {
+                    return;
+                }
+
                 // Update the browser url to the current activity.
                 history.pushState(null, null, M.cfg.wwwroot + '/mod/interactivevideo/view.php?id=' + id);
                 // Update the title of tab to the activity name.
@@ -284,6 +290,57 @@ export default {
             root.on(ModalEvents.outsideClick, function(e) {
                 e.preventDefault();
             });
+
+            const fetchCompletion = () => $.ajax({
+                url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
+                method: 'POST',
+                dataType: 'text',
+                data: {
+                    action: 'get_cm_completion',
+                    cmid: id,
+                    sesskey: M.cfg.sesskey,
+                    contextid: contextid,
+                    courseid: course,
+                    userid: M.cfg.userId || 0,
+                }
+            });
+
+            /**
+             * Closes the popup opened from the start screen page and brings that page up to date.
+             * The next play loads a new iframe, which resumes by itself.
+             */
+            const closeStartScreenPopup = async() => {
+                // Read this first: removing the iframe takes its document with it.
+                const withavailability = iframeDoc?.body.classList.contains('withavailability');
+                // Hiding moves the modal in the DOM, which would reload a remaining iframe and record another view.
+                root.find('#ivplayer').remove();
+
+                // These are rendered by the server, so a reload is the only way to refresh them.
+                let reload = $('[data-region="outcomelist"]').length > 0;
+                if (!reload && $('.automatic-completion-conditions').length > 0) {
+                    try {
+                        const completion = await fetchCompletion();
+                        const completiondata = completion ? JSON.parse(completion) : null;
+                        if (completiondata) {
+                            // Finishing this activity may unlock others, such as the next item.
+                            reload = withavailability && completiondata.overallcompletion;
+                            $('[data-region=activity-information]').html($(completiondata.completion).html());
+                        }
+                    } catch (error) {
+                        // The page only shows older completion until the next visit.
+                    }
+                }
+                if (reload) {
+                    window.location.reload();
+                    return;
+                }
+
+                $('body').removeClass('overflow-hidden');
+                const modal = playerModal;
+                playerModal = null;
+                modal.destroy();
+                $('#interactivevideo-startframe #play').trigger('focus');
+            };
 
             $(document).off('interactivevideo:closemodal');
             $(document).on('interactivevideo:closemodal', async function() {
@@ -306,19 +363,7 @@ export default {
                     // If there is automatic completion conditions, we have to update it.
                     let $autocompletion = $card.find('.automatic-completion-conditions');
                     if ($autocompletion.length > 0) {
-                        const completion = await $.ajax({
-                            url: M.cfg.wwwroot + '/mod/interactivevideo/ajax.php',
-                            method: 'POST',
-                            dataType: 'text',
-                            data: {
-                                action: 'get_cm_completion',
-                                cmid: id,
-                                sesskey: M.cfg.sesskey,
-                                contextid: contextid,
-                                courseid: course,
-                                userid: M.cfg.userId || 0,
-                            }
-                        });
+                        const completion = await fetchCompletion();
 
                         if (completion) {
                             const completiondata = JSON.parse(completion);
@@ -384,7 +429,7 @@ export default {
                     details = null;
                     player = null;
 
-                    if ($card.find('.analytics.progress .progress-bar').length == 0) {
+                    if (!$card || $card.find('.analytics.progress .progress-bar').length == 0) {
                         // Remove the iframe.
                         playerModal.hide();
                         iframeDoc = null;
@@ -437,6 +482,10 @@ export default {
                         }
                     }
                     setTimeout(() => {
+                        if (startscreenonly) {
+                            closeStartScreenPopup();
+                            return;
+                        }
                         dispatchEvent('interactivevideo:closemodal');
                         root.find('[data-action="hide"]').trigger('click');
                     }, player ? 1500 : 0);
@@ -507,6 +556,13 @@ export default {
                 const id = $(this).closest('li').data('id');
                 launchVideo(null, M.cfg.courseId, null, id);
             }
+        });
+
+        // Open the video from the start screen page.
+        $(document).on('click', '#interactivevideo-startframe #play', async function(e) {
+            e.preventDefault();
+            const $frame = $(this).closest('#interactivevideo-startframe');
+            launchVideo(null, $frame.data('course'), $frame.data('contextid'), $frame.data('id'), true);
         });
 
         $(document).on('click', '.open-external-link', function() {

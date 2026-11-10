@@ -1535,6 +1535,21 @@ define([
             let $toast = $('.toast-wrapper').detach();
             $wrapper.append($toast);
 
+            // The side panels are fixed, but Popper still fits their dropdowns inside #page, which stops at the
+            // panel. A dropdown reads these settings only when created, which may have happened already.
+            const [boundaryAttr, boundaryValue] = isBS5 ? ['data-bs-popper-config', JSON.stringify({
+                modifiers: ['preventOverflow', 'flip'].map((name) => ({name, options: {boundary: 'viewport'}}))
+                    .concat({name: 'offset', options: {offset: [0, 2]}}),
+            })] : ['data-boundary', 'viewport'];
+            const useViewportBoundary = (e) => {
+                const $toggle = $(e.target).closest(`.iv-sidebar [data${bsAffix}-toggle="dropdown"]`);
+                if ($toggle.length && !$toggle.attr(boundaryAttr)) {
+                    $toggle.attr(boundaryAttr, boundaryValue).dropdown('dispose');
+                }
+            };
+            document.addEventListener('pointerdown', useViewportBoundary, true);
+            document.addEventListener('keydown', useViewportBoundary, true);
+
             $(document).on('click', '.completion-required', async function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -2332,9 +2347,12 @@ define([
 
                 // Autoplay if enabled and in right conditions.
                 if (!isPreviewMode && !firstPlay) {
-                    let autoplay = displayoptions.autoplay == 1;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    // The learner already pressed play on the start screen page.
+                    const autostart = urlParams.get('autostart') == '1';
+                    let autoplay = displayoptions.autoplay == 1 || autostart;
                     let time = start;
-                    if ($('.intro-content').hasClass('hasintro')) {
+                    if ($('.intro-content').hasClass('hasintro') && !autostart) {
                         autoplay = false;
                     }
                     if ((uprogress.lastviewed > start && uprogress.lastviewed < end - 5) || moment) {
@@ -2348,7 +2366,6 @@ define([
                         replaceProgressBars(100);
                     }
                     // Get noautoplay from the URL.
-                    const urlParams = new URLSearchParams(window.location.search);
                     const noautoplay = urlParams.get('da');
                     if (autoplay && player.allowAutoplay && noautoplay != '1') {
                         setTimeout(async() => {
@@ -2613,7 +2630,7 @@ define([
                 // Add button to the toolbar.
                 const renderDeleteProgressButton = async() => {
                     $videowrapper.find('#toolbar')
-                        .append(`<button id="deleteprogress" class="rotatex-360 shadow-sm btn"
+                        .append(`<button id="deleteprogress" class="shadow-sm btn"
                          title="${await getString('resetprogress', 'mod_interactivevideo')}">
                          <i class="bi bi-arrow-repeat"></i></button>`);
                 };

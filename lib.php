@@ -95,6 +95,7 @@ function interactivevideo_display_options($moduleinstance, array $current = []) 
     $options['customdescription'] = $moduleinstance->customdescription ?? '';
     $fields = [
         'distractionfreemode',
+        'startscreenonly',
         'usefixedratio',
         'alignindicator',
         'autohidecontrols',
@@ -2590,6 +2591,17 @@ function interactivevideo_appearanceandbehavior_form($mform, $current, $sections
             ['group' => 1],
             [0, 1]
         );
+
+        // Start screen only: the video opens in a full-viewport popup on play.
+        $group[] = $mform->createElement(
+            'advcheckbox',
+            'startscreenonly',
+            '',
+            get_string('startscreenonly', 'mod_interactivevideo'),
+            ['group' => 1],
+            [0, 1]
+        );
+        $mform->hideIf('startscreenonly', 'distractionfreemode', 'eq', 1);
 
         // Dark mode.
         $group[] = $mform->createElement(

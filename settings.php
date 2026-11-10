@@ -53,12 +53,6 @@ $settings = null; // Must first tell Moodle not to add the default node.
 // General settings page.
 $gsettings = new admin_settingpage('modsettinginteractivevideo', get_string('generalsettings', 'mod_interactivevideo'));
 
-$gsettings->add(new \mod_interactivevideo\admin_setting_infonotice(
-    'mod_interactivevideo/paidcontenttypesactivationnotice',
-    get_string('paidcontenttypesactivationnoticeheading', 'mod_interactivevideo'),
-    get_string('paidcontenttypesactivationnotice', 'mod_interactivevideo')
-));
-
 $enablecontenttypes = get_config('mod_interactivevideo', 'enablecontenttypes');
 if ($enablecontenttypes === false || $enablecontenttypes === '') {
     $enablecontenttypes = \mod_interactivevideo\local\installed_contenttypes::get_default_enabled();
@@ -258,6 +252,7 @@ $asettings->add(new admin_setting_configmulticheckbox(
         'showname' => get_string('showname', 'mod_interactivevideo'),
         'showposterimageright' => get_string('showposterimageright', 'mod_interactivevideo'),
         'distractionfreemode' => get_string('distractionfreemode', 'mod_interactivevideo'),
+        'startscreenonly' => get_string('startscreenonly', 'mod_interactivevideo'),
         'darkmode' => get_string('darkmode', 'mod_interactivevideo'),
         'usefixedratio' => get_string('usefixedratio', 'mod_interactivevideo'),
         'autohidecontrols' => get_string('autohidecontrols', 'mod_interactivevideo'),

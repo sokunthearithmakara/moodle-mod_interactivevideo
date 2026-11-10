@@ -130,6 +130,7 @@ class quicksettings_form extends \core_form\dynamic_form {
             'alignindicator',
             'theme',
             'distractionfreemode',
+            'startscreenonly',
             'usecustomposterimage',
             'displayinline',
             'launchinpopup',

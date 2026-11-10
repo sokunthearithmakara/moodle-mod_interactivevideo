@@ -1,6 +1,27 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [2.4] - 2026-11-10
+### Added
+- New appearance setting: Show start screen only, open video on play. Outside distraction-free mode, the activity page shows the start screen in a 16:9 frame without loading the video. Play opens the video in a full-viewport popup, and the view is recorded when the popup opens.
+- Design system for side panels: colour and size tokens, `iv-panel-*` components and the `mod_interactivevideo/sidepanel_head` template, documented in `docs/design-system.md`. Works with Bootstrap 4 and 5, light, dark and distraction-free modes.
+
+### Changed
+- Sound effects are short tones generated in the browser by the new `mod_interactivevideo/sound` module, replacing the alarm, points-awarded and pop audio files. Marking an interaction as not done plays its own sound. The content bank uses the same module.
+- Icons and toolbar buttons no longer spin on hover.
+
+### Fixed
+- Closing the "Launch in popup" player no longer throws an error when it was opened from the activity name link.
+- Dark mode: the user name next to the user picture in the activity header is white.
+- Dark mode (Bootstrap 5): the highlighted and deleted rows in the interactions list have dark-mode colours.
+- Distraction-free mode on large screens: the video no longer runs under the toolbar buttons when the window is tall for its width. The controller keeps the full width.
+- The Cancel button in the Import contents dialog closes it.
+- Interactive Video's and Flexbook's styles for buttons, form fields, checkboxes, badges, headings, lists,
+  dropdowns and background colours no longer reach Moodle's own page chrome (navbar, drawers, message
+  drawer, notifications, footer). They now apply only to the activity's content and its dialogs.
+- Side panel segmented controls: an icon and its count or label sit on one centre line.
+
 ## [2.3.0] - 2026-10-26
 ### Added
 - New behavior setting: Disable right-clicking and devTools detection to safeguard the video.

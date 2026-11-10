@@ -445,9 +445,14 @@ const defaultDisplayContent = async function(annotation, player) {
         // Add annotation toggle button if it does not exist.
         if (isPlayerMode || isPreviewMode) {
             if ($('#wrapper #toolbar #annotation-toggle').length == 0) {
-                $('#wrapper #toolbar')
-                    .append(`<button id="annotation-toggle" class="btn btn-sm border-0">
-                    <i class="bi bi-chevron-${rtl ? 'right' : 'left'}"></i></button>`);
+                const $toggle = $(`<button id="annotation-toggle" class="btn btn-sm border-0">
+                    <i class="bi bi-chevron-${rtl ? 'right' : 'left'}" aria-hidden="true"></i></button>`);
+                $('#wrapper #toolbar').append($toggle);
+                // Name the button like the other toolbar buttons; course formats may show the title as its label.
+                getString('interactions', 'mod_interactivevideo').then((label) => {
+                    $toggle.attr({title: label, 'aria-label': label});
+                    return label;
+                }).catch(() => null);
             }
         }
         // Show the sidebar.
