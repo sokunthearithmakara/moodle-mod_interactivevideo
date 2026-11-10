@@ -19,7 +19,8 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
 
       mariadb:
-        image: mariadb:10
+        # 5.3 needs 11.4; older branches keep 10.11. A matrix entry sets its own version with mariadb-version.
+        image: mariadb:${{ matrix.mariadb-version || '10.11' }}
         env:
           MYSQL_USER: 'root'
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
@@ -27,7 +28,8 @@ jobs:
           MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        # mysqladmin is gone from the 11.x images; the images' own healthcheck.sh is in both.
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval 10s --health-timeout 5s --health-retries 3
 
     strategy:
       fail-fast: false
@@ -89,6 +91,7 @@ jobs:
           - php: '8.4'
             moodle-branch: 'MOODLE_503_STABLE'
             database: 'mariadb'
+            mariadb-version: '11.4'
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
