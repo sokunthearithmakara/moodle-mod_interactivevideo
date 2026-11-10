@@ -8,9 +8,8 @@ jobs:
 
     services:
       postgres:
-        # Must satisfy the newest Moodle branch in the matrix: 5.0 needs 14, 5.1 needs 15,
-        # 5.2 needs 16. Only minimums are declared, so a newer server suits every branch.
-        image: postgres:16
+        # 5.3 needs 17; older branches keep 16. A matrix entry sets its own version with postgres-version.
+        image: postgres:${{ matrix.postgres-version || '16' }}
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -88,6 +87,7 @@ jobs:
           - php: '8.3'
             moodle-branch: 'MOODLE_503_STABLE'
             database: 'pgsql'
+            postgres-version: '17'
           - php: '8.4'
             moodle-branch: 'MOODLE_503_STABLE'
             database: 'mariadb'
