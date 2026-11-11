@@ -570,13 +570,12 @@ class outcome_mapping {
     /**
      * Adds the "Outcomes" section to an interaction form.
      *
-     * Nothing is added when the site has outcomes disabled. When the activity has no outcome
-     * attached yet the section only points the teacher at the activity settings.
+     * Nothing is added when the site has outcomes disabled or the activity has no outcome attached.
      *
      * @param \MoodleQuickForm $mform The form.
      * @param string $modname Module name.
      * @param int $instanceid The activity instance id.
-     * @param int $cmid The course module id, for the activity settings link.
+     * @param int $cmid The course module id. No longer used; kept so callers need not change.
      * @param string $defaultmode Rating method preselected for a newly ticked outcome.
      * @param bool $expanded Whether the section starts expanded.
      */
@@ -591,24 +590,13 @@ class outcome_mapping {
         if (!self::is_enabled()) {
             return;
         }
-        $mform->addElement('header', 'outcomes', get_string('outcomes', 'grades'));
-        $mform->setExpanded('outcomes', $expanded);
-
+        // An activity with no outcomes attached has nothing to rate, so the interaction gets no section.
         $outcomes = self::get_activity_outcomes($modname, $instanceid);
         if (empty($outcomes)) {
-            $link = \html_writer::link(
-                new \moodle_url('/course/modedit.php', ['update' => $cmid]),
-                get_string('outcomesnone_link', 'mod_interactivevideo'),
-                ['target' => '_blank']
-            );
-            $mform->addElement(
-                'static',
-                'outcomesnone',
-                '',
-                self::muted(get_string('outcomesnone', 'mod_interactivevideo', $link))
-            );
             return;
         }
+        $mform->addElement('header', 'outcomes', get_string('outcomes', 'grades'));
+        $mform->setExpanded('outcomes', $expanded);
 
         $mform->addElement(
             'static',

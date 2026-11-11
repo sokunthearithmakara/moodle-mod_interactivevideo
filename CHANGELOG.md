@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Sound effects are short tones generated in the browser by the new `mod_interactivevideo/sound` module, replacing the alarm, points-awarded and pop audio files. Marking an interaction as not done plays its own sound. The content bank uses the same module.
 - Icons and toolbar buttons no longer spin on hover.
+- Interaction forms show the Learning outcomes section only when the activity has outcomes attached.
 
 ### Fixed
 - Closing the "Launch in popup" player no longer throws an error when it was opened from the activity name link.

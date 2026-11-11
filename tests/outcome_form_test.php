@@ -186,19 +186,17 @@ final class outcome_form_test extends \advanced_testcase {
     }
 
     /**
-     * An activity without outcomes attached only gets a pointer to its settings.
+     * An activity without outcomes attached gets no outcomes section.
      */
-    public function test_section_without_activity_outcomes(): void {
+    public function test_no_section_without_activity_outcomes(): void {
         global $DB;
         $DB->delete_records('grade_items', ['outcomeid' => $this->outcomeid]);
 
         $form = new outcome_form_scored_fixture(null, null, 'post', '', [], true, $this->args());
         $mform = $form->mform();
 
-        $this->assertTrue($mform->elementExists('outcomes'));
-        $this->assertTrue($mform->elementExists('outcomesnone'));
+        $this->assertFalse($mform->elementExists('outcomes'));
         $this->assertFalse($mform->elementExists($this->field('enabled')));
-        $this->assertStringContainsString('update=' . $this->cm->id, $mform->getElement('outcomesnone')->toHtml());
     }
 
     /**
