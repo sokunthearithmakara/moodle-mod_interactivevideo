@@ -1939,6 +1939,9 @@ export default {
                 // Apply jelly animation after DOM is ready
                 setTimeout(() => {
                     root.addClass('jelly-anim');
+                    // Ready to type: the search box takes the focus (after the modal's own focus handling),
+                    // with any earlier search selected so typing replaces it.
+                    root.find('#contentsearch').trigger('focus').trigger('select');
                 }, 10);
 
                 // Make the modal draggable.
